@@ -90,6 +90,11 @@ export interface AxisInfo {
   range: [number, number]
   /** The data column this axis shows, when there is one. */
   field?: string
+  /**
+   * `log`: a base-10 log axis (kind `linear`, positive domain in data units). Pixels are linear in log10 of the
+   * value, so pixel-to-data maps and zoom must work in log space.
+   */
+  scale?: 'log'
 }
 
 export interface SceneAxes {

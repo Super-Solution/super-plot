@@ -34,6 +34,21 @@ const densityIn = [
   { values: [7] }
 ]
 const density = densityIn.map(c => { const d = kde(c.values, c.bandwidth); return { in: c, out: { silverman: silverman(c.values), ...d, peaks: densityPeaks(d) } } })
+const { logTicks, niceLogDomain, loess, transformBinEdges } = core
+const logTickCases = [[1, 1e6, 5], [1, 1000, 8], [1, 100, 8], [0.01, 1, 9], [20, 80, 5], [3, 800, 4], [0.5, 2e9, 6], [1e-6, 1e-3, 3]].map(([a, b, n]) => ({ in: [a, b, n], out: logTicks(a, b, n) }))
+const logNiceCases = [[3, 800], [10, 10], [1, 1000], [0.02, 0.5], [7, 7.5]].map(([a, b]) => ({ in: [a, b], out: niceLogDomain(a, b) }))
+const loessXs = [5, 1, 3, 2, 4, 8, 6, 7, 9, 10]
+const loessYs = [2, 9, 4, 7, 3, 6, 1, 8, 5, 2]
+const loessCases = [
+  { xs: loessXs, ys: loessYs, bandwidth: 0.5, grid: 10 },
+  { xs: loessXs, ys: loessYs, bandwidth: 0.3, grid: 50 },
+  { xs: loessXs, ys: loessYs, bandwidth: 1, grid: 7 },
+  { xs: [1, 1, 1, 2, 2, 3], ys: [1, 2, 3, 4, 5, 6], bandwidth: 0.3, grid: 5 },
+  { xs: [4, 4, 4], ys: [1, 2, 6], bandwidth: 0.3, grid: 50 },
+  { xs: [1, 2], ys: [1, 2], bandwidth: 0.3, grid: 50 },
+  { xs: Array.from({ length: 25 }, (_, i) => i * 0.4), ys: Array.from({ length: 25 }, (_, i) => Math.sin(i * 0.4) * 10), bandwidth: 0.2, grid: 12 }
+].map(c => ({ in: c, out: loess(c.xs, c.ys, c.bandwidth, c.grid) }))
+const binStepCases = [{ values: [0, 13], maxbins: 10 }, { values: [1, 2, 2, 3, 9], maxbins: 4 }, { values: [0.1, 0.66], maxbins: 3 }, { values: [5, 5], maxbins: 10 }, { values: [0, 97], maxbins: 10, step: 7 }].map(c => ({ in: c, out: transformBinEdges(c.values, c.maxbins, c.step) }))
 
 const withoutData = spec => { const { data, ...rest } = spec; return rest }
 
@@ -275,7 +290,48 @@ const FEATURE_VALIDATION = [
   ['domain: equal dates', lines({ xDomain: ['2026-06-30', '2026-06-30T00:00:00Z'] })],
   ['domain: three values', lines({ xDomain: ['2026-01-01', '2026-06-30', '2026-12-31'] })],
   ['domain: ISO on a value axis', bars({ yDomain: ['1970-01-01', '1970-01-02'] })],
-  ['domain: xDomain is not a bar field', bars({ xDomain: [0, 1] })]
+  ['domain: xDomain is not a bar field', bars({ xDomain: [0, 1] })],
+  // Round 5: log scales, intervals, point annotations, gaps, loess trends, lollipops.
+  ['log: y on a line', lines({ yScale: 'log' })],
+  ['log: y on a line, some values at or below zero', { type: 'line', x: 'x', y: 'v', yScale: 'log', data: [{ x: 1, v: 10 }, { x: 2, v: 0 }, { x: 3, v: -5 }, { x: 4, v: 1000 }] }],
+  ['log: every value at or below zero', { type: 'scatter', x: 'v', y: 't', yScale: 'log', data: [{ v: 1, t: 0 }, { v: 2, t: -1 }] }],
+  ['log: x and y on a scatter', { type: 'scatter', x: 'v', y: 't', xScale: 'log', yScale: 'log', data: W }],
+  ['log: x on a line over dates is refused', lines({ xScale: 'log' })],
+  ['log: x on a scatter over dates is refused', { type: 'scatter', x: 'd', y: 'v', xScale: 'log', data: W }],
+  ['log: a domain at zero', lines({ yScale: 'log', yDomain: [0, 10] })],
+  ['log: refused on a bar', bars({ yScale: 'log' })],
+  ['log: linear accepted on a bar', bars({ yScale: 'linear' })],
+  ['log: refused on an area', { type: 'area', x: 'd', y: 'v', yScale: 'log', data: W }],
+  ['log: refused on a histogram', { type: 'histogram', value: 'v', yScale: 'log', data: W }],
+  ['log: bad value', lines({ yScale: 'log2' })],
+  ['log: gaps zero on a log axis', lines({ yScale: 'log', gaps: 'zero' })],
+  ['interval: band on a line', lines({ yLower: 'v', yUpper: 't' })],
+  ['interval: lower only', lines({ yLower: 'v' })],
+  ['interval: upper only on a scatter', { type: 'scatter', x: 'v', y: 't', xUpper: 't', data: W }],
+  ['interval: several y columns', lines({ y: ['v', 't'], yLower: 'v', yUpper: 't' })],
+  ['interval: on a stacked area', { type: 'area', x: 'd', y: 'v', series: 'g', stack: 'stack', yLower: 'v', yUpper: 't', data: W }],
+  ['interval: whiskers on grouped bars', bars({ yLower: 'v', yUpper: 't' })],
+  ['interval: whiskers on stacked bars', bars({ stack: 'stack', yLower: 'v', yUpper: 't' })],
+  ['interval: ends swapped', { type: 'scatter', x: 'v', y: 't', yLower: 't', yUpper: 'v', data: [{ v: 1, t: 5 }, { v: 2, t: 1 }] }],
+  ['interval: not numeric', lines({ yLower: 'k', yUpper: 't' })],
+  ['interval: no such column', lines({ yLower: 'low', yUpper: 't' })],
+  ['annotation: a point', lines({ annotations: [{ x: '2026-02-09', y: 8, label: 'Peak', tone: 'positive' }] })],
+  ['annotation: a point with a category', bars({ annotations: [{ x: 'b', y: 8, label: 'Best' }, { axis: 'y', value: 5, label: 'Target' }] })],
+  ['annotation: a point without label', lines({ annotations: [{ x: '2026-02-09', y: 8 }] })],
+  ['annotation: a point without y', lines({ annotations: [{ x: '2026-02-09', label: 'Peak' }] })],
+  ['annotation: a point with a bad x', lines({ annotations: [{ x: null, y: 8, label: 'Peak' }] })],
+  ['annotation: a point with a line field', lines({ annotations: [{ x: 1, y: 8, label: 'Peak', to: 3 }] })],
+  ['annotation: a line with a point field', lines({ annotations: [{ axis: 'y', value: 8, y: 3 }] })],
+  ['gaps: connect', lines({ gaps: 'connect' })],
+  ['gaps: zero on an area', { type: 'area', x: 'd', y: 'v', gaps: 'zero', data: W }],
+  ['gaps: bad value', lines({ gaps: 'skip' })],
+  ['gaps: not on a bar', bars({ gaps: 'connect' })],
+  ['trend: loess', { type: 'scatter', x: 'v', y: 't', trend: 'loess', trendBandwidth: 0.5, data: W }],
+  ['trend: bandwidth without loess', { type: 'scatter', x: 'v', y: 't', trendBandwidth: 0.5, data: W }],
+  ['trend: bandwidth out of range', { type: 'scatter', x: 'v', y: 't', trend: 'loess', trendBandwidth: 2, data: W }],
+  ['mark: lollipop', bars({ mark: 'lollipop', labels: true })],
+  ['mark: lollipop stacked', bars({ mark: 'lollipop', stack: 'normalize', y: ['v', 't'] })],
+  ['mark: bad value', bars({ mark: 'dot' })]
 ]
 
 const VALIDATION = [
@@ -623,6 +679,46 @@ const TRANSFORM = [
   ['a later step reads the output of an earlier one', pipe([{ aggregate: { groupBy: ['region'], fields: { revenue: 'sum' } } }, { sort: { field: 'date' } }])],
   ['only the first bad step is reported', pipe([{ sort: { field: 'nope' } }, { top: { n: 0, by: 'nope' } }], { y: 'nope', stak: 1 })],
   ['a warning from a step survives a later error', pipe([{ timeUnit: { field: 'date', unit: 'month', as: 'm' } }, { filter: { field: 'm', equal: 'x' } }], { data: [...S, { date: 'soon', region: 'APAC', revenue: 1, units: 1 }] })],
+  // Round 5: bin, window and fold.
+  ['bin: default maxbins, default names', pipe([{ bin: { field: 'revenue' } }])],
+  ['bin: maxbins is a maximum (the histogram step is made coarser)', { type: 'bar', x: 'b0', y: 'n', data: rowsOf(14, i => ({ v: i })), transform: [{ bin: { field: 'v', maxbins: 4, as: ['b0', 'b1'] } }, { aggregate: { groupBy: ['b0', 'b1'], count: 'n' } }] }],
+  ['bin: a step', pipe([{ bin: { field: 'revenue', step: 25, as: ['from', 'to'] } }], { x: 'from' })],
+  ['bin: one value', { type: 'bar', x: 'v_start', y: 'n', data: [{ v: 3 }, { v: 3 }], transform: [{ bin: { field: 'v' } }, { aggregate: { groupBy: ['v_start'], count: 'n' } }] }],
+  ['bin: decimals', { type: 'bar', x: 'lo', y: 'n', data: rowsOf(9, i => ({ v: 0.1 + i * 0.07 })), transform: [{ bin: { field: 'v', maxbins: 3, as: ['lo', 'hi'] } }, { aggregate: { groupBy: ['lo'], count: 'n' } }] }],
+  ['bin: not numeric', pipe([{ bin: { field: 'region' } }])],
+  ['bin: no field', pipe([{ bin: { maxbins: 3 } }])],
+  ['bin: maxbins too large', pipe([{ bin: { field: 'revenue', maxbins: 201 } }])],
+  ['bin: maxbins not whole', pipe([{ bin: { field: 'revenue', maxbins: 2.5 } }])],
+  ['bin: step zero', pipe([{ bin: { field: 'revenue', step: 0 } }])],
+  ['bin: step too small', pipe([{ bin: { field: 'revenue', step: 0.1 } }])],
+  ['bin: as of one name', pipe([{ bin: { field: 'revenue', as: ['b'] } }])],
+  ['bin: as twice the same', pipe([{ bin: { field: 'revenue', as: ['b', 'b'] } }])],
+  ...['sum', 'mean', 'count', 'rank', 'pctChange', 'lag', 'lead', 'movingMean'].map(op => [`window: ${op} per region by date`, pipe([{ window: { op, field: 'revenue', as: 'w', groupBy: ['region'], sortBy: 'date' } }], { y: 'units', x: 'date', series: 'region' })]),
+  ['window: sum descending, no groups', pipe([{ window: { op: 'sum', field: 'units', as: 'w', sortBy: 'revenue', order: 'desc' } }], { y: 'w' })],
+  ['window: rank without sortBy ranks the field, ties share', mix([{ window: { op: 'rank', field: 'v', as: 'r', order: 'desc' } }])],
+  ['window: rank of text', mix([{ window: { op: 'rank', field: 'k', as: 'r' } }], { y: 'r' })],
+  ['window: movingMean over 2 rows', pipe([{ window: { op: 'movingMean', field: 'revenue', as: 'm', sortBy: 'date', frame: 2 } }], { y: 'm' })],
+  ['window: data order without sortBy', mix([{ window: { op: 'lag', field: 'k', as: 'prev' } }])],
+  ['window: frame ignored', pipe([{ window: { op: 'sum', field: 'revenue', as: 'w', frame: 4 } }])],
+  ['window: order without sortBy', pipe([{ window: { op: 'sum', field: 'revenue', as: 'w', order: 'desc' } }])],
+  ['window: as in place', pipe([{ window: { op: 'sum', field: 'revenue', as: 'revenue', sortBy: 'date' } }])],
+  ['window: unknown op', pipe([{ window: { op: 'cumsum', field: 'revenue', as: 'w' } }])],
+  ['window: no op', pipe([{ window: { field: 'revenue', as: 'w' } }])],
+  ['window: no as', pipe([{ window: { op: 'sum', field: 'revenue' } }])],
+  ['window: no such sortBy', pipe([{ window: { op: 'sum', field: 'revenue', as: 'w', sortBy: 'when' } }])],
+  ['window: groupBy is a string', pipe([{ window: { op: 'sum', field: 'revenue', as: 'w', groupBy: 'region' } }])],
+  ['window: bad order', pipe([{ window: { op: 'sum', field: 'revenue', as: 'w', sortBy: 'date', order: 'descending' } }])],
+  ['window: frame zero', pipe([{ window: { op: 'movingMean', field: 'revenue', as: 'w', frame: 0 } }])],
+  ['fold: two columns', { type: 'bar', x: 'region', y: 'value', series: 'key', data: S, transform: [{ fold: { fields: ['revenue', 'units'] } }] }],
+  ['fold: named, then a window over the folded rows', { type: 'line', x: 'date', y: 'total', series: 'measure', data: S, transform: [{ fold: { fields: ['revenue', 'units'], as: ['measure', 'amount'] } }, { window: { op: 'sum', field: 'amount', as: 'total', groupBy: ['measure'], sortBy: 'date' } }] }],
+  ['fold: a folded column is gone for the next step', pipe([{ fold: { fields: ['revenue', 'units'] } }, { sort: { field: 'revenue' } }])],
+  ['fold: no fields', pipe([{ fold: {} }])],
+  ['fold: empty fields', pipe([{ fold: { fields: [] } }])],
+  ['fold: no such column', pipe([{ fold: { fields: ['revenue', 'cost'] } }])],
+  ['fold: a column twice', pipe([{ fold: { fields: ['revenue', 'revenue'] } }])],
+  ['fold: as of one name', pipe([{ fold: { fields: ['revenue'], as: ['k'] } }])],
+  ['pipeline: fold, bin, aggregate, window', { type: 'line', x: 'from', y: 'cum', series: 'k', data: rowsOf(40, i => ({ a: (i * 37) % 23, b: (i * 11) % 17 })), transform: [{ fold: { fields: ['a', 'b'], as: ['k', 'v'] } }, { bin: { field: 'v', maxbins: 4, as: ['from', 'to'] } }, { aggregate: { groupBy: ['k', 'from'], count: 'n' } }, { window: { op: 'sum', field: 'n', as: 'cum', groupBy: ['k'], sortBy: 'from' } }] }],
+  ['no expression step', pipe([{ calculate: 'datum.revenue * 2', as: 'x2' }])],
   ['transform is not run when data is missing', { type: 'bar', x: 'region', y: 'revenue', transform: [{ nope: 1 }] }],
   ['transform as a JSON string spec', JSON.stringify(pipe([{ aggregate: { fields: { revenue: 'sum', units: 'mean' }, groupBy: ['region'] } }, { top: { by: 'revenue', n: 2 } }]))]
 ].map(([name, spec]) => {
@@ -661,6 +757,10 @@ const doc = rows({
   boxStats: box,
   density,
   histogramBins: bins,
+  logTicks: logTickCases,
+  logNiceDomain: logNiceCases,
+  loess: loessCases,
+  binStep: binStepCases,
   chartExamples: examples,
   brokenSpecs: broken,
   geographies: GEOGRAPHIES,

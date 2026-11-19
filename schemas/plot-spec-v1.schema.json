@@ -117,11 +117,31 @@
                   "n",
                   "by"
                 ]
+              },
+              "bin": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "window": {
+                "type": "object",
+                "required": [
+                  "op",
+                  "field",
+                  "as"
+                ]
+              },
+              "fold": {
+                "type": "object",
+                "required": [
+                  "fields"
+                ]
               }
             },
             "additionalProperties": false
           },
-          "description": "Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+          "description": "Data steps run before the chart reads its columns, in order (at most 10): filter, timeUnit, aggregate, sort, top, bin (round bins: start and end columns), window (running sum, mean, count, rank, pctChange, lag, lead, movingMean, per group, in a sort order) and fold (wide columns to key/value rows). No expressions. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
         },
         "patterns": {
           "type": "boolean",
@@ -140,47 +160,88 @@
         "annotations": {
           "type": "array",
           "maxItems": 50,
-          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band.",
+          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date).",
           "items": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": [
-              "axis",
-              "value"
-            ],
-            "properties": {
-              "axis": {
-                "enum": [
+            "oneOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "axis",
+                  "value"
+                ],
+                "properties": {
+                  "axis": {
+                    "enum": [
+                      "x",
+                      "y"
+                    ]
+                  },
+                  "value": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "to": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "label": {
+                    "type": "string",
+                    "maxLength": 80
+                  },
+                  "tone": {
+                    "enum": [
+                      "neutral",
+                      "positive",
+                      "negative",
+                      "warning",
+                      "info"
+                    ]
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
                   "x",
-                  "y"
-                ]
-              },
-              "value": {
-                "type": [
-                  "number",
-                  "string"
-                ]
-              },
-              "to": {
-                "type": [
-                  "number",
-                  "string"
-                ]
-              },
-              "label": {
-                "type": "string",
-                "maxLength": 80
-              },
-              "tone": {
-                "enum": [
-                  "neutral",
-                  "positive",
-                  "negative",
-                  "warning",
-                  "info"
-                ]
+                  "y",
+                  "label"
+                ],
+                "properties": {
+                  "x": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "y": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "label": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 80
+                  },
+                  "tone": {
+                    "enum": [
+                      "neutral",
+                      "positive",
+                      "negative",
+                      "warning",
+                      "info"
+                    ]
+                  }
+                }
               }
-            }
+            ]
           }
         },
         "facet": {
@@ -284,6 +345,28 @@
             ]
           },
           "description": "Fix the value axis range, e.g. [0, 100]. Bars should start at 0; only change it knowingly."
+        },
+        "mark": {
+          "enum": [
+            "bar",
+            "lollipop"
+          ],
+          "description": "Default bar. `lollipop` draws a thin stem from zero and a dot at the value instead of a filled bar: the same chart (sort, orientation, labels, grouped series side by side) with less ink, good for many categories. Not for stacks: falls back to bars with a warning."
+        },
+        "yLower": {
+          "type": "string",
+          "description": "Numeric column with the lower end of an interval on y (a confidence or min-max range), drawn as a whisker with caps across each bar (grouped bars only; stacked bars ignore it with a warning). Needs `yUpper` too; the tooltip shows the interval and the axis includes it. (name of a column in data)"
+        },
+        "yUpper": {
+          "type": "string",
+          "description": "Numeric column with the upper end of the interval on y; see `yLower`. (name of a column in data)"
+        },
+        "yScale": {
+          "enum": [
+            "linear",
+            "log"
+          ],
+          "description": "Only `linear`. A bar's length starts at zero, which a log axis cannot show, so `log` is refused (`log_scale_refused`). Use a line or a scatter for values spanning several orders of magnitude."
         }
       }
     },
@@ -400,11 +483,31 @@
                   "n",
                   "by"
                 ]
+              },
+              "bin": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "window": {
+                "type": "object",
+                "required": [
+                  "op",
+                  "field",
+                  "as"
+                ]
+              },
+              "fold": {
+                "type": "object",
+                "required": [
+                  "fields"
+                ]
               }
             },
             "additionalProperties": false
           },
-          "description": "Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+          "description": "Data steps run before the chart reads its columns, in order (at most 10): filter, timeUnit, aggregate, sort, top, bin (round bins: start and end columns), window (running sum, mean, count, rank, pctChange, lag, lead, movingMean, per group, in a sort order) and fold (wide columns to key/value rows). No expressions. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
         },
         "patterns": {
           "type": "boolean",
@@ -423,47 +526,88 @@
         "annotations": {
           "type": "array",
           "maxItems": 50,
-          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band.",
+          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date).",
           "items": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": [
-              "axis",
-              "value"
-            ],
-            "properties": {
-              "axis": {
-                "enum": [
+            "oneOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "axis",
+                  "value"
+                ],
+                "properties": {
+                  "axis": {
+                    "enum": [
+                      "x",
+                      "y"
+                    ]
+                  },
+                  "value": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "to": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "label": {
+                    "type": "string",
+                    "maxLength": 80
+                  },
+                  "tone": {
+                    "enum": [
+                      "neutral",
+                      "positive",
+                      "negative",
+                      "warning",
+                      "info"
+                    ]
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
                   "x",
-                  "y"
-                ]
-              },
-              "value": {
-                "type": [
-                  "number",
-                  "string"
-                ]
-              },
-              "to": {
-                "type": [
-                  "number",
-                  "string"
-                ]
-              },
-              "label": {
-                "type": "string",
-                "maxLength": 80
-              },
-              "tone": {
-                "enum": [
-                  "neutral",
-                  "positive",
-                  "negative",
-                  "warning",
-                  "info"
-                ]
+                  "y",
+                  "label"
+                ],
+                "properties": {
+                  "x": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "y": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "label": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 80
+                  },
+                  "tone": {
+                    "enum": [
+                      "neutral",
+                      "positive",
+                      "negative",
+                      "warning",
+                      "info"
+                    ]
+                  }
+                }
               }
-            }
+            ]
           }
         },
         "facet": {
@@ -554,9 +698,39 @@
           "default": "linear",
           "description": "`smooth` is monotone (never overshoots the data); `step` holds each value until the next point."
         },
+        "gaps": {
+          "enum": [
+            "break",
+            "connect",
+            "zero"
+          ],
+          "description": "Default break. What a missing or null y does: `break` leaves a gap in the line, `connect` joins the points on either side, `zero` draws it as 0 (the tooltip says \"missing\"). Stacked areas always count a missing value as 0."
+        },
+        "yLower": {
+          "type": "string",
+          "description": "Numeric column with the lower end of an interval on y (a confidence or min-max range), drawn as a shaded band behind each line (one band per series; with long-form `series`, not with several `y` columns). Needs `yUpper` too; the tooltip shows the interval and the axis includes it. (name of a column in data)"
+        },
+        "yUpper": {
+          "type": "string",
+          "description": "Numeric column with the upper end of the interval on y; see `yLower`. (name of a column in data)"
+        },
         "points": {
           "type": "boolean",
           "description": "Force markers on (`true`) or off (`false`). Default: markers when there are few points, otherwise only the last point."
+        },
+        "yScale": {
+          "enum": [
+            "linear",
+            "log"
+          ],
+          "description": "Default linear. `log` draws the vertical axis in powers of ten (growth, orders of magnitude); values at or below zero cannot be placed and are left out with a `log_nonpositive` warning."
+        },
+        "xScale": {
+          "enum": [
+            "linear",
+            "log"
+          ],
+          "description": "Default linear. `log` draws the horizontal axis in powers of ten (sizes, frequencies); values at or below zero cannot be placed and are left out with a `log_nonpositive` warning. Only for a numeric x; dates and categories are refused."
         }
       }
     },
@@ -673,11 +847,31 @@
                   "n",
                   "by"
                 ]
+              },
+              "bin": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "window": {
+                "type": "object",
+                "required": [
+                  "op",
+                  "field",
+                  "as"
+                ]
+              },
+              "fold": {
+                "type": "object",
+                "required": [
+                  "fields"
+                ]
               }
             },
             "additionalProperties": false
           },
-          "description": "Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+          "description": "Data steps run before the chart reads its columns, in order (at most 10): filter, timeUnit, aggregate, sort, top, bin (round bins: start and end columns), window (running sum, mean, count, rank, pctChange, lag, lead, movingMean, per group, in a sort order) and fold (wide columns to key/value rows). No expressions. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
         },
         "patterns": {
           "type": "boolean",
@@ -696,47 +890,88 @@
         "annotations": {
           "type": "array",
           "maxItems": 50,
-          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band.",
+          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date).",
           "items": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": [
-              "axis",
-              "value"
-            ],
-            "properties": {
-              "axis": {
-                "enum": [
+            "oneOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "axis",
+                  "value"
+                ],
+                "properties": {
+                  "axis": {
+                    "enum": [
+                      "x",
+                      "y"
+                    ]
+                  },
+                  "value": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "to": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "label": {
+                    "type": "string",
+                    "maxLength": 80
+                  },
+                  "tone": {
+                    "enum": [
+                      "neutral",
+                      "positive",
+                      "negative",
+                      "warning",
+                      "info"
+                    ]
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
                   "x",
-                  "y"
-                ]
-              },
-              "value": {
-                "type": [
-                  "number",
-                  "string"
-                ]
-              },
-              "to": {
-                "type": [
-                  "number",
-                  "string"
-                ]
-              },
-              "label": {
-                "type": "string",
-                "maxLength": 80
-              },
-              "tone": {
-                "enum": [
-                  "neutral",
-                  "positive",
-                  "negative",
-                  "warning",
-                  "info"
-                ]
+                  "y",
+                  "label"
+                ],
+                "properties": {
+                  "x": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "y": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "label": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 80
+                  },
+                  "tone": {
+                    "enum": [
+                      "neutral",
+                      "positive",
+                      "negative",
+                      "warning",
+                      "info"
+                    ]
+                  }
+                }
               }
-            }
+            ]
           }
         },
         "facet": {
@@ -827,6 +1062,22 @@
           "default": "linear",
           "description": "`smooth` is monotone (never overshoots the data); `step` holds each value until the next point."
         },
+        "gaps": {
+          "enum": [
+            "break",
+            "connect",
+            "zero"
+          ],
+          "description": "Default break. What a missing or null y does: `break` leaves a gap in the line, `connect` joins the points on either side, `zero` draws it as 0 (the tooltip says \"missing\"). Stacked areas always count a missing value as 0."
+        },
+        "yLower": {
+          "type": "string",
+          "description": "Numeric column with the lower end of an interval on y (a confidence or min-max range), drawn as a shaded band behind each line (one band per series; with long-form `series`, not with several `y` columns). Needs `yUpper` too; the tooltip shows the interval and the axis includes it. (name of a column in data)"
+        },
+        "yUpper": {
+          "type": "string",
+          "description": "Numeric column with the upper end of the interval on y; see `yLower`. (name of a column in data)"
+        },
         "stack": {
           "enum": [
             "none",
@@ -835,6 +1086,13 @@
           ],
           "default": "none",
           "description": "`stack` adds series on top of each other; `normalize` shows each series as a share of 100%."
+        },
+        "yScale": {
+          "enum": [
+            "linear",
+            "log"
+          ],
+          "description": "Only `linear`. An area starts at zero, which a log axis cannot show, so `log` is refused (`log_scale_refused`). Use a line or a scatter for values spanning several orders of magnitude."
         }
       }
     },
@@ -951,11 +1209,31 @@
                   "n",
                   "by"
                 ]
+              },
+              "bin": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "window": {
+                "type": "object",
+                "required": [
+                  "op",
+                  "field",
+                  "as"
+                ]
+              },
+              "fold": {
+                "type": "object",
+                "required": [
+                  "fields"
+                ]
               }
             },
             "additionalProperties": false
           },
-          "description": "Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+          "description": "Data steps run before the chart reads its columns, in order (at most 10): filter, timeUnit, aggregate, sort, top, bin (round bins: start and end columns), window (running sum, mean, count, rank, pctChange, lag, lead, movingMean, per group, in a sort order) and fold (wide columns to key/value rows). No expressions. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
         },
         "patterns": {
           "type": "boolean",
@@ -974,47 +1252,88 @@
         "annotations": {
           "type": "array",
           "maxItems": 50,
-          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band.",
+          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date).",
           "items": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": [
-              "axis",
-              "value"
-            ],
-            "properties": {
-              "axis": {
-                "enum": [
+            "oneOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "axis",
+                  "value"
+                ],
+                "properties": {
+                  "axis": {
+                    "enum": [
+                      "x",
+                      "y"
+                    ]
+                  },
+                  "value": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "to": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "label": {
+                    "type": "string",
+                    "maxLength": 80
+                  },
+                  "tone": {
+                    "enum": [
+                      "neutral",
+                      "positive",
+                      "negative",
+                      "warning",
+                      "info"
+                    ]
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
                   "x",
-                  "y"
-                ]
-              },
-              "value": {
-                "type": [
-                  "number",
-                  "string"
-                ]
-              },
-              "to": {
-                "type": [
-                  "number",
-                  "string"
-                ]
-              },
-              "label": {
-                "type": "string",
-                "maxLength": 80
-              },
-              "tone": {
-                "enum": [
-                  "neutral",
-                  "positive",
-                  "negative",
-                  "warning",
-                  "info"
-                ]
+                  "y",
+                  "label"
+                ],
+                "properties": {
+                  "x": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "y": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "label": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 80
+                  },
+                  "tone": {
+                    "enum": [
+                      "neutral",
+                      "positive",
+                      "negative",
+                      "warning",
+                      "info"
+                    ]
+                  }
+                }
               }
-            }
+            ]
           }
         },
         "facet": {
@@ -1060,10 +1379,47 @@
         "trend": {
           "enum": [
             "none",
-            "linear"
+            "linear",
+            "loess"
           ],
           "default": "none",
-          "description": "Draw a least-squares line per series."
+          "description": "Draw a fit per series: `linear` is a least-squares line, `loess` a local regression curve (tricube weights, local linear fits, evaluated on 50 points; see `trendBandwidth`). On a log axis the fit is made in log space."
+        },
+        "trendBandwidth": {
+          "type": "number",
+          "minimum": 0.05,
+          "maximum": 1,
+          "description": "Default 0.3. For `trend: \"loess\"`: the share of the points each local fit uses. Smaller follows the data more closely, larger is smoother."
+        },
+        "yScale": {
+          "enum": [
+            "linear",
+            "log"
+          ],
+          "description": "Default linear. `log` draws the vertical axis in powers of ten (incomes, populations, response times); values at or below zero cannot be placed and are left out with a `log_nonpositive` warning."
+        },
+        "xScale": {
+          "enum": [
+            "linear",
+            "log"
+          ],
+          "description": "Default linear. `log` draws the horizontal axis in powers of ten (sizes, counts); values at or below zero cannot be placed and are left out with a `log_nonpositive` warning. Only for a numeric x; dates are refused."
+        },
+        "yLower": {
+          "type": "string",
+          "description": "Numeric column with the lower end of an interval on y (a confidence or min-max range), drawn as a vertical error bar with caps through each point. Needs `yUpper` too; the tooltip shows the interval and the axis includes it. (name of a column in data)"
+        },
+        "yUpper": {
+          "type": "string",
+          "description": "Numeric column with the upper end of the interval on y; see `yLower`. (name of a column in data)"
+        },
+        "xLower": {
+          "type": "string",
+          "description": "Numeric column with the lower end of an interval on x (a confidence or min-max range), drawn as a horizontal error bar with caps through each point. Needs `xUpper` too; the tooltip shows the interval and the axis includes it. (name of a column in data)"
+        },
+        "xUpper": {
+          "type": "string",
+          "description": "Numeric column with the upper end of the interval on x; see `xLower`. (name of a column in data)"
         },
         "density": {
           "enum": [
@@ -1223,11 +1579,31 @@
                   "n",
                   "by"
                 ]
+              },
+              "bin": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "window": {
+                "type": "object",
+                "required": [
+                  "op",
+                  "field",
+                  "as"
+                ]
+              },
+              "fold": {
+                "type": "object",
+                "required": [
+                  "fields"
+                ]
               }
             },
             "additionalProperties": false
           },
-          "description": "Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+          "description": "Data steps run before the chart reads its columns, in order (at most 10): filter, timeUnit, aggregate, sort, top, bin (round bins: start and end columns), window (running sum, mean, count, rank, pctChange, lag, lead, movingMean, per group, in a sort order) and fold (wide columns to key/value rows). No expressions. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
         },
         "patterns": {
           "type": "boolean",
@@ -1388,11 +1764,31 @@
                   "n",
                   "by"
                 ]
+              },
+              "bin": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "window": {
+                "type": "object",
+                "required": [
+                  "op",
+                  "field",
+                  "as"
+                ]
+              },
+              "fold": {
+                "type": "object",
+                "required": [
+                  "fields"
+                ]
               }
             },
             "additionalProperties": false
           },
-          "description": "Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+          "description": "Data steps run before the chart reads its columns, in order (at most 10): filter, timeUnit, aggregate, sort, top, bin (round bins: start and end columns), window (running sum, mean, count, rank, pctChange, lag, lead, movingMean, per group, in a sort order) and fold (wide columns to key/value rows). No expressions. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
         },
         "patterns": {
           "type": "boolean",
@@ -1552,11 +1948,31 @@
                   "n",
                   "by"
                 ]
+              },
+              "bin": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "window": {
+                "type": "object",
+                "required": [
+                  "op",
+                  "field",
+                  "as"
+                ]
+              },
+              "fold": {
+                "type": "object",
+                "required": [
+                  "fields"
+                ]
               }
             },
             "additionalProperties": false
           },
-          "description": "Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+          "description": "Data steps run before the chart reads its columns, in order (at most 10): filter, timeUnit, aggregate, sort, top, bin (round bins: start and end columns), window (running sum, mean, count, rank, pctChange, lag, lead, movingMean, per group, in a sort order) and fold (wide columns to key/value rows). No expressions. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
         },
         "patterns": {
           "type": "boolean",
@@ -1575,47 +1991,88 @@
         "annotations": {
           "type": "array",
           "maxItems": 50,
-          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band.",
+          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date).",
           "items": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": [
-              "axis",
-              "value"
-            ],
-            "properties": {
-              "axis": {
-                "enum": [
+            "oneOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "axis",
+                  "value"
+                ],
+                "properties": {
+                  "axis": {
+                    "enum": [
+                      "x",
+                      "y"
+                    ]
+                  },
+                  "value": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "to": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "label": {
+                    "type": "string",
+                    "maxLength": 80
+                  },
+                  "tone": {
+                    "enum": [
+                      "neutral",
+                      "positive",
+                      "negative",
+                      "warning",
+                      "info"
+                    ]
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
                   "x",
-                  "y"
-                ]
-              },
-              "value": {
-                "type": [
-                  "number",
-                  "string"
-                ]
-              },
-              "to": {
-                "type": [
-                  "number",
-                  "string"
-                ]
-              },
-              "label": {
-                "type": "string",
-                "maxLength": 80
-              },
-              "tone": {
-                "enum": [
-                  "neutral",
-                  "positive",
-                  "negative",
-                  "warning",
-                  "info"
-                ]
+                  "y",
+                  "label"
+                ],
+                "properties": {
+                  "x": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "y": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "label": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 80
+                  },
+                  "tone": {
+                    "enum": [
+                      "neutral",
+                      "positive",
+                      "negative",
+                      "warning",
+                      "info"
+                    ]
+                  }
+                }
               }
-            }
+            ]
           }
         },
         "facet": {
@@ -1678,6 +2135,13 @@
           "type": "boolean",
           "default": false,
           "description": "Draw a dashed line at the mean."
+        },
+        "yScale": {
+          "enum": [
+            "linear",
+            "log"
+          ],
+          "description": "Only `linear`. A bin's height (its count) starts at zero, which a log axis cannot show, so `log` is refused (`log_scale_refused`). Use a line or a scatter for values spanning several orders of magnitude."
         }
       }
     },
@@ -1793,11 +2257,31 @@
                   "n",
                   "by"
                 ]
+              },
+              "bin": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "window": {
+                "type": "object",
+                "required": [
+                  "op",
+                  "field",
+                  "as"
+                ]
+              },
+              "fold": {
+                "type": "object",
+                "required": [
+                  "fields"
+                ]
               }
             },
             "additionalProperties": false
           },
-          "description": "Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+          "description": "Data steps run before the chart reads its columns, in order (at most 10): filter, timeUnit, aggregate, sort, top, bin (round bins: start and end columns), window (running sum, mean, count, rank, pctChange, lag, lead, movingMean, per group, in a sort order) and fold (wide columns to key/value rows). No expressions. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
         },
         "patterns": {
           "type": "boolean",
@@ -1816,47 +2300,88 @@
         "annotations": {
           "type": "array",
           "maxItems": 50,
-          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band.",
+          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date).",
           "items": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": [
-              "axis",
-              "value"
-            ],
-            "properties": {
-              "axis": {
-                "enum": [
+            "oneOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "axis",
+                  "value"
+                ],
+                "properties": {
+                  "axis": {
+                    "enum": [
+                      "x",
+                      "y"
+                    ]
+                  },
+                  "value": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "to": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "label": {
+                    "type": "string",
+                    "maxLength": 80
+                  },
+                  "tone": {
+                    "enum": [
+                      "neutral",
+                      "positive",
+                      "negative",
+                      "warning",
+                      "info"
+                    ]
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
                   "x",
-                  "y"
-                ]
-              },
-              "value": {
-                "type": [
-                  "number",
-                  "string"
-                ]
-              },
-              "to": {
-                "type": [
-                  "number",
-                  "string"
-                ]
-              },
-              "label": {
-                "type": "string",
-                "maxLength": 80
-              },
-              "tone": {
-                "enum": [
-                  "neutral",
-                  "positive",
-                  "negative",
-                  "warning",
-                  "info"
-                ]
+                  "y",
+                  "label"
+                ],
+                "properties": {
+                  "x": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "y": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "label": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 80
+                  },
+                  "tone": {
+                    "enum": [
+                      "neutral",
+                      "positive",
+                      "negative",
+                      "warning",
+                      "info"
+                    ]
+                  }
+                }
               }
-            }
+            ]
           }
         },
         "facet": {
@@ -2035,11 +2560,31 @@
                   "n",
                   "by"
                 ]
+              },
+              "bin": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "window": {
+                "type": "object",
+                "required": [
+                  "op",
+                  "field",
+                  "as"
+                ]
+              },
+              "fold": {
+                "type": "object",
+                "required": [
+                  "fields"
+                ]
               }
             },
             "additionalProperties": false
           },
-          "description": "Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+          "description": "Data steps run before the chart reads its columns, in order (at most 10): filter, timeUnit, aggregate, sort, top, bin (round bins: start and end columns), window (running sum, mean, count, rank, pctChange, lag, lead, movingMean, per group, in a sort order) and fold (wide columns to key/value rows). No expressions. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
         },
         "patterns": {
           "type": "boolean",
@@ -2058,47 +2603,88 @@
         "annotations": {
           "type": "array",
           "maxItems": 50,
-          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band.",
+          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date).",
           "items": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": [
-              "axis",
-              "value"
-            ],
-            "properties": {
-              "axis": {
-                "enum": [
+            "oneOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "axis",
+                  "value"
+                ],
+                "properties": {
+                  "axis": {
+                    "enum": [
+                      "x",
+                      "y"
+                    ]
+                  },
+                  "value": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "to": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "label": {
+                    "type": "string",
+                    "maxLength": 80
+                  },
+                  "tone": {
+                    "enum": [
+                      "neutral",
+                      "positive",
+                      "negative",
+                      "warning",
+                      "info"
+                    ]
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
                   "x",
-                  "y"
-                ]
-              },
-              "value": {
-                "type": [
-                  "number",
-                  "string"
-                ]
-              },
-              "to": {
-                "type": [
-                  "number",
-                  "string"
-                ]
-              },
-              "label": {
-                "type": "string",
-                "maxLength": 80
-              },
-              "tone": {
-                "enum": [
-                  "neutral",
-                  "positive",
-                  "negative",
-                  "warning",
-                  "info"
-                ]
+                  "y",
+                  "label"
+                ],
+                "properties": {
+                  "x": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "y": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "label": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 80
+                  },
+                  "tone": {
+                    "enum": [
+                      "neutral",
+                      "positive",
+                      "negative",
+                      "warning",
+                      "info"
+                    ]
+                  }
+                }
               }
-            }
+            ]
           }
         },
         "facet": {
@@ -2289,11 +2875,31 @@
                   "n",
                   "by"
                 ]
+              },
+              "bin": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "window": {
+                "type": "object",
+                "required": [
+                  "op",
+                  "field",
+                  "as"
+                ]
+              },
+              "fold": {
+                "type": "object",
+                "required": [
+                  "fields"
+                ]
               }
             },
             "additionalProperties": false
           },
-          "description": "Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+          "description": "Data steps run before the chart reads its columns, in order (at most 10): filter, timeUnit, aggregate, sort, top, bin (round bins: start and end columns), window (running sum, mean, count, rank, pctChange, lag, lead, movingMean, per group, in a sort order) and fold (wide columns to key/value rows). No expressions. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
         },
         "patterns": {
           "type": "boolean",
@@ -2454,11 +3060,31 @@
                   "n",
                   "by"
                 ]
+              },
+              "bin": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "window": {
+                "type": "object",
+                "required": [
+                  "op",
+                  "field",
+                  "as"
+                ]
+              },
+              "fold": {
+                "type": "object",
+                "required": [
+                  "fields"
+                ]
               }
             },
             "additionalProperties": false
           },
-          "description": "Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+          "description": "Data steps run before the chart reads its columns, in order (at most 10): filter, timeUnit, aggregate, sort, top, bin (round bins: start and end columns), window (running sum, mean, count, rank, pctChange, lag, lead, movingMean, per group, in a sort order) and fold (wide columns to key/value rows). No expressions. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
         },
         "patterns": {
           "type": "boolean",
@@ -2608,11 +3234,31 @@
                   "n",
                   "by"
                 ]
+              },
+              "bin": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "window": {
+                "type": "object",
+                "required": [
+                  "op",
+                  "field",
+                  "as"
+                ]
+              },
+              "fold": {
+                "type": "object",
+                "required": [
+                  "fields"
+                ]
               }
             },
             "additionalProperties": false
           },
-          "description": "Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+          "description": "Data steps run before the chart reads its columns, in order (at most 10): filter, timeUnit, aggregate, sort, top, bin (round bins: start and end columns), window (running sum, mean, count, rank, pctChange, lag, lead, movingMean, per group, in a sort order) and fold (wide columns to key/value rows). No expressions. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
         },
         "patterns": {
           "type": "boolean",
@@ -2631,47 +3277,88 @@
         "annotations": {
           "type": "array",
           "maxItems": 50,
-          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band.",
+          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date).",
           "items": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": [
-              "axis",
-              "value"
-            ],
-            "properties": {
-              "axis": {
-                "enum": [
+            "oneOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "axis",
+                  "value"
+                ],
+                "properties": {
+                  "axis": {
+                    "enum": [
+                      "x",
+                      "y"
+                    ]
+                  },
+                  "value": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "to": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "label": {
+                    "type": "string",
+                    "maxLength": 80
+                  },
+                  "tone": {
+                    "enum": [
+                      "neutral",
+                      "positive",
+                      "negative",
+                      "warning",
+                      "info"
+                    ]
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
                   "x",
-                  "y"
-                ]
-              },
-              "value": {
-                "type": [
-                  "number",
-                  "string"
-                ]
-              },
-              "to": {
-                "type": [
-                  "number",
-                  "string"
-                ]
-              },
-              "label": {
-                "type": "string",
-                "maxLength": 80
-              },
-              "tone": {
-                "enum": [
-                  "neutral",
-                  "positive",
-                  "negative",
-                  "warning",
-                  "info"
-                ]
+                  "y",
+                  "label"
+                ],
+                "properties": {
+                  "x": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "y": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "label": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 80
+                  },
+                  "tone": {
+                    "enum": [
+                      "neutral",
+                      "positive",
+                      "negative",
+                      "warning",
+                      "info"
+                    ]
+                  }
+                }
               }
-            }
+            ]
           }
         },
         "facet": {
@@ -2871,11 +3558,31 @@
                   "n",
                   "by"
                 ]
+              },
+              "bin": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "window": {
+                "type": "object",
+                "required": [
+                  "op",
+                  "field",
+                  "as"
+                ]
+              },
+              "fold": {
+                "type": "object",
+                "required": [
+                  "fields"
+                ]
               }
             },
             "additionalProperties": false
           },
-          "description": "Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+          "description": "Data steps run before the chart reads its columns, in order (at most 10): filter, timeUnit, aggregate, sort, top, bin (round bins: start and end columns), window (running sum, mean, count, rank, pctChange, lag, lead, movingMean, per group, in a sort order) and fold (wide columns to key/value rows). No expressions. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
         },
         "patterns": {
           "type": "boolean",
@@ -2894,47 +3601,88 @@
         "annotations": {
           "type": "array",
           "maxItems": 50,
-          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band.",
+          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date).",
           "items": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": [
-              "axis",
-              "value"
-            ],
-            "properties": {
-              "axis": {
-                "enum": [
+            "oneOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "axis",
+                  "value"
+                ],
+                "properties": {
+                  "axis": {
+                    "enum": [
+                      "x",
+                      "y"
+                    ]
+                  },
+                  "value": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "to": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "label": {
+                    "type": "string",
+                    "maxLength": 80
+                  },
+                  "tone": {
+                    "enum": [
+                      "neutral",
+                      "positive",
+                      "negative",
+                      "warning",
+                      "info"
+                    ]
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
                   "x",
-                  "y"
-                ]
-              },
-              "value": {
-                "type": [
-                  "number",
-                  "string"
-                ]
-              },
-              "to": {
-                "type": [
-                  "number",
-                  "string"
-                ]
-              },
-              "label": {
-                "type": "string",
-                "maxLength": 80
-              },
-              "tone": {
-                "enum": [
-                  "neutral",
-                  "positive",
-                  "negative",
-                  "warning",
-                  "info"
-                ]
+                  "y",
+                  "label"
+                ],
+                "properties": {
+                  "x": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "y": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "label": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 80
+                  },
+                  "tone": {
+                    "enum": [
+                      "neutral",
+                      "positive",
+                      "negative",
+                      "warning",
+                      "info"
+                    ]
+                  }
+                }
               }
-            }
+            ]
           }
         },
         "facet": {
@@ -3127,11 +3875,31 @@
                   "n",
                   "by"
                 ]
+              },
+              "bin": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "window": {
+                "type": "object",
+                "required": [
+                  "op",
+                  "field",
+                  "as"
+                ]
+              },
+              "fold": {
+                "type": "object",
+                "required": [
+                  "fields"
+                ]
               }
             },
             "additionalProperties": false
           },
-          "description": "Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+          "description": "Data steps run before the chart reads its columns, in order (at most 10): filter, timeUnit, aggregate, sort, top, bin (round bins: start and end columns), window (running sum, mean, count, rank, pctChange, lag, lead, movingMean, per group, in a sort order) and fold (wide columns to key/value rows). No expressions. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
         },
         "patterns": {
           "type": "boolean",
@@ -3150,47 +3918,88 @@
         "annotations": {
           "type": "array",
           "maxItems": 50,
-          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band.",
+          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date).",
           "items": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": [
-              "axis",
-              "value"
-            ],
-            "properties": {
-              "axis": {
-                "enum": [
+            "oneOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "axis",
+                  "value"
+                ],
+                "properties": {
+                  "axis": {
+                    "enum": [
+                      "x",
+                      "y"
+                    ]
+                  },
+                  "value": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "to": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "label": {
+                    "type": "string",
+                    "maxLength": 80
+                  },
+                  "tone": {
+                    "enum": [
+                      "neutral",
+                      "positive",
+                      "negative",
+                      "warning",
+                      "info"
+                    ]
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
                   "x",
-                  "y"
-                ]
-              },
-              "value": {
-                "type": [
-                  "number",
-                  "string"
-                ]
-              },
-              "to": {
-                "type": [
-                  "number",
-                  "string"
-                ]
-              },
-              "label": {
-                "type": "string",
-                "maxLength": 80
-              },
-              "tone": {
-                "enum": [
-                  "neutral",
-                  "positive",
-                  "negative",
-                  "warning",
-                  "info"
-                ]
+                  "y",
+                  "label"
+                ],
+                "properties": {
+                  "x": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "y": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "label": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 80
+                  },
+                  "tone": {
+                    "enum": [
+                      "neutral",
+                      "positive",
+                      "negative",
+                      "warning",
+                      "info"
+                    ]
+                  }
+                }
               }
-            }
+            ]
           }
         },
         "facet": {
@@ -3376,11 +4185,31 @@
                   "n",
                   "by"
                 ]
+              },
+              "bin": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "window": {
+                "type": "object",
+                "required": [
+                  "op",
+                  "field",
+                  "as"
+                ]
+              },
+              "fold": {
+                "type": "object",
+                "required": [
+                  "fields"
+                ]
               }
             },
             "additionalProperties": false
           },
-          "description": "Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+          "description": "Data steps run before the chart reads its columns, in order (at most 10): filter, timeUnit, aggregate, sort, top, bin (round bins: start and end columns), window (running sum, mean, count, rank, pctChange, lag, lead, movingMean, per group, in a sort order) and fold (wide columns to key/value rows). No expressions. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
         },
         "patterns": {
           "type": "boolean",
@@ -3541,11 +4370,31 @@
                   "n",
                   "by"
                 ]
+              },
+              "bin": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "window": {
+                "type": "object",
+                "required": [
+                  "op",
+                  "field",
+                  "as"
+                ]
+              },
+              "fold": {
+                "type": "object",
+                "required": [
+                  "fields"
+                ]
               }
             },
             "additionalProperties": false
           },
-          "description": "Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+          "description": "Data steps run before the chart reads its columns, in order (at most 10): filter, timeUnit, aggregate, sort, top, bin (round bins: start and end columns), window (running sum, mean, count, rank, pctChange, lag, lead, movingMean, per group, in a sort order) and fold (wide columns to key/value rows). No expressions. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
         },
         "patterns": {
           "type": "boolean",
@@ -3683,11 +4532,31 @@
                   "n",
                   "by"
                 ]
+              },
+              "bin": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "window": {
+                "type": "object",
+                "required": [
+                  "op",
+                  "field",
+                  "as"
+                ]
+              },
+              "fold": {
+                "type": "object",
+                "required": [
+                  "fields"
+                ]
               }
             },
             "additionalProperties": false
           },
-          "description": "Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+          "description": "Data steps run before the chart reads its columns, in order (at most 10): filter, timeUnit, aggregate, sort, top, bin (round bins: start and end columns), window (running sum, mean, count, rank, pctChange, lag, lead, movingMean, per group, in a sort order) and fold (wide columns to key/value rows). No expressions. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
         },
         "patterns": {
           "type": "boolean",
@@ -3834,11 +4703,31 @@
                   "n",
                   "by"
                 ]
+              },
+              "bin": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "window": {
+                "type": "object",
+                "required": [
+                  "op",
+                  "field",
+                  "as"
+                ]
+              },
+              "fold": {
+                "type": "object",
+                "required": [
+                  "fields"
+                ]
               }
             },
             "additionalProperties": false
           },
-          "description": "Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+          "description": "Data steps run before the chart reads its columns, in order (at most 10): filter, timeUnit, aggregate, sort, top, bin (round bins: start and end columns), window (running sum, mean, count, rank, pctChange, lag, lead, movingMean, per group, in a sort order) and fold (wide columns to key/value rows). No expressions. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
         },
         "patterns": {
           "type": "boolean",
@@ -3970,11 +4859,31 @@
                   "n",
                   "by"
                 ]
+              },
+              "bin": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "window": {
+                "type": "object",
+                "required": [
+                  "op",
+                  "field",
+                  "as"
+                ]
+              },
+              "fold": {
+                "type": "object",
+                "required": [
+                  "fields"
+                ]
               }
             },
             "additionalProperties": false
           },
-          "description": "Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+          "description": "Data steps run before the chart reads its columns, in order (at most 10): filter, timeUnit, aggregate, sort, top, bin (round bins: start and end columns), window (running sum, mean, count, rank, pctChange, lag, lead, movingMean, per group, in a sort order) and fold (wide columns to key/value rows). No expressions. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
         },
         "patterns": {
           "type": "boolean",
@@ -4108,11 +5017,31 @@
                   "n",
                   "by"
                 ]
+              },
+              "bin": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "window": {
+                "type": "object",
+                "required": [
+                  "op",
+                  "field",
+                  "as"
+                ]
+              },
+              "fold": {
+                "type": "object",
+                "required": [
+                  "fields"
+                ]
               }
             },
             "additionalProperties": false
           },
-          "description": "Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+          "description": "Data steps run before the chart reads its columns, in order (at most 10): filter, timeUnit, aggregate, sort, top, bin (round bins: start and end columns), window (running sum, mean, count, rank, pctChange, lag, lead, movingMean, per group, in a sort order) and fold (wide columns to key/value rows). No expressions. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
         },
         "patterns": {
           "type": "boolean",
@@ -4256,11 +5185,31 @@
                   "n",
                   "by"
                 ]
+              },
+              "bin": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "window": {
+                "type": "object",
+                "required": [
+                  "op",
+                  "field",
+                  "as"
+                ]
+              },
+              "fold": {
+                "type": "object",
+                "required": [
+                  "fields"
+                ]
               }
             },
             "additionalProperties": false
           },
-          "description": "Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+          "description": "Data steps run before the chart reads its columns, in order (at most 10): filter, timeUnit, aggregate, sort, top, bin (round bins: start and end columns), window (running sum, mean, count, rank, pctChange, lag, lead, movingMean, per group, in a sort order) and fold (wide columns to key/value rows). No expressions. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
         },
         "patterns": {
           "type": "boolean",
@@ -4498,11 +5447,31 @@
                   "n",
                   "by"
                 ]
+              },
+              "bin": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "window": {
+                "type": "object",
+                "required": [
+                  "op",
+                  "field",
+                  "as"
+                ]
+              },
+              "fold": {
+                "type": "object",
+                "required": [
+                  "fields"
+                ]
               }
             },
             "additionalProperties": false
           },
-          "description": "Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+          "description": "Data steps run before the chart reads its columns, in order (at most 10): filter, timeUnit, aggregate, sort, top, bin (round bins: start and end columns), window (running sum, mean, count, rank, pctChange, lag, lead, movingMean, per group, in a sort order) and fold (wide columns to key/value rows). No expressions. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
         },
         "patterns": {
           "type": "boolean",
@@ -4731,11 +5700,31 @@
                   "n",
                   "by"
                 ]
+              },
+              "bin": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "window": {
+                "type": "object",
+                "required": [
+                  "op",
+                  "field",
+                  "as"
+                ]
+              },
+              "fold": {
+                "type": "object",
+                "required": [
+                  "fields"
+                ]
               }
             },
             "additionalProperties": false
           },
-          "description": "Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+          "description": "Data steps run before the chart reads its columns, in order (at most 10): filter, timeUnit, aggregate, sort, top, bin (round bins: start and end columns), window (running sum, mean, count, rank, pctChange, lag, lead, movingMean, per group, in a sort order) and fold (wide columns to key/value rows). No expressions. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
         },
         "patterns": {
           "type": "boolean",
@@ -4963,11 +5952,31 @@
                   "n",
                   "by"
                 ]
+              },
+              "bin": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "window": {
+                "type": "object",
+                "required": [
+                  "op",
+                  "field",
+                  "as"
+                ]
+              },
+              "fold": {
+                "type": "object",
+                "required": [
+                  "fields"
+                ]
               }
             },
             "additionalProperties": false
           },
-          "description": "Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+          "description": "Data steps run before the chart reads its columns, in order (at most 10): filter, timeUnit, aggregate, sort, top, bin (round bins: start and end columns), window (running sum, mean, count, rank, pctChange, lag, lead, movingMean, per group, in a sort order) and fold (wide columns to key/value rows). No expressions. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
         },
         "patterns": {
           "type": "boolean",

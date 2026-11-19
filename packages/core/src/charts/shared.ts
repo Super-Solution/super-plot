@@ -75,3 +75,11 @@ export function seqLegend(c: ChartCtx, x: number, y0: number, h: number, lo: num
   c.marks.push(c.text(x + 18, y0 + 4, c.format(hi), { role: 'legend', baseline: 'middle', size: c.size - 1 }))
   c.marks.push(c.text(x + 18, y0 + h - 4, c.format(lo), { role: 'legend', baseline: 'middle', size: c.size - 1 }))
 }
+
+/** The labelled point annotations, as one sentence for the description ("" when there are none). */
+export function pointNotes(spec: Record<string, any>): string {
+  const pts = ((spec.annotations ?? []) as Record<string, unknown>[]).filter(a => !('axis' in a) && typeof a.label === 'string')
+  if (!pts.length) return ''
+  const list = pts.slice(0, 5).map(a => `"${clip(String(a.label), 40)}" at ${clip(String(a.x), 30)}, ${clip(String(a.y), 30)}`)
+  return ` Marked: ${list.join('; ')}${pts.length > 5 ? ` and ${pts.length - 5} more` : ''}.`
+}

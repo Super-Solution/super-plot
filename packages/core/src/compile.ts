@@ -8,7 +8,7 @@ import { cssVar, resolveTheme, type RenderEnv, type Theme, type ThemeOption } fr
 import { estimateWidth, fit, type Measure } from './util/text.js'
 import { clamp } from './util/num.js'
 import { distinct, xKey } from './data.js'
-import { fmtList } from './charts/shared.js'
+import { fmtList, pointNotes } from './charts/shared.js'
 import type { Camera } from './geo/view.js'
 
 /**
@@ -97,7 +97,7 @@ export function compilePlot(input: unknown, options: RenderOptions = {}): Compil
   if (spec.patterns === true) applyPatterns(marks, series)
 
   const title = typeof spec.title === 'string' && spec.title ? spec.title : def.name
-  let description = typeof spec.description === 'string' && spec.description ? spec.description : def.describe(spec, { locale })
+  let description = typeof spec.description === 'string' && spec.description ? spec.description : def.describe(spec, { locale }) + pointNotes(spec)
   if (spec.facet && !(typeof spec.description === 'string' && spec.description) && panels) description += ` Split into ${panels.length} panels by ${spec.facet}: ${fmtList(panels.map(p => p.key))}.`
   let scene: Scene = {
     width,

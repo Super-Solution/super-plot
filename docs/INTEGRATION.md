@@ -27,6 +27,41 @@ daily.setZoom({ x: ['2026-02-01', '2026-03-01'] }); daily.getBrush(); daily.setB
 
 A selection is `{ x?: { field, range } | { field, oneOf }, y?: ..., filters }`: plain JSON an agent can read, store or send back as a transform. Viewers drag to brush (Shift-drag pans when zoom is on too), Ctrl/⌘-scroll or pinch to zoom, double-click to reset; from the keyboard + / - / 0, Shift+arrows, and `[` / `]` on a focused mark. `<super-plot>` dispatches the same as `plot-zoom`, `plot-brush`, `plot-hover`, `plot-render`.
 
+## Log scales, intervals, point notes, gaps, trends, lollipops
+
+All of these are spec fields (see [SPEC.md](SPEC.md)); validation explains every refusal with a `code`, a `path` and a `hint`.
+
+```ts
+// Log axes: ticks at powers of ten (with 2 and 5 between on short ranges), labels in the value format.
+{ type: 'scatter', x: 'rows', y: 'ms', xScale: 'log', yScale: 'log', trend: 'loess', trendBandwidth: 0.3, data }
+// A band behind each line (long-form `series` works), dropped to zero where a value is missing.
+{ type: 'line', x: 'date', y: 'mean', series: 'region', yLower: 'p5', yUpper: 'p95', gaps: 'zero', data }
+// Error bars on a scatter (`xLower`/`xUpper` too), whiskers on grouped bars, lollipops.
+{ type: 'bar', x: 'team', y: 'score', yLower: 'lo', yUpper: 'hi', mark: 'lollipop', orientation: 'horizontal', sort: 'desc', data }
+// A labelled point next to the existing line and band annotations.
+annotations: [{ x: '2026-03-01', y: 120, label: 'Launch' }, { axis: 'y', value: 100, label: 'Target' }]
+```
+
+- `yScale: 'log'` works on line and scatter, `xScale: 'log'` on scatter and on a line with a numeric x. Values at or below zero are left out with a `log_nonpositive` warning that gives the count (an error when nothing is left). Bars, areas and histograms refuse `log` (`log_scale_refused`): their marks start at zero, which a log axis cannot show. Zoom, pan and brush work in log space; `scene.axes.x.scale === 'log'` tells a custom renderer or binding to do the same, and the brush's `filters` still report data values.
+- `gaps`: `break` (the default, what earlier versions drew), `connect`, `zero` (the tooltip says "missing").
+- Intervals are columns, not computed: compute a confidence interval upstream or in your query. The tooltip, the spoken label and `onSelect`'s `datum` carry both ends.
+- `trend: 'loess'` is a deterministic local regression (`loess(xs, ys, bandwidth, grid)` is exported from core with the exact algorithm in its doc comment); on log axes the fit is made in log space.
+- Point annotations take `x` and `y` in the units of the horizontal and vertical axis (on a horizontal bar chart `x` is the value). They are listed in the description ("Marked: ...").
+
+## Transform steps: bin, window, fold
+
+Next to filter, timeUnit, aggregate, sort and top, `transform` takes three more plain-data steps (no expressions, still at most 10 steps):
+
+```ts
+transform: [
+  { fold: { fields: ['Q1', 'Q2', 'Q3', 'Q4'], as: ['quarter', 'revenue'] } },                          // wide to long
+  { window: { op: 'sum', field: 'revenue', as: 'running', groupBy: ['region'], sortBy: 'quarter' } }, // running total
+  { bin: { field: 'price', maxbins: 10, as: ['from', 'to'] } }                                         // histogram-style bins
+]
+```
+
+Window ops: `sum`, `mean`, `count` (cumulative), `rank` (1, 2, 2, 4), `pctChange`, `lag`, `lead`, `movingMean` (`frame` rows, default 3). The table of steps with their keys is generated in [SPEC.md](SPEC.md#transform-steps); the Go and Python ports will be checked against the new `transformCases` in `conformance/plot.v1.json`.
+
 ## Live data
 
 `plot.appendRows(rows, { max: 500 })` adds rows to the end, drops the oldest past `max`, and draws once per frame however often it is called. Zoom, brush and hidden series stay; the spec object you passed is not changed.
