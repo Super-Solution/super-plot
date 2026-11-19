@@ -71,6 +71,50 @@ describe('features page in a real browser', () => {
     await page.close()
   })
 
+  it('transition: bars move between data states on SVG and canvas, end as drawn directly, and snap under reduced motion', async () => {
+    const page = await open()
+    // The bar heights in the SVG chart, by team (bars with rounded corners are paths: their bounding boxes).
+    const heights = (): Promise<Record<string, number>> => page.evaluate(() => Object.fromEntries([...document.querySelectorAll<SVGGraphicsElement>('#trans .sp-data')].map(e => [e.getAttribute('aria-label')!.split(',')[0], Math.round(e.getBBox().height * 10) / 10])))
+    const before = await heights()
+    const sample: Record<string, number>[] = []
+    await page.click('#trans-next')
+    // The labels are the new ones at once; the geometry goes through in-between values.
+    const after = await page.evaluate(() => (window as unknown as W).plots.trans.getScene().marks.filter(m => m.role === 'data').length)
+    for (let i = 0; i < 4; i++) { sample.push(await heights()); await page.waitForTimeout(60) }
+    await page.waitForTimeout(400)
+    const end = await heights()
+    expect(Object.keys(end).length).toBe(after)
+    const shared = Object.keys(before).filter(k => k in end && before[k] !== end[k])
+    expect(shared.length).toBeGreaterThan(0)
+    const k = shared[0]
+    expect(sample.some(s => s[k] !== undefined && Math.abs(s[k] - before[k]) > 0.5 && Math.abs(s[k] - end[k]) > 0.5)).toBe(true)
+    expect(await page.locator('#trans g.sp-ghost').count()).toBe(0)
+    // The end state is exactly what a fresh chart of the same spec draws.
+    const same = await page.evaluate(() => {
+      const p = (window as unknown as W & { plots: Record<string, { toSvg(): string; getScene(): unknown }> }).plots.trans
+      const host = document.createElement('div')
+      host.style.width = `${document.getElementById('trans')!.clientWidth}px`
+      host.style.height = `${document.getElementById('trans')!.clientHeight}px`
+      document.body.appendChild(host)
+      const Ctor = (p as unknown as { constructor: new (h: HTMLElement, s: unknown, o: object) => { toSvg(): string; dispose(): void } }).constructor
+      const q = new Ctor(host, (p as unknown as { spec: unknown }).spec, { animate: false })
+      const ok = q.toSvg() === p.toSvg() && host.querySelector('svg')!.innerHTML.replace(/sp\d+-/g, '') === document.querySelector('#trans svg')!.innerHTML.replace(/sp\d+-/g, '')
+      q.dispose()
+      host.remove()
+      return ok
+    })
+    expect(same).toBe(true)
+    expect(await page.evaluate(() => (window as unknown as W).plots.transCv.getRenderer())).toBe('canvas')
+    // Reduced motion: the next update is drawn at once.
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await page.click('#trans-next')
+    const now = await heights()
+    await page.waitForTimeout(400)
+    expect(await heights()).toEqual(now)
+    expect(errors).toEqual([])
+    await page.close()
+  })
+
   it('live data keeps appending without errors; the data table is in the page', async () => {
     const page = await open()
     const n = (): Promise<number> => page.evaluate(() => (window as unknown as W).plots.live.getScene().marks.length)

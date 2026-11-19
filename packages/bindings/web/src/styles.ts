@@ -26,6 +26,7 @@ export const CSS = `
 .sp-m:focus{outline:none}
 .sp-m:focus-visible{outline:2px solid var(--sp-info,#2962FF);outline-offset:2px}
 .sp-data{transition:opacity .15s ease}
+.sp-moving .sp-data{transition:none}
 .sp-dimmed{opacity:.28!important}
 .sp-legend[data-lk],.sp-m[data-lk]{cursor:pointer}
 .sp-data[tabindex],.sp-hit{cursor:default}

@@ -246,6 +246,21 @@ export class CanvasLayer {
   }
 
   /**
+   * Repaint the chart from an in-between scene (a transition frame). Hit testing, keyboard order, the legend
+   * buttons and the hover overlay stay on the scene given to `draw`, so they are right at once. Not used with
+   * the WebGL layer (transitions skip to the end there).
+   */
+  paintFrame(frame: Scene): void {
+    if (!this.scene || (this.gl && !this.gl.isLost)) return
+    const ctx = this.ctx
+    ctx.setTransform(1, 0, 0, 1, 0, 0)
+    ctx.clearRect(0, 0, this.base.width, this.base.height)
+    ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0)
+    const P = this.base.ownerDocument.defaultView?.Path2D as unknown as Path2DCtor | undefined
+    drawScene(ctx as unknown as Canvas2D, frame, { font: this.font, resolve: this.resolve, Path2D: P, pattern: i => this.patternFor(i, frame), dots: run => this.stamp(ctx, run) })
+  }
+
+  /**
    * Move a map's camera on the GPU without recompiling. Returns false when there is no WebGL map (the caller
    * recompiles instead).
    */

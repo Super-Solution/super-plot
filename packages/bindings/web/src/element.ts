@@ -17,8 +17,8 @@ type EventKey = (typeof EVENTS)[number]
  * Vue, Svelte and Angular do with a property binding), and `locale`, `timeZone` and `strings` (the UI-string
  * overrides, an object). Attributes: `spec`, `theme`, `locale`, `time-zone` (an IANA name), `strings` (JSON),
  * `renderer` (auto | svg | canvas | webgl), `toolbar` (present for the default buttons, or a comma list such as
- * `"png,csv,sound"`; `"false"` for none), `sync` (a group key), and the flags `navigator` and `drill` (present
- * for true, `"false"` for false). Attributes win over the properties, and those over the same key in `options`.
+ * `"png,csv,sound"`; `"false"` for none), `sync` (a group key), the flags `navigator` and `drill` (present
+ * for true, `"false"` for false), and `transition` (present for true, a number of ms, or `"false"`). Attributes win over the properties, and those over the same key in `options`.
  * Events (bubbling CustomEvents): `plot-select` (detail: SelectEvent), `plot-issues` (detail: Issue[]),
  * `plot-hover` (SelectEvent or null), `plot-render` (RenderEvent), `plot-zoom` (ZoomRange or null),
  * `plot-brush` (BrushSelection or null), `plot-drill` (the focus path, string[]) and, for maps, `plot-camera`
@@ -30,7 +30,7 @@ export function defineSuperPlot(name = 'super-plot'): CustomElementConstructor {
   const existing = customElements.get(name)
   if (existing) return existing
   class SuperPlotElement extends HTMLElement {
-    static observedAttributes = ['spec', 'theme', 'locale', 'time-zone', 'strings', 'renderer', 'toolbar', 'sync', 'navigator', 'drill']
+    static observedAttributes = ['spec', 'theme', 'locale', 'time-zone', 'strings', 'renderer', 'toolbar', 'sync', 'navigator', 'drill', 'transition']
     private plot: SuperPlot | null = null
     private _spec: unknown = undefined
     private _options: Partial<SuperPlotOptions> = {}
@@ -170,6 +170,13 @@ function optionOf(attr: string, v: string | null): Partial<SuperPlotOptions> {
     return { toolbar: t.split(',').map(s => s.trim()).filter(Boolean) as ToolbarItem[] }
   }
   if (attr === 'navigator' || attr === 'drill') return v === null ? {} : { [attr]: v.trim() !== 'false' }
+  if (attr === 'transition') {
+    if (v === null) return {}
+    const t = v.trim()
+    if (t === 'false') return { transition: false }
+    const ms = t === '' ? NaN : Number(t)
+    return { transition: Number.isFinite(ms) ? { duration: ms } : true }
+  }
   if (attr === 'strings') {
     const o = v === null ? null : safeParse(v)
     return o && typeof o === 'object' && !Array.isArray(o) ? { strings: o as SuperPlotOptions['strings'] } : {}

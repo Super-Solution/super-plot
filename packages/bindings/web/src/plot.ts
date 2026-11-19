@@ -15,9 +15,11 @@ import { AxisControl, type BrushSelection, type ZoomRange } from './interact.js'
 import { audioContextOf, idleController, playNotes, sonifyNotes, type SonifyController, type SonifyOptions } from './sound.js'
 import { ensureStyles } from './styles.js'
 import { groupOf, joinGroup, leaveGroup, syncConf, syncTarget, xValueOf, type SyncConf, type SyncOptions, type SyncValue } from './sync.js'
+import type * as Trans from './transition.js'
 
 export type { AxisPick, AxisRange, BrushSelection, ZoomRange } from './interact.js'
 export type { SyncOptions } from './sync.js'
+export type { TransitionOptions } from './transition.js'
 export type { Note, SonifyController, SonifyOptions, SonifyPlan } from './sound.js'
 
 /** What a tooltip shows: a title and label/value rows (the mark's `tip`). */
@@ -64,6 +66,16 @@ export interface RenderEvent {
 export interface SuperPlotOptions extends Omit<RenderOptions, 'hidden' | 'measure' | 'view' | 'plugins'> {
   /** Play the entrance animation (skipped under `prefers-reduced-motion`). Default true. */
   animate?: boolean
+  /**
+   * Animate from the old data to the new on `setSpec`, `appendRows` and legend toggles: marks matched by series
+   * and datum move, new ones grow from the baseline or fade in, gone ones fade out; axes, labels and tooltips
+   * show the new state at once. `true` is 300 ms eased; `{ duration, easing }` sets them (at most 1,000 ms;
+   * `easing: 'linear' | 'cubic'`). Never under `prefers-reduced-motion: reduce` or on a hidden page, never on
+   * the first draw, during a zoom, pan, brush or map drag, on WebGL, above 5,000 data marks, or for
+   * `appendRows` calls closer together than the duration: those snap to the new state. Default false, since
+   * motion can hide what changed.
+   */
+  transition?: boolean | Trans.TransitionOptions
   /** Show the hover tooltip unless the spec says `tooltip: false`. Default true. */
   tooltip?: boolean
   /** A mark was clicked or activated with Enter/Space. */
@@ -181,6 +193,7 @@ const glChunk = chunk<typeof Gl>(() => import('./gl/index.js'))
 const navChunk = chunk<typeof Nav>(() => import('./navigator.js'))
 const toolChunk = chunk<typeof Tools>(() => import('./toolbar.js'))
 const mapChunk = chunk<typeof MapCtl>(() => import('./map-control.js'))
+const transChunk = chunk<typeof Trans>(() => import('./transition.js'))
 let warnedGl = false
 
 /** What identifies "the same map" across setSpec: chart type and geography (a name, or inline). */
@@ -296,6 +309,14 @@ export class SuperPlot {
   /** Chunks this plot is loading, and what runs when each is here (what `ready()` waits for). */
   private loading = new Set<Chunk<unknown>>()
   private pending = new Set<Promise<void>>()
+  /** The `transition` option: the clock (created on first use), and what drew the last frame. */
+  private player: Trans.Player | null = null
+  private drawnWith: 'svg' | 'canvas' | 'webgl' | null = null
+  /** What was on screen when a transition was cut short by a new draw: where the next one starts. */
+  private transFrom: Trans.Shown[] | null = null
+  /** When the last appended rows were drawn, and the gap before that (fast streams do not animate). */
+  private lastAppend = -Infinity
+  private appendGap = Infinity
 
   constructor(readonly host: HTMLElement, spec: unknown, private options: SuperPlotOptions = {}) {
     const doc = host.ownerDocument
@@ -351,6 +372,8 @@ export class SuperPlot {
       this.mq?.addEventListener?.('change', this.onScheme)
     }
     this.joinSync()
+    // Fetch the transition code now: the first draw never moves, so it is here by the first update.
+    this.transitionCode()
     this.render(true)
   }
 
@@ -366,7 +389,7 @@ export class SuperPlot {
     this.rows = null
     this.navRefused = false
     this.dataVersion++
-    this.render(true)
+    this.render(true, 'data')
   }
 
   /**
@@ -388,7 +411,10 @@ export class SuperPlot {
     this.appendRaf = requestAnimationFrame(() => {
       this.appendRaf = 0
       if (this.disposed) return
-      this.render(false)
+      const now = performance.now()
+      this.appendGap = now - this.lastAppend
+      this.lastAppend = now
+      this.render(false, 'append')
       this.sayNews()
     })
   }
@@ -407,13 +433,16 @@ export class SuperPlot {
   setOptions(patch: Partial<SuperPlotOptions>): void {
     const prevCamera = this.options.camera
     this.options = { ...this.options, ...patch }
+    const before = this.hidden
     if (patch.hidden) this.hidden = new Set(patch.hidden)
+    const toggled = before.size !== this.hidden.size || [...before].some(k => !this.hidden.has(k))
     // Only a camera that really changed resets the viewer's (an inline object re-sent by a framework does not).
     if (patch.camera && JSON.stringify(patch.camera) !== JSON.stringify(prevCamera)) this.cam = null
     if ('sync' in patch) this.joinSync()
     if ('dataTable' in patch) this.tableShown = null
     if ('navigator' in patch) this.navRefused = false
-    this.render(false)
+    if ('transition' in patch) this.transitionCode()
+    this.render(false, toggled ? 'data' : undefined)
   }
 
   getScene(): Scene | null {
@@ -534,7 +563,7 @@ export class SuperPlot {
 
   /**
    * Settles once the code this plot loads on demand for what it shows now (the navigator strip, the toolbar,
-   * the map controls, the WebGL layer) is loaded and drawn. Everything else is drawn by the constructor, `setSpec` and
+   * the map controls, the WebGL layer, the transition code) is loaded and drawn. Everything else is drawn by the constructor, `setSpec` and
    * `setOptions` before they return. Never rejects: a part that failed to load is reported through `onIssues`
    * (`load_failed`), and WebGL falls back to canvas.
    */
@@ -599,6 +628,7 @@ export class SuperPlot {
     this.sound = null
     this.leaveSync()
     this.disposed = true
+    this.player?.stop()
     cancelAnimationFrame(this.raf)
     cancelAnimationFrame(this.appendRaf)
     this.axis.dispose()
@@ -707,9 +737,16 @@ export class SuperPlot {
     return this.focusPath && s && typeof s === 'object' ? { ...(s as Record<string, unknown>), focus: this.focusPath } : s
   }
 
-  private render(enter: boolean): void {
+  /** Draw the current spec. `cause` says the data changed (a transition may run): new spec or toggle, or appended rows. */
+  private render(enter: boolean, cause?: 'data' | 'append'): void {
     if (this.disposed) return
     const started = performance.now()
+    const prev = this.scene
+    // A new draw cuts a running transition short; the next one starts from where it was.
+    if (this.player?.running) {
+      this.transFrom = this.player.shown()
+      this.player.stop()
+    }
     const o = this.options
     const hostW = Math.floor(this.host.getBoundingClientRect().width || this.host.clientWidth)
     const width = o.width ?? (hostW > 0 ? hostW : 640)
@@ -732,7 +769,7 @@ export class SuperPlot {
     if (navH && result.ok && !navigable(result.scene)) {
       // Asked for, but this chart cannot have one: draw again at the full height, and say why on every draw.
       this.navRefused = true
-      return this.render(enter)
+      return this.render(enter, cause)
     }
     if (result.ok && this.options.navigator === true && (this.navRefused || (this.spec as { facet?: unknown } | null)?.facet)) result.issues.push(NAV_REFUSED)
     this.glMoved = false
@@ -742,6 +779,8 @@ export class SuperPlot {
     this.hoverMark = null
     if (!result.ok) {
       this.ssr = null
+      this.transFrom = null
+      this.drawnWith = null
       this.layer?.dispose()
       this.layer = null
       this.scene = null
@@ -775,7 +814,7 @@ export class SuperPlot {
     if (this.ssr && wantCanvas) {
       // Server markup is SVG; this plot draws on canvas, with the real text measure.
       this.ssr = null
-      return this.render(enter)
+      return this.render(enter, cause)
     }
     this.setupMap(result.scene, theme)
     this.setupToolbar(result.scene, theme)
@@ -801,7 +840,9 @@ export class SuperPlot {
         // Keep the canvas element in place when it is already there: moving it would drop keyboard focus.
         this.mount(this.layer.el)
         this.root.setAttribute('data-renderer', this.layer.renderer)
+        const plan = this.planFor(prev, result.scene, cause, this.layer.renderer)
         this.afterDraw(result.scene, started, changed || enter, { ctx: this.layer.drawingContext() })
+        if (plan) this.playCanvas(plan.plan, plan.conf)
         return
       }
     }
@@ -816,21 +857,101 @@ export class SuperPlot {
       if (id && svgKey(renderSvg(result.scene, { interactive: true, idPrefix: id, font })) === el.getAttribute('data-sp-key')) {
         this.hydrated = true
         this.mount(el)
+        this.drawnWith = 'svg'
+        this.transFrom = null
         this.afterDraw(result.scene, started, true, { svg: el as SVGSVGElement })
         return
       }
-      return this.render(enter)
+      return this.render(enter, cause)
     }
     const svg = renderSvg(result.scene, { interactive: true, idPrefix: this.id, font })
     const tpl = this.host.ownerDocument.createElement('template')
     tpl.innerHTML = svg
     this.mount(tpl.content)
-    if (enter && !this.map?.pressed() && o.animate !== false) {
+    const plan = this.planFor(prev, result.scene, cause, 'svg')
+    if (enter && !plan && !this.map?.pressed() && o.animate !== false) {
       this.root.classList.add('sp-enter')
       clearTimeout(this.enterTimer)
       this.enterTimer = window.setTimeout(() => this.root.classList.remove('sp-enter'), 1000)
     }
-    this.afterDraw(result.scene, started, changed || enter, { svg: this.root.querySelector('svg') ?? undefined })
+    const svgEl = this.root.querySelector('svg')
+    this.afterDraw(result.scene, started, changed || enter, { svg: svgEl ?? undefined })
+    if (plan && svgEl) this.playSvg(plan.plan, plan.conf, svgEl, font)
+  }
+
+  // ---- transitions -------------------------------------------------------------------------
+
+  /**
+   * The `transition` option: a plan from what is on screen to `next`, or null when this draw snaps (off, first
+   * draw, another renderer or chart type, WebGL, a gesture, reduced motion, a hidden page, a fast stream, too
+   * many marks, or nothing that moves).
+   */
+  private planFor(prev: Scene | null, next: Scene, cause: 'data' | 'append' | undefined, renderer: 'svg' | 'canvas' | 'webgl'): { plan: Trans.Plan; conf: Trans.TransitionConf } | null {
+    const from = this.transFrom
+    const was = this.drawnWith
+    this.transFrom = null
+    this.drawnWith = renderer
+    const t = this.transitionCode()
+    // Until its code is here (a few ms after the option is set), updates snap.
+    const conf = t?.transitionConf(this.options.transition)
+    if (!t || !conf || !cause || !prev || renderer === 'webgl' || was !== renderer || prev.type !== next.type) return null
+    if (this.dragging() || this.map?.pressed() || !t.motionAllowed(this.host.ownerDocument.defaultView as (Window & typeof globalThis) | null)) return null
+    if (cause === 'append' && this.appendGap < conf.duration) return null
+    const shown = from ?? t.shownOf(prev)
+    if (shown.length > t.TRANSITION_MAX_MARKS || dataMarkCount(next) > t.TRANSITION_MAX_MARKS) return null
+    const plan = t.planTransition(shown, next, { orderFade: cause === 'append' })
+    return plan.moving ? { plan, conf } : null
+  }
+
+  /** The transition code (its own chunk), loading it the first time the option is on; null until it is here. */
+  private transitionCode(): typeof Trans | null {
+    const o = this.options.transition
+    if (!(o === true || (!!o && typeof o === 'object'))) return null
+    if (!transChunk.mod) this.need(transChunk, 'transition', () => {})
+    return transChunk.mod
+  }
+
+  private playerNow(t: typeof Trans): Trans.Player {
+    return (this.player ??= new t.Player(this.host.ownerDocument.defaultView as (Window & typeof globalThis) | null))
+  }
+
+  private playSvg(plan: Trans.Plan, conf: Trans.TransitionConf, svg: SVGSVGElement, font: string): void {
+    const t = transChunk.mod!
+    // A running entrance would scale the moving marks as well.
+    clearTimeout(this.enterTimer)
+    this.root.classList.remove('sp-enter')
+    const frames = new t.SvgFrames(svg, plan, this.id, font)
+    this.root.classList.add('sp-moving')
+    this.playerNow(t).start(plan, conf, e => frames.apply(e), () => {
+      frames.dispose()
+      this.root.classList.remove('sp-moving')
+    })
+  }
+
+  private playCanvas(plan: Trans.Plan, conf: Trans.TransitionConf): void {
+    const layer = this.layer
+    const t = transChunk.mod!
+    if (!layer) return
+    this.playerNow(t).start(plan, conf, e => layer.paintFrame(t.frameScene(plan, e)), done => {
+      // Frames repaint the canvas: plugins draw on the final picture again.
+      if (done && this.layer === layer && this.scene === plan.scene && this.runPlugins(plan.scene, { ctx: layer.drawingContext() })) this.options.onIssues?.(this.issues)
+    })
+  }
+
+  /** Each plugin's `afterDraw`; one that throws becomes a `plugin_error` warning. True when one did. */
+  private runPlugins(scene: Scene, target: { svg?: SVGSVGElement; ctx?: CanvasRenderingContext2D }): boolean {
+    const renderer = this.getRenderer()
+    let failed = false
+    for (const p of this.options.plugins ?? []) {
+      if (!p.afterDraw) continue
+      try {
+        p.afterDraw({ scene, renderer, ...target })
+      } catch (e) {
+        this.issues = [...this.issues, { severity: 'warning', code: 'plugin_error', path: '', message: `Plugin "${p.name}" failed in afterDraw: ${e instanceof Error ? e.message : String(e)}.` }]
+        failed = true
+      }
+    }
+    return failed
   }
 
   /** Zoom and brush, plugins, the data table, then tell the host. */
@@ -840,15 +961,7 @@ export class SuperPlot {
     this.syncNav(scene)
     if (target.svg) this.syncCrumbs(target.svg, scene)
     const renderer = this.getRenderer()
-    for (const p of o.plugins ?? []) {
-      if (!p.afterDraw) continue
-      try {
-        p.afterDraw({ scene, renderer, ...target })
-      } catch (e) {
-        this.issues = [...this.issues, { severity: 'warning', code: 'plugin_error', path: '', message: `Plugin "${p.name}" failed in afterDraw: ${e instanceof Error ? e.message : String(e)}.` }]
-        report = true
-      }
-    }
+    if (this.runPlugins(scene, target)) report = true
     this.syncTable()
     this.syncBar()
     if (report) o.onIssues?.(this.issues)
@@ -1396,7 +1509,7 @@ export class SuperPlot {
       if (this.hidden.has(key)) this.hidden.delete(key)
       else if (this.scene!.series.filter(s => !s.hidden).length > 1) this.hidden.add(key)
       this.options.onHiddenChange?.([...this.hidden])
-      this.render(false)
+      this.render(false, 'data')
       return
     }
     // A breadcrumb item: back up to that level.

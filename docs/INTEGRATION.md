@@ -145,6 +145,20 @@ new SuperPlot(el, { type: 'sunburst', path: ['region', 'country', 'city'], value
 
 `plot.appendRows(rows, { max: 500 })` adds rows to the end, drops the oldest past `max`, and draws once per frame however often it is called. Zoom, brush and hidden series stay; the spec object you passed is not changed.
 
+## Transitions between data states
+
+```ts
+new SuperPlot(el, spec, { transition: true })                                   // 300 ms, eased
+new SuperPlot(el, spec, { transition: { duration: 500, easing: 'linear' } })     // at most 1,000 ms
+```
+
+Off by default, and meant to stay short: motion draws the eye to what moved, which is not always what changed most, and an in-between frame shows values that are in no row (a bar halfway to its new height). Keep it for small dashboards where seeing a bar move helps, not for charts people read closely. With `transition` on, `setSpec`, `appendRows`, legend toggles and `setOptions({ hidden })` animate from what is on screen to the new state:
+
+- **What moves.** Data marks of the old and new scene are matched by series and datum identity (the datum's text fields such as the category, group, label or ISO date, its `x` when that is a number and there is no numeric `y`, a beeswarm `row`); marks with no identity (a line's path, its dots, scatter points) are matched in order within their series. Matched rects move and resize, circles move and change radius, lines move, paths with the same commands have their numbers interpolated (others cross-fade), new bars grow from the zero line, other new marks fade in, and gone marks fade out. Colours follow the entity, so they are not tweened. After `appendRows`, marks matched only by order cross-fade instead of moving, since the n-th point is then another row.
+- **What does not.** Axes, ticks, labels, legend, titles and hit targets show the new state at once: no tick text is invented in between. Tooltips, `aria` labels, the live region, the data table, `getScene()`, exports and `onRender` carry the new data from the first frame; on canvas, hover and the keyboard test the final scene.
+- **When it is skipped** (the chart draws the new state at once): under `prefers-reduced-motion: reduce` (read on every draw and every frame), on a hidden page, on the first draw (`animate` covers that), when the chart type or renderer changes, on WebGL, during a zoom, pan, brush or map drag, above 5,000 data marks, and for `appendRows` calls closer together than the duration. A new update during a transition cancels it and starts from where the marks are. Resizes, zooms, theme and drill-down redraws never animate.
+- Works on the SVG renderer (data elements move in place; copies of gone marks fade out, `aria-hidden` and without pointer events) and on canvas (each frame redraws the chart; plugins' `afterDraw` runs again on the final picture, since frames repaint it). React: the `transition` prop (an inline object is compared by value). `<super-plot transition>` (present for true, a number of ms, or `"false"`).
+
 ## Plugins
 
 ```ts
@@ -304,9 +318,9 @@ Regenerate the data with `npm run conformance`; `npm run test:ports` and `npm ru
 
 ## Framework notes
 
-- React: `<SuperPlot spec onSelect onIssues onHiddenChange onHover onRender onZoom onBrush onDrill plugins dataTable sync toolbar tooltipFormat navigator drill announce printLight locale timeZone strings />`; the ref is the `SuperPlot` instance (`appendRows`, `setZoom`, `setBrush`, `toPng`, `toCsv`, `sonify`, `ready`). `sync`, `toolbar` and `strings` may be inline objects or arrays (compared by value); `tooltipFormat` and the callbacks always call the latest function without a redraw.
+- React: `<SuperPlot spec onSelect onIssues onHiddenChange onHover onRender onZoom onBrush onDrill plugins dataTable sync toolbar tooltipFormat navigator drill announce printLight transition locale timeZone strings />`; the ref is the `SuperPlot` instance (`appendRows`, `setZoom`, `setBrush`, `toPng`, `toCsv`, `sonify`, `ready`). `sync`, `toolbar`, `transition` and `strings` may be inline objects or arrays (compared by value); `tooltipFormat` and the callbacks always call the latest function without a redraw.
 - shadcn/ui: `theme="shadcn"` reads the project's `--chart-1..5` and surface tokens; nothing to configure.
-- Plain HTML: `<super-plot spec='{"type":"bar",...}' theme="auto" toolbar sync="sales">`. Attributes: `spec` (JSON), `theme`, `locale`, `time-zone`, `strings` (JSON), `renderer`, `toolbar` (present for the default buttons, a comma list such as `"png,csv,sound"`, or `"false"`), `sync` (a key), `navigator` and `drill` (flags: present for true, `"false"`). Events add `plot-drill`. Properties: `spec`, `locale`, `timeZone`, `strings` and `options` (any `SuperPlotOptions` as an object, callbacks included); an attribute wins over a property, a property over the same key in `options`. Methods: `appendRows`, `setZoom`, `getZoom`, `setBrush`, `getBrush`, `toSvg`, `toPng`, `toCsv`, `sonify`, and `instance` for the rest.
+- Plain HTML: `<super-plot spec='{"type":"bar",...}' theme="auto" toolbar sync="sales">`. Attributes: `spec` (JSON), `theme`, `locale`, `time-zone`, `strings` (JSON), `renderer`, `toolbar` (present for the default buttons, a comma list such as `"png,csv,sound"`, or `"false"`), `sync` (a key), `navigator` and `drill` (flags: present for true, `"false"`), `transition` (present for true, a number of ms, or `"false"`). Events add `plot-drill`. Properties: `spec`, `locale`, `timeZone`, `strings` and `options` (any `SuperPlotOptions` as an object, callbacks included); an attribute wins over a property, a property over the same key in `options`. Methods: `appendRows`, `setZoom`, `getZoom`, `setBrush`, `getBrush`, `toSvg`, `toPng`, `toCsv`, `sonify`, and `instance` for the rest.
 - Next.js and SSR: render `renderToSvg` on the server for a static chart, or mount `<SuperPlot>` on the client (the server renders an empty div). For the web binding see "Server rendering and hydration".
 
 ### Vue, Svelte and Angular
