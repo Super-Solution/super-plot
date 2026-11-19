@@ -75,4 +75,28 @@ describe('<SuperPlot> (react)', () => {
     await m.unmount()
     expect(document.querySelector('table.sp-table')).toBeNull()
   })
+
+  it('passes sync, toolbar and tooltipFormat through; inline values do not redraw; the ref has toCsv and sonify', async () => {
+    const ref = createRef<Plot | null>()
+    const renders = vi.fn()
+    const line = chartCatalog().find(c => c.type === 'line')!.example
+    const two = (fmt: (t: { title?: string }) => string): React.ReactNode => (
+      <>
+        <SuperPlot ref={ref} spec={line} width={600} height={360} sync={{ key: 'r' }} toolbar={['csv', 'table']} tooltipFormat={fmt} onRender={renders} />
+        <SuperPlot spec={line} width={600} height={360} sync="r" />
+      </>
+    )
+    const m = await mount(two(t => `a ${t.title}`))
+    expect(renders).toHaveBeenCalledTimes(1)
+    expect([...m.el.querySelectorAll<HTMLButtonElement>('.sp-bar button')].map(b => b.dataset.tool)).toEqual(['csv', 'table'])
+    await m.rerender(two(t => `b ${t.title}`))
+    expect(renders).toHaveBeenCalledTimes(1)
+    const [first, second] = [...m.el.querySelectorAll('.sp-root')]
+    first.querySelector('.sp-hit[data-i]')!.dispatchEvent(new MouseEvent('pointerover', { bubbles: true }))
+    expect(first.querySelector('.sp-tip')!.textContent).toMatch(/^b /)
+    expect(second.querySelector('.sp-tip')!.hasAttribute('data-show')).toBe(true)
+    expect(ref.current!.toCsv().startsWith('week,')).toBe(true)
+    expect(ref.current!.sonify().playing).toBe(false)
+    await m.unmount()
+  })
 })

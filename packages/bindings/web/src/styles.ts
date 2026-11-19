@@ -41,6 +41,17 @@ export const CSS = `
 .sp-ctl{position:absolute;right:8px;top:8px;z-index:5;display:flex;flex-direction:column;gap:4px;line-height:1}
 .sp-ctl button{width:28px;height:28px;padding:0;margin:0;border:1px solid;border-radius:6px;font:16px/1 system-ui,sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .sp-ctl button:focus-visible{outline:2px solid var(--sp-info,#2962FF);outline-offset:1px}
+.sp-bar{position:absolute;right:8px;top:8px;z-index:6;display:flex;gap:4px;line-height:1;opacity:0;transition:opacity .15s ease}
+.sp-root:hover>.sp-bar,.sp-bar:focus-within{opacity:1}
+@media (hover:none){.sp-bar{opacity:1}}
+.sp-bar button{height:24px;padding:0 8px;margin:0;border:1px solid;border-radius:6px;font:500 11px/1 var(--sp-font,system-ui,sans-serif);cursor:pointer;display:flex;align-items:center}
+.sp-bar button:focus{outline:none}
+.sp-bar button:focus-visible{outline:2px solid var(--sp-info,#2962FF);outline-offset:1px}
+.sp-bar button[aria-pressed="true"]{box-shadow:inset 0 0 0 1px var(--sp-info,#2962FF)}
+.sp-bar button[aria-disabled="true"]{opacity:.45;cursor:default}
+.sp-root[data-toolbar] .sp-ctl{top:40px}
+.sp-tip[data-custom]{white-space:pre-line}
+@media print{.sp-bar,.sp-ctl,.sp-tip{display:none!important}}
 .sp-error{line-height:1.5;font:12px ui-monospace,SFMono-Regular,Menlo,monospace;padding:12px;border:1px solid #F23645;border-radius:6px;color:#F23645;white-space:pre-wrap}
 @keyframes sp-y{from{transform:scaleY(0)}to{transform:none}}
 @keyframes sp-x{from{transform:scaleX(0)}to{transform:none}}
@@ -50,7 +61,29 @@ export const CSS = `
 .sp-enter .sp-a-x{transform-box:fill-box;transform-origin:0 50%;animation:sp-x .5s cubic-bezier(.2,.7,.2,1) both}
 .sp-enter .sp-a-fade{animation:sp-fade .5s ease both}
 .sp-enter .sp-a-draw{stroke-dasharray:1;stroke-dashoffset:1;animation:sp-draw .8s ease forwards}
-@media (prefers-reduced-motion:reduce){.sp-enter *{animation:none!important}}
+@media (prefers-reduced-motion:reduce){.sp-enter *{animation:none!important}.sp-bar,.sp-tip,.sp-data{transition:none}}
+@media (forced-colors:active){
+.sp-root svg,.sp-cv canvas{forced-color-adjust:none}
+.sp-m:focus-visible,.sp-cv-lk:focus-visible,.sp-cv>canvas:first-child:focus-visible,.sp-root[data-axes]:focus-visible,.sp-root[data-map]:focus-visible,.sp-ctl button:focus-visible,.sp-bar button:focus-visible{outline:2px solid Highlight;outline-offset:2px}
+.sp-m.sp-data:focus-visible{stroke:Highlight;stroke-width:3px}
+.sp-root svg g[pointer-events] line{stroke:Highlight}
+.sp-brush{background:transparent;border:2px solid Highlight}
+.sp-tip{background:Canvas!important;color:CanvasText!important;border-color:CanvasText!important;box-shadow:none}
+.sp-tip i{forced-color-adjust:none;outline:1px solid CanvasText}
+.sp-bar,.sp-bar:focus-within{opacity:1}
+.sp-bar button,.sp-ctl button{background:ButtonFace!important;color:ButtonText!important;border-color:ButtonText!important}
+.sp-bar button[aria-pressed="true"]{background:Highlight!important;color:HighlightText!important}
+.sp-bar button[aria-disabled="true"]{color:GrayText!important;border-color:GrayText!important;opacity:1}
+.sp-table,.sp-table th,.sp-table td{color:CanvasText;border-color:CanvasText}
+.sp-error{color:CanvasText;border-color:CanvasText}
+}
+@media (prefers-contrast:more){
+.sp-dimmed{opacity:.15!important}
+.sp-tip{border-width:2px;box-shadow:none}
+.sp-brush{border-width:2px;background:color-mix(in srgb,var(--sp-info,#2962FF) 22%,transparent)}
+.sp-m:focus-visible,.sp-cv-lk:focus-visible,.sp-cv>canvas:first-child:focus-visible,.sp-root[data-axes]:focus-visible,.sp-root[data-map]:focus-visible,.sp-ctl button:focus-visible,.sp-bar button:focus-visible{outline-width:3px}
+.sp-bar{opacity:1}
+}
 `
 
 const MARK = 'data-super-plot'

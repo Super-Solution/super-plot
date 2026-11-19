@@ -97,5 +97,13 @@ plots.plugin = new SuperPlot(el('plugin'), planSpec, { plugins: [stamp] })
 el('table-toggle').addEventListener('change', e => plots.plugin.setOptions({ dataTable: (e.target as HTMLInputElement).checked ? 'visible' : true }))
 plots.plugin.setOptions({ dataTable: true })
 
+// ---- sync, toolbar, tooltipFormat, sonify ---------------------------------------------------
+const ops = Array.from({ length: 90 }, (_, i) => ({ date: day(i), orders: Math.round(200 + 60 * Math.sin(i / 9) + 15 * gauss()), latency: +(120 + 40 * Math.cos(i / 11) + 8 * gauss()).toFixed(1) }))
+plots.syncA = new SuperPlot(el('sync-a'), { type: 'line', x: 'date', y: 'orders', data: ops, zoom: 'x', title: 'Orders', subtitle: 'Per day' }, {
+  sync: 'ops', toolbar: ['png', 'svg', 'csv', 'table', 'reset', 'sound'],
+  tooltipFormat: t => `${t.title}\n${t.rows[0]?.value ?? ''} orders`
+})
+plots.syncB = new SuperPlot(el('sync-b'), { type: 'area', x: 'date', y: 'latency', data: ops, zoom: 'x', title: 'Latency', subtitle: 'p50, ms' }, { sync: 'ops', toolbar: true })
+
 ;(window as unknown as { plots: typeof plots }).plots = plots
 document.body.dataset.ready = '1'

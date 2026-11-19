@@ -36,3 +36,37 @@ export function plotTable(spec: unknown, options: { maxRows?: number } = {}): Pl
   const columns = keys.map((key, i) => ({ key, numeric: rows.length > 0 && rows.every(x => x[i] === null || typeof x[i] === 'number') && rows.some(x => typeof x[i] === 'number') }))
   return { caption: typeof s.title === 'string' && s.title ? s.title : `${s.type} chart`, columns, rows, total: data.length }
 }
+
+export interface CsvOptions {
+  /** Rows to write at most. Default: all of them (validation already caps `data` at 50,000 rows). */
+  maxRows?: number
+  /** Field separator. Default `,`; `;` for spreadsheets set to a decimal comma, a tab for TSV. */
+  separator?: ',' | ';' | '\t'
+}
+
+const PLAIN_NUMBER = /^-?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?$/
+// A spreadsheet runs a cell that starts with one of these as a formula (CSV injection).
+const FORMULA_START = /^[=+\-@\t\r]/
+
+/** One CSV field: formula-looking text is defused with a leading apostrophe, then quoted per RFC 4180 when needed. */
+export function csvCell(v: string | number | boolean | null, separator: string = ','): string {
+  if (v === null) return ''
+  let s = typeof v === 'number' ? (Number.isFinite(v) ? String(v) : '') : String(v)
+  if (typeof v === 'string' && FORMULA_START.test(s) && !PLAIN_NUMBER.test(s)) s = `'${s}`
+  if (s.includes('"') || s.includes(separator) || s.includes('\n') || s.includes('\r')) s = `"${s.replace(/"/g, '""')}"`
+  return s
+}
+
+/**
+ * The data a chart shows as CSV: the same columns and rows as {@link plotTable} (after `transform`), with a
+ * header row, CRLF line ends and RFC 4180 quoting. Text that a spreadsheet would run as a formula (starting
+ * with `=`, `+`, `-`, `@`, a tab or a carriage return) gets a leading apostrophe; numbers, negative ones
+ * included, stay numbers. Null when the spec is invalid.
+ */
+export function plotCsv(spec: unknown, options: CsvOptions = {}): string | null {
+  const t = plotTable(spec, { maxRows: options.maxRows ?? Infinity })
+  if (!t) return null
+  const sep = options.separator ?? ','
+  const line = (cells: (string | number | boolean | null)[]): string => cells.map(c => csvCell(c, sep)).join(sep) + '\r\n'
+  return line(t.columns.map(c => c.key)) + t.rows.map(line).join('')
+}

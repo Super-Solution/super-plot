@@ -1,7 +1,7 @@
 import { forwardRef, useEffect, useRef, type CSSProperties, type ForwardedRef } from 'react'
 import { SuperPlot as Plot, type SuperPlotOptions } from '@supersolutions/super-plot-web/base'
 
-export type { BrushSelection, DrawTarget, RenderEvent, SelectEvent, SuperPlotOptions, ZoomRange } from '@supersolutions/super-plot-web/base'
+export type { BrushSelection, DrawTarget, RenderEvent, SelectEvent, SonifyController, SonifyOptions, SuperPlotOptions, SyncOptions, TipContent, ToolbarItem, ZoomRange } from '@supersolutions/super-plot-web/base'
 
 export interface SuperPlotProps extends SuperPlotOptions {
   /** The plot spec. Create it once or memoize it: a new object re-renders the chart. */
@@ -14,7 +14,9 @@ export interface SuperPlotProps extends SuperPlotOptions {
  * `<SuperPlot spec={...} />`. A thin binding over the web mount: one effect creates it, props
  * update it, unmount disposes it. Safe under Strict Mode and server rendering (the DOM work
  * happens in an effect; on the server use `renderToSvg` from core for a static chart).
- * The ref is the underlying `SuperPlot` instance (`toSvg()`, `toPng()`, `getScene()`).
+ * The ref is the underlying `SuperPlot` instance (`toSvg()`, `toPng()`, `toCsv()`, `sonify()`, `getScene()`).
+ * `sync` and `toolbar` may be inline objects or arrays (compared by value); `tooltipFormat` always calls the
+ * latest function, like the callbacks.
  */
 export const SuperPlot = forwardRef<Plot | null, SuperPlotProps>(function SuperPlot({ spec, className, style, ...options }, ref) {
   const host = useRef<HTMLDivElement>(null)
@@ -40,7 +42,8 @@ export const SuperPlot = forwardRef<Plot | null, SuperPlotProps>(function SuperP
       onHover: e => latest.current.onHover?.(e),
       onRender: e => latest.current.onRender?.(e),
       onZoom: z => latest.current.onZoom?.(z),
-      onBrush: b => latest.current.onBrush?.(b)
+      onBrush: b => latest.current.onBrush?.(b),
+      tooltipFormat: (tip, e) => latest.current.tooltipFormat?.(tip, e) ?? null
     })
     plot.current = p
     expose(p)
@@ -59,14 +62,18 @@ export const SuperPlot = forwardRef<Plot | null, SuperPlotProps>(function SuperP
     plot.current?.setSpec(spec)
   }, [spec])
 
-  const { theme, locale, width, height, animate, tooltip, hidden, renderer, canvasAbove, webglAbove, interactive, camera, plugins, dataTable } = options
+  const { theme, locale, width, height, animate, tooltip, hidden, renderer, canvasAbove, webglAbove, interactive, camera, plugins, dataTable, sync, toolbar } = options
+  // Inline `sync={{ key: 'a' }}` or `toolbar={['png']}` is a new object every render: compare by value.
+  const syncKey = JSON.stringify(sync ?? null)
+  const toolbarKey = JSON.stringify(toolbar ?? null)
   useEffect(() => {
     if (first.current) {
       first.current = false
       return
     }
-    plot.current?.setOptions({ theme, locale, width, height, animate, tooltip, renderer, canvasAbove, webglAbove, interactive, dataTable, ...(plugins ? { plugins } : {}), ...(hidden ? { hidden } : {}), ...(camera ? { camera } : {}) })
-  }, [theme, locale, width, height, animate, tooltip, hidden, renderer, canvasAbove, webglAbove, interactive, camera, plugins, dataTable])
+    plot.current?.setOptions({ theme, locale, width, height, animate, tooltip, renderer, canvasAbove, webglAbove, interactive, dataTable, sync, toolbar, ...(plugins ? { plugins } : {}), ...(hidden ? { hidden } : {}), ...(camera ? { camera } : {}) })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [theme, locale, width, height, animate, tooltip, hidden, renderer, canvasAbove, webglAbove, interactive, camera, plugins, dataTable, syncKey, toolbarKey])
 
   return <div ref={host} className={className} style={style} />
 })

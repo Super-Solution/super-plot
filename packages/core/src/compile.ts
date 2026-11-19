@@ -1,7 +1,7 @@
 import { ChartCtx } from './context.js'
 import { fieldsOf, getChart, type ChartDef } from './registry.js'
 import type { AxisInfo, Mark, Rect, Scene, SceneAxes, SeriesInfo } from './scene.js'
-import { renderSvg, type SvgOptions } from './svg.js'
+import { escapeXml, renderSvg, svgKey, type SvgOptions } from './svg.js'
 import { PlotSpecError, validatePlot } from './validate.js'
 import type { Issue, Row } from './schema.js'
 import { cssVar, resolveTheme, type RenderEnv, type Theme, type ThemeOption } from './theme.js'
@@ -262,13 +262,32 @@ export function compileOrThrow(input: unknown, options?: RenderOptions): Scene {
   return r.scene
 }
 
+export interface HydrateOptions {
+  /**
+   * Write the markup the web binding draws itself (hover hooks, CSS variables, `var(--sp-font)`), stamped with
+   * `data-sp-key` (a hash of that markup) and `data-sp-id` (its id prefix). A `SuperPlot` mounted on a host
+   * whose first child is this `<svg>` keeps it instead of drawing again when its own markup for the same spec,
+   * size, theme and locale hashes the same; otherwise it redraws. Ids default to a prefix derived from the
+   * content, so different charts on one page do not share ids.
+   */
+  hydrate?: boolean
+}
+
 /**
  * Spec to standalone SVG string: no DOM, runs in Node, a worker or an agent tool.
- * Colours are resolved to plain values unless `resolveVars: false`.
+ * Colours are resolved to plain values unless `resolveVars: false` (or `hydrate: true`).
  */
-export function renderToSvg(input: unknown, options: RenderOptions & SvgOptions = {}): string {
+export function renderToSvg(input: unknown, options: RenderOptions & SvgOptions & HydrateOptions = {}): string {
   const scene = compileOrThrow(input, options)
   const theme: Theme = resolveTheme(options.theme, options.prefersDark)
+  if (options.hydrate) {
+    const font = options.font ?? `var(--sp-font, ${theme.font})`
+    const draw = (idPrefix: string): string => renderSvg(scene, { interactive: true, idPrefix, font })
+    const id = options.idPrefix ?? `sp${svgKey(draw('sp'))}`
+    const svg = draw(id)
+    // `display:block` (outside the hashed markup) so the page has no inline gap below the chart before the binding loads.
+    return svg.replace('<svg ', `<svg data-sp-key="${svgKey(svg)}" data-sp-id="${escapeXml(id)}" `).replace(' style="font-family:', ' style="display:block;font-family:')
+  }
   const font = options.font ?? (options.resolveVars === false ? `var(--sp-font, ${theme.font})` : theme.font)
   return renderSvg(scene, { resolveVars: true, ...options, font })
 }
