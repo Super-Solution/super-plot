@@ -16,6 +16,10 @@ Read `docs/DESIGN.md` first. Then:
 | Change zoom, pan, brush | `packages/bindings/web/src/interact.ts` (pure helpers + `AxisControl`); `scene.axes` comes from `cartesian.ts` and `compile.ts` | `tests/web/interact.test.ts`, `tests/e2e/features.e2e.ts` |
 | Change the fast dot path | `packages/bindings/web/src/stamp.ts` (called through `drawScene`'s `dots` hook) | `tests/web/interact.test.ts`; bench with `scripts/bench.mjs` |
 | Change textures, data table, plugins | `packages/core/src/patterns.ts`, `table.ts`, `compile.ts` (`PlotPlugin`) | keep SVG (`svg.ts`) and canvas (`canvas.ts`) in step |
+| Add maths the ports must match (densities, fits, layouts, apportionment) | a pure exported function with the exact algorithm in its doc comment (`kde`, `loess`, `dodge`, `waffleCells`, `logTicks`) | a conformance section in `scripts/export-conformance.mjs`; port it with the same operation order |
+| Change sync, toolbar, navigator, drill-down, sound, CSV | `packages/bindings/web/src/sync.ts`, `plot.ts`, `sound.ts`; CSV in core `table.ts` (`plotCsv`) | user-visible text goes through `strings` (`packages/core/src/strings.ts`), never a literal |
+| Add user-visible text | a key in `DEFAULT_STRINGS` (`packages/core/src/strings.ts`), read with `c.t(key)` (core) or `this.t(key)` (web) | INTEGRATION.md lists the keys |
+| Decide whether to copy a competitor feature | `docs/COMPETITIVE.md` (built / refused / open, with reasons) | sources in `docs/COMPETITORS-<date>.md`; method in super-dev-docs `docs/30-runbooks/competitive-review.md` |
 | Add a framework binding | new `packages/bindings/<name>` that calls `SuperPlot` from web | add it to `scripts/packages.mjs`; no logic of its own |
 
 Never edit `conformance/*.json`, `ports/*/**/fields.v1.json` or `docs/SPEC.md` by hand: they are generated (`npm run conformance`, `npm run docs:spec`).

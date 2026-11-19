@@ -16,7 +16,7 @@ spec (JSON) -> validatePlot (transform runs here) -> chart.compile(ctx) -> plugi
 - The **spec** is plain JSON: `{ type, data: rows, x, y, series, ... }`. Rows are objects (wide or long form).
 - The **field DSL** (`packages/core/src/schema.ts`) is the only place a field is declared. Validation, JSON Schema,
   `docs/SPEC.md`, the agent catalog, tests and the gallery all read it, so they cannot disagree.
-- A **chart** is a `ChartDef` (`type, name, summary, useWhen, fields, example, compile, describe`). Twelve are registered: bar, line, area, scatter, pie, donut, histogram, box, heatmap, radar, treemap, sankey.
+- A **chart** is a `ChartDef` (`type, name, summary, useWhen, fields, example, compile, describe`). 28 are registered (see `chartTypes()` and [SPEC.md](SPEC.md)): bar, line, area, scatter, pie, donut, histogram, box, violin, heatmap, calendar, waterfall, bullet, bump, timeline, radar, treemap, sunburst, sankey, parallel, funnel, waffle, beeswarm, and the four maps.
 - The **scene** is a serializable list of marks (rect, path, circle, line, text) with roles and tooltips, plus `axes` (the plot
   rectangle and each axis's kind, domain, pixel range and column) and `panels` for small multiples. Renderers do not know about
   charts; the web binding maps pointer pixels back to data through `axes` for zoom, pan and brush.
@@ -64,7 +64,11 @@ The competitor review of 2026-11-19 (`super-dev-docs/docs/60-reference/competiti
 | `line` over bars | Vega-Lite layers | One field on the bar chart, still one value axis (no dual axis, on purpose) |
 | Fast dot path: pixels stamped instead of 50,000 arc paths | Highcharts Boost lesson ("a fast mode must not drop features") | Same marks, hover, legend and keyboard; only the rasterisation changes |
 
-Not adopted, with the reason: drawing in a worker with `OffscreenCanvas` (Chart.js; `drawScene` already accepts any 2D context, so a host can do it, but the binding does not yet), declared cross-chart linking (Vega-Lite `resolve`; today linking is one `onBrush` line, see OPEN-DECISIONS), animated transitions between data states (uPlot, visx and Plot skip them too), sonification (Highcharts; postponed), server-rendered SVG hydration (the client redraws).
+### Round 5 (0.4.0): every competitor row decided
+
+The second review covered 18 libraries and 62 capabilities from sources opened on 2026-11-19 ([COMPETITORS-2026-11-19.md](COMPETITORS-2026-11-19.md)). [COMPETITIVE.md](COMPETITIVE.md) gives, per row, what Super Plot does (built, refused with a reason, or open) and the defects found on the way. Per-feature design notes (borrowed from, how it fits the principles, limits, choices to revisit) are in [design-notes-0.4.0/](design-notes-0.4.0/): `wp1` waterfall, funnel, bullet, bump; `wp2` violin, calendar, sunburst, parallel, box points; `wp3` log scales, intervals, point annotations, gaps, loess, lollipop, bin/window/fold; `wp4` sync, tooltipFormat, CSV, toolbar, sonify, hydration, high contrast, Vue/Svelte/Angular; `wp6` waffle, beeswarm, colour-vision check; `wp7` timeline, stream graph, time zones, `strings`; `wp8` navigator, drill-down, live announcements, print, touch; `ports` the Go and Python catch-up.
+
+The rules held in every row: a capability is a spec field (checked, schema-documented, ported) or a binding option/event, never a wrapper; maths that the ports must reproduce is a pure exported function with its algorithm in the doc comment (kde, loess, dodge, waffle cells, log ticks, bins); nothing random (jitter and sampling are index-based); every refusal is an issue with a code and a hint, not a silent drop; and no new runtime dependency.
 
 ## Conventions copied from the sibling libs
 
@@ -101,9 +105,10 @@ Not adopted, with the reason: drawing in a worker with `OffscreenCanvas` (Chart.
 ## Known limits (honest list)
 
 - In core, text width is estimated; the web binding measures with canvas. Server SVG can differ from browser layout by a few pixels.
-- Time axes use UTC. No time zone option yet.
+- Time axes default to UTC; the `timeZone` render option moves ticks and labels to a local zone (DST-aware). Data are read as instants: an ISO string without an offset is UTC.
 - One value axis. There is no dual-axis chart on purpose; Super Chat cards with right-axis series are converted without them and say so.
-- No funnel or gauge: they overlap with Super Chat cards.
+- No gauge (a stat tile or a one-row bullet reads better), no word cloud, no non-map 3D, no dual axis, no expression language: see [COMPETITIVE.md](COMPETITIVE.md) for each refusal and its reason.
+- Network graphs, chord diagrams, Arrow input and drawing in a worker are open, not refused (OPEN-DECISIONS).
 - Default palette: orange, yellow and cyan fall outside the lightness band the dataviz validator prefers. Kept to stay TradingView-aligned; values are in `PALETTE`. The `accessible` preset passes every validator check in light mode; three of its colours are under 3:1 contrast on white, so they lean on the legend and tooltips (identity is never colour alone).
 - Zoom and brush work on cartesian charts without `facet`. A category axis can be brushed, not zoomed. A brush's `filters` use the transform's range rule (from inclusive, to exclusive), so a row exactly on the right edge is left out.
 - `appendRows` coalesces to one draw per frame but recompiles the whole scene; there is no incremental layout.
