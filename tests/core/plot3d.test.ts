@@ -226,6 +226,20 @@ describe('surface', () => {
     expect(ds[1]).toMatchObject({ x: 14, y: 1.8 })
     expect(ds.at(-1)).toMatchObject({ x: 32, y: 9 })
   })
+  it('keeps every axis title inside the plot clip and the colour key below the turn buttons', () => {
+    for (const [w, h] of [[420, 340], [640, 480], [300, 260]]) {
+      const s = compile(ex('surface'), { width: w, height: h })
+      const box = s.clips!.plot3d.match(/^M(-?[\d.]+)[ ,]/)!
+      const left = Math.max(0, Number(box[1]))
+      for (const t of s.marks.filter(m => m.type === 'text' && m.role === 'axis-label') as { x: number; text: string; anchor?: string }[]) {
+        const width = t.text.length * 6.5
+        const start = t.anchor === 'end' ? t.x - width : t.anchor === 'middle' ? t.x - width / 2 : t.x
+        expect(start, `${t.text} at ${w}x${h}`).toBeGreaterThanOrEqual(left)
+      }
+      const key = s.marks.filter(m => m.role === 'legend' && m.type === 'text') as { y: number }[]
+      expect(Math.min(...key.map(k => k.y)), `${w}x${h}`).toBeGreaterThan(h * 0.3)
+    }
+  })
   it('missing grid points are warned about and drawn as holes; sparse data is told to use scatter3d', () => {
     const data = gridRows(5, 4, (i, j) => i === 2 && j === 1)
     const v = validatePlot(sf(data))

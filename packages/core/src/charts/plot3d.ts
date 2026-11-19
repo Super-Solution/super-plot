@@ -130,7 +130,25 @@ function drawBox(c: ChartCtx, v: View3d, ax: { x: Axis3; y: Axis3; z: Axis3 }, c
     }
     const gap = 14 + Math.abs(d.dx) * widest + Math.abs(d.dy) * tickSize
     const m = P(mid)
-    push(c.text(m.x + d.dx * gap, m.y + d.dy * gap, fit(a.title, 160, c.size, c.measure.bind(c)), { ...pos, fill: c.c('text'), size: c.size }))
+    const title = fit(a.title, 160, c.size, c.measure.bind(c))
+    // Keep the title inside the clip (the plot area plus its margin): a side edge near the frame would cut it off.
+    // Text width is estimated in core, so leave 15% room for the browser's real font.
+    const tw = c.measure(title, c.size) * 1.15 + 2
+    const L = Math.max(0, v.rect.x - 40), R = Math.min(c.width, v.rect.x + v.rect.w + 40)
+    const lo = L + (pos.anchor === 'end' ? tw : pos.anchor === 'middle' ? tw / 2 : 0)
+    const hi = R - (pos.anchor === 'start' ? tw : pos.anchor === 'middle' ? tw / 2 : 0)
+    const tx0 = m.x + d.dx * gap
+    if (tx0 >= lo && tx0 <= hi) {
+      push(c.text(tx0, m.y + d.dy * gap, title, { ...pos, fill: c.c('text'), size: c.size }))
+      return
+    }
+    // No room beside the edge (it runs close to the frame): put the title above the edge's upper end, over its
+    // tick labels, the way a vertical axis title sits on top of the axis.
+    const ends = [P(edge[0]), P(edge[1])]
+    const top = ends[0].y <= ends[1].y ? ends[0] : ends[1]
+    const half = tw / 2
+    const x = Math.min(R - half, Math.max(L + half, top.x + d.dx * (8 + widest / 2)))
+    push(c.text(x, top.y - tickSize - 4, title, { anchor: 'middle', baseline: 'alphabetic', fill: c.c('text'), size: c.size }))
   }
   label(ax.x, xEdge, lx, tx, t => [X(t), -by, -1], [0, -by, 0])
   label(ax.y, yEdge, ly, ty, t => [-bx, Y(t), -1], [-bx, 0, 0])
@@ -401,10 +419,11 @@ function surfaceCompile(c: ChartCtx): { series: SeriesInfo[] } {
       aria: `${s.x} ${exact(x)}, ${s.y} ${exact(y)}: ${s.z} ${zf(t.z)}`, datum: { x, y, z: t.z }
     })
   }
-  // The colour key: the value scale of heatmaps, labelled with the z column.
-  const h = Math.min(area.h, 160)
+  // The colour key: the value scale of heatmaps, labelled with the z column. It sits at the bottom right, so the
+  // web binding's turn and zoom buttons (top right) never cover its title.
+  const h = Math.max(30, Math.min(area.h - 24, 160))
   const lx = frame.x + frame.w - barW + 22
-  const ly = area.y + (area.h - h) / 2
+  const ly = area.y + area.h - h
   seqLegend(c, lx, ly, h, lo, hi)
   c.marks.push(c.text(lx, ly - 10, fit(String(s.zLabel ?? s.z), barW + 10, c.size - 1, c.measure.bind(c)), { role: 'legend', size: c.size - 1 }))
   const order: number[] = []
