@@ -16,7 +16,7 @@ spec (JSON) -> validatePlot (transform runs here) -> chart.compile(ctx) -> plugi
 - The **spec** is plain JSON: `{ type, data: rows, x, y, series, ... }`. Rows are objects (wide or long form).
 - The **field DSL** (`packages/core/src/schema.ts`) is the only place a field is declared. Validation, JSON Schema,
   `docs/SPEC.md`, the agent catalog, tests and the gallery all read it, so they cannot disagree.
-- A **chart** is a `ChartDef` (`type, name, summary, useWhen, fields, example, compile, describe`). 28 are registered (see `chartTypes()` and [SPEC.md](SPEC.md)): bar, line, area, scatter, pie, donut, histogram, box, violin, heatmap, calendar, waterfall, bullet, bump, timeline, radar, treemap, sunburst, sankey, parallel, funnel, waffle, beeswarm, and the four maps.
+- A **chart** is a `ChartDef` (`type, name, summary, useWhen, fields, example, compile, describe`). 31 are registered (see `chartTypes()` and [SPEC.md](SPEC.md)): bar, line, area, scatter, pie, donut, histogram, box, violin, heatmap, calendar, waterfall, bullet, bump, timeline, radar, treemap, sunburst, sankey, parallel, funnel, waffle, beeswarm, gauge, wordcloud, scatter3d, surface, and the four maps.
 - The **scene** is a serializable list of marks (rect, path, circle, line, text) with roles and tooltips, plus `axes` (the plot
   rectangle and each axis's kind, domain, pixel range and column) and `panels` for small multiples. Renderers do not know about
   charts; the web binding maps pointer pixels back to data through `axes` for zoom, pan and brush.
@@ -70,6 +70,22 @@ The second review covered 18 libraries and 62 capabilities from sources opened o
 
 The rules held in every row: a capability is a spec field (checked, schema-documented, ported) or a binding option/event, never a wrapper; maths that the ports must reproduce is a pure exported function with its algorithm in the doc comment (kde, loess, dodge, waffle cells, log ticks, bins); nothing random (jitter and sampling are index-based); every refusal is an issue with a code and a hint, not a silent drop; and no new runtime dependency.
 
+### Round 6 (0.4.0): the round-5 refusals, built safely
+
+The owner overruled six round-5 refusals (2026-11-19) and kept one: the expression language stays out, because code in a spec is an injection risk and would need a second and third implementation in Go and Python; columns are computed before the spec is written. The other six were built with one rule each: **safe by default, switchable off, and the misleading risk stated plainly** in INTEGRATION.md and, where it helps, as an issue the agent sees every time. Notes per workstream: `r6-a1` gauge and word cloud, `r6-a2` dual and broken axes and the `index` step, `r6-b` scatter3d and surface, `r6-c` data transitions, `ports` (Round 6 section).
+
+| Feature | Field or option | What keeps it honest |
+|---|---|---|
+| Gauge | `type: 'gauge'` (`value`, `max`, `target`, `bands`, `arc`) | Arc length is the value's share of `min`..`max` and always starts at `min`; out-of-range values are printed as they are and warned; a missing `max` is derived and warned; bands are named in text, not only by colour |
+| Word cloud | `type: 'wordcloud'` (`text`, `value`, `series`, `rotate`) | Font size by the square root of the value; the description lists the top words with values in order; dropped and floored words are warned; the docs point to a sorted bar chart. Layout is the pure, integer-only `cloudLayout` |
+| Non-map 3D | `type: 'scatter3d'`, `type: 'surface'`, `camera`, `projection` | Orthographic by default (`perspective` opt-in); `perspective_3d` info names the 2D chart that compares exactly; exact x, y, z in tooltips, description and table; no auto-rotation; keyboard turning. 3D bars refused |
+| Dual y-axis | `yRight`, `yRightLabel`, `rightDomain`, `formatRight` | `dual_axis` info every time with a hint to `index` or two synced charts; axes coloured by their series; legend says "(right axis)"; bar zeros aligned |
+| Broken axis | `yBreak` | Same pixels per unit on both sides, a zigzag across the axis and every crossed bar; `axis_break` info; `break_misleading` error when the break would hide the comparison; hidden values counted |
+| Indexed series | transform step `index` | The safer alternative to a second axis: every series as a share of its value at a base row |
+| Data transitions | web `transition` option, off by default | Reduced motion re-checked every frame, at most 1,000 ms, skipped above 5,000 marks; tooltips, aria, table and exports show the new data from the first frame |
+
+Issues gained an `info` severity for these notes (drawn as asked; read this). The ports reproduce the new charts, fields, issues and the `index` step, checked by conformance and the differential fuzzer.
+
 ## Conventions copied from the sibling libs
 
 | Convention | Where it came from | In Super Plot |
@@ -119,7 +135,8 @@ The rules held in every row: a capability is a spec field (checked, schema-docum
 - In core, text width is estimated; the web binding measures with canvas. Server SVG can differ from browser layout by a few pixels.
 - Time axes default to UTC; the `timeZone` render option moves ticks and labels to a local zone (DST-aware). Data are read as instants: an ISO string without an offset is UTC.
 - A second value axis (`yRight`) and a broken axis (`yBreak`) exist since round 6, each with an `info` issue stating its risk every time (see INTEGRATION). Super Chat cards with right-axis series are still converted without them, with a note (`fromChatChartCard` was not changed).
-- No gauge (a stat tile or a one-row bullet reads better), no word cloud, no non-map 3D, no expression language: see [COMPETITIVE.md](COMPETITIVE.md) for each refusal and its reason.
+- No expression language, no 3D bars, no pictorial bars: see [COMPETITIVE.md](COMPETITIVE.md) for each refusal and its reason. Gauge, word cloud, non-map 3D, dual and broken axes and data transitions exist since round 6, each with its risk stated (see INTEGRATION).
+- 3D is drawn on canvas with painter's order (no depth buffer): tiles of a steep surface can overlap wrongly at some angles. WebGL draws only the scatter's points. Keyboard users step through every point before Tab leaves a 3D chart, as on other SVG charts.
 - Network graphs, chord diagrams, Arrow input and drawing in a worker are open, not refused (OPEN-DECISIONS).
 - Default palette: orange, yellow and cyan fall outside the lightness band the dataviz validator prefers. Kept to stay TradingView-aligned; values are in `PALETTE`. The `accessible` preset passes every validator check in light mode; three of its colours are under 3:1 contrast on white, so they lean on the legend and tooltips (identity is never colour alone).
 - Zoom and brush work on cartesian charts without `facet`. A category axis can be brushed, not zoomed. A brush's `filters` use the transform's range rule (from inclusive, to exclusive), so a row exactly on the right edge is left out.

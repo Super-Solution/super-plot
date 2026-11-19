@@ -2,7 +2,7 @@
 
 Statistical charts for people and agents: bar (and lollipop), line, area (and stream graph), scatter, pie, donut, waffle, histogram,
 box plot, violin, beeswarm, heatmap, calendar, waterfall, bullet, bump, timeline, radar, treemap, sunburst, sankey, parallel coordinates,
-funnel, and maps (choropleth, bubbles, 3D columns, raised regions, flows; flat or on a globe, drawn with SVG, canvas or WebGL).
+funnel, gauge, word cloud, 3D scatter and surface, and maps (choropleth, bubbles, 3D columns, raised regions, flows; flat or on a globe, drawn with SVG, canvas or WebGL).
 Super Plot is the sibling of Super Chart: Super Chart draws financial time series (candles, drawing tools),
 Super Plot draws everything else you put in a report or a chat answer.
 
@@ -11,6 +11,7 @@ what was built, what was refused and why ([docs/COMPETITIVE.md](docs/COMPETITIVE
 [docs/COMPETITORS-2026-11-19.md](docs/COMPETITORS-2026-11-19.md)): 12 more chart types, log scales, error bars and bands, point
 annotations, loess trends, bin/window/fold transforms, synced charts, a navigator, drill-down, an export toolbar and CSV, custom
 tooltips, sonification, server-rendered SVG that the browser adopts, a colour-blind check, time zones and translatable text.
+Round 6 (same version) adds, at the owner's request and each safe by default with its risk documented: gauge, word cloud, 3D scatter and surface, a second value axis, broken axes, an `index` transform and opt-in animated data transitions; an expression language stays refused.
 0.3.0 added transforms, zoom/brush, facets, live data and per-chart imports. Licensed under Apache-2.0 (see [LICENSE](LICENSE) and [NOTICE](NOTICE)), © SUPER SOLUTION LABS INC. Packages stay `private` (not
 published to npm or PyPI) until the owner decides to publish (see [docs/OPEN-DECISIONS.md](docs/OPEN-DECISIONS.md)).
 
