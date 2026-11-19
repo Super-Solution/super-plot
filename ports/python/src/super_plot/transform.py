@@ -14,6 +14,7 @@ input of the next, and each step is checked against the columns the step before 
     {"bin":       {"field": "price", "maxbins": 10, "as": ["from", "to"]}}        round edges, as the histogram
     {"window":    {"op": "sum", "field": "revenue", "as": "running", "groupBy": ["region"], "sortBy": "date"}}
     {"fold":      {"fields": ["Q1", "Q2", "Q3"], "as": ["quarter", "revenue"]}}  wide to long
+    {"index":     {"field": "revenue", "groupBy": ["region"], "sortBy": "date"}}   first value of each group = 100
 
 There is deliberately no expression step (`calculate`).
 
@@ -32,16 +33,18 @@ Row = dict[str, Any]
 Issues = list[dict[str, Any]]
 
 TRANSFORM_LIMIT = 10
-TRANSFORM_OPS = ["filter", "timeUnit", "aggregate", "sort", "top", "bin", "window", "fold"]
+TRANSFORM_OPS = ["filter", "timeUnit", "aggregate", "sort", "top", "bin", "window", "fold", "index"]
 WINDOW_OPS = ["sum", "mean", "count", "rank", "pctChange", "lag", "lead", "movingMean"]
 BIN_LIMIT = 200
 FOLD_LIMIT = 50
 MAX_ROWS = 50000  # LIMITS.maxRows
+MAX_STRING = 200  # LIMITS.maxString
 TIME_UNITS = ["year", "quarter", "month", "week", "day", "hour"]
 AGGREGATE_OPS = ["sum", "mean", "median", "min", "max", "count", "distinct"]
 _FILTER_KEYS = ["field", "equal", "oneOf", "range", "gt", "gte", "lt", "lte", "valid"]
 _KEYS = {"filter": _FILTER_KEYS, "timeUnit": ["field", "unit", "as"], "aggregate": ["groupBy", "fields", "count"], "sort": ["field", "order"], "top": ["n", "by"],
-         "bin": ["field", "as", "step", "maxbins"], "window": ["op", "field", "as", "groupBy", "sortBy", "order", "frame"], "fold": ["fields", "as"]}
+         "bin": ["field", "as", "step", "maxbins"], "window": ["op", "field", "as", "groupBy", "sortBy", "order", "frame"], "fold": ["fields", "as"],
+         "index": ["field", "as", "groupBy", "sortBy", "base", "at"]}
 
 
 def _fmt(v: Any) -> str:
@@ -286,6 +289,44 @@ def apply_transform(value: Any, rows: list[Row], issues: Issues, path: str = "tr
                 sort_by = field
             cur = _window_rows(cur, wop, field, b["as"], group_by, sort_by, b.get("order") == "desc", int(b.get("frame", 3)))
             columns = {**columns, b["as"]: None}
+        elif op == "index":
+            field = column("field")
+            if field is None:
+                return None
+            if "as" in b and not _is_name(b["as"]):
+                return err(f"{bp}.as", "bad_type", f"{bp}.as must be a column name of 1 to 64 characters.")
+            group_by = b.get("groupBy")
+            if group_by is None:
+                group_by = []
+            if not isinstance(group_by, list) or len(group_by) > 4 or not all(isinstance(g, str) for g in group_by):
+                return err(f"{bp}.groupBy", "bad_type", f"{bp}.groupBy must be an array of at most 4 column names.")
+            for gi, g in enumerate(group_by):
+                if g not in columns:
+                    return no_column(f"{bp}.groupBy[{gi}]", g)
+            sort_by = None
+            if "sortBy" in b:
+                sort_by = column("sortBy")
+                if sort_by is None:
+                    return None
+            if "base" in b and not (is_finite_number(b["base"]) and b["base"] > 0):
+                return err(f"{bp}.base", "bad_value", f"{bp}.base must be a positive number (the value every group starts from), got {_fmt(b['base'])}.", "Use 100 for an index, or 1 for a ratio.")
+            at = b["at"] if "at" in b else "first"
+            if not ((isinstance(at, str) and (at == "first" or ulen(at) <= MAX_STRING)) or is_finite_number(at)):
+                return err(f"{bp}.at", "bad_type", f'{bp}.at must be "first" or a value of the sortBy column (a number, a date or a text), got {_fmt(at)}.')
+            first = isinstance(at, str) and at == "first"
+            if not first and sort_by is None:
+                return err(f"{bp}.sortBy", "missing_required", f'{bp}.at names a base value, so it needs "sortBy" (the column that value is looked up in).', f'E.g. {{"index":{{"field":"{field}","sortBy":"date","at":{json_key(at)}}}}}.')
+            if not any(to_number(r.get(field)) is not None for r in cur):
+                return err(f"{bp}.field", "not_numeric", f'Column "{field}" has no numeric values to index.', "Index a numeric column, or convert the values to numbers first.")
+            target = b["as"] if "as" in b else field
+            cur, dropped = _index_rows(cur, field, target, group_by, sort_by, float(b["base"]) if "base" in b else 100.0, None if first else at)
+            if dropped:
+                one = len(dropped) == 1
+                listed = ", ".join(f"{g} ({why})" for g, why in dropped[:10])
+                issues.append({"severity": "warning", "code": "index_group_dropped", "path": f"{bp}.field",
+                               "message": f"{len(dropped)} {'group has' if one else 'groups have'} no usable base value and {'was' if one else 'were'} dropped (a value cannot be divided by zero, a missing or a negative base): {listed}{f' and {len(dropped) - 10} more' if len(dropped) > 10 else ''}.",
+                               "hint": "Filter out the leading zeros or gaps first, or pick a base with `at` where every group has a positive value." if first else "Pick an `at` value present in every group with a positive value, or filter those groups out first."})
+            columns = {**columns, target: None}
         else:  # fold
             if "fields" not in b:
                 return err(f"{bp}.fields", "missing_required", f'{bp} needs "fields" (the columns to fold into rows).')
@@ -493,6 +534,55 @@ def _window_rows(rows: list[Row], op: str, field: str, target: str, group_by: li
                         c += 1
                 result[ri] = s / c if c else None
     return [{**r, target: result[i]} for i, r in enumerate(rows)]
+
+
+def _index_rows(rows: list[Row], field: str, target: str, group_by: list[str], sort_by: str | None, base: float, at: Any) -> tuple[list[Row], list[tuple[str, str]]]:
+    """One index step: every group is rescaled so its base row equals `base`. Mirrors `indexRows`.
+
+    `at` is None for the first row in `sort_by` order, otherwise the `sort_by` value of the base row. A group with
+    no usable base value is dropped whole and named in the second result. Kept rows keep their order."""
+    groups: dict[str, list[int]] = {}
+    for i, r in enumerate(rows):
+        groups.setdefault(json_key([r.get(g) for g in group_by]), []).append(i)
+    result: list[Any] = [None] * len(rows)
+    keep = [True] * len(rows)
+    dropped: list[tuple[str, str]] = []
+    for idx in groups.values():
+        order = idx if sort_by is None else [idx[k] for k in _sort_order([rows[i].get(sort_by) for i in idx], False)]
+        if at is None:
+            base_row: int | None = order[0]
+        else:
+            base_row = next((i for i in order if _same_key(rows[i].get(sort_by), sort_by in rows[i], at)), None)  # type: ignore[arg-type]
+        b = None if base_row is None else to_number(rows[base_row].get(field))
+        if base_row is None:
+            why = f"no row at {_fmt(at)}"
+        elif b is None:
+            why = "base is missing" if _is_missing(rows[base_row].get(field)) else "base is not a number"
+        elif b == 0:
+            why = "base is 0"
+        elif b < 0:
+            why = "base is negative"
+        else:
+            why = ""
+        if why:
+            r = rows[idx[0]]
+            name = '"' + " / ".join("null" if r.get(g) is None else js_string(r[g]) for g in group_by) + '"' if group_by else "all rows"
+            dropped.append((name, why))
+            for i in idx:
+                keep[i] = False
+            continue
+        for i in idx:
+            v = to_number(rows[i].get(field))
+            result[i] = None if v is None else (v * base) / b  # type: ignore[operator]
+    return [{**r, target: result[i]} for i, r in enumerate(rows) if keep[i]], dropped
+
+
+def _same_key(a: Any, present: bool, b: Any) -> bool:
+    """`sameKey(a, b)` for a cell `a` (absent reads "undefined") and a JSON value `b`."""
+    na, nb = ordinal(a), ordinal(b)
+    if na is not None or nb is not None:
+        return na == nb
+    return _text_or_undefined(a, present) == js_string(b)
 
 
 def _rank_tie(prev: Row, row: Row, key: str) -> bool:

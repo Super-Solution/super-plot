@@ -13,7 +13,7 @@ from ._js import clip, is_finite_number, is_number, js_string, key_string, numbe
 from .data import detect_x_kind, distinct, matrix, observations
 from .geo import Geography, js_trim, normalize_region
 from .isotime import _civil_from_days, to_time
-from .numeric import bin_counts, bin_edges, box_stats, closest, correlation, density_peaks, extent, kde, mean, quantile, r2, total, waffle_cells, waffle_grid
+from .numeric import bin_counts, bin_edges, box_stats, closest, correlation, density_peaks, extent, js_round, kde, mean, quantile, r2, total, waffle_cells, waffle_grid
 from .text import format_date, format_datetime, format_duration, format_percent, value_formatter
 
 Spec = dict[str, Any]
@@ -137,6 +137,131 @@ def _interval_check(spec: Spec, rows: list[dict], issues: Issues, axis: str) -> 
     return True
 
 
+# ------------------------------------------------------------------------- two value axes, broken axis
+# Mirrors `packages/core/src/charts/valueaxes.ts`.
+
+_RIGHT_ONLY = ["yRightLabel", "rightDomain", "formatRight"]
+
+
+def _right_cols(spec: Spec) -> list[str]:
+    """The columns of `yRight`, as a list."""
+    if "yRight" not in spec:
+        return []
+    return spec["yRight"] if isinstance(spec["yRight"], list) else [spec["yRight"]]
+
+
+def _dual_check(spec: Spec, issues: Issues, left: list[str], refused: str | None = None, ignored: str | None = None) -> None:
+    """Checks for `yRight`: `refused` says why a right axis cannot be drawn here (an error), `ignored` why it is left out."""
+    right = _right_cols(spec)
+    if not right:
+        for k in _RIGHT_ONLY:
+            if k in spec:
+                _issue(issues, "warning", "right_axis_unused", k, f"{k} is ignored: there is no right axis without `yRight`.", "Add yRight with the column(s) for the right axis, or drop this field.")
+        return
+    if refused:
+        _issue(issues, "error", "dual_axis_refused", "yRight", f"A right axis is refused here: {refused}", "Index the series to a common base (an `index` transform step) and use one axis, or draw two charts with `sync`.")
+        return
+    if ignored:
+        _issue(issues, "warning", "dual_axis_ignored", "yRight", f"yRight is ignored {ignored}", "Use vertical bars (or a line chart) for a right axis.")
+        return
+    bad = False
+    for i, c in enumerate(right):
+        if c in left:
+            bad = True
+            _issue(issues, "error", "dual_axis_overlap", f"yRight[{i}]" if isinstance(spec["yRight"], list) else "yRight", f'Column "{c}" is on both axes.', "Give each column one axis: remove it from y (or line), or from yRight.")
+    if bad:
+        return
+    names = _fmt_list([f'"{clip(c, 40)}"' for c in right])
+    _issue(issues, "info", "dual_axis", "yRight",
+           f"{names} {'is' if len(right) == 1 else 'are'} drawn against a second value axis on the right. Two independent scales on one plot can suggest a relationship (where lines cross, how far apart they are, whether they move together) that is only the choice of the two ranges.",
+           'To compare growth, index every series to a common base (transform step {"index":{"field":...,"groupBy":[...]}}) and use one axis; to compare levels, draw two charts with `sync`. Keep the right axis only when the two measures are related and the reader needs both on one time line.')
+
+
+def _break_plan(values: list[float], brk: list[float], bars: bool) -> tuple[list[float], bool]:
+    """Values on a broken axis: those inside the cut, and whether any lies beyond it. Mirrors `breakPlan`."""
+    lo, hi = brk
+    inside = [v for v in values if lo < v < hi]
+    above = any(v >= hi for v in values)
+    below = any(v <= lo for v in values)
+    # Bars start at zero, outside the cut: the far side is the one away from zero.
+    beyond = (above if lo > 0 else below) if bars else above and below
+    return inside, beyond
+
+
+def _say(v: float) -> str:
+    return number_string(js_round(v * 1e6) / 1e6)
+
+
+def _break_check(spec: Spec, issues: Issues, values: list[float], bars: bool, refused: str | None = None) -> bool:
+    """Checks for `yBreak`; a break with no value beyond it is removed from the normalised spec. Mirrors `breakCheck`."""
+    if "yBreak" not in spec:
+        return False
+    b = spec["yBreak"]
+    if b[0] is None or b[1] is None:
+        _issue(issues, "error", "bad_value", "yBreak", "yBreak needs two numbers, [from, to]: the span to cut out of the axis.", "E.g. [50, 900] to cut out everything between 50 and 900.")
+        return False
+    if refused:
+        _issue(issues, "error", "break_refused", "yBreak", f"A broken axis is refused here: {refused}", "Use facets or (on a line) a log scale to show values of very different size.")
+        return False
+    span = f"[{_say(b[0])}, {_say(b[1])}]"
+    if bars and b[0] <= 0 and b[1] >= 0:
+        _issue(issues, "error", "break_misleading", "yBreak", f"yBreak {span} cuts out zero, where every bar starts: the bars that do not cross the break would lose their baseline and their lengths would mean nothing.",
+               "Move the break to a span that every bar either crosses or stays below (both ends above zero, or both below), or drop it and use facets.")
+        return False
+    inside, beyond = _break_plan(values, b, bars)
+    if not beyond:
+        _issue(issues, "warning", "break_outside", "yBreak", f"No value lies beyond yBreak {span}{'' if bars else ' on both sides'}, so there is nothing to bring closer: the break is not drawn.", "Set the break between the small and the large values, or drop it.")
+        # The normalised spec says what is drawn.
+        del spec["yBreak"]
+        return False
+    if inside:
+        n = len(inside)
+        _issue(issues, "warning", "break_hides_values", "yBreak",
+               f"{n} {'value lies' if n == 1 else 'values lie'} inside the cut-out span ({', '.join(_say(v) for v in inside[:5])}{', ...' if n > 5 else ''}); {'it is' if n == 1 else 'they are'} drawn at the edge of the break, marked with a dashed outline, and tooltips say so.",
+               "A break should remove a span no value falls in. Narrow it so no value lies inside, or drop it.")
+    how = "Bars that cross the cut are drawn shorter than their value, so large and small bars look closer than they are" if bars else "Changes across the cut look smaller than they are"
+    _issue(issues, "info", "axis_break", "yBreak", f"The value axis is cut from {_say(b[0])} to {_say(b[1])}: a span of {_say(b[1] - b[0])} is not drawn. {how}; a zigzag gap marks the cut, and tooltips and the description give the real values.",
+           "To show values of very different size without hiding part of the scale, use facets, or a log scale on a line chart.")
+    return True
+
+
+def _range_text(values: list[float], fmt: str | None) -> str:
+    """Lowest and highest of some numbers, as text in a format. Mirrors `rangeText`."""
+    if not values:
+        return "no values"
+    f = value_formatter(fmt)
+    lo, hi = float("inf"), float("-inf")
+    for v in values:
+        if v < lo:
+            lo = v
+        if v > hi:
+            hi = v
+    return f(lo) if lo == hi else f"{f(lo)} to {f(hi)}"
+
+
+def _dual_note(spec: Spec, left_keys: list[str], left_values: list[float], right_keys: list[str], right_values: list[float]) -> str:
+    """The description's sentence on two value axes. Mirrors `dualNote`."""
+    def axis(side: str, label: Any) -> str:
+        return f"the {side} axis{f' ({clip(label, 60)})' if isinstance(label, str) and label else ''}"
+
+    right_format = spec["formatRight"] if spec.get("formatRight") is not None else spec.get("format")
+    return (f" Two value axes with independent scales: {axis('left', spec.get('yLabel'))} shows {_fmt_list([clip(k, 40) for k in left_keys])} ({_range_text(left_values, spec.get('format'))});"
+            f" {axis('right', spec.get('yRightLabel'))} shows {_fmt_list([clip(k, 40) for k in right_keys])} ({_range_text(right_values, right_format)})."
+            " Where the lines meet or how steep they look depends on the two chosen ranges, not on the data.")
+
+
+def _break_note(spec: Spec, values: list[float], bars: bool) -> str:
+    """The description's sentence on a broken axis. Mirrors `breakNote`."""
+    brk = spec.get("yBreak")
+    if not brk or brk[0] is None or brk[1] is None:
+        return ""
+    f = value_formatter(spec.get("format"))
+    inside = len(_break_plan(values, brk, bars)[0])
+    how = "bars that cross it are drawn shorter than their value" if bars else "changes across it look smaller than they are"
+    more = f" {inside} {'value lies' if inside == 1 else 'values lie'} inside the cut and {'is' if inside == 1 else 'are'} drawn at its edge." if inside else ""
+    return f" The value axis is broken: the span from {f(brk[0])} to {f(brk[1])} is cut out, so {how}; the values given here are the real ones.{more}"
+
+
 # ---------------------------------------------------------------------------------------------- bar
 
 
@@ -160,6 +285,45 @@ def _line_cols(spec: Spec) -> list[str]:
     return spec["line"] if isinstance(spec["line"], list) else [spec["line"]]
 
 
+def _right_line_cols(spec: Spec) -> list[str]:
+    """Lines on a second value axis (`yRight`): vertical bars that are not 100% stacked only. Mirrors `rightLineCols`."""
+    if spec.get("orientation") == "horizontal" or spec.get("stack") == "normalize":
+        return []
+    return _right_cols(spec)
+
+
+def _col_sums(spec: Spec, col: str) -> dict[str, float]:
+    """Per category, the sum of a column (duplicates summed, like bars). Mirrors `colSums`."""
+    mm: dict[str, float] = {}
+    for r in spec["data"]:
+        v = to_number(r.get(col))
+        if v is None:
+            continue
+        cat = key_string(r.get(spec["x"]))
+        mm[cat] = mm.get(cat, 0.0) + v
+    return mm
+
+
+def _bar_axis_values(spec: Spec) -> list[float]:
+    """The numbers drawn on the left value axis: bars, lines and whisker ends. Mirrors `axisValues`."""
+    _, keys, m = _bar_model(spec)
+    out: list[float] = []
+    for row in m.values():
+        for k in keys:
+            if k in row:
+                out.append(row[k])
+    for k in _line_cols(spec):
+        if k not in keys:
+            out.extend(_col_sums(spec, k).values())
+    if spec.get("yLower") and spec.get("yUpper") and spec.get("stack", "none") == "none":
+        for r in spec["data"]:
+            for col in (spec["yLower"], spec["yUpper"]):
+                n = to_number(r.get(col))
+                if n is not None:
+                    out.append(n)
+    return out
+
+
 def _series_ignored(spec: Spec, issues: Issues) -> None:
     if isinstance(spec.get("y"), list) and len(spec["y"]) > 1 and spec.get("series"):
         _issue(issues, "warning", "series_ignored", "series", "`series` is ignored when `y` lists several columns.")
@@ -174,6 +338,14 @@ def _check_bar(spec: Spec, rows: list[dict], issues: Issues) -> None:
             _issue(issues, "warning", "negative_in_stack", "y", "Negative values in a stacked bar are stacked below the axis; check that is what you want.")
     if "line" in spec and (spec.get("orientation") == "horizontal" or spec.get("stack") == "normalize"):
         _issue(issues, "warning", "line_ignored", "line", f"`line` is ignored on {'horizontal' if spec.get('orientation') == 'horizontal' else '100% stacked'} bars.")
+    ys = spec["y"] if isinstance(spec["y"], list) else [spec["y"]]
+    line_list = [] if "line" not in spec else spec["line"] if isinstance(spec["line"], list) else [spec["line"]]
+    _dual_check(spec, issues, [*ys, *line_list],
+                ignored="on horizontal bars: their value axis runs along x." if spec.get("orientation") == "horizontal" else "on 100% stacked bars: their axis is a share, not a quantity." if spec.get("stack") == "normalize" else None)
+    _break_check(spec, issues, _bar_axis_values(spec), True,
+                 "a stack adds its segments end to end, so a cut would fall inside segments and hide which ones." if spec.get("stack") in ("stack", "normalize")
+                 else "bars refuse a log axis." if spec.get("yScale") == "log"
+                 else "with a right axis, a break on the left one would make the two scales even harder to compare." if _right_line_cols(spec) else None)
     _refuse_log(spec, issues, "yScale")
     stacked = spec.get("stack") in ("stack", "normalize")
     if spec.get("mark") == "lollipop" and stacked:
@@ -205,6 +377,23 @@ def _describe_bar(spec: Spec) -> str:
     ls = [k for k in _line_cols(spec) if k not in keys]
     if ls:
         t += f" With {'a line' if len(ls) == 1 else 'lines'} for {_fmt_list(ls)} on the same axis."
+    rs = [k for k in _right_line_cols(spec) if k not in keys and k not in ls]
+    if rs:
+        fr = value_formatter(spec["formatRight"] if spec.get("formatRight") is not None else spec.get("format"))
+        for k in rs[:2]:
+            vals = list(_col_sums(spec, k).items())
+            if not vals:
+                continue
+            top = _first_max(vals, lambda x: x[1])
+            low = _first_min(vals, lambda x: x[1])
+            t += (f" {clip(k, 40)} (right axis, a line): from {fr(vals[0][1])} at {clip(vals[0][0], 40)} to {fr(vals[-1][1])} at {clip(vals[-1][0], 40)};"
+                  f" peak {fr(top[1])} at {clip(top[0], 40)}, low {fr(low[1])} at {clip(low[0], 40)}.")
+        left_vals = [v for row in m.values() for v in row.values()]
+        for k in ls:
+            left_vals.extend(_col_sums(spec, k).values())
+        t += _dual_note(spec, [*keys, *ls], left_vals, rs, [v for k in rs for v in _col_sums(spec, k).values()]).replace("Where the lines meet", "Where a line meets the bars", 1)
+    if spec.get("yBreak") and unstacked and not rs:
+        t += _break_note(spec, _bar_axis_values(spec), True)
     if spec.get("yLower") and spec.get("yUpper") and unstacked:
         t += f" Whiskers show {clip(spec['yLower'], 40)} to {clip(spec['yUpper'], 40)}."
     return t
@@ -225,9 +414,16 @@ def _describe_series(spec: Spec, name: str) -> str:
     def label(x: Any) -> str:
         return format_date(x) if kind == "time" else (x if isinstance(x, str) else number_string(x))
 
-    t = f"{_lead(spec, name)} {len(keys)} series{f' ({_fmt_list(keys)})' if len(keys) > 1 else ''} over {'categories' if kind == 'category' else 'time' if kind == 'time' else 'a numeric x axis'}."
-    for k in keys[:4]:
-        pts = [{"x": xk(o["x"]), "y": o["y"]} for o in obs if o["s"] == k and o["y"] is not None and xk(o["x"]) is not None
+    rights = _right_cols(spec) if spec.get("stack", "none") == "none" and spec.get("yScale") != "log" else []
+    obs_r = observations(spec["data"], spec.get("x"), rights) if rights else []
+    keys_r = [k for k in distinct(o["s"] for o in obs_r) if k not in keys]
+    every = [*keys, *keys_r]
+    t = f"{_lead(spec, name)} {len(every)} series{f' ({_fmt_list(every)})' if len(every) > 1 else ''} over {'categories' if kind == 'category' else 'time' if kind == 'time' else 'a numeric x axis'}."
+    f_left = f
+    f_right = value_formatter(spec["formatRight"] if spec.get("formatRight") is not None else spec.get("format"))
+    for k, right in [*((k, False) for k in keys[:4]), *((k, True) for k in keys_r[:2])]:
+        f = f_right if right else f_left
+        pts = [{"x": xk(o["x"]), "y": o["y"]} for o in (obs_r if right else obs) if o["s"] == k and o["y"] is not None and xk(o["x"]) is not None
                and (spec.get("yScale") != "log" or o["y"] > 0) and (spec.get("xScale") != "log" or kind != "linear" or xk(o["x"]) > 0)]
         if kind != "category":
             pts.sort(key=lambda p: p["x"])
@@ -237,9 +433,28 @@ def _describe_series(spec: Spec, name: str) -> str:
         hi = _first_max(pts, lambda p: p["y"])
         lo = _first_min(pts, lambda p: p["y"])
         change = f" ({to_fixed(((last['y'] - first['y']) / abs(first['y'])) * 100, 1)}%)" if first["y"] != 0 else ""
-        t += (f" {clip(k, 40)}: from {f(first['y'])} at {label(first['x'])} to {f(last['y'])} at {label(last['x'])}{change if len(pts) > 1 else ''};"
+        t += (f" {clip(k, 40)}{' (right axis)' if right else ''}: from {f(first['y'])} at {label(first['x'])} to {f(last['y'])} at {label(last['x'])}{change if len(pts) > 1 else ''};"
               f" peak {f(hi['y'])} at {label(hi['x'])}, low {f(lo['y'])} at {label(lo['x'])}.")
+    if keys_r:
+        def vals(o: list[dict]) -> list[float]:
+            return [p["y"] for p in o if p["y"] is not None and xk(p["x"]) is not None]
+
+        t += _dual_note(spec, keys, vals(obs), keys_r, vals(obs_r))
+    if spec["type"] == "line" and spec.get("yBreak") and spec.get("yScale") != "log" and not keys_r:
+        t += _break_note(spec, _line_values(spec), False)
     return t + _series_notes(spec)
+
+
+def _line_values(spec: Spec) -> list[float]:
+    """The numbers a line chart draws on its value axis: the y columns and the interval ends. Mirrors `lineValues`."""
+    cols = [*(spec["y"] if isinstance(spec["y"], list) else [spec["y"]]), *([spec["yLower"], spec["yUpper"]] if spec.get("yLower") and spec.get("yUpper") else [])]
+    out: list[float] = []
+    for r in spec["data"]:
+        for col in cols:
+            n = to_number(r.get(col))
+            if n is not None:
+                out.append(n)
+    return out
 
 
 def _has_band(spec: Spec) -> bool:
@@ -261,6 +476,15 @@ def _series_notes(spec: Spec) -> str:
 def _check_series(spec: Spec, rows: list[dict], issues: Issues, area: bool) -> None:
     """Mirrors `seriesCheck`."""
     multi = isinstance(spec["y"], list) and len(spec["y"]) > 1
+    left = spec["y"] if isinstance(spec["y"], list) else [spec["y"]]
+    stacked = spec.get("stack", "none") != "none"
+    _dual_check(spec, issues, left,
+                refused="a stacked area adds its series together, and a series on another scale cannot be part of that sum." if area and stacked
+                else "the left axis is logarithmic; a log and a linear axis on one plot cannot be compared at all." if not area and spec.get("yScale") == "log" else None)
+    if not area:
+        _break_check(spec, issues, _line_values(spec), False,
+                     "a log axis already compresses large values; cutting a span out of it as well would hide by how much." if spec.get("yScale") == "log"
+                     else "with a right axis, a break on the left one would make the two scales even harder to compare." if _right_cols(spec) else None)
     if multi and spec.get("series"):
         _issue(issues, "warning", "series_ignored", "series", "`series` is ignored when `y` lists several columns.")
     if _interval_check(spec, rows, issues, "y"):

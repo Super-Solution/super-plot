@@ -39,14 +39,15 @@ const (
 var (
 	// TransformOps are the step kinds, TimeUnits the buckets of timeUnit, AggregateOps the operations of aggregate.
 	// WindowOps are the operations of window.
-	TransformOps = []string{"filter", "timeUnit", "aggregate", "sort", "top", "bin", "window", "fold"}
+	TransformOps = []string{"filter", "timeUnit", "aggregate", "sort", "top", "bin", "window", "fold", "index"}
 	WindowOps    = []string{"sum", "mean", "count", "rank", "pctChange", "lag", "lead", "movingMean"}
 	TimeUnits    = []string{"year", "quarter", "month", "week", "day", "hour"}
 	AggregateOps = []string{"sum", "mean", "median", "min", "max", "count", "distinct"}
 
 	filterKeys    = []string{"field", "equal", "oneOf", "range", "gt", "gte", "lt", "lte", "valid"}
 	transformKeys = map[string][]string{"filter": filterKeys, "timeUnit": {"field", "unit", "as"}, "aggregate": {"groupBy", "fields", "count"}, "sort": {"field", "order"}, "top": {"n", "by"},
-		"bin": {"field", "as", "step", "maxbins"}, "window": {"op", "field", "as", "groupBy", "sortBy", "order", "frame"}, "fold": {"fields", "as"}}
+		"bin": {"field", "as", "step", "maxbins"}, "window": {"op", "field", "as", "groupBy", "sortBy", "order", "frame"}, "fold": {"fields", "as"},
+		"index": {"field", "as", "groupBy", "sortBy", "base", "at"}}
 )
 
 // ordinal is a row value or bound as a number: numbers first, then ISO dates (epoch ms). Mirrors ordinal.
@@ -584,9 +585,193 @@ func applyTransform(value any, raw json.RawMessage, rows []row, issues *[]Issue,
 				}
 			}
 			columns = distinct(append(kept, k, v))
+		case "index":
+			field, good := column("field")
+			if !good {
+				return nil, false
+			}
+			target := field
+			if as, given := b["as"]; given {
+				if !isName(as) {
+					return fail(bp+".as", "bad_type", bp+".as must be a column name of 1 to 64 characters.")
+				}
+				target = as.(string)
+			}
+			var groupBy []string
+			if v := b["groupBy"]; v != nil {
+				list, isList := v.([]any)
+				good := isList && len(list) <= 4
+				for _, e := range list {
+					s, isStr := e.(string)
+					good = good && isStr
+					groupBy = append(groupBy, s)
+				}
+				if !good {
+					return fail(bp+".groupBy", "bad_type", bp+".groupBy must be an array of at most 4 column names.")
+				}
+			}
+			for gi, g := range groupBy {
+				if !contains(columns, g) {
+					return noColumn(fmt.Sprintf("%s.groupBy[%d]", bp, gi), g)
+				}
+			}
+			sortBy, sorted := "", false
+			if _, given := b["sortBy"]; given {
+				if sortBy, good = column("sortBy"); !good {
+					return nil, false
+				}
+				sorted = true
+			}
+			base := 100.0
+			if v, given := b["base"]; given {
+				n, isNum := v.(float64)
+				if !isNum || !isFinite(n) || n <= 0 {
+					return fail(bp+".base", "bad_value", fmt.Sprintf("%s.base must be a positive number (the value every group starts from), got %s.", bp, show(v)), "Use 100 for an index, or 1 for a ratio.")
+				}
+				base = n
+			}
+			// at: "first" (the default), or the sortBy value of the base row.
+			at, first := b["at"]
+			first = !first || at == "first"
+			if !first {
+				text, isStr := at.(string)
+				n, isNum := at.(float64)
+				if !(isStr && ulen(text) <= data.Limits["maxString"]) && !(isNum && isFinite(n)) {
+					return fail(bp+".at", "bad_type", fmt.Sprintf("%s.at must be \"first\" or a value of the sortBy column (a number, a date or a text), got %s.", bp, show(at)))
+				}
+				if !sorted {
+					return fail(bp+".sortBy", "missing_required", bp+".at names a base value, so it needs \"sortBy\" (the column that value is looked up in).", fmt.Sprintf(`E.g. {"index":{"field":%q,"sortBy":"date","at":%s}}.`, field, show(at)))
+				}
+			}
+			numeric := false
+			for _, r := range cur {
+				if _, ok := toNumber(r[field]); ok {
+					numeric = true
+					break
+				}
+			}
+			if !numeric {
+				return fail(bp+".field", "not_numeric", fmt.Sprintf("Column %q has no numeric values to index.", field), "Index a numeric column, or convert the values to numbers first.")
+			}
+			var dropped []string
+			cur, dropped = indexRows(cur, field, target, groupBy, sortBy, sorted, base, at, first)
+			if n := len(dropped); n > 0 {
+				more := ""
+				if n > 10 {
+					more = fmt.Sprintf(" and %d more", n-10)
+				}
+				hint := "Pick an `at` value present in every group with a positive value, or filter those groups out first."
+				if first {
+					hint = "Filter out the leading zeros or gaps first, or pick a base with `at` where every group has a positive value."
+				}
+				add(issues, "warning", "index_group_dropped", bp+".field", fmt.Sprintf("%d %s no usable base value and %s dropped (a value cannot be divided by zero, a missing or a negative base): %s%s.", n, plural(n, "group has", "groups have"), plural(n, "was", "were"), strings.Join(dropped[:min(10, n)], ", "), more), hint)
+			}
+			columns = distinct(append(append([]string(nil), columns...), target))
 		}
 	}
 	return cur, true
+}
+
+// indexRows is one index step: every group is rescaled so that its base row equals base. The base row is the
+// first in sortBy order (first), or the first in that order whose sortBy value equals at. A group with no usable
+// base value is dropped whole and named in dropped. Kept rows keep their order. Mirrors indexRows.
+func indexRows(rows []row, field, target string, groupBy []string, sortBy string, sorted bool, base float64, at any, first bool) (out []row, dropped []string) {
+	groups := newOmap[[]int]()
+	for i, r := range rows {
+		var key strings.Builder
+		key.WriteByte('[')
+		for gi, g := range groupBy {
+			if gi > 0 {
+				key.WriteByte(',')
+			}
+			jsonKey(&key, r[g])
+		}
+		members, _ := groups.get(key.String())
+		groups.set(key.String(), append(members, i))
+	}
+	result := make([]any, len(rows))
+	keep := make([]bool, len(rows))
+	for _, idx := range groups.values() {
+		order := idx
+		if sorted {
+			values := make([]any, len(idx))
+			for k, i := range idx {
+				values[k] = rows[i][sortBy]
+			}
+			order = make([]int, len(idx))
+			for k, pos := range sortOrder(values, false) {
+				order[k] = idx[pos]
+			}
+		}
+		baseRow := -1
+		if first {
+			baseRow = order[0]
+		} else {
+			for _, i := range order {
+				if sameKey(rows[i], sortBy, at) {
+					baseRow = i
+					break
+				}
+			}
+		}
+		why := ""
+		b := 0.0
+		if baseRow < 0 {
+			why = "no row at " + show(at)
+		} else if n, ok := toNumber(rows[baseRow][field]); !ok {
+			why = "base is not a number"
+			if v := rows[baseRow][field]; v == nil || isEmptyString(v) {
+				why = "base is missing"
+			}
+		} else if n == 0 {
+			why = "base is 0"
+		} else if n < 0 {
+			why = "base is negative"
+		} else {
+			b = n
+		}
+		if why != "" {
+			name := "all rows"
+			if len(groupBy) > 0 {
+				parts := make([]string, len(groupBy))
+				for gi, g := range groupBy {
+					parts[gi] = "null"
+					if v := rows[idx[0]][g]; v != nil {
+						parts[gi] = jsString(v)
+					}
+				}
+				name = `"` + strings.Join(parts, " / ") + `"`
+			}
+			dropped = append(dropped, name+" ("+why+")")
+			continue
+		}
+		for _, i := range idx {
+			keep[i] = true
+			if v, ok := toNumber(rows[i][field]); ok {
+				result[i] = mul(v, base) / b
+			}
+		}
+	}
+	out = make([]row, 0, len(rows))
+	for i, r := range rows {
+		if keep[i] {
+			c := copyRow(r, 1)
+			c[target] = result[i]
+			out = append(out, c)
+		}
+	}
+	return out, dropped
+}
+
+// sameKey says whether a row's cell and a JSON value are the same sort key: the same number or date, else the
+// same text (a missing cell reads "undefined"). Mirrors sameKey.
+func sameKey(r row, key string, b any) bool {
+	na, aOK := ordinal(r[key])
+	nb, bOK := ordinal(b)
+	if aOK || bOK {
+		return aOK && bOK && na == nb
+	}
+	return cellText(r, key) == jsString(b)
 }
 
 // filterRow is the predicate for one filter step (every test given must hold). Mirrors filterRow.

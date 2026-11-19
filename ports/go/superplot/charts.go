@@ -52,6 +52,15 @@ var checks = map[string]func(spec, []row, *[]Issue){
 }
 
 // mapChecks are the checks of the map charts: they also get the geography that geo resolved to (nil without geo).
+func init() {
+	for k, v := range checksMore {
+		checks[k] = v
+	}
+	for k, v := range describersMore {
+		describers[k] = v
+	}
+}
+
 var mapChecks = map[string]func(spec, []row, *[]Issue, *geography){
 	"choropleth": checkChoropleth,
 	"bubble-map": checkBubbleMap,
@@ -354,6 +363,27 @@ func checkBar(s spec, rows []row, issues *[]Issue) {
 		}
 		issue(issues, "warning", "line_ignored", "line", fmt.Sprintf("`line` is ignored on %s bars.", on))
 	}
+	left := append([]string(nil), columnList(s["y"])...)
+	if has(s, "line") {
+		left = append(left, columnList(s["line"])...)
+	}
+	ignored := ""
+	if str(s, "orientation") == "horizontal" {
+		ignored = "on horizontal bars: their value axis runs along x."
+	} else if str(s, "stack") == "normalize" {
+		ignored = "on 100% stacked bars: their axis is a share, not a quantity."
+	}
+	dualCheck(s, issues, left, "", ignored)
+	refused := ""
+	switch {
+	case stacked(s):
+		refused = "a stack adds its segments end to end, so a cut would fall inside segments and hide which ones."
+	case str(s, "yScale") == "log":
+		refused = "bars refuse a log axis."
+	case len(rightLineCols(s)) > 0:
+		refused = "with a right axis, a break on the left one would make the two scales even harder to compare."
+	}
+	breakCheck(s, issues, barAxisValues(s), true, refused)
 	refuseLog(s, issues, "yScale")
 	if str(s, "mark") == "lollipop" && stacked(s) {
 		issue(issues, "warning", "lollipop_stacked", "mark", "Lollipops cannot stack; stacked bars are drawn instead.", `Set stack to "none" for side-by-side lollipops.`)
@@ -420,6 +450,39 @@ func describeBar(s spec) string {
 	if len(ls) > 0 {
 		t += fmt.Sprintf(" With %s for %s on the same axis.", plural(len(ls), "a line", "lines"), fmtList(ls, 5))
 	}
+	var rs []string
+	for _, k := range rightLineCols(s) {
+		if !contains(mod.keys, k) && !contains(ls, k) {
+			rs = append(rs, k)
+		}
+	}
+	if len(rs) > 0 {
+		fR := ValueFormatter(rightFormat(s))
+		var rightVals []float64
+		for i, k := range rs {
+			sums := colSums(s, k)
+			rightVals = append(rightVals, sums.values()...)
+			if i >= 2 || len(sums.keys) == 0 {
+				continue
+			}
+			at := func(c string) float64 { v, _ := sums.get(c); return v }
+			first, last := sums.keys[0], sums.keys[len(sums.keys)-1]
+			hi, lo := firstMax(sums.keys, at), firstMin(sums.keys, at)
+			t += fmt.Sprintf(" %s (right axis, a line): from %s at %s to %s at %s; peak %s at %s, low %s at %s.", clip(k, 40), fR(at(first)), clip(first, 40), fR(at(last)), clip(last, 40), fR(at(hi)), clip(hi, 40), fR(at(lo)), clip(lo, 40))
+		}
+		var leftVals []float64
+		for _, r := range mod.m.values() {
+			leftVals = append(leftVals, r.values()...)
+		}
+		for _, k := range ls {
+			leftVals = append(leftVals, colSums(s, k).values()...)
+		}
+		note := dualNote(s, append(append([]string(nil), mod.keys...), ls...), leftVals, rs, rightVals)
+		t += strings.Replace(note, "Where the lines meet", "Where a line meets the bars", 1)
+	}
+	if has(s, "yBreak") && !stacked(s) && len(rs) == 0 {
+		t += breakNote(s, barAxisValues(s), true)
+	}
 	if str(s, "yLower") != "" && str(s, "yUpper") != "" && !stacked(s) {
 		t += fmt.Sprintf(" Whiskers show %s to %s.", clip(str(s, "yLower"), 40), clip(str(s, "yUpper"), 40))
 	}
@@ -465,18 +528,54 @@ func describeSeries(s spec, name string) string {
 	case "time":
 		over = "time"
 	}
-	listed := ""
-	if len(keys) > 1 {
-		listed = fmt.Sprintf(" (%s)", fmtList(keys, 5))
+	// A second value axis (yRight, unstacked and not on a log axis): one series per column.
+	var oR []obs
+	var keysR []string
+	if st := str(s, "stack"); (st == "" || st == "none") && str(s, "yScale") != "log" {
+		if rights := rightCols(s); len(rights) > 0 {
+			// Several columns name their own series; one column does too, as no series column is passed.
+			oR = observations(rowsOf(s), str(s, "x"), has(s, "x"), rights, "")
+			seen := make([]string, len(oR))
+			for i, ob := range oR {
+				seen[i] = ob.s
+			}
+			for _, k := range distinct(seen) {
+				if !contains(keys, k) {
+					keysR = append(keysR, k)
+				}
+			}
+		}
 	}
-	t := fmt.Sprintf("%s %d series%s over %s.", lead(s, name), len(keys), listed, over)
+	every := append(append([]string(nil), keys...), keysR...)
+	listed := ""
+	if len(every) > 1 {
+		listed = fmt.Sprintf(" (%s)", fmtList(every, 5))
+	}
+	t := fmt.Sprintf("%s %d series%s over %s.", lead(s, name), len(every), listed, over)
 	type pt struct {
 		x any
 		y float64
 	}
+	type pick struct {
+		k     string
+		right bool
+	}
+	var picks []pick
 	for _, k := range keys[:min(4, len(keys))] {
+		picks = append(picks, pick{k, false})
+	}
+	for _, k := range keysR[:min(2, len(keysR))] {
+		picks = append(picks, pick{k, true})
+	}
+	fL, fR := f, ValueFormatter(rightFormat(s))
+	for _, pk := range picks {
+		k, from, suffix := pk.k, o, ""
+		f = fL
+		if pk.right {
+			from, suffix, f = oR, " (right axis)", fR
+		}
 		var pts []pt
-		for _, ob := range o {
+		for _, ob := range from {
 			if ob.s != k || !ob.hasY {
 				continue
 			}
@@ -503,7 +602,22 @@ func describeSeries(s spec, name string) string {
 		if first.y != 0 && len(pts) > 1 {
 			change = fmt.Sprintf(" (%s%%)", toFixed(((last.y-first.y)/math.Abs(first.y))*100, 1))
 		}
-		t += fmt.Sprintf(" %s: from %s at %s to %s at %s%s; peak %s at %s, low %s at %s.", clip(k, 40), f(first.y), label(first.x), f(last.y), label(last.x), change, f(hi.y), label(hi.x), f(lo.y), label(lo.x))
+		t += fmt.Sprintf(" %s%s: from %s at %s to %s at %s%s; peak %s at %s, low %s at %s.", clip(k, 40), suffix, f(first.y), label(first.x), f(last.y), label(last.x), change, f(hi.y), label(hi.x), f(lo.y), label(lo.x))
+	}
+	if len(keysR) > 0 {
+		vals := func(list []obs) []float64 {
+			var out []float64
+			for _, ob := range list {
+				if _, ok := xk(ob.x); ob.hasY && ok {
+					out = append(out, ob.y)
+				}
+			}
+			return out
+		}
+		t += dualNote(s, keys, vals(o), keysR, vals(oR))
+	}
+	if str(s, "type") == "line" && has(s, "yBreak") && str(s, "yScale") != "log" && len(keysR) == 0 {
+		t += breakNote(s, lineValues(s), false)
 	}
 	return t + seriesNotes(s)
 }
@@ -545,6 +659,22 @@ func checkSeries(s spec, rows []row, issues *[]Issue, area bool) {
 	ys := columnList(s["y"])
 	_, isList := s["y"].([]any)
 	multi := isList && len(ys) > 1
+	refused := ""
+	if st := str(s, "stack"); area && st != "" && st != "none" {
+		refused = "a stacked area adds its series together, and a series on another scale cannot be part of that sum."
+	} else if !area && str(s, "yScale") == "log" {
+		refused = "the left axis is logarithmic; a log and a linear axis on one plot cannot be compared at all."
+	}
+	dualCheck(s, issues, ys, refused, "")
+	if !area {
+		refused = ""
+		if str(s, "yScale") == "log" {
+			refused = "a log axis already compresses large values; cutting a span out of it as well would hide by how much."
+		} else if len(rightCols(s)) > 0 {
+			refused = "with a right axis, a break on the left one would make the two scales even harder to compare."
+		}
+		breakCheck(s, issues, lineValues(s), false, refused)
+	}
 	if multi && str(s, "series") != "" {
 		issue(issues, "warning", "series_ignored", "series", "`series` is ignored when `y` lists several columns.")
 	}

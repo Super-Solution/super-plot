@@ -29,16 +29,18 @@ func floats(v any) []float64 {
 
 func main() {
 	var d struct {
-		Out       [][]any `json:"out"`
-		Ticks     [][]any `json:"ticks"`
-		Bins      [][]any `json:"bins"`
-		Buckets   [][]any `json:"buckets"`
-		Logs      [][]any `json:"logs"`
-		Densities [][]any `json:"densities"`
-		Fits      [][]any `json:"fits"`
-		BinSteps  [][]any `json:"binSteps"`
-		Waffles   [][]any `json:"waffles"`
-		Durations [][]any `json:"durations"`
+		Out       [][]any             `json:"out"`
+		Ticks     [][]any             `json:"ticks"`
+		Bins      [][]any             `json:"bins"`
+		Buckets   [][]any             `json:"buckets"`
+		Logs      [][]any             `json:"logs"`
+		Densities [][]any             `json:"densities"`
+		Fits      [][]any             `json:"fits"`
+		BinSteps  [][]any             `json:"binSteps"`
+		Waffles   [][]any             `json:"waffles"`
+		Durations [][]any             `json:"durations"`
+		Exacts    [][]any             `json:"exacts"`
+		Clouds    [][]json.RawMessage `json:"clouds"`
 		Specs     []struct {
 			Spec       json.RawMessage `json:"spec"` // as written: a decoded map forgets the order of a Topology's objects
 			OK         bool            `json:"ok"`
@@ -152,6 +154,33 @@ func main() {
 			report("DURATION", c[0], got, c[1])
 		}
 	}
+	// Round 6: the 3D charts' exact number format, and word cloud layouts (whole pixels, so equal means equal).
+	for _, c := range d.Exacts {
+		if got := sp.FormatExact(c[0].(float64)); got != c[1].(string) {
+			report("EXACT", c[0], got, c[1])
+		}
+	}
+	for _, c := range d.Clouds {
+		var words []sp.CloudWord
+		var widths []float64
+		var width, height float64
+		var want []*sp.CloudBox
+		for j, into := range []any{&words, &widths, &width, &height, &want} {
+			if err := json.Unmarshal(c[j], into); err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				os.Exit(2)
+			}
+		}
+		byText := map[string]float64{}
+		for j, w := range words {
+			byText[w.Text] = widths[j]
+		}
+		got := sp.CloudLayout(words, width, height, func(text string, _ int) float64 { return byText[text] })
+		if !reflect.DeepEqual(got, want) {
+			gb, _ := json.Marshal(got)
+			report("CLOUD", len(words), width, height, string(gb), string(c[4]))
+		}
+	}
 	for i, c := range d.Specs {
 		v := sp.ValidatePlot([]byte(c.Spec))
 		var got, want []string
@@ -192,7 +221,7 @@ func main() {
 			}
 		}
 	}
-	fmt.Printf("go: %d numeric cases, %d specs, %d mismatches\n", len(d.Out)+len(d.Ticks)+len(d.Bins)+len(d.Buckets)+len(d.Logs)+len(d.Densities)+len(d.Fits)+len(d.BinSteps)+len(d.Waffles)+len(d.Durations), len(d.Specs), bad)
+	fmt.Printf("go: %d numeric cases, %d specs, %d mismatches\n", len(d.Out)+len(d.Ticks)+len(d.Bins)+len(d.Buckets)+len(d.Logs)+len(d.Densities)+len(d.Fits)+len(d.BinSteps)+len(d.Waffles)+len(d.Durations)+len(d.Exacts)+len(d.Clouds), len(d.Specs), bad)
 	if bad > 0 {
 		os.Exit(1)
 	}

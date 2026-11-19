@@ -18,7 +18,7 @@ import (
 
 // Issue is one problem found in a spec.
 type Issue struct {
-	Severity string `json:"severity"` // "error" or "warning"
+	Severity string `json:"severity"` // "error" (the spec is refused), "warning" (drawn, with a change) or "info" (drawn as asked; a note to read)
 	Code     string `json:"code"`     // stable, machine-readable
 	Path     string `json:"path"`     // JSON path into the spec, e.g. "y" or "annotations[1].axis"
 	Message  string `json:"message"`
@@ -286,7 +286,7 @@ func validateField(name string, d fieldDef, value any, issues *[]Issue, columns 
 		gs.geo = geo
 		return value
 	case "camera":
-		return validateCamera(name, value, issues)
+		return validateCamera(name, value, issues, d)
 	case "values":
 		// A list of data values (strings or numbers, compared as strings), e.g. a path of group names.
 		list, isList := value.([]any)
@@ -541,22 +541,34 @@ func validateAnnotations(name string, value any, issues *[]Issue) any {
 
 func isString(v any) bool { _, ok := v.(string); return ok }
 
-func validateCamera(name string, value any, issues *[]Issue) any {
+// validateCamera checks a camera: the map's (lng, lat, zoom, pitch, bearing), or the keys and limits the field
+// names (the 3D charts take zoom, pitch and bearing, pitch up to 90).
+func validateCamera(name string, value any, issues *[]Issue, d fieldDef) any {
+	cameraKeys, example := cameraKeys, `{"lng":121,"lat":24,"zoom":2}`
+	if d.Keys != nil {
+		cameraKeys, example = d.Keys, `{"pitch":60,"bearing":35,"zoom":1.5}`
+	}
 	m, ok := value.(map[string]any)
 	if !ok {
-		add(issues, "error", "bad_type", name, `camera must be an object such as {"lng":121,"lat":24,"zoom":2}.`)
+		add(issues, "error", "bad_type", name, "camera must be an object such as "+example+".")
 		return nil
 	}
 	out := map[string]any{}
 	good := true
 	for _, k := range sortedKeys(m) {
 		p := name + "." + k
-		limits, known := data.Camera[k]
+		limits, known := d.Limits[k]
+		if !known {
+			limits, known = data.Camera[k]
+		}
+		known = known && contains(cameraKeys, k)
 		f, isNum := m[k].(float64)
 		switch {
 		case !known:
 			hint := "Allowed: " + strings.Join(cameraKeys, ", ") + "."
-			if near, found := closest(k, cameraKeys); found {
+			if d.Keys != nil && (k == "lng" || k == "lat") {
+				hint = "A 3D chart turns round the centre of its box: lng and lat are map fields. " + hint
+			} else if near, found := closest(k, cameraKeys); found {
 				hint = fmt.Sprintf("Did you mean %q?", near)
 			}
 			add(issues, "error", "unknown_field", p, fmt.Sprintf("Unknown camera field %q.", k), hint)

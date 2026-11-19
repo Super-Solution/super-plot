@@ -129,6 +129,11 @@ def format_value(value: float, fmt: str | None = None) -> str:
     return value_formatter(fmt)(value)
 
 
+def format_exact(value: float) -> str:
+    """A number with up to 10 decimals and grouped thousands: `Intl.NumberFormat("en", {maximumFractionDigits: 10})`."""
+    return _signed(value, _plain(_shortest(value), 0, 10))
+
+
 def format_percent(ratio: float, digits: int = 1) -> str:
     """A ratio (0.25) as text ("25%"), with up to `digits` decimals."""
     return _signed(ratio, _percent(ratio, digits))

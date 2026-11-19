@@ -32,6 +32,9 @@ type fieldDef struct {
 	Max      *float64 `json:"max"`
 	Integer  bool     `json:"integer"`
 	Default  any      `json:"default"`
+	// Keys and Limits: the camera fields a chart takes and their ranges, when they differ from the map camera's.
+	Keys   []string              `json:"keys"`
+	Limits map[string][2]float64 `json:"limits"`
 }
 
 type tables struct {
@@ -271,6 +274,10 @@ func ValueFormatter(format string) func(float64) string {
 
 // FormatValue formats one value in a Super Plot format string.
 func FormatValue(value float64, format string) string { return ValueFormatter(format)(value) }
+
+// FormatExact formats a number with up to 10 decimals and grouped thousands, as
+// Intl.NumberFormat("en", {maximumFractionDigits: 10}) does.
+func FormatExact(value float64) string { return signed(value, plain(shortest(value), 0, 10, true)) }
 
 // FormatPercent formats a ratio (0.25) as text ("25%") with up to digits decimals.
 func FormatPercent(ratio float64, digits int) string { return signed(ratio, percent(ratio, digits)) }

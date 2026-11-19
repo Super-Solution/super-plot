@@ -72,3 +72,73 @@ No fault was found in the reference: every mismatch the fuzzer reported was the 
 - "-0% of target" (above).
 - Whether the ports should offer `describe` in a time zone. It needs the IANA database in each language
   (Go has `time/tzdata`, Python `zoneinfo`), and the conformance data has no case for it.
+
+# Round 6: the Go and Python ports
+
+Round 6 added four charts, two value-axis fields and one transform step to the reference. Both ports now replay
+every conformance case and agree with the reference on every fuzzed case.
+
+## What was ported
+
+- **Charts.** `gauge` (items, the scale from `min` / `max` / the data, bands, target, the reading against a
+  band), `wordcloud` (the words a cloud draws, their font sizes, and the layout itself), `scatter3d` and
+  `surface` (points, the grid with its missing and repeated cells, `projection` and `camera`).
+  Python: `charts_more.py`. Go: `charts_extra.go`.
+- **A second value axis and a broken one.** `yRight`, `yRightLabel`, `rightDomain`, `formatRight` and `yBreak`
+  on bar, line and area: the checks (`dual_axis`, `dual_axis_refused`, `dual_axis_ignored`, `dual_axis_overlap`,
+  `right_axis_unused`, `axis_break`, `break_refused`, `break_misleading`, `break_hides_values`, `break_outside`)
+  and the sentences they add to a description. Python: `charts.py`. Go: `valueaxes.go`.
+- **The `index` step** of `transform`, with `index_group_dropped`.
+- **A third severity.** `info` (`dual_axis`, `axis_break`, `perspective_3d`): a note, not a fault. A port already
+  treated anything but `error` as passing, so only the documentation changed.
+- **The camera of a 3D view.** The fields file now carries the camera's keys and limits per field (`keys`,
+  `limits`), so one `camera` check serves the maps and the 3D charts.
+
+Zoom and brush refusals and `transition` are decided when a chart is compiled or drawn; nothing in validate or
+describe depends on them, so the ports have nothing to port there.
+
+## Decisions and findings
+
+- **The word cloud layout is integers only**, by design of the reference: the spiral reads cosines from a table
+  of `cos(5k degrees) x 10000`, divides with one rounding rule (half away from zero) and tests boxes on a 32 px
+  grid. The ports copy the table and the rule, so a layout is equal box for box and needs no tolerance. The one
+  floating-point input is the text width, which the host supplies (`measure`) and the layout rounds up once.
+- **The exact number format.** The 3D descriptions print a value with up to 10 decimals
+  (`Intl.NumberFormat` with `maximumFractionDigits: 10`). `format_exact` / `FormatExact` start from the shortest
+  text that reads back as the same double (Python's `repr`, Go's `strconv` with precision -1), round that
+  decimal text half up at the tenth place and group the integer part. Rounding the text and not the double is
+  what makes `0.30000000000000004` print as `0.3` and `5e-11` as `0.0000000001`, as the reference does.
+- **Minus zero in a grid.** The reference collects a surface's x and y values in a `Set`, which stores `-0` as
+  `0`. The ports normalise the sign when they collect the values; otherwise a grid starting at `-0` would count
+  one value too many and describe itself from "-0".
+- **`yBreak` leaves the normalized spec** when the break lies outside the values (`break_outside`): the
+  reference deletes the field after warning, and so do the ports.
+- **Index compares the base row as sort does**: by number or date when both cells read as one, otherwise as
+  text, and an absent cell reads as the text "undefined". Each value is computed as `(v * base) / b`, in that
+  order, which is the order the reference multiplies and divides in; the other order differs in the last bit.
+
+## Fuzzing
+
+`ports/fuzz/generate.mjs` now writes, per seed:
+
+- 76,457 numeric cases: the earlier ones plus 5,507 exact number formats and 300 word cloud layouts (1 to 70
+  words in areas from nothing to 750 x 530, some words rotated);
+- 6,207 specs: 5,000 at random over all 31 chart types, with the new charts' fields sound and wrong, a camera
+  and a projection on the 3D charts, `yRight` / `yBreak` and their companions on the charts that take them
+  (and now and then on one that does not), and `index` among the transform steps; 700 bar, line and area charts
+  that are mostly sound, written to reach every refusal and note of the two axis fields; 500 mostly sound
+  gauges, word clouds and 3D charts, among them clouds at the word limit and grids at the size limit; and the 7
+  size-limit maps from before.
+
+| Seed | Numeric cases | Specs (valid) | Mismatches, Python | Mismatches, Go |
+|---|---|---|---|---|
+| 7 | 76,457 | 6,207 (2,230) | 0 | 0 |
+| 2026 | 76,457 | 6,207 (2,210) | 0 | 0 |
+| 90210 | 76,457 | 6,207 (2,197) | 0 | 0 |
+
+On seed 7 the specs reach `dual_axis` 259 times, `break_refused` 183, `dual_axis_overlap` 57,
+`dual_axis_ignored` 45, `axis_break` 44, `break_outside` 26, `break_misleading` 12, `break_hides_values` 11,
+`perspective_3d` 314, `index_group_dropped` 280, `too_many_words` 28 and `grid_too_large` 26.
+
+No fault was found in the reference. The one difference the fuzzer reported was in its own cases: JSON cannot
+carry `-0`, so the exact-format case for it arrived as `0`; the case is now `-1e-11`, which rounds to "-0".
