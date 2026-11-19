@@ -8,16 +8,20 @@ from __future__ import annotations
 
 from .geo import GEO_LIMITS, GEO_PRESETS, Geography, GeographyError, get_geography, list_geographies, match_region, normalize_region, register_geography, unregister_geography
 from .isotime import MAX_TIME, MIN_TIME, time_bucket
-from .numeric import bin_counts, bin_edges, box_stats, linear_ticks, nice_domain, quantile
+from .numeric import (
+    bin_counts, bin_edges, box_stats, density_peaks, kde, linear_ticks, loess, log_ticks, nice_domain, nice_log_domain, quantile,
+    silverman, transform_bin_edges, waffle_cells,
+)
 from .text import format_percent, format_value
-from .transform import AGGREGATE_OPS, TIME_UNITS, TRANSFORM_LIMIT, TRANSFORM_OPS, apply_transform
+from .transform import AGGREGATE_OPS, TIME_UNITS, TRANSFORM_LIMIT, TRANSFORM_OPS, WINDOW_OPS, apply_transform
 from .validate import LIMITS, PlotSpecError, Validation, chart_types, describe_plot, fields_of, is_safe_color, require_valid, validate_plot
 
 __all__ = [
     "AGGREGATE_OPS", "GEO_LIMITS", "GEO_PRESETS", "Geography", "GeographyError", "LIMITS", "MAX_TIME", "MIN_TIME", "PlotSpecError", "TIME_UNITS",
-    "TRANSFORM_LIMIT", "TRANSFORM_OPS", "Validation", "apply_transform", "bin_counts", "bin_edges", "box_stats",
-    "chart_types", "describe_plot", "fields_of", "format_percent", "format_value", "get_geography", "is_safe_color",
-    "linear_ticks", "list_geographies", "match_region", "nice_domain", "normalize_region", "quantile",
-    "register_geography", "require_valid", "time_bucket", "unregister_geography", "validate_plot",
+    "TRANSFORM_LIMIT", "TRANSFORM_OPS", "Validation", "WINDOW_OPS", "apply_transform", "bin_counts", "bin_edges", "box_stats",
+    "chart_types", "density_peaks", "describe_plot", "fields_of", "format_percent", "format_value", "get_geography", "is_safe_color",
+    "kde", "linear_ticks", "list_geographies", "loess", "log_ticks", "match_region", "nice_domain", "nice_log_domain",
+    "normalize_region", "quantile", "register_geography", "require_valid", "silverman", "time_bucket", "transform_bin_edges",
+    "unregister_geography", "validate_plot", "waffle_cells",
 ]
 __version__ = "0.3.0"

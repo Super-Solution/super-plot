@@ -13,9 +13,9 @@ from importlib import resources
 from typing import Any
 
 from ._js import clip as _clip  # noqa: F401  (re-exported for symmetry with the reference)
-from ._js import is_finite_number, is_number, to_number, ulen, uslice
-from .charts import CHECKS, DESCRIBE, MAP_CHECKS
-from .geo import CAMERA_RANGE, Geography, resolve_geo
+from ._js import is_finite_number, is_number, js_string, to_number, ulen, uslice
+from .charts import CHECKS, DESCRIBE, MAP_CHECKS, point_notes
+from .geo import CAMERA_RANGE, Geography, js_trim, resolve_geo
 from .isotime import to_time
 from .numeric import closest
 from .text import is_value_format
@@ -27,6 +27,7 @@ with resources.files(__package__).joinpath("fields.v1.json").open("r", encoding=
 LIMITS: dict[str, int] = _DEFS["limits"]
 _CHARTS: dict[str, dict[str, dict[str, Any]]] = {c["type"]: {f["name"]: f for f in c["fields"]} for c in _DEFS["charts"]}
 _ANNOTATION_KEYS = ["axis", "value", "to", "label", "tone"]
+_POINT_ANNOTATION_KEYS = ["x", "y", "label", "tone"]
 _TONES = ["neutral", "positive", "negative", "warning", "info"]
 _HEX = re.compile(r"#(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})", re.I)
 _FUNC = re.compile(r"(?:rgb|rgba|hsl|hsla)\(\s*[0-9.%\s,/-]+\)", re.I)
@@ -164,12 +165,32 @@ def _validate_field(name: str, d: dict[str, Any], value: Any, issues: list, colu
         return value
     if kind == "camera":
         return _camera(name, value, issues)
+    if kind == "flag":
+        # A column of yes/no values, or a list of the marked values.
+        if isinstance(value, str):
+            if value in columns:
+                return value
+            near = closest(value, list(columns))
+            return bad("no_such_column", f'Column "{value}" does not exist in data.', f"{f'Did you mean {chr(34)}{near}{chr(34)}? ' if near else ''}Give a column of yes/no values, or a list of the marked values, e.g. [\"Total\"].")
+        if not isinstance(value, list) or not value:
+            return bad("bad_type", f"{name} must be a column name or a non-empty list of values, got {_show(value)}.")
+        if len(value) > LIMITS["maxCategories"]:
+            return bad("too_many", f"{name} lists {len(value)} values; at most {LIMITS['maxCategories']}.")
+        for i, v in enumerate(value):
+            if not (isinstance(v, str) or is_finite_number(v)):
+                _add(issues, "error", "bad_type", f"{name}[{i}]", f"{name}[{i}] must be a string or a number, got {_show(v)}.")
+                return None
+        return [js_string(v) for v in value]
     # column / columns
     names = (value if isinstance(value, list) else [value]) if kind == "columns" else [value]
     if kind == "column" and not isinstance(value, str):
         return bad("bad_type", f"{name} must be the name of a data column (a string), got {_show(value)}.")
     if (kind == "columns" and not all(isinstance(v, str) for v in names)) or len(names) == 0:
         return bad("bad_type", f"{name} must be a column name or a non-empty array of column names.")
+    if kind == "columns" and "min" in d and len(names) < d["min"]:
+        return bad("too_few_columns", f"{name} needs at least {d['min']} columns, got {len(names)}.", f"List {d['min']} or more column names.")
+    if kind == "columns" and "max" in d and len(names) > d["max"]:
+        return bad("too_many_columns", f"{name} takes at most {d['max']} columns, got {len(names)}.", "Keep the most important ones, or split the chart.")
     ok = True
     for i, c in enumerate(names):
         path = f"{name}[{i}]" if isinstance(value, list) else name
@@ -230,20 +251,47 @@ def _annotations(name: str, value: Any, issues: list) -> Any:
         if not isinstance(a, dict):
             _add(issues, "error", "bad_type", p, f"{p} must be an object.")
             continue
+        # Two forms: a reference line or band ({axis, value, to?}) and a labelled point ({x, y, label}).
+        point = "axis" not in a and ("x" in a or "y" in a)
+        keys = _POINT_ANNOTATION_KEYS if point else _ANNOTATION_KEYS
         for k in a:
-            if k not in _ANNOTATION_KEYS:
-                _add(issues, "error", "unknown_field", f"{p}.{k}", f'Unknown annotation field "{k}".', f"Allowed: {', '.join(_ANNOTATION_KEYS)}.")
-        if a.get("axis") not in ("x", "y"):
-            _add(issues, "error", "bad_enum", f"{p}.axis", f'{p}.axis must be "x" or "y".')
+            if k not in keys:
+                _add(issues, "error", "unknown_field", f"{p}.{k}", f'Unknown {"point annotation" if point else "annotation"} field "{k}".', f"Allowed: {', '.join(keys)}.")
+
+        def tone_and_label() -> bool:
+            if "tone" in a and not (isinstance(a["tone"], str) and a["tone"] in _TONES):
+                _add(issues, "error", "bad_enum", f"{p}.tone", f"{p}.tone must be one of {', '.join(_TONES)}.")
+                return False
+            if "label" in a and not isinstance(a["label"], str):
+                _add(issues, "error", "bad_type", f"{p}.label", f"{p}.label must be a string.")
+                return False
+            return True
+
+        if point:
+            wrong = False
+            for k in ("x", "y"):
+                if k not in a:
+                    _add(issues, "error", "missing_required", f"{p}.{k}", f'{p} is a point annotation and needs "{k}".', "Give both x and y in the units of their axis: a category name, a number or an ISO date.")
+                elif not (isinstance(a[k], str) or is_finite_number(a[k])):
+                    _add(issues, "error", "bad_type", f"{p}.{k}", f"{p}.{k} must be a number, an ISO date or a category name, got {_show(a[k])}.")
+                else:
+                    continue
+                wrong = True
+                break
+            if wrong or not tone_and_label():
+                continue
+            if not isinstance(a.get("label"), str) or not js_trim(a["label"]):
+                _add(issues, "error", "missing_required", f"{p}.label", f'{p} is a point annotation and needs a short "label".', 'E.g. {"x":"2026-03-01","y":120,"label":"Launch"}.')
+                continue
+            out.append({**a, "label": uslice(a["label"], 80)})
+            continue
+        if a.get("axis") not in ("x", "y") or not isinstance(a.get("axis"), str):
+            _add(issues, "error", "bad_enum", f"{p}.axis", f'{p}.axis must be "x" or "y".', "For a labelled point, leave out axis and give x, y and label.")
         elif not (isinstance(a.get("value"), str) or is_number(a.get("value"))):
             _add(issues, "error", "bad_type", f"{p}.value", f"{p}.value must be a number or a string.")
-        elif "to" in a and a["to"] is not None and not (isinstance(a["to"], str) or is_number(a["to"])):
+        elif "to" in a and not (isinstance(a["to"], str) or is_number(a["to"])):
             _add(issues, "error", "bad_type", f"{p}.to", f"{p}.to must be a number or a string.")
-        elif "tone" in a and a["tone"] is not None and a["tone"] not in _TONES:
-            _add(issues, "error", "bad_enum", f"{p}.tone", f"{p}.tone must be one of {', '.join(_TONES)}.")
-        elif "label" in a and a["label"] is not None and not isinstance(a["label"], str):
-            _add(issues, "error", "bad_type", f"{p}.label", f"{p}.label must be a string.")
-        else:
+        elif tone_and_label():
             out.append({**a, **({"label": uslice(a["label"], 80)} if isinstance(a.get("label"), str) else {})})
     return out
 
@@ -336,7 +384,7 @@ def validate_plot(spec: Any) -> Validation:
             near = closest(key, list(defs))
             _add(issues, "error", "unknown_field", key, f'Unknown field "{key}" for a {chart} chart.', f'Did you mean "{near}"?' if near else f"Allowed: {', '.join(defs)}.")
             continue
-        if d["kind"] in ("column", "columns") and not data_ok:
+        if (d["kind"] in ("column", "columns") or (d["kind"] == "flag" and isinstance(value, str))) and not data_ok:
             continue
         v = _validate_field(key, d, value, issues, columns, valid_rows, found)
         if v is not None:
@@ -374,4 +422,4 @@ def describe_plot(spec: Any) -> str:
     Raises `PlotSpecError` when the spec is invalid."""
     s = require_valid(spec)
     d = s.get("description")
-    return d if isinstance(d, str) and d else DESCRIBE[s["type"]](s)
+    return d if isinstance(d, str) and d else DESCRIBE[s["type"]](s) + point_notes(s)

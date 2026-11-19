@@ -9,6 +9,11 @@ input of the next, and each step is checked against the columns the step before 
     {"aggregate": {"groupBy": ["month", "region"], "fields": {"revenue": "sum"}, "count": "orders"}}
     {"sort":      {"field": "revenue", "order": "descending"}}
     {"top":       {"n": 10, "by": "revenue"}}
+    {"bin":       {"field": "price", "maxbins": 10, "as": ["from", "to"]}}        round edges, as the histogram
+    {"window":    {"op": "sum", "field": "revenue", "as": "running", "groupBy": ["region"], "sortBy": "date"}}
+    {"fold":      {"fields": ["Q1", "Q2", "Q3"], "as": ["quarter", "revenue"]}}  wide to long
+
+There is deliberately no expression step (`calculate`).
 
 The first invalid step stops the run (later steps cannot be checked without its output).
 """
@@ -19,17 +24,22 @@ from typing import Any, Callable
 
 from ._js import is_finite_number, is_number, js_keys, js_string, json_key, to_number, ulen, utf16_key
 from .isotime import MAX_TIME, MIN_TIME, time_bucket, to_time
-from .numeric import closest
+from .numeric import bin_index, closest, transform_bin_edges
 
 Row = dict[str, Any]
 Issues = list[dict[str, Any]]
 
 TRANSFORM_LIMIT = 10
-TRANSFORM_OPS = ["filter", "timeUnit", "aggregate", "sort", "top"]
+TRANSFORM_OPS = ["filter", "timeUnit", "aggregate", "sort", "top", "bin", "window", "fold"]
+WINDOW_OPS = ["sum", "mean", "count", "rank", "pctChange", "lag", "lead", "movingMean"]
+BIN_LIMIT = 200
+FOLD_LIMIT = 50
+MAX_ROWS = 50000  # LIMITS.maxRows
 TIME_UNITS = ["year", "quarter", "month", "week", "day", "hour"]
 AGGREGATE_OPS = ["sum", "mean", "median", "min", "max", "count", "distinct"]
 _FILTER_KEYS = ["field", "equal", "oneOf", "range", "gt", "gte", "lt", "lte", "valid"]
-_KEYS = {"filter": _FILTER_KEYS, "timeUnit": ["field", "unit", "as"], "aggregate": ["groupBy", "fields", "count"], "sort": ["field", "order"], "top": ["n", "by"]}
+_KEYS = {"filter": _FILTER_KEYS, "timeUnit": ["field", "unit", "as"], "aggregate": ["groupBy", "fields", "count"], "sort": ["field", "order"], "top": ["n", "by"],
+         "bin": ["field", "as", "step", "maxbins"], "window": ["op", "field", "as", "groupBy", "sortBy", "order", "frame"], "fold": ["fields", "as"]}
 
 
 def _fmt(v: Any) -> str:
@@ -199,7 +209,7 @@ def apply_transform(value: Any, rows: list[Row], issues: Issues, path: str = "tr
             if "order" in b and b["order"] not in ("ascending", "descending"):
                 return err(f"{bp}.order", "bad_enum", f'{bp}.order must be "ascending" or "descending".')
             cur = _sort_rows(cur, field, b.get("order") == "descending")
-        else:  # top
+        elif op == "top":
             by = column("by")
             if by is None:
                 return None
@@ -207,11 +217,116 @@ def apply_transform(value: Any, rows: list[Row], issues: Issues, path: str = "tr
             if not is_finite_number(n) or not float(n).is_integer() or n < 1 or n > 1000:
                 return err(f"{bp}.n", "bad_value", f"{bp}.n must be an integer from 1 to 1000, got {_fmt(n)}.")
             cur = _sort_rows(cur, by, True)[: int(n)]
+        elif op == "bin":
+            field = column("field")
+            if field is None:
+                return None
+            names = b["as"] if "as" in b else [f"{field}_start", f"{field}_end"]
+            if not _is_pair(names):
+                return err(f"{bp}.as", "bad_type", f"{bp}.as must be two different column names of 1 to 64 characters: [start, end].", 'E.g. ["from", "to"].')
+            if "maxbins" in b and not (_is_int(b["maxbins"]) and 1 <= b["maxbins"] <= BIN_LIMIT):
+                return err(f"{bp}.maxbins", "bad_value", f"{bp}.maxbins must be an integer from 1 to {BIN_LIMIT}, got {_fmt(b['maxbins'])}.")
+            if "step" in b and not (is_finite_number(b["step"]) and b["step"] > 0):
+                return err(f"{bp}.step", "bad_value", f"{bp}.step must be a positive number (the bin width), got {_fmt(b['step'])}.")
+            nums = [to_number(r.get(field)) for r in cur]
+            vals = [v for v in nums if v is not None]
+            present = sum(1 for r in cur if not _is_missing(r.get(field)))
+            if not vals:
+                return err(f"{bp}.field", "not_numeric", f'Column "{field}" has no numeric values to bin.', "Bin a numeric column, or convert the values to numbers first.")
+            step = float(b["step"]) if "step" in b else None
+            if step is not None and (max(vals) - min(vals)) / step > BIN_LIMIT:
+                return err(f"{bp}.step", "too_many_bins", f"{bp}.step {_fmt(b['step'])} cuts the values into more than {BIN_LIMIT} bins.", "Use a wider step, or leave it out and set maxbins.")
+            if len(vals) < present:
+                issues.append({"severity": "warning", "code": "some_not_numeric", "path": f"{bp}.field", "message": f'{present - len(vals)} of {present} values in "{field}" are not numeric; their bin is null.'})
+            edges = transform_bin_edges(vals, b.get("maxbins", 10), step)
+            s0, s1 = names
+            binned: list[Row] = []
+            for r, v in zip(cur, nums):
+                k = -1 if v is None else bin_index(v, edges)
+                binned.append({**r, s0: None if k < 0 else edges[k], s1: None if k < 0 else edges[k + 1]})
+            cur = binned
+            columns = {**columns, s0: None, s1: None}
+        elif op == "window":
+            wop = b.get("op")
+            if not isinstance(wop, str) or wop not in WINDOW_OPS:
+                near = closest(wop, WINDOW_OPS) if isinstance(wop, str) else None
+                return err(f"{bp}.op", "missing_required" if "op" not in b else "bad_enum", f"{bp}.op must be one of {', '.join(WINDOW_OPS)}; got {_fmt(wop)}.", f'Did you mean "{near}"?' if near else None)
+            field = column("field")
+            if field is None:
+                return None
+            if "as" not in b:
+                return err(f"{bp}.as", "missing_required", f'{bp} needs "as" (a name for the new column).')
+            if not _is_name(b["as"]):
+                return err(f"{bp}.as", "bad_type", f"{bp}.as must be a column name of 1 to 64 characters.")
+            group_by = b.get("groupBy")
+            if group_by is None:
+                group_by = []
+            if not isinstance(group_by, list) or len(group_by) > 4 or not all(isinstance(g, str) for g in group_by):
+                return err(f"{bp}.groupBy", "bad_type", f"{bp}.groupBy must be an array of at most 4 column names.")
+            for gi, g in enumerate(group_by):
+                if g not in columns:
+                    return no_column(f"{bp}.groupBy[{gi}]", g)
+            sort_by = None
+            if "sortBy" in b:
+                sort_by = column("sortBy")
+                if sort_by is None:
+                    return None
+            if "order" in b and b["order"] not in ("asc", "desc"):
+                return err(f"{bp}.order", "bad_enum", f'{bp}.order must be "asc" or "desc".')
+            if "frame" in b:
+                if not (_is_int(b["frame"]) and 1 <= b["frame"] <= 1000):
+                    return err(f"{bp}.frame", "bad_value", f"{bp}.frame must be an integer from 1 to 1000 (rows in the moving window), got {_fmt(b['frame'])}.")
+                if wop != "movingMean":
+                    issues.append({"severity": "warning", "code": "frame_ignored", "path": f"{bp}.frame", "message": f"{bp}.frame only applies to movingMean; it is ignored for {wop}."})
+            if "order" in b and sort_by is None and wop != "rank":
+                issues.append({"severity": "warning", "code": "order_ignored", "path": f"{bp}.order", "message": f"{bp}.order needs sortBy; without it the rows keep their order."})
+            if sort_by is None and wop == "rank":
+                sort_by = field
+            cur = _window_rows(cur, wop, field, b["as"], group_by, sort_by, b.get("order") == "desc", int(b.get("frame", 3)))
+            columns = {**columns, b["as"]: None}
+        else:  # fold
+            if "fields" not in b:
+                return err(f"{bp}.fields", "missing_required", f'{bp} needs "fields" (the columns to fold into rows).')
+            fields = b["fields"]
+            if not isinstance(fields, list) or not fields or len(fields) > FOLD_LIMIT or not all(isinstance(f, str) for f in fields):
+                return err(f"{bp}.fields", "bad_type", f"{bp}.fields must be an array of 1 to {FOLD_LIMIT} column names.")
+            for fi, f in enumerate(fields):
+                if f not in columns:
+                    return no_column(f"{bp}.fields[{fi}]", f)
+                if fields.index(f) != fi:
+                    return err(f"{bp}.fields[{fi}]", "duplicate", f'Column "{f}" is listed twice.')
+            names = b["as"] if "as" in b else ["key", "value"]
+            if not _is_pair(names):
+                return err(f"{bp}.as", "bad_type", f"{bp}.as must be two different column names of 1 to 64 characters: [key, value].", 'E.g. ["quarter", "revenue"].')
+            if len(cur) * len(fields) > MAX_ROWS:
+                return err(bp, "too_many_rows", f"Folding {len(fields)} columns of {len(cur)} rows makes {len(cur) * len(fields)} rows; the limit is {MAX_ROWS}.", "Filter or aggregate first, or fold fewer columns.")
+            k, v = names
+            drop = set(fields)
+            folded: list[Row] = []
+            for r in cur:
+                rest = {key: r[key] for key in js_keys(r) if key not in drop}
+                for f in fields:
+                    folded.append({**rest, k: f, v: r.get(f)})
+            cur = folded
+            columns = {**{c: None for c in columns if c not in drop}, k: None, v: None}
     return cur
 
 
 def _is_name(v: Any) -> bool:
     return isinstance(v, str) and 1 <= ulen(v) <= 64
+
+
+def _is_pair(v: Any) -> bool:
+    """Two different column names."""
+    return isinstance(v, list) and len(v) == 2 and all(_is_name(x) for x in v) and v[0] != v[1]
+
+
+def _is_int(v: Any) -> bool:
+    return is_finite_number(v) and float(v).is_integer()
+
+
+def _is_missing(v: Any) -> bool:
+    return v is None or (isinstance(v, str) and v == "")
 
 
 def filter_row(f: dict[str, Any]) -> Callable[[Row], bool]:
@@ -295,10 +410,14 @@ def _reduce(rows: list[Row], col: str, op: str) -> float | int | None:
 
 def _sort_rows(rows: list[Row], field: str, desc: bool) -> list[Row]:
     """Stable sort: numbers and dates by value, everything else as text; missing values last. Mirrors `sortRows`."""
+    return [rows[i] for i in _sort_order([r.get(field) for r in rows], desc)]
+
+
+def _sort_order(values: list[Any], desc: bool) -> list[int]:
+    """The order (indices) that sorts `values` by the sort step's rule. Mirrors `sortOrder`."""
     keyed = []
-    for i, r in enumerate(rows):
-        v = r.get(field)
-        keyed.append((r, i, ordinal(v), None if v is None else utf16_key(js_string(v))))
+    for i, v in enumerate(values):
+        keyed.append((i, i, ordinal(v), None if v is None else utf16_key(js_string(v))))
 
     def compare(a: tuple, b: tuple) -> int:
         if a[3] is None or b[3] is None:
@@ -317,3 +436,67 @@ def _sort_rows(rows: list[Row], field: str, desc: bool) -> list[Row]:
 
     keyed.sort(key=cmp_to_key(compare))
     return [k[0] for k in keyed]
+
+
+def _text_or_undefined(v: Any, present: bool) -> str:
+    return js_string(v) if present else "undefined"
+
+
+def _window_rows(rows: list[Row], op: str, field: str, target: str, group_by: list[str], sort_by: str | None, desc: bool, frame: int) -> list[Row]:
+    """One window step: the op walks each group in `sort_by` order; rows keep their order. Mirrors `windowRows`."""
+    groups: dict[str, list[int]] = {}
+    for i, r in enumerate(rows):
+        groups.setdefault(json_key([r.get(g) for g in group_by]), []).append(i)
+    result: list[Any] = [None] * len(rows)
+    for idx in groups.values():
+        order = idx if sort_by is None else [idx[k] for k in _sort_order([rows[i].get(sort_by) for i in idx], desc)]
+        nums = [to_number(rows[i].get(field)) for i in order]
+        total = 0.0
+        seen = present = 0
+        for k, ri in enumerate(order):
+            n = nums[k]
+            if op == "sum":
+                if n is not None:
+                    total += n
+                result[ri] = total
+            elif op == "mean":
+                if n is not None:
+                    total += n
+                    seen += 1
+                result[ri] = total / seen if seen else None
+            elif op == "count":
+                if not _is_missing(rows[ri].get(field)):
+                    present += 1
+                result[ri] = present
+            elif op == "rank":
+                key = rows[ri].get(sort_by)  # type: ignore[arg-type]
+                if key is None:
+                    result[ri] = None
+                else:
+                    prev = order[k - 1] if k > 0 else None
+                    result[ri] = result[prev] if prev is not None and _rank_tie(rows[prev], rows[ri], sort_by) else k + 1  # type: ignore[arg-type]
+            elif op == "pctChange":
+                prev_n = nums[k - 1] if k > 0 else None
+                result[ri] = None if n is None or prev_n is None or prev_n == 0 else (n - prev_n) / abs(prev_n)
+            elif op == "lag":
+                result[ri] = rows[order[k - 1]].get(field) if k > 0 else None
+            elif op == "lead":
+                result[ri] = rows[order[k + 1]].get(field) if k < len(order) - 1 else None
+            else:  # movingMean
+                s = 0.0
+                c = 0
+                for j in range(max(0, k - frame + 1), k + 1):
+                    if nums[j] is not None:
+                        s += nums[j]  # type: ignore[operator]
+                        c += 1
+                result[ri] = s / c if c else None
+    return [{**r, target: result[i]} for i, r in enumerate(rows)]
+
+
+def _rank_tie(prev: Row, row: Row, key: str) -> bool:
+    """`sameKey(key(prev), key(row))`, where a missing cell is `undefined` (its text is "undefined")."""
+    a, b = prev.get(key), row.get(key)
+    na, nb = ordinal(a), ordinal(b)
+    if na is not None or nb is not None:
+        return na == nb
+    return _text_or_undefined(a, key in prev) == _text_or_undefined(b, key in row)

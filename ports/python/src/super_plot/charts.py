@@ -7,11 +7,11 @@ from __future__ import annotations
 
 from typing import Any, Callable
 
-from ._js import clip, is_number, js_string, key_string, number_string, or_empty, to_fixed, to_number
+from ._js import clip, is_finite_number, is_number, js_string, key_string, number_string, or_empty, to_fixed, to_number
 from .data import detect_x_kind, distinct, matrix, observations
 from .geo import Geography, js_trim, normalize_region
-from .isotime import to_time
-from .numeric import bin_counts, bin_edges, box_stats, closest, correlation, extent, mean, quantile, total
+from .isotime import _civil_from_days, to_time
+from .numeric import bin_counts, bin_edges, box_stats, closest, correlation, density_peaks, extent, kde, mean, quantile, r2, total, waffle_cells, waffle_grid
 from .text import format_date, format_percent, value_formatter
 
 Spec = dict[str, Any]
@@ -19,6 +19,13 @@ Issues = list[dict[str, Any]]
 MAX_AXES = 16
 MAX_NODES = 40
 MAX_LINKS = 300
+MAX_SERIES = 8  # LIMITS.maxSeries
+MAX_STAGES = 40
+MAX_CALENDAR_YEARS = 5
+MAX_CHILDREN = 30
+MAX_LINES = 2000
+_DAY = 86_400_000
+_WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
 
 
 def _issue(issues: Issues, severity: str, code: str, path: str, message: str, hint: str | None = None) -> None:
@@ -58,6 +65,75 @@ def _plural(n: int, one: str, many: str) -> str:
     return one if n == 1 else many
 
 
+def _stable_desc(items: list[Any], key: Callable[[Any], float]) -> list[Any]:
+    """`[...items].sort((a, b) => key(b) - key(a))`: largest first, ties in their order."""
+    return sorted(items, key=lambda it: -key(it))
+
+
+def point_notes(spec: Spec) -> str:
+    """The labelled point annotations, as one sentence for the description. Mirrors `pointNotes`."""
+    pts = [a for a in spec.get("annotations") or [] if "axis" not in a and isinstance(a.get("label"), str)]
+    if not pts:
+        return ""
+    items = [f'"{clip(a["label"], 40)}" at {clip(js_string(a.get("x")), 30)}, {clip(js_string(a.get("y")), 30)}' for a in pts[:5]]
+    return f" Marked: {'; '.join(items)}{f' and {len(pts) - 5} more' if len(pts) > 5 else ''}."
+
+
+# ------------------------------------------------------------------------------- log scales, intervals
+# Mirrors `packages/core/src/charts/extras.ts`.
+
+
+def _refuse_log(spec: Spec, issues: Issues, field: str) -> None:
+    if spec.get(field) == "log":
+        _issue(issues, "error", "log_scale_refused", field, f'{field} "log" is refused here.', "Use a line or a scatter for values spanning several orders of magnitude.")
+
+
+def _log_non_positive(rows: list[dict], cols: list[str], path: str, issues: Issues) -> None:
+    """Values at or below zero in the columns behind a log axis: one issue with the count."""
+    bad = seen = 0
+    for r in rows:
+        for c in cols:
+            n = to_number(r.get(c))
+            if n is None:
+                continue
+            seen += 1
+            if n <= 0:
+                bad += 1
+    if not bad:
+        return
+    if bad == seen:
+        _issue(issues, "error", "log_nonpositive", path, "Every value is zero or negative; a log axis cannot show any of them.", "Use the linear scale, or plot a positive quantity.")
+    else:
+        _issue(issues, "warning", "log_nonpositive", path, f"{bad} of {seen} values are zero or negative; a log axis cannot place them, so they are left out.", "Filter them with `transform`, or use the linear scale.")
+
+
+def _log_domain(spec: Spec, issues: Issues, scale_field: str, domain_field: str) -> None:
+    d = spec.get(domain_field)
+    if spec.get(scale_field) != "log" or not d:
+        return
+    if (d[0] is not None and d[0] <= 0) or (d[1] is not None and d[1] <= 0):
+        _issue(issues, "error", "log_bad_domain", domain_field, f"{domain_field} must be above zero on a log axis.", "Use a positive lower bound such as 1 or 0.1, or null for automatic.")
+
+
+def _interval_check(spec: Spec, rows: list[dict], issues: Issues, axis: str) -> bool:
+    """`xLower` without `xUpper` (or the other way round), and intervals whose ends are swapped."""
+    lo, hi = spec.get(f"{axis}Lower"), spec.get(f"{axis}Upper")
+    if lo is None and hi is None:
+        return False
+    if lo is None or hi is None:
+        missing = f"{axis}Lower" if lo is None else f"{axis}Upper"
+        _issue(issues, "error", "interval_incomplete", missing, f"An interval needs both {axis}Lower and {axis}Upper; {missing} is missing.", f"Give {missing} too.")
+        return False
+    swapped = 0
+    for r in rows:
+        a, b = to_number(r.get(lo)), to_number(r.get(hi))
+        if a is not None and b is not None and a > b:
+            swapped += 1
+    if swapped:
+        _issue(issues, "warning", "interval_reversed", f"{axis}Lower", f"In {swapped} {_plural(swapped, 'row', 'rows')} {axis}Lower is above {axis}Upper; the interval is drawn between the two anyway.")
+    return True
+
+
 # ---------------------------------------------------------------------------------------------- bar
 
 
@@ -95,6 +171,12 @@ def _check_bar(spec: Spec, rows: list[dict], issues: Issues) -> None:
             _issue(issues, "warning", "negative_in_stack", "y", "Negative values in a stacked bar are stacked below the axis; check that is what you want.")
     if "line" in spec and (spec.get("orientation") == "horizontal" or spec.get("stack") == "normalize"):
         _issue(issues, "warning", "line_ignored", "line", f"`line` is ignored on {'horizontal' if spec.get('orientation') == 'horizontal' else '100% stacked'} bars.")
+    _refuse_log(spec, issues, "yScale")
+    stacked = spec.get("stack") in ("stack", "normalize")
+    if spec.get("mark") == "lollipop" and stacked:
+        _issue(issues, "warning", "lollipop_stacked", "mark", "Lollipops cannot stack; stacked bars are drawn instead.", 'Set stack to "none" for side-by-side lollipops.')
+    if _interval_check(spec, rows, issues, "y") and stacked:
+        _issue(issues, "warning", "interval_ignored_stacked", "yLower", "Whiskers cannot be shown on stacked bars; they are left out.", 'Set stack to "none" for grouped bars with whiskers.')
     if detect_x_kind("auto", [r.get(spec["x"]) for r in rows]) == "time" and len(rows) > 60:
         _issue(issues, "warning", "prefer_line", "type", "Many bars over time: a line or area chart reads better.")
 
@@ -103,7 +185,8 @@ def _describe_bar(spec: Spec) -> str:
     cats, keys, m = _bar_model(spec)
     f = _formatter(spec)
     totals = [{"c": c, "v": total(list(m.get(c, {}).values()))} for c in cats]
-    t = f"{_lead(spec, 'Bar chart')} {len(cats)} {_plural(len(cats), 'category', 'categories')}"
+    unstacked = spec.get("stack", "none") == "none"
+    t = f"{_lead(spec, 'Lollipop chart' if spec.get('mark') == 'lollipop' and unstacked else 'Bar chart')} {len(cats)} {_plural(len(cats), 'category', 'categories')}"
     if len(keys) > 1:
         stack = spec.get("stack")
         t += f", {len(keys)} series ({_fmt_list(keys)}{', stacked' if stack == 'stack' else ', stacked to 100%' if stack == 'normalize' else ''})."
@@ -119,6 +202,8 @@ def _describe_bar(spec: Spec) -> str:
     ls = [k for k in _line_cols(spec) if k not in keys]
     if ls:
         t += f" With {'a line' if len(ls) == 1 else 'lines'} for {_fmt_list(ls)} on the same axis."
+    if spec.get("yLower") and spec.get("yUpper") and unstacked:
+        t += f" Whiskers show {clip(spec['yLower'], 40)} to {clip(spec['yUpper'], 40)}."
     return t
 
 
@@ -139,7 +224,8 @@ def _describe_series(spec: Spec, name: str) -> str:
 
     t = f"{_lead(spec, name)} {len(keys)} series{f' ({_fmt_list(keys)})' if len(keys) > 1 else ''} over {'categories' if kind == 'category' else 'time' if kind == 'time' else 'a numeric x axis'}."
     for k in keys[:4]:
-        pts = [{"x": xk(o["x"]), "y": o["y"]} for o in obs if o["s"] == k and o["y"] is not None and xk(o["x"]) is not None]
+        pts = [{"x": xk(o["x"]), "y": o["y"]} for o in obs if o["s"] == k and o["y"] is not None and xk(o["x"]) is not None
+               and (spec.get("yScale") != "log" or o["y"] > 0) and (spec.get("xScale") != "log" or kind != "linear" or xk(o["x"]) > 0)]
         if kind != "category":
             pts.sort(key=lambda p: p["x"])
         if not pts:
@@ -150,26 +236,90 @@ def _describe_series(spec: Spec, name: str) -> str:
         change = f" ({to_fixed(((last['y'] - first['y']) / abs(first['y'])) * 100, 1)}%)" if first["y"] != 0 else ""
         t += (f" {clip(k, 40)}: from {f(first['y'])} at {label(first['x'])} to {f(last['y'])} at {label(last['x'])}{change if len(pts) > 1 else ''};"
               f" peak {f(hi['y'])} at {label(hi['x'])}, low {f(lo['y'])} at {label(lo['x'])}.")
+    return t + _series_notes(spec)
+
+
+def _has_band(spec: Spec) -> bool:
+    """Shaded intervals behind lines: only with one `y` column, and not on stacked areas."""
+    return bool(spec.get("yLower")) and bool(spec.get("yUpper")) and not (isinstance(spec["y"], list) and len(spec["y"]) > 1) and spec.get("stack", "none") == "none"
+
+
+def _series_notes(spec: Spec) -> str:
+    """One sentence on log axes and bands, for the description. Mirrors `seriesNotes`."""
+    t = ""
+    axes = [a for a in ("y", "x") if spec.get(f"{a}Scale") == "log" and spec["type"] == "line"]
+    if axes:
+        t += f" The {' and '.join(axes)} axis {'are' if len(axes) > 1 else 'is'} logarithmic."
+    if _has_band(spec):
+        t += f" A shaded band shows {clip(spec['yLower'], 40)} to {clip(spec['yUpper'], 40)}."
     return t
+
+
+def _check_series(spec: Spec, rows: list[dict], issues: Issues, area: bool) -> None:
+    """Mirrors `seriesCheck`."""
+    multi = isinstance(spec["y"], list) and len(spec["y"]) > 1
+    if multi and spec.get("series"):
+        _issue(issues, "warning", "series_ignored", "series", "`series` is ignored when `y` lists several columns.")
+    if _interval_check(spec, rows, issues, "y"):
+        if multi:
+            _issue(issues, "warning", "interval_needs_one_y", "yLower", "yLower and yUpper describe one column; with several `y` columns no band is drawn.", "Fold the columns into long form (a `fold` step) and use `series`.")
+        elif spec.get("stack") in ("stack", "normalize"):
+            _issue(issues, "warning", "interval_ignored_stacked", "yLower", "An interval cannot be shown on a stacked area; no band is drawn.", 'Set stack to "none", or use a line chart.')
+    if area:
+        _refuse_log(spec, issues, "yScale")
+        return
+    ys = spec["y"] if isinstance(spec["y"], list) else [spec["y"]]
+    if spec.get("yScale") == "log":
+        _log_non_positive(rows, ys, "y", issues)
+        _log_domain(spec, issues, "yScale", "yDomain")
+        if spec.get("gaps") == "zero":
+            _issue(issues, "warning", "gaps_zero_log", "gaps", "A log axis has no zero, so missing values break the line instead.")
+    if spec.get("xScale") == "log":
+        if detect_x_kind(spec.get("xType"), [r.get(spec["x"]) for r in rows]) != "linear":
+            _refuse_log(spec, issues, "xScale")
+        else:
+            _log_non_positive(rows, [spec["x"]], "x", issues)
+            _log_domain(spec, issues, "xScale", "xDomain")
 
 
 # ------------------------------------------------------------------------------------------ scatter
 
 
+def _scatter_kind(spec: Spec, rows: list[dict]) -> str:
+    if spec.get("xType") in ("time", "linear"):
+        return spec["xType"]
+    return "time" if any(isinstance(r.get(spec["x"]), str) and to_number(r.get(spec["x"])) is None for r in rows) else "linear"
+
+
 def _scatter_points(spec: Spec, rows: list[dict]) -> list[dict]:
-    kind = "time" if spec.get("xType") == "time" else "linear" if spec.get("xType") == "linear" else (
-        "time" if any(isinstance(r.get(spec["x"]), str) and to_number(r.get(spec["x"])) is None for r in rows) else "linear")
+    kind = _scatter_kind(spec, rows)
+    log_x = spec.get("xScale") == "log" and kind == "linear"
+    log_y = spec.get("yScale") == "log"
     pts = []
     for r in rows:
         x = to_time(r.get(spec["x"])) if kind == "time" else to_number(r.get(spec["x"]))
         y = to_number(r.get(spec["y"]))
-        if x is None or y is None:
+        if x is None or y is None or (log_x and not x > 0) or (log_y and not y > 0):
             continue
         pts.append({"x": x, "y": y, "s": or_empty(r.get(spec["series"])) if spec.get("series") else str(spec["y"])})
     return pts
 
 
 def _check_scatter(spec: Spec, rows: list[dict], issues: Issues) -> None:
+    kind = _scatter_kind(spec, rows)
+    if spec.get("xScale") == "log" and kind == "time":
+        _refuse_log(spec, issues, "xScale")
+    for a in ("x", "y"):
+        if spec.get(f"{a}Scale") != "log" or (a == "x" and kind == "time"):
+            continue
+        _log_non_positive(rows, [spec[a]], a, issues)
+        _log_domain(spec, issues, f"{a}Scale", f"{a}Domain")
+    _interval_check(spec, rows, issues, "y")
+    _interval_check(spec, rows, issues, "x")
+    if "trendBandwidth" in spec and spec.get("trend") != "loess":
+        _issue(issues, "warning", "trend_bandwidth_ignored", "trendBandwidth", 'trendBandwidth only applies to `trend: "loess"`; it is ignored.')
+    if _has_error(issues):
+        return
     if not _scatter_points(spec, rows):
         _issue(issues, "error", "no_points", "data", "No row has both a numeric x and y.")
 
@@ -187,6 +337,14 @@ def _describe_scatter(spec: Spec) -> str:
     ey = extent(p["y"] for p in pts)
     if ey:
         t += f" {spec['y']} ranges from {f(ey[0])} to {f(ey[1])}."
+    logs = (["x"] if spec.get("xScale") == "log" and _scatter_kind(spec, spec["data"]) == "linear" else []) + (["y"] if spec.get("yScale") == "log" else [])
+    if logs:
+        t += f" The {' and '.join(logs)} axis {'are' if len(logs) > 1 else 'is'} logarithmic."
+    bars = (["vertical"] if spec.get("yLower") and spec.get("yUpper") else []) + (["horizontal"] if spec.get("xLower") and spec.get("xUpper") else [])
+    if bars:
+        t += f" Points carry {' and '.join(bars)} error bars."
+    if spec.get("trend") == "loess":
+        t += " A LOESS curve shows the local trend."
     return t
 
 
@@ -264,14 +422,30 @@ def _describe_histogram(spec: Spec) -> str:
 # -------------------------------------------------------------------------------------------- box
 
 
-def _describe_box(spec: Spec) -> str:
+def _box_groups(spec: Spec, rows: list[dict]) -> dict[str, list[float]]:
+    """Values per group, in order of first appearance (box and violin). Mirrors `groups` in box.ts."""
     g: dict[str, list[float]] = {}
-    for r in spec["data"]:
+    for r in rows:
         v = to_number(r.get(spec["y"]))
         if v is None:
             continue
         k = or_empty(r.get(spec["x"])) if spec.get("x") else str(spec["y"])
         g.setdefault(k, []).append(v)
+    return g
+
+
+def _check_points(spec: Spec, rows: list[dict], issues: Issues) -> None:
+    """Cross-field checks shared by box and violin. Mirrors `checkPoints`."""
+    if "points" in spec and spec.get("outliers") is False and spec["points"] != "none":
+        _issue(issues, "warning", "outliers_ignored", "outliers", "`outliers: false` is ignored because `points` is set.", 'Use points: "none" to hide every dot, and drop `outliers`.')
+    if spec.get("points") == "all" and len(spec.get("data") or []) > 5000:
+        _issue(issues, "warning", "many_marks", "points", f'points: "all" draws {len(spec["data"])} dots.', 'Use points: "outliers", or sample with `transform`.')
+    if spec.get("patterns") is True:
+        _issue(issues, "warning", "patterns_unsupported", "patterns", f"A {spec['type']} chart has no series to tell apart, so patterns is ignored.")
+
+
+def _describe_box(spec: Spec) -> str:
+    g = _box_groups(spec, spec["data"])
     f = _formatter(spec)
     keys = list(g.keys())
     t = f"{_lead(spec, 'Box plot')} Distribution of {spec['y']}{f' for {len(keys)} groups ({_fmt_list(keys)})' if spec.get('x') else ''}."
@@ -691,13 +865,739 @@ def _describe_flow_map(spec: Spec) -> str:
     return t
 
 
+# ---------------------------------------------------------------------------------------- violin
+
+
+def _check_violin(spec: Spec, rows: list[dict], issues: Issues) -> None:
+    _check_points(spec, rows, issues)
+    if spec.get("bandwidth") == 0 and "bandwidth" in spec:
+        _issue(issues, "error", "out_of_range", "bandwidth", "bandwidth must be above 0.", "Leave it out for Silverman's rule, or give a positive width in the units of y.")
+    few = [k for k, v in _box_groups(spec, rows).items() if len(v) < 5]
+    if few:
+        _issue(issues, "warning", "few_values", "y", f"{len(few)} group(s) have fewer than 5 values ({_fmt_list([clip(k, 30) for k in few], 3)}); their violin shape is mostly smoothing.", 'Use a box plot or points: "all" for small groups.')
+
+
+def _describe_violin(spec: Spec) -> str:
+    g = _box_groups(spec, spec["data"])
+    f = _formatter(spec)
+    keys = list(g.keys())
+    bw = spec.get("bandwidth")
+    silverman_note = " (bandwidth by Silverman's rule)"
+    t = (f"{_lead(spec, 'Violin plot')} Distribution of {spec['y']}{f' for {len(keys)} groups ({_fmt_list(keys)})' if spec.get('x') else ''}, as a Gaussian kernel density"
+         f"{f' with bandwidth {f(bw)}' if bw else silverman_note}.")
+    for k in keys[:6]:
+        st = box_stats(g[k])
+        d = kde(g[k], bw)
+        if not st or not d:
+            continue
+        pk = density_peaks(d)
+        peaks = f"{len(pk)} peaks, near {_fmt_list([f(x) for x in pk], 4)}" if len(pk) > 1 else f"densest near {f(pk[0])}"
+        t += f" {clip(k, 30)}: median {f(st['median'])}, middle half {f(st['q1'])} to {f(st['q3'])}, range {f(st['min'])} to {f(st['max'])}, {peaks}."
+    return t
+
+
+# -------------------------------------------------------------------------------------- calendar
+
+
+def _year_of(day: int) -> int:
+    return _civil_from_days(day)[0]
+
+
+def _calendar_days(rows: list[dict], x: str, value: str) -> dict[int, float]:
+    """Sum of `value` per UTC calendar day (epoch day number). Mirrors `calendarDays`."""
+    out: dict[int, float] = {}
+    for r in rows:
+        t = to_time(r.get(x))
+        v = to_number(r.get(value))
+        if t is None or v is None:
+            continue
+        d = int(t // _DAY)
+        out[d] = out.get(d, 0.0) + v
+    return out
+
+
+def _calendar_years(days: dict[int, float]) -> tuple[list[int], list[int]]:
+    every = sorted({_year_of(d) for d in days})
+    return every, every[-MAX_CALENDAR_YEARS:]
+
+
+def _check_calendar(spec: Spec, rows: list[dict], issues: Issues) -> None:
+    x = spec["x"]
+    seen = bad = 0
+    for r in rows:
+        v = r.get(x)
+        if _blank(v):
+            continue
+        seen += 1
+        if to_time(v) is None:
+            bad += 1
+    if seen and bad == seen:
+        _issue(issues, "error", "not_time", "x", f'Column "{x}" has no dates.', 'Use ISO dates such as "2026-03-14" or epoch milliseconds.')
+    elif bad:
+        _issue(issues, "warning", "some_not_time", "x", f'{bad} of {seen} values in "{x}" are not dates and will be skipped.')
+    days = _calendar_days(rows, x, spec["value"])
+    if seen and bad < seen and not days:
+        _issue(issues, "error", "no_values", "value", "No row has both a date and a numeric value.")
+    every, shown = _calendar_years(days)
+    if len(every) > MAX_CALENDAR_YEARS:
+        _issue(issues, "warning", "too_many_years", "x", f"The data spans {len(every)} years; only the last {MAX_CALENDAR_YEARS} ({shown[0]} to {shown[-1]}) are drawn.", "Filter with `transform`, or aggregate to weeks or months and use a line or bar chart.")
+    if spec.get("patterns") is True:
+        _issue(issues, "warning", "patterns_unsupported", "patterns", "A calendar has one colour scale and no series, so patterns is ignored.")
+
+
+def _describe_calendar(spec: Spec) -> str:
+    f = _formatter(spec)
+    days = _calendar_days(spec["data"], spec["x"], spec["value"])
+    every, shown = _calendar_years(days)
+    kept = sorted(((d, v) for d, v in days.items() if _year_of(d) in shown), key=lambda dv: dv[0])
+    if not kept:
+        return f"{_lead(spec, 'Calendar heatmap')} No days with data."
+
+    def date(d: int) -> str:
+        return format_date(d * _DAY)
+
+    first, last = kept[0][0], kept[-1][0]
+    span = last - first + 1
+    hi = _first_max(kept, lambda dv: dv[1])
+    lo = _first_min(kept, lambda dv: dv[1])
+    t = f"{_lead(spec, 'Calendar heatmap')} {len(kept)} days with data from {date(first)} to {date(last)}, coloured by {spec['value']}, totalling {f(total([v for _, v in kept]))}."
+    if span > len(kept):
+        t += f" {span - len(kept)} days in that span have no data."
+    t += f" Highest: {date(hi[0])} ({f(hi[1])}). Lowest: {date(lo[0])} ({f(lo[1])})."
+    sums = [0.0] * 7
+    counts = [0] * 7
+    for d, v in kept:
+        w = (d + 4) % 7  # 1970-01-01 was a Thursday
+        sums[w] += v
+        counts[w] += 1
+    ranked = _stable_desc([(sums[i] / counts[i], i) for i in range(7) if counts[i]], lambda a: a[0])
+    if len(ranked) > 1:
+        t += f" On average {_WEEKDAYS[ranked[0][1]]} is highest ({f(ranked[0][0])}) and {_WEEKDAYS[ranked[-1][1]]} lowest ({f(ranked[-1][0])})."
+    if len(every) > len(shown):
+        t += f" Only the last {len(shown)} of {len(every)} years are drawn."
+    return t
+
+
+# -------------------------------------------------------------------------------------- sunburst
+
+
+def _list_of(v: Any) -> list[str]:
+    return v if isinstance(v, list) else [v]
+
+
+def hierarchy(rows: list[dict], levels: list[str], value: str) -> dict:
+    """Sum `value` over a hierarchy given by `levels` (outermost first). Mirrors `hierarchy` in sunburst.ts:
+    a row stops at its first empty level; children are ordered largest first, the smallest past 30 merged into
+    "Other". Returns the root node {"name", "path", "value", "children"}."""
+    root: dict = {"name": "", "path": [], "value": 0.0, "children": [], "index": {}}
+    for r in rows:
+        v = to_number(r.get(value))
+        if v is None or v <= 0:
+            continue
+        root["value"] += v
+        node = root
+        for col in levels:
+            raw = r.get(col)
+            if _blank(raw):
+                break
+            name = js_string(raw)
+            child = node["index"].get(name)
+            if child is None:
+                child = {"name": name, "path": [*node["path"], name], "value": 0.0, "children": [], "index": {}}
+                node["index"][name] = child
+                node["children"].append(child)
+            child["value"] += v
+            node = child
+
+    def tidy(n: dict) -> None:
+        n["children"] = _stable_desc(n["children"], lambda c: c["value"])
+        if len(n["children"]) > MAX_CHILDREN:
+            rest = n["children"][MAX_CHILDREN - 1:]
+            del n["children"][MAX_CHILDREN - 1:]
+            n["children"].append({"name": "Other", "path": [*n["path"], "Other"], "value": total([c["value"] for c in rest]), "children": [], "index": {}})
+        for c in n["children"]:
+            tidy(c)
+
+    tidy(root)
+    return root
+
+
+def _check_sunburst(spec: Spec, rows: list[dict], issues: Issues) -> None:
+    levels = _list_of(spec["path"])
+    seen: set[str] = set()
+    for i, l in enumerate(levels):
+        if l in seen:
+            _issue(issues, "error", "duplicate_column", f"path[{i}]", f'"{l}" appears twice in path.', "Each level of the hierarchy needs its own column.")
+        seen.add(l)
+    if spec["value"] in levels:
+        _issue(issues, "warning", "value_in_path", "value", f'"{spec["value"]}" is both a level and the value.')
+    neg = 0
+    for r in rows:
+        v = to_number(r.get(spec["value"]))
+        if v is not None and v <= 0:
+            neg += 1
+    if neg:
+        _issue(issues, "warning", "negative_slices", "value", f"{neg} zero or negative value(s) will be skipped; a share cannot be negative.")
+
+
+def _describe_sunburst(spec: Spec) -> str:
+    levels = _list_of(spec["path"])
+    root = hierarchy(spec["data"], levels, spec["value"])
+    f = _formatter(spec)
+
+    def pct(v: float) -> str:
+        return format_percent(v / root["value"] if root["value"] else 0)
+
+    if not root["children"]:
+        return f"{_lead(spec, 'Sunburst')} No positive values."
+    leaves = 0
+    biggest: dict | None = None
+    stack = list(reversed(root["children"]))
+    while stack:  # depth first, in the order the reference walks
+        n = stack.pop()
+        if not n["children"]:
+            leaves += 1
+            if biggest is None or n["value"] > biggest["value"]:
+                biggest = n
+        stack.extend(reversed(n["children"]))
+    top = [f"{clip(n['name'], 30)} ({pct(n['value'])})" for n in root["children"][:3]]
+    t = (f"{_lead(spec, 'Sunburst')} {len(levels)} level{'s' if len(levels) > 1 else ''} ({' > '.join(levels)}), {leaves} leaves totalling {f(root['value'])}."
+         f" First level: {len(root['children'])} groups, largest {_fmt_list(top, 3)}.")
+    if biggest is not None and len(biggest["path"]) > 1:
+        t += f" Largest leaf: {clip(' > '.join(biggest['path']), 80)} ({f(biggest['value'])}, {pct(biggest['value'])})."
+    return t
+
+
+# -------------------------------------------------------------------------------------- parallel
+
+
+def _complete(rows: list[dict], dims: list[str]) -> list[tuple[dict, list[float]]]:
+    """Rows with a number in every dimension, each with its values in dimension order."""
+    out = []
+    for r in rows:
+        values = []
+        for d in dims:
+            v = to_number(r.get(d))
+            if v is None:
+                break
+            values.append(v)
+        if len(values) == len(dims):
+            out.append((r, values))
+    return out
+
+
+def _sample(n: int) -> tuple[int, int]:
+    """(lines drawn, step): every row up to MAX_LINES, else every k-th. Mirrors `sampleRows`."""
+    if n <= MAX_LINES:
+        return n, 1
+    step = -(-n // MAX_LINES)
+    return -(-n // step), step
+
+
+def _check_parallel(spec: Spec, rows: list[dict], issues: Issues) -> None:
+    dims = _list_of(spec["dimensions"])
+    seen: set[str] = set()
+    for i, d in enumerate(dims):
+        if d in seen:
+            _issue(issues, "error", "duplicate_column", f"dimensions[{i}]", f'"{d}" appears twice in dimensions.', "Each axis needs its own column.")
+        seen.add(d)
+    every = _complete(rows, dims)
+    skipped = len(rows) - len(every)
+    if not every:
+        _issue(issues, "error", "no_values", "dimensions", "No row has a number in every dimension.", "Fill or filter out rows with missing values.")
+    elif skipped:
+        _issue(issues, "warning", "incomplete_rows", "dimensions", f"{skipped} row(s) lack a number in some dimension and are not drawn.")
+    drawn, step = _sample(len(every))
+    if step > 1:
+        _issue(issues, "warning", "lines_sampled", "data", f"One row in every {step} is drawn ({drawn} lines). The axes still span every row.", "Filter or aggregate with `transform`.")
+    if spec.get("patterns") is True:
+        _issue(issues, "warning", "patterns_unsupported", "patterns", "Parallel coordinates draw lines, which have no fill to texture; patterns is ignored.")
+
+
+def _describe_parallel(spec: Spec) -> str:
+    dims = _list_of(spec["dimensions"])
+    every = _complete(spec["data"], dims)
+    f = _formatter(spec)
+    if not every:
+        return f"{_lead(spec, 'Parallel coordinates')} No complete rows."
+    groups = distinct(key_string(r.get(spec["series"])) for r, _ in every) if isinstance(spec.get("series"), str) else []
+    by = spec.get("series")
+    t = (f"{_lead(spec, 'Parallel coordinates')} {len(every)} rows across {len(dims)} measures ({_fmt_list(dims, 6)})"
+         f"{f', in {len(groups)} groups by {by} ({_fmt_list(groups)})' if groups else ''}.")
+    ranges = []
+    for i, d in enumerate(dims[:6]):
+        v = [vals[i] for _, vals in every]
+        ranges.append(f"{clip(d, 30)} {f(min(v))} to {f(max(v))}")
+    t += f" Ranges: {'; '.join(ranges)}."
+    best: tuple[str, str, float] | None = None
+    for i in range(len(dims) - 1):
+        r = correlation([vals[i] for _, vals in every], [vals[i + 1] for _, vals in every])
+        if r is not None and (best is None or abs(r) > abs(best[2])):
+            best = (dims[i], dims[i + 1], r)
+    if best:
+        t += f" Strongest link between neighbouring axes: {clip(best[0], 30)} and {clip(best[1], 30)} (r = {to_fixed(best[2], 2)})."
+    drawn, step = _sample(len(every))
+    if step > 1:
+        t += f" One row in every {step} is drawn ({drawn} lines)."
+    return t
+
+
+# ------------------------------------------------------------------------------------- waterfall
+
+_YES = {"true", "yes", "1", "total", "subtotal"}
+
+
+def is_yes(v: Any) -> bool:
+    """A yes/no cell of a `flag` column: true, 1, or "true", "yes", "1", "total", "subtotal" (any case, trimmed)."""
+    if isinstance(v, bool):
+        return v
+    if is_number(v):
+        return v == 1
+    return isinstance(v, str) and js_trim(v).lower() in _YES
+
+
+def flagged(flag: Any, r: dict, key_column: str | None) -> bool:
+    """Is this row marked by a `flag` field? A column name reads the row's yes/no cell; a list matches the row's
+    value in `key_column` (as a string). Mirrors `flagged` in schema.ts."""
+    if isinstance(flag, str):
+        return is_yes(r.get(flag))
+    if isinstance(flag, list) and key_column is not None:
+        v = r.get(key_column)
+        return v is not None and js_string(v) in flag
+    return False
+
+
+def _waterfall_model(spec: Spec, rows: list[dict]) -> dict:
+    """Steps in data order (duplicate labels summed). Mirrors `waterfallModel`."""
+    sums: dict[str, float | None] = {}
+    is_total: set[str] = set()
+    duplicates = 0
+    for r in rows:
+        k = key_string(r.get(spec["x"]))
+        v = to_number(r.get(spec["y"]))
+        if k not in sums:
+            sums[k] = v
+        else:
+            duplicates += 1
+            prev = sums[k]
+            sums[k] = prev if v is None else (prev or 0.0) + v
+        if flagged(spec.get("total"), r, spec["x"]):
+            is_total.add(k)
+    start = float(spec["start"]) if is_number(spec.get("start")) else 0.0
+    running = start
+    steps: list[dict] = []
+    mismatches: list[str] = []
+    for i, (key, v) in enumerate(sums.items()):
+        if key in is_total:
+            value = running if v is None else v
+            checked = i > 0 or "start" in spec
+            if v is not None and checked and abs(v - running) > 1e-9 * max(1, abs(running)):
+                mismatches.append(key)
+            steps.append({"key": key, "kind": "total", "change": 0.0, "running": value})
+            running = value
+            continue
+        if v is None:
+            continue
+        steps.append({"key": key, "kind": "increase" if v >= 0 else "decrease", "change": v, "running": running + v})
+        running += v
+    return {"steps": steps, "start": start, "end": running, "mismatches": mismatches, "duplicates": duplicates}
+
+
+def _check_waterfall(spec: Spec, rows: list[dict], issues: Issues) -> None:
+    keys = distinct(key_string(r.get(spec["x"])) for r in rows)
+    tot = spec.get("total")
+    if isinstance(tot, list):
+        for i, t in enumerate(tot):
+            if t in keys:
+                continue
+            near = closest(t, keys)
+            _issue(issues, "warning", "no_such_step", f"total[{i}]", f'No step is labelled "{clip(t, 60)}"; it was ignored.', f'Did you mean "{near}"?' if near else None)
+    elif isinstance(tot, str) and not any(flagged(tot, r, None) for r in rows):
+        _issue(issues, "warning", "no_totals", "total", f'No row of "{tot}" says yes, so no step is drawn as a total.', 'Use true, 1, "yes" or "total" for the total rows.')
+    m = _waterfall_model(spec, rows)
+    if m["duplicates"]:
+        _issue(issues, "warning", "duplicate_steps", "x", f"{m['duplicates']} row(s) repeat a step label; their changes were summed into one bar.")
+    if m["mismatches"]:
+        _issue(issues, "warning", "total_mismatch", "total", "The value given for a total differs from the sum of the steps before it; the given value is drawn.", "Leave y empty on a total row to draw the computed running total.")
+    if not m["steps"]:
+        _issue(issues, "error", "empty_data", "y", "No step has a numeric change and no row is a total.", "Give each step a signed number in y.")
+
+
+def _describe_waterfall(spec: Spec) -> str:
+    m = _waterfall_model(spec, spec["data"])
+    steps, end = m["steps"], m["end"]
+    f = _formatter(spec)
+
+    def sg(v: float) -> str:
+        return f"+{f(v)}" if v > 0 else f(v)
+
+    changes = [s for s in steps if s["kind"] != "total"]
+    totals = [s for s in steps if s["kind"] == "total"]
+    opening = steps[0]["running"] if steps and steps[0]["kind"] == "total" else m["start"]
+    total_word = _plural(len(totals), "total", "totals")
+    t = (f"{_lead(spec, 'Waterfall chart')} {len(changes)} {_plural(len(changes), 'change', 'changes')}"
+         f"{f' and {len(totals)} {total_word}' if totals else ''}, from {f(opening)} to {f(end)} (net {sg(end - opening)}).")
+    ups = [s for s in changes if s["change"] > 0]
+    downs = [s for s in changes if s["change"] < 0]
+    if ups:
+        u = _first_max(ups, lambda s: s["change"])
+        t += f" Largest increase: {clip(u['key'], 40)} ({sg(u['change'])})."
+    if downs:
+        d = _first_min(downs, lambda s: s["change"])
+        t += f" Largest decrease: {clip(d['key'], 40)} ({sg(d['change'])})."
+    if totals:
+        listed = ", ".join(f"{clip(s['key'], 30)} {f(s['running'])}" for s in totals[:5])
+        t += f" Totals: {listed}{f' and {len(totals) - 5} more' if len(totals) > 5 else ''}."
+    return t
+
+
+# ---------------------------------------------------------------------------------------- funnel
+
+
+def _funnel_stages(spec: Spec, rows: list[dict]) -> tuple[list[dict], int, int]:
+    """Stages in data order, duplicates summed; rows without a number and negative values are left out."""
+    sums: dict[str, float] = {}
+    negative = duplicates = 0
+    for r in rows:
+        v = to_number(r.get(spec["value"]))
+        if v is None:
+            continue
+        if v < 0:
+            negative += 1
+            continue
+        k = key_string(r.get(spec["stage"]))
+        if k in sums:
+            duplicates += 1
+        sums[k] = sums.get(k, 0.0) + v
+    order = list(sums)
+    first = sums[order[0]] if order else 0.0
+    stages = []
+    for i, key in enumerate(order):
+        value = sums[key]
+        prev = sums[order[i - 1]] if i else 0.0
+        stages.append({"key": key, "value": value, "ofFirst": value / first if first > 0 else None, "ofPrevious": value / prev if i and prev > 0 else None})
+    return stages, negative, duplicates
+
+
+def _check_funnel(spec: Spec, rows: list[dict], issues: Issues) -> None:
+    stages, negative, duplicates = _funnel_stages(spec, rows)
+    if len(stages) > MAX_STAGES:
+        _issue(issues, "error", "too_many_stages", "stage", f"{len(stages)} stages; a funnel takes at most {MAX_STAGES}.", "Group stages, or use a bar chart.")
+    if not stages:
+        _issue(issues, "error", "empty_data", "value", "No stage has a value of 0 or more.")
+    if negative:
+        _issue(issues, "warning", "negative_values", "value", f"{negative} negative value(s) were skipped; a funnel cannot show them.")
+    if duplicates:
+        _issue(issues, "warning", "duplicate_stages", "stage", f"{duplicates} row(s) repeat a stage name; their values were summed.")
+    if any(i > 0 and st["value"] > stages[i - 1]["value"] for i, st in enumerate(stages)):
+        _issue(issues, "warning", "funnel_increases", "value", "A stage is larger than the one before it; a funnel reads as narrowing, so it misleads here. Drawn anyway.", "Check the stage order, or use a bar chart for stages that are not subsets of each other.")
+
+
+def _describe_funnel(spec: Spec) -> str:
+    stages, _, _ = _funnel_stages(spec, spec["data"])
+    f = _formatter(spec)
+    if not stages:
+        return f"{_lead(spec, 'Funnel chart')} No stages."
+    first, last = stages[0], stages[-1]
+    if len(stages) == 1:
+        return f"{_lead(spec, 'Funnel chart')} 1 stage: {clip(first['key'], 40)}, {f(first['value'])}."
+    t = (f"{_lead(spec, 'Funnel chart')} {len(stages)} stages ({_fmt_list([clip(st['key'], 30) for st in stages])}),"
+         f" from {f(first['value'])} at {clip(first['key'], 40)} to {f(last['value'])} at {clip(last['key'], 40)}")
+    t += "; the first stage is 0, so there are no shares of it." if last["ofFirst"] is None else f": {format_percent(last['ofFirst'])} of the first stage reach the last."
+    worst = None
+    worst_i = 0
+    for i, st in enumerate(stages):
+        if i and st["ofPrevious"] is not None and (worst is None or st["ofPrevious"] < worst["ofPrevious"]):
+            worst, worst_i = st, i
+    if worst is not None and worst["ofPrevious"] < 1:
+        t += f" Largest drop: {clip(stages[worst_i - 1]['key'], 40)} to {clip(worst['key'], 40)}, {format_percent(worst['ofPrevious'])} continue."
+    if any(i and st["value"] > stages[i - 1]["value"] for i, st in enumerate(stages)):
+        t += " The value rises between some stages."
+    return t
+
+
+# ---------------------------------------------------------------------------------------- bullet
+
+
+def _cols(v: Any) -> list[str]:
+    return v if isinstance(v, list) else [v] if isinstance(v, str) else []
+
+
+def _bullet_rows(spec: Spec, rows: list[dict]) -> tuple[list[dict], int, list[str]]:
+    """One row per measure (the first row of a repeated name wins). Mirrors `bulletRows`."""
+    seen: set[str] = set()
+    out: list[dict] = []
+    unordered: list[str] = []
+    duplicates = 0
+    names = _cols(spec.get("ranges"))
+    for r in rows:
+        key = key_string(r.get(spec["x"]))
+        if key in seen:
+            duplicates += 1
+            continue
+        seen.add(key)
+        given = [(n, v) for n, v in ((n, to_number(r.get(n))) for n in names) if v is not None]
+        if any(i and g[1] < given[i - 1][1] for i, g in enumerate(given)):
+            unordered.append(key)
+        out.append({"key": key, "value": to_number(r.get(spec["value"])), "target": to_number(r.get(spec["target"])) if spec.get("target") else None,
+                    "ranges": sorted(given, key=lambda g: g[1])})
+    return out, duplicates, unordered
+
+
+def _check_bullet(spec: Spec, rows: list[dict], issues: Issues) -> None:
+    if not spec.get("target") and not spec.get("ranges"):
+        _issue(issues, "warning", "prefer_bar", "type", "Without a target or ranges a bullet chart is a bar chart.", 'Add `target` and `ranges`, or use `type: "bar"`.')
+    _, duplicates, unordered = _bullet_rows(spec, rows)
+    if duplicates:
+        _issue(issues, "warning", "duplicate_measures", "x", f"{duplicates} row(s) repeat a measure name; only the first row of each is drawn.")
+    if unordered:
+        _issue(issues, "warning", "ranges_not_increasing", "ranges", "Some thresholds do not increase in column order; they were sorted.", "List range columns worst first, each threshold higher than the one before.")
+
+
+def _describe_bullet(spec: Spec) -> str:
+    rows, _, _ = _bullet_rows(spec, spec["data"])
+    f = _formatter(spec)
+    names = _cols(spec.get("ranges"))
+    t = (f"{_lead(spec, 'Bullet chart')} {len(rows)} {_plural(len(rows), 'measure', 'measures')} ({_fmt_list([clip(r['key'], 30) for r in rows])})"
+         f"{' against targets' if spec.get('target') else ''}{f', with ranges {_fmt_list(names)}' if names else ''}{', each on its own scale' if spec.get('scale') == 'each' else ''}.")
+    for r in rows[:6]:
+        if r["value"] is None:
+            t += f" {clip(r['key'], 30)}: no value."
+            continue
+        t += f" {clip(r['key'], 30)}: {f(r['value'])}"
+        if r["target"] is not None:
+            share = f" ({format_percent(r['value'] / r['target'])} of target)" if r["target"] != 0 else ""
+            t += f" against {f(r['target'])}{share}"
+        if r["ranges"]:
+            g = next((n for n, limit in r["ranges"] if r["value"] <= limit), None)
+            t += f", in {g}" if g else ", above every range"
+        t += "."
+    if len(rows) > 6:
+        t += f" And {len(rows) - 6} more."
+    return t
+
+
+# ------------------------------------------------------------------------------------------ bump
+
+
+def _bump_model(spec: Spec, rows: list[dict]) -> dict:
+    """Ranks per x, from a `rank` column or by ranking `y` among the series present at that x. Mirrors `bumpModel`."""
+    kind = detect_x_kind("auto", [r.get(spec["x"]) for r in rows])
+    xs = distinct(key_string(v) for v in (r.get(spec["x"]) for r in rows) if not _blank(v))
+    if kind != "category":
+        def num(k: str) -> float:
+            n = to_time(k) if kind == "time" else to_number(k)
+            return 0.0 if n is None else n
+        xs = sorted(xs, key=num)
+    ranks: dict[str, dict[str, float]] = {}
+    duplicates = bad_ranks = 0
+    if spec.get("rank"):
+        every = distinct(key_string(r.get(spec.get("series"))) for r in rows)
+        for r in rows:
+            x = r.get(spec["x"])
+            if _blank(x):
+                continue
+            v = to_number(r.get(spec["rank"]))
+            if v is None:
+                continue
+            if v < 1:
+                bad_ranks += 1
+                continue
+            m = ranks.setdefault(key_string(r.get(spec.get("series"))), {})
+            if key_string(x) in m:
+                duplicates += 1
+            else:
+                m[key_string(x)] = v
+    else:
+        obs = observations(rows, spec["x"], spec["y"], spec.get("series"))
+        every = distinct(o["s"] for o in obs)
+        values: dict[str, dict[str, float]] = {}
+        for o in obs:
+            if o["y"] is None or _blank(o["x"]):
+                continue
+            m = values.setdefault(o["s"], {})
+            k = key_string(o["x"])
+            if k in m:
+                duplicates += 1
+            m[k] = m.get(k, 0.0) + o["y"]
+        desc = spec.get("rankBy") != "asc"
+        for x in xs:
+            present = [s for s in every if x in values.get(s, {})]
+            present.sort(key=lambda s: -values[s][x] if desc else values[s][x])
+            for i, s in enumerate(present):
+                ranks.setdefault(s, {})[x] = i + 1
+    every = [s for s in every if ranks.get(s)]
+    keys = every
+    if len(every) > MAX_SERIES:
+        def mean_rank(s: str) -> float:
+            return total(list(ranks[s].values())) / len(ranks[s])
+        best = set(sorted(every, key=mean_rank)[:MAX_SERIES])
+        keys = [s for s in every if s in best]
+    return {"xs": xs, "all": every, "keys": keys, "ranks": ranks, "duplicates": duplicates, "badRanks": bad_ranks}
+
+
+def _check_bump(spec: Spec, rows: list[dict], issues: Issues) -> None:
+    if not spec.get("rank") and not spec.get("y"):
+        return _issue(issues, "error", "missing_required", "y", "A bump chart needs `rank` (a column of ranks) or `y` (values to rank per x).", 'E.g. "y": "points", "series": "team".')
+    if spec.get("rank") and not spec.get("series"):
+        return _issue(issues, "error", "missing_required", "series", "`rank` needs `series`: the column naming whose rank each row is.")
+    if spec.get("rank") and spec.get("y"):
+        _issue(issues, "warning", "y_ignored", "y", "`y` is ignored when `rank` is given.")
+    if not spec.get("rank") and isinstance(spec.get("y"), list) and len(spec["y"]) > 1 and spec.get("series"):
+        _issue(issues, "warning", "series_ignored", "series", "`series` is ignored when `y` lists several columns.")
+    if "rankBy" in spec and spec["rankBy"] != "desc" and spec.get("rank"):
+        _issue(issues, "warning", "rank_by_ignored", "rankBy", "`rankBy` only applies when ranks come from `y`.")
+    if spec.get("patterns") is True:
+        _issue(issues, "warning", "patterns_unsupported", "patterns", "A bump chart has lines and dots, no filled areas, so patterns do not apply.")
+    m = _bump_model(spec, rows)
+    if m["badRanks"]:
+        _issue(issues, "warning", "bad_rank", "rank", f"{m['badRanks']} rank(s) below 1 were skipped; rank 1 is the best.")
+    if m["duplicates"]:
+        _issue(issues, "warning", "duplicate_points", "rank" if spec.get("rank") else "y", f"{m['duplicates']} row(s) repeat a series at the same x.")
+    if len(m["all"]) > MAX_SERIES:
+        _issue(issues, "warning", "too_many_series", "series", f"{len(m['all'])} series; only the {MAX_SERIES} with the best average rank are drawn.", "Filter first, e.g. a `top` step in `transform`.")
+    elif len(m["all"]) == 1:
+        _issue(issues, "warning", "single_series", "series", "A bump chart compares ranks; with one series it is always first.", "Add `series`, or use a line chart.")
+    if len(m["xs"]) < 2:
+        _issue(issues, "warning", "single_step", "x", "Only one x value: there is no change of rank to show.")
+
+
+def _describe_bump(spec: Spec) -> str:
+    m = _bump_model(spec, spec["data"])
+    xs, keys, ranks = m["xs"], m["keys"], m["ranks"]
+    first = xs[0] if xs else ""
+    last = xs[-1] if xs else None
+    n = number_string
+    t = f"{_lead(spec, 'Bump chart')} Ranks of {len(keys)} series ({_fmt_list([clip(k, 30) for k in keys])}) over {len(xs)} steps from {clip(first, 30)} to {clip(last, 30)}"
+    t += "." if spec.get("rank") else f", ranked by {'value' if isinstance(spec['y'], list) else clip(spec['y'], 40)}, {'lowest' if spec.get('rankBy') == 'asc' else 'highest'} first."
+    end = sorted((k for k in keys if last in ranks[k]), key=lambda k: ranks[k][last]) if last is not None else []
+    if end:
+        t += f" At {clip(last, 30)}: {', '.join(f'{n(r2(ranks[k][last]))}. {clip(k, 30)}' for k in end[:5])}."
+    up = down = None
+    for k in keys:
+        rk = ranks[k]
+        seen = [x for x in xs if x in rk]
+        if len(seen) < 2:
+            continue
+        a, b = rk[seen[0]], rk[seen[-1]]
+        if b < a and (up is None or a - b > up[1] - up[2]):
+            up = (k, a, b)
+        if b > a and (down is None or b - a > down[2] - down[1]):
+            down = (k, a, b)
+    if up:
+        t += f" Biggest climb: {clip(up[0], 30)}, from {n(r2(up[1]))} to {n(r2(up[2]))}."
+    if down:
+        t += f" Biggest fall: {clip(down[0], 30)}, from {n(r2(down[1]))} to {n(r2(down[2]))}."
+    return t
+
+
+# ---------------------------------------------------------------------------------------- waffle
+
+
+def _waffle_parts(spec: Spec, rows: list[dict]) -> list[dict]:
+    """Categories with their summed value; past eight the smallest merge into "Other". Mirrors `parts`."""
+    sums: dict[str, float] = {}
+    for r in rows:
+        n = to_number(r.get(spec["value"]))
+        if n is None or n < 0:
+            continue
+        k = or_empty(r.get(spec["label"]))
+        sums[k] = sums.get(k, 0.0) + n
+    order = [k for k in distinct(or_empty(r.get(spec["label"])) for r in rows) if k in sums]
+    parts = [{"key": k, "value": sums[k]} for k in order]
+    sort = spec.get("sort")
+    if sort and sort != "none":
+        parts = sorted(parts, key=lambda p: p["value"] if sort == "asc" else -p["value"])
+    if len(parts) > MAX_SERIES:
+        keep = {p["key"] for p in _stable_desc(parts, lambda p: p["value"])[: MAX_SERIES - 1]}
+        rest = [p for p in parts if p["key"] not in keep]
+        parts = [p for p in parts if p["key"] in keep] + [{"key": "Other", "value": total([p["value"] for p in rest])}]
+    return parts
+
+
+def _check_waffle(spec: Spec, rows: list[dict], issues: Issues) -> None:
+    cells = spec.get("cells")
+    if cells is not None and cells % 10 != 0:
+        _issue(issues, "error", "bad_value", "cells", f"cells must be a multiple of 10 so the grid is a full rectangle; got {number_string(cells)}.")
+    if not any(p["value"] > 0 for p in _waffle_parts(spec, rows)):
+        _issue(issues, "error", "no_positive_values", "value", "No category has a positive value; a waffle needs a whole to share out.", "Check the value column, or the transform that produced it.")
+
+
+def _describe_waffle(spec: Spec) -> str:
+    parts = _waffle_parts(spec, spec["data"])
+    cells = spec.get("cells", 100)
+    tot = total([p["value"] for p in parts])
+    f = _formatter(spec)
+    cols, rows = waffle_grid(cells)
+    n = number_string
+    t = (f"{_lead(spec, 'Waffle chart')} {len(parts)} {_plural(len(parts), 'category', 'categories')} totalling {f(tot)},"
+         f" as {n(cells)} cells ({n(cols)} by {n(rows)}; one cell is {format_percent(1 / cells, 2)}).")
+    if tot > 0:
+        counts = waffle_cells([p["value"] for p in parts], int(cells))
+        ranked = _stable_desc([{**p, "n": counts[i]} for i, p in enumerate(parts)], lambda p: p["value"])
+        listed = ", ".join(f"{clip(p['key'], 30)} {format_percent(p['value'] / tot)} ({p['n']} {_plural(p['n'], 'cell', 'cells')})" for p in ranked[:5])
+        t += f" {listed}{f' and {len(ranked) - 5} more' if len(ranked) > 5 else ''}."
+    return t
+
+
+# -------------------------------------------------------------------------------------- beeswarm
+
+
+def _swarm_points(spec: Spec, rows: list[dict]) -> list[tuple[float, str]]:
+    out = []
+    for r in rows:
+        x = to_number(r.get(spec["x"]))
+        if x is not None:
+            out.append((x, or_empty(r.get(spec["y"])) if spec.get("y") else ""))
+    return out
+
+
+def _check_beeswarm(spec: Spec, rows: list[dict], issues: Issues) -> None:
+    if not _swarm_points(spec, rows):
+        _issue(issues, "error", "no_points", "x", "No row has a numeric x.", "Pick a numeric column for x.")
+
+
+def _describe_beeswarm(spec: Spec) -> str:
+    pts = _swarm_points(spec, spec["data"])
+    f = _formatter(spec)
+    lanes = distinct(g for _, g in pts)
+
+    def stat(xs: list[float]) -> str:
+        v = sorted(xs)
+        return f"median {f(quantile(v, 0.5))}, range {f(v[0])} to {f(v[-1])}"
+
+    t = f"{_lead(spec, 'Beeswarm plot')} {len(pts)} {_plural(len(pts), 'value', 'values')} of {spec['x']}, one dot each"
+    if spec.get("y"):
+        t += f", in {len(lanes)} {_plural(len(lanes), 'group', 'groups')} by {spec['y']} ({_fmt_list([clip(l, 30) for l in lanes])})"
+    t += "."
+    if pts:
+        t += f" Overall {stat([x for x, _ in pts])}."
+    if spec.get("y") and len(lanes) > 1:
+        for l in lanes[:6]:
+            xs = [x for x, g in pts if g == l]
+            t += f" {clip(l, 30)}: {len(xs)} {_plural(len(xs), 'value', 'values')}, {stat(xs)}."
+    return t
+
+
 # ----------------------------------------------------------------------------------------- tables
 
 CHECKS: dict[str, Callable[[Spec, list[dict], Issues], None]] = {
     "bar": _check_bar,
-    "line": lambda s, r, i: _series_ignored(s, i),
-    "area": lambda s, r, i: _series_ignored(s, i),
+    "line": lambda s, r, i: _check_series(s, r, i, False),
+    "area": lambda s, r, i: _check_series(s, r, i, True),
     "scatter": _check_scatter,
+    "histogram": lambda s, r, i: _refuse_log(s, i, "yScale"),
+    "box": _check_points,
+    "violin": _check_violin,
+    "calendar": _check_calendar,
+    "waterfall": _check_waterfall,
+    "bullet": _check_bullet,
+    "bump": _check_bump,
+    "sunburst": _check_sunburst,
+    "parallel": _check_parallel,
+    "funnel": _check_funnel,
+    "waffle": _check_waffle,
+    "beeswarm": _check_beeswarm,
     "radar": _check_radar,
     "treemap": _check_treemap,
     "sankey": _check_sankey,
@@ -720,6 +1620,16 @@ DESCRIBE: dict[str, Callable[[Spec], str]] = {
     "donut": lambda s: _describe_pie(s, "Donut chart"),
     "histogram": _describe_histogram,
     "box": _describe_box,
+    "violin": _describe_violin,
+    "calendar": _describe_calendar,
+    "waterfall": _describe_waterfall,
+    "bullet": _describe_bullet,
+    "bump": _describe_bump,
+    "sunburst": _describe_sunburst,
+    "parallel": _describe_parallel,
+    "funnel": _describe_funnel,
+    "waffle": _describe_waffle,
+    "beeswarm": _describe_beeswarm,
     "heatmap": _describe_heatmap,
     "radar": _describe_radar,
     "treemap": _describe_treemap,

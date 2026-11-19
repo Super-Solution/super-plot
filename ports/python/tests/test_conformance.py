@@ -9,6 +9,7 @@ from pathlib import Path
 from super_plot import (
     bin_counts, bin_edges, box_stats, chart_types, describe_plot, format_percent, format_value, linear_ticks,
     nice_domain, quantile, require_valid, validate_plot, PlotSpecError,
+    density_peaks, kde, loess, log_ticks, nice_log_domain, silverman, transform_bin_edges, waffle_cells,
     GeographyError, get_geography, match_region, register_geography, unregister_geography,
     apply_transform, time_bucket,
 )
@@ -71,6 +72,39 @@ class Conformance(unittest.TestCase):
         for c in DATA["histogramBins"]:
             edges = bin_edges(c["in"]["values"], c["in"]["bins"])
             same({"edges": edges, "counts": bin_counts(c["in"]["values"], edges)}, c["out"], str(c["in"]))
+
+    def test_density(self):
+        self.assertTrue(DATA["density"])
+        for c in DATA["density"]:
+            d = kde(c["in"]["values"], c["in"].get("bandwidth"))
+            same({"silverman": silverman(c["in"]["values"]), **d, "peaks": density_peaks(d)}, c["out"], str(c["in"]))
+
+    def test_log_ticks(self):
+        self.assertTrue(DATA["logTicks"])
+        for c in DATA["logTicks"]:
+            same(log_ticks(*c["in"]), c["out"], str(c["in"]))
+
+    def test_log_nice_domain(self):
+        self.assertTrue(DATA["logNiceDomain"])
+        for c in DATA["logNiceDomain"]:
+            same(list(nice_log_domain(*c["in"])), c["out"], str(c["in"]))
+
+    def test_loess(self):
+        self.assertTrue(DATA["loess"])
+        for c in DATA["loess"]:
+            i = c["in"]
+            same([list(p) for p in loess(i["xs"], i["ys"], i["bandwidth"], i["grid"])], c["out"], str(i))
+
+    def test_transform_bin_edges(self):
+        self.assertTrue(DATA["binStep"])
+        for c in DATA["binStep"]:
+            i = c["in"]
+            same(transform_bin_edges(i["values"], i["maxbins"], i.get("step")), c["out"], str(i))
+
+    def test_waffle_cells(self):
+        self.assertTrue(DATA["waffleCells"])
+        for c in DATA["waffleCells"]:
+            self.assertEqual(waffle_cells(c["in"]["values"], c["in"]["cells"]), c["out"], str(c["in"]))
 
     def test_formats(self):
         for c in DATA["formats"]:
