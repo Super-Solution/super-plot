@@ -1,8 +1,10 @@
 import type { AxisInfo, Scene, UiStringKey } from '@supersolutions/super-plot-core/base'
 import { invert, pixelOf } from './interact.js'
+import { NAV_HEIGHT } from './navigable.js'
 
-/** Height of the overview strip below the chart, in px (the strip itself plus a little air). */
-export const NAV_HEIGHT = 44
+// Loaded on demand (its own chunk) by a plot with the `navigator` option; `navigable.ts` holds what is needed first.
+export { NAV_HEIGHT, NAV_TYPES, navigable } from './navigable.js'
+
 /** The strip's top and height inside the navigator. */
 const STRIP_Y = 6
 const STRIP_H = 32
@@ -10,18 +12,9 @@ const SVG_NS = 'http://www.w3.org/2000/svg'
 /** Points kept per subpath of an overview line: about two per pixel column (first, lowest, highest, last). */
 const MAX_LINE_POINTS = 4000
 
-/** Charts that get a navigator: a continuous x that the viewer can zoom. */
-export const NAV_TYPES = ['line', 'area', 'scatter']
-
 /** Data value to the axis's linear space (log10 on a log axis). */
 const fwd = (a: AxisInfo, v: number): number => (a.scale === 'log' ? Math.log10(v) : v)
 const back = (a: AxisInfo, t: number): number => (a.scale === 'log' ? 10 ** t : t)
-
-/** Does this scene get a navigator? Zoom on a continuous x, one panel, a line, area or scatter chart. */
-export function navigable(scene: Scene | null): boolean {
-  const a = scene?.axes
-  return !!a?.zoom && a.x.kind !== 'band' && !scene!.panels && !scene!.geo && NAV_TYPES.includes(scene!.type)
-}
 
 /**
  * Thin a path of straight segments (`M x y L x y ...`) to at most about `max` points per subpath, keeping in

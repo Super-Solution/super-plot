@@ -169,9 +169,10 @@ describe('plot.sonify()', () => {
     expect(FakeAudio.made[1].closed).toBe(true)
   })
 
-  it('the toolbar sound button starts and stops it', () => {
+  it('the toolbar sound button starts and stops it', async () => {
     ;(window as { AudioContext?: unknown }).AudioContext = FakeAudio
     const p = new SuperPlot(host, line, { width: 600, height: 400, toolbar: ['sound'] })
+    await p.ready()
     const btn = host.querySelector<HTMLButtonElement>('[data-tool="sound"]')!
     expect(btn.getAttribute('aria-label')).toBe('Play as sound')
     btn.click()

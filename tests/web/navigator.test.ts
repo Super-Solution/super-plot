@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { SuperPlot, type ZoomRange } from '@supersolutions/super-plot-web'
 import { defineSuperPlot } from '@supersolutions/super-plot-web/element'
 import { compilePlot, type Issue } from '@supersolutions/super-plot-core'
@@ -35,7 +35,38 @@ const ptr = (el: Element, type: string, x: number, id = 1): void => {
 }
 const num = (el: Element, a: string): number => Number(el.getAttribute(a))
 
+// Tests below use the navigator with its code loaded.
+beforeAll(async () => {
+  HTMLCanvasElement.prototype.getContext = (() => null) as typeof HTMLCanvasElement.prototype.getContext
+  const p = new SuperPlot(document.createElement('div'), { type: 'line', x: 'x', y: 'y', data: pts, zoom: 'x' }, { width: 600, height: 400, navigator: true })
+  await p.ready()
+  p.dispose()
+})
+
 describe('navigator', () => {
+  it('keeps the strip\'s room at once and draws it when its code is here (no layout shift)', async () => {
+    // A fresh module registry: the navigator's chunk is not loaded yet.
+    vi.resetModules()
+    const { SuperPlot: Fresh } = await import('@supersolutions/super-plot-web')
+    const auto = document.createElement('div')
+    host.appendChild(auto)
+    const p = new Fresh(auto, { type: 'line', x: 'x', y: 'y', data: pts, zoom: 'x' }, { width: 600, animate: false, navigator: true })
+    const nav = auto.querySelector<HTMLElement>('.sp-nav')!
+    expect(nav.previousElementSibling).toBe(auto.querySelector('.sp-root'))
+    expect(nav.childElementCount).toBe(0)
+    // The strip's height comes from the stylesheet's .sp-nav rule, the placeholder's class too.
+    expect(CSS).toContain(`.sp-nav{position:relative;display:block;width:100%;height:${NAV_HEIGHT}px`)
+    const height = p.getScene()!.height
+    await p.ready()
+    const drawn = auto.querySelector<HTMLElement>('.sp-nav')!
+    expect(drawn.querySelectorAll('[role="slider"]')).toHaveLength(3)
+    expect(auto.querySelectorAll('.sp-nav')).toHaveLength(1)
+    expect(drawn.previousElementSibling).toBe(auto.querySelector('.sp-root'))
+    expect(p.getScene()!.height).toBe(height)
+    p.dispose()
+    expect(auto.querySelector('.sp-nav')).toBeNull()
+  })
+
   it('adds an overview strip under a zoomable line chart, inside the given height', () => {
     const p = new SuperPlot(host, { type: 'line', x: 'x', y: 'y', data: pts, zoom: 'x' }, { width: 600, height: 400, animate: false, navigator: true })
     const nav = navOf()

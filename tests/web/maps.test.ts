@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { SuperPlot } from '@supersolutions/super-plot-web'
 import { chartCatalog, type Camera } from '@supersolutions/super-plot-core'
 
@@ -22,9 +22,34 @@ afterEach(() => {
   vi.useRealTimers()
   document.body.innerHTML = ''
 })
+// The tests below run with the map controls' code loaded.
+beforeAll(async () => {
+  HTMLCanvasElement.prototype.getContext = (() => stub()) as unknown as typeof HTMLCanvasElement.prototype.getContext
+  const p = new SuperPlot(document.createElement('div'), ex('choropleth'), { width: 640, height: 420 })
+  await p.ready()
+  p.dispose()
+})
 const key = (el: Element, k: string, shift = false): void => { el.dispatchEvent(new KeyboardEvent('keydown', { key: k, shiftKey: shift, bubbles: true })) }
 
 describe('maps in the browser binding', () => {
+  it('the map is drawn at once; its controls are their own chunk, there once it is loaded', async () => {
+    // A fresh module registry: the map controls' chunk is not loaded yet.
+    vi.resetModules()
+    const { SuperPlot: Fresh } = await import('@supersolutions/super-plot-web')
+    const p = new Fresh(host, ex('choropleth'), { width: 640, height: 420, toolbar: ['csv'] })
+    const root = host.querySelector<HTMLElement>('.sp-root')!
+    expect(root.querySelector('svg .sp-data')).not.toBeNull()
+    expect(root.hasAttribute('data-toolbar')).toBe(true)
+    await p.ready()
+    expect(root.hasAttribute('data-map')).toBe(true)
+    expect(root.tabIndex).toBe(0)
+    // In the order a first draw with the code at hand gives: map buttons, then the toolbar.
+    expect([...root.children].map(c => c.className).slice(-2)).toEqual(['sp-ctl', 'sp-bar'])
+    key(root, '+')
+    expect(p.getCamera()!.zoom).toBeGreaterThan(1)
+    p.dispose()
+  })
+
   it('a flat choropleth stays SVG; the root is focusable and has zoom buttons', () => {
     const p = new SuperPlot(host, ex('choropleth'), { width: 640, height: 420 })
     expect(p.getRenderer()).toBe('svg')

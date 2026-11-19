@@ -1,11 +1,14 @@
 import {
-  compilePlot, renderSvg, resolveTheme, estimateWidth, defaultHeight, dataMarkCount, makeView, dragCamera, zoomCamera, clampCamera, plotTable, plotCsv, svgKey, cssVar,
+  compilePlot, renderSvg, resolveTheme, estimateWidth, defaultHeight, dataMarkCount, clampCamera, plotTable, plotCsv, svgKey, cssVar,
   resolveStrings, fillString, type UiStringKey, type UiStrings,
-  type AxisInfo, type Camera, type Issue, type Mark, type Measure, type PlotPlugin, type RenderOptions, type Scene, type Theme, type Tip, type ViewParams
+  type AxisInfo, type Camera, type Issue, type Mark, type Measure, type PlotPlugin, type RenderOptions, type Scene, type Theme, type Tip
 } from '@supersolutions/super-plot-core/base'
 import { CanvasLayer, markCenter, nearestMark } from './canvas.js'
-import { NAV_HEIGHT, Navigator, navigable } from './navigator.js'
+import { NAV_HEIGHT, navigable } from './navigable.js'
 import type * as Gl from './gl/index.js'
+import type * as MapCtl from './map-control.js'
+import type * as Nav from './navigator.js'
+import type * as Tools from './toolbar.js'
 import { AxisControl, type BrushSelection, type ZoomRange } from './interact.js'
 import { audioContextOf, idleController, playNotes, sonifyNotes, type SonifyController, type SonifyOptions } from './sound.js'
 import { ensureStyles } from './styles.js'
@@ -23,15 +26,6 @@ export type ToolbarItem = 'png' | 'svg' | 'csv' | 'table' | 'reset' | 'sound'
 const TOOLBAR_ITEMS: readonly ToolbarItem[] = ['png', 'svg', 'csv', 'table', 'reset', 'sound']
 /** What `toolbar: true` shows ('reset' only on a chart that can zoom). */
 const TOOLBAR_DEFAULT: readonly ToolbarItem[] = ['png', 'svg', 'csv', 'table', 'reset']
-/** Each button's visible text and accessible name, as keys of the `strings` option. */
-const TOOLBAR_LABELS: Record<ToolbarItem, [text: UiStringKey, name: UiStringKey]> = {
-  png: ['toolPng', 'toolPngName'],
-  svg: ['toolSvg', 'toolSvgName'],
-  csv: ['toolCsv', 'toolCsvName'],
-  table: ['toolTable', 'toolTableName'],
-  reset: ['toolReset', 'toolResetName'],
-  sound: ['toolSound', 'toolSoundName']
-}
 
 /** A download name from a chart title: no path or control characters, at most 80 characters, `chart` when empty. */
 export function fileNameOf(title: unknown, ext: string): string {
@@ -165,11 +159,27 @@ const PRINT_LIGHT: Record<string, string> = { dark: 'light', 'accessible-dark': 
 const TOUCH_SLOP = 12
 
 let uid = 0
-// The WebGL layer is a separate chunk, loaded the first time a plot needs it.
-let glModule: typeof Gl | null = null
+
+/** Code a page only pays for when a plot uses it: its own chunk, fetched the first time a plot needs it. */
+interface Chunk<T> {
+  /** The module, once loaded. */
+  readonly mod: T | null
+  load(): Promise<T>
+}
+function chunk<T>(fetch: () => Promise<T>): Chunk<T> {
+  let mod: T | null = null
+  let loading: Promise<T> | null = null
+  return {
+    get mod() { return mod },
+    // A failed fetch (a network error) is tried again the next time a plot asks.
+    load: () => (loading ??= fetch().then(m => (mod = m), e => { loading = null; throw e }))
+  }
+}
+const glChunk = chunk<typeof Gl>(() => import('./gl/index.js'))
+const navChunk = chunk<typeof Nav>(() => import('./navigator.js'))
+const toolChunk = chunk<typeof Tools>(() => import('./toolbar.js'))
+const mapChunk = chunk<typeof MapCtl>(() => import('./map-control.js'))
 let warnedGl = false
-let glLoading: Promise<typeof Gl> | null = null
-const loadGl = (): Promise<typeof Gl> => (glLoading ??= import('./gl/index.js').then(m => (glModule = m)))
 
 /** What identifies "the same map" across setSpec: chart type and geography (a name, or inline). */
 const mapKeyOf = (spec: unknown): string => {
@@ -234,11 +244,9 @@ export class SuperPlot {
   private cam: Camera | null = null
   /** The camera moved on the GPU since the last compile. */
   private glMoved = false
-  private pointers = new Map<number, { x: number; y: number }>()
-  private drag: { moved: boolean; turn: boolean } | null = null
-  private justDragged = false
   private gestureTimer = 0
-  private controls: HTMLDivElement | null = null
+  /** Drag, pinch, keys and zoom buttons on an interactive map (its own chunk, loaded with the first map). */
+  private map: MapCtl.MapControl | null = null
   private glWaiting = false
   private axis: AxisControl
   private hoverMark: Mark | null = null
@@ -252,8 +260,7 @@ export class SuperPlot {
   private rows: unknown[] | null = null
   private appendRaf = 0
   private sync: SyncConf | null = null
-  private bar: HTMLDivElement | null = null
-  private barKey = ''
+  private bar: Tools.Toolbar | null = null
   /** The toolbar's table button: null follows `dataTable`, true shows the table, false hides it from sight. */
   private tableShown: boolean | null = null
   /** Announcements (sonify) on the SVG renderer, created on first use; the canvas view has its own. */
@@ -265,7 +272,9 @@ export class SuperPlot {
   /** This plot adopted server markup: it measures text the way the server did, so later draws line up with it. */
   private hydrated = false
   /** The `navigator` option's overview strip, and the full-range scene it draws (recompiled when the data or size change). */
-  private nav: Navigator | null = null
+  private nav: Nav.Navigator | null = null
+  /** The strip's element: the navigator's, or an empty one of the same height while its code loads (no layout shift). */
+  private navEl: HTMLDivElement | null = null
   private navFull: { key: string; scene: Scene } | null = null
   /** The chart could not have a navigator (no zoom, categories on x, ...): draw without it until the spec changes. */
   private navRefused = false
@@ -282,6 +291,9 @@ export class SuperPlot {
   private printing = false
   /** The last pointer pressed was a finger or a pen: taps pick the nearest mark within a few pixels. */
   private coarse = false
+  /** Chunks this plot is loading, and what runs when each is here (what `ready()` waits for). */
+  private loading = new Set<Chunk<unknown>>()
+  private pending = new Set<Promise<void>>()
 
   constructor(readonly host: HTMLElement, spec: unknown, private options: SuperPlotOptions = {}) {
     const doc = host.ownerDocument
@@ -518,6 +530,35 @@ export class SuperPlot {
     return ctl
   }
 
+  /**
+   * Settles once the code this plot loads on demand for what it shows now (the navigator strip, the toolbar,
+   * the map controls, the WebGL layer) is loaded and drawn. Everything else is drawn by the constructor, `setSpec` and
+   * `setOptions` before they return. Never rejects: a part that failed to load is reported through `onIssues`
+   * (`load_failed`), and WebGL falls back to canvas.
+   */
+  async ready(): Promise<void> {
+    while (this.pending.size) await Promise.all([...this.pending])
+  }
+
+  /** Keep `p` (a load and what runs after it) for `ready()`. */
+  private track(p: Promise<void>): void {
+    const q = p.catch(() => {}).finally(() => this.pending.delete(q))
+    this.pending.add(q)
+  }
+
+  /** Load a chunk this plot needs (one request per plot at a time), then run `then` unless the plot was disposed. */
+  private need<T>(c: Chunk<T>, what: string, then: (m: T) => void): void {
+    if (this.loading.has(c)) return
+    this.loading.add(c)
+    this.track(c.load().then(m => {
+      this.loading.delete(c)
+      if (!this.disposed) then(m)
+    }, e => {
+      this.loading.delete(c)
+      if (!this.disposed) this.warn('load_failed', `The ${what} could not be loaded: ${e instanceof Error ? e.message : String(e)}.`, 'It is code split from the main bundle: check that its chunk file is served next to it.')
+    }))
+  }
+
   /** Say something to screen readers: through the canvas view's live region, or this plot's own. */
   /**
    * The binding's own text from the `strings` option (the same keys as core's, English by default), placeholders
@@ -563,6 +604,8 @@ export class SuperPlot {
     this.table = null
     this.nav?.dispose()
     this.nav = null
+    this.navEl?.remove()
+    this.navEl = null
     clearTimeout(this.sayTimer)
     this.root.removeEventListener('pointerdown', this.onPointerKind, true)
     this.host.ownerDocument.defaultView?.removeEventListener('beforeprint', this.onBeforePrint)
@@ -641,7 +684,7 @@ export class SuperPlot {
     const prev = this.root.style.height
     this.root.style.height = '0px'
     // The navigator and a visible data table sit in the host too: they are not a height the host has of its own.
-    const others = ([this.nav?.el, this.table] as (HTMLElement | null | undefined)[]).filter((e): e is HTMLElement => !!e && e.parentNode === this.host)
+    const others = ([this.navEl, this.table] as (HTMLElement | null | undefined)[]).filter((e): e is HTMLElement => !!e && e.parentNode === this.host)
     const shown = others.map(e => e.style.display)
     for (const e of others) e.style.display = 'none'
     const h = this.host.clientHeight
@@ -701,8 +744,10 @@ export class SuperPlot {
       this.layer = null
       this.scene = null
       this.issues = result.issues
-      this.controls?.remove()
-      this.controls = null
+      if (this.map) {
+        this.map.controls?.remove()
+        this.map.controls = null
+      }
       this.setupToolbar(null, null)
       const err = this.host.ownerDocument.createElement('div')
       err.className = 'sp-error'
@@ -778,7 +823,7 @@ export class SuperPlot {
     const tpl = this.host.ownerDocument.createElement('template')
     tpl.innerHTML = svg
     this.mount(tpl.content)
-    if (enter && !this.drag && o.animate !== false) {
+    if (enter && !this.map?.pressed() && o.animate !== false) {
       this.root.classList.add('sp-enter')
       clearTimeout(this.enterTimer)
       this.enterTimer = window.setTimeout(() => this.root.classList.remove('sp-enter'), 1000)
@@ -816,8 +861,8 @@ export class SuperPlot {
     const keep: Node[] = [this.tip]
     // One live region per chart: the canvas view brings its own.
     if (this.live && !this.layer) keep.push(this.live)
-    if (this.controls) keep.push(this.controls)
-    if (this.bar) keep.push(this.bar)
+    if (this.map?.controls) keep.push(this.map.controls)
+    if (this.bar) keep.push(this.bar.el)
     for (const c of [...this.root.childNodes]) if (c !== drawing && !keep.includes(c)) c.remove()
     if (drawing.parentNode !== this.root) this.root.prepend(drawing)
     for (const k of keep) if (k.parentNode !== this.root) this.root.appendChild(k)
@@ -829,24 +874,40 @@ export class SuperPlot {
   private syncNav(scene: Scene | null): void {
     if (!scene || !this.navWanted() || !navigable(scene)) {
       this.nav?.dispose()
+      this.navEl?.remove()
       this.nav = null
+      this.navEl = null
       this.navFull = null
       return
     }
     const doc = this.host.ownerDocument
-    this.nav ??= new Navigator(doc, {
-      view: () => this.axis.view?.x ?? null,
-      setX: (x, notify) => this.axis.viewX(x, notify),
-      locale: () => this.options.locale,
-      timeZone: () => this.options.timeZone,
-      text: (key, vars) => this.t(key, vars),
-      color: token => cssVar(this.themeNow(), token)
+    const mod = navChunk.mod
+    if (mod && !this.nav) {
+      this.nav = new mod.Navigator(doc, {
+        view: () => this.axis.view?.x ?? null,
+        setX: (x, notify) => this.axis.viewX(x, notify),
+        locale: () => this.options.locale,
+        timeZone: () => this.options.timeZone,
+        text: (key, vars) => this.t(key, vars),
+        color: token => cssVar(this.themeNow(), token)
+      })
+      if (this.navEl?.parentNode) this.navEl.replaceWith(this.nav.el)
+      this.navEl = this.nav.el
+    }
+    if (!this.navEl) {
+      // Its code is on the way: keep the strip's room now, so nothing moves when it is drawn.
+      this.navEl = doc.createElement('div')
+      this.navEl.className = 'sp-nav'
+    }
+    if (!mod) this.need(navChunk, 'navigator', () => {
+      this.syncNav(this.scene)
+      this.syncTable()
     })
-    const el = this.nav.el
+    const el = this.navEl
     if (el.parentNode !== this.host || el.previousSibling !== this.root) this.host.insertBefore(el, this.root.nextSibling)
     el.style.width = this.options.width !== undefined ? `${this.options.width}px` : ''
-    const full = this.fullScene(scene)
-    if (full) this.nav.update(full.scene, full.key)
+    const full = this.nav ? this.fullScene(scene) : null
+    if (full) this.nav!.update(full.scene, full.key)
   }
 
   /**
@@ -966,60 +1027,30 @@ export class SuperPlot {
     return out
   }
 
-  /** The `toolbar` option: real buttons, rebuilt only when the list changes (so focus stays on them). */
-  private setupToolbar(scene: Scene | null, theme: ReturnType<typeof resolveTheme> | null): void {
+  /** The `toolbar` option: the buttons this chart gets, drawn once the toolbar's code is here. */
+  private setupToolbar(scene: Scene | null, theme: Theme | null): void {
     const items = this.toolbarItems(scene)
     if (!items.length) {
-      this.bar?.remove()
+      this.bar?.el.remove()
       this.bar = null
-      this.barKey = ''
       this.root.removeAttribute('data-toolbar')
       return
     }
-    const key = items.join(',')
-    if (!this.bar || this.barKey !== key) {
-      const doc = this.host.ownerDocument
-      const box = this.bar ?? doc.createElement('div')
-      box.className = 'sp-bar'
-      box.setAttribute('role', 'toolbar')
-      box.replaceChildren(...items.map(k => {
-        const b = doc.createElement('button')
-        b.type = 'button'
-        b.dataset.tool = k
-        b.addEventListener('click', e => { e.stopPropagation(); this.runTool(k) })
-        return b
-      }))
-      this.bar = box
-      this.barKey = key
-    }
-    // Labels on every render, so a change of `strings` reaches buttons that stay (and keep focus).
-    this.bar.setAttribute('aria-label', this.t('toolbar'))
-    for (const b of this.bar.querySelectorAll<HTMLButtonElement>('button')) {
-      const [text, name] = TOOLBAR_LABELS[b.dataset.tool as ToolbarItem]
-      const label = this.t(name)
-      if (b.textContent !== this.t(text)) b.textContent = this.t(text)
-      b.setAttribute('aria-label', label)
-      b.title = label
-    }
+    // Set before the buttons arrive: the map buttons make room for them now rather than move later.
     this.root.setAttribute('data-toolbar', '')
-    if (theme) for (const b of this.bar.querySelectorAll<HTMLButtonElement>('button')) {
-      b.style.background = `var(--sp-surface, ${theme.colors.surface})`
-      b.style.color = `var(--sp-text, ${theme.colors.text})`
-      b.style.borderColor = `var(--sp-border, ${theme.colors.border})`
-    }
+    const mod = toolChunk.mod
+    if (!mod) return this.need(toolChunk, 'toolbar', () => {
+      this.setupToolbar(this.scene, this.scene ? this.themeNow() : null)
+      if (this.bar && this.bar.el.parentNode !== this.root) this.root.appendChild(this.bar.el)
+      this.syncBar()
+    })
+    this.bar ??= new mod.Toolbar(this.host.ownerDocument, k => this.runTool(k))
+    this.bar.update(items, k => this.t(k), theme)
   }
 
   /** Button states: pressed table and sound, reset only active while zoomed. */
   private syncBar(): void {
-    const bar = this.bar
-    if (!bar) return
-    const table = bar.querySelector<HTMLButtonElement>('[data-tool="table"]')
-    table?.setAttribute('aria-pressed', String(this.tableWant() === 'visible'))
-    const sound = bar.querySelector<HTMLButtonElement>('[data-tool="sound"]')
-    sound?.setAttribute('aria-pressed', String(!!this.sound?.playing))
-    const reset = bar.querySelector<HTMLButtonElement>('[data-tool="reset"]')
-    // aria-disabled, not disabled: a disabled button would drop the keyboard focus the viewer just put on it.
-    reset?.setAttribute('aria-disabled', String(!this.axis.view))
+    this.bar?.state(this.tableWant() === 'visible', !!this.sound?.playing, !!this.axis.view)
   }
 
   private runTool(k: ToolbarItem): void {
@@ -1050,17 +1081,7 @@ export class SuperPlot {
   }
 
   private download(name: string, blob: Blob): void {
-    const doc = this.host.ownerDocument
-    const url = URL.createObjectURL(blob)
-    const a = doc.createElement('a')
-    a.href = url
-    a.download = name
-    a.rel = 'noopener'
-    a.style.display = 'none'
-    doc.body.appendChild(a)
-    a.click()
-    a.remove()
-    setTimeout(() => URL.revokeObjectURL(url), 1000)
+    toolChunk.mod?.download(this.host.ownerDocument, name, blob)
   }
 
   // ---- sync --------------------------------------------------------------------------------
@@ -1153,7 +1174,7 @@ export class SuperPlot {
     }
     if (want === 'visible') this.table.setAttribute('data-visible', '')
     else this.table.removeAttribute('data-visible')
-    const after = this.nav?.el.parentNode === this.host ? this.nav.el : this.root
+    const after = this.navEl?.parentNode === this.host ? this.navEl : this.root
     if (this.table.parentNode !== this.host || this.table.previousSibling !== after) this.host.insertBefore(this.table, after.nextSibling)
     const env = JSON.stringify([this.options.strings ?? null, this.options.locale ?? ''])
     if (this.tableOf === this.spec && this.tableEnv === env) return
@@ -1216,11 +1237,12 @@ export class SuperPlot {
    * load it, and decide again once it is here.
    */
   private hardwareGl(): boolean {
-    if (!glModule) {
-      this.whenGlLoads(() => !glModule!.probeWebGL(this.host.ownerDocument).software)
+    const gl = glChunk.mod
+    if (!gl) {
+      this.whenGlLoads(() => !glChunk.mod!.probeWebGL(this.host.ownerDocument).software)
       return false
     }
-    const probe = glModule.probeWebGL(this.host.ownerDocument)
+    const probe = gl.probeWebGL(this.host.ownerDocument)
     return probe.ok && !probe.software
   }
 
@@ -1228,28 +1250,29 @@ export class SuperPlot {
   private whenGlLoads(worth: () => boolean): void {
     if (this.glWaiting) return
     this.glWaiting = true
-    loadGl().then(() => {
+    this.track(glChunk.load().then(() => {
       this.glWaiting = false
       if (!this.disposed && !this.glOff && worth()) this.render(false)
     }, () => {
       this.glWaiting = false
       this.glOff = true
-    })
+    }))
   }
 
   private makeGl(): Gl.GlView | null {
     const doc = this.host.ownerDocument
-    if (!glModule) {
+    const gl = glChunk.mod
+    if (!gl) {
       this.whenGlLoads(() => true)
       return null
     }
-    const v = glModule.GlView.create(doc, () => this.onGlLost())
+    const v = gl.GlView.create(doc, () => this.onGlLost())
     if (!v) {
       this.glOff = true
       // Asked for explicitly: say once why the plot is on canvas instead.
       if (this.options.renderer === 'webgl' && !warnedGl) {
         warnedGl = true
-        console.warn(`Super Plot: WebGL is not available (${glModule.GlView.lastError}); drawing on canvas.`)
+        console.warn(`Super Plot: WebGL is not available (${gl.GlView.lastError}); drawing on canvas.`)
       }
     }
     return v
@@ -1511,76 +1534,42 @@ export class SuperPlot {
     return !!this.scene?.geo && this.options.interactive !== false
   }
 
-  private dragging(): boolean { return this.drag?.moved === true || this.justDragged || this.axis.dragging() }
+  private dragging(): boolean { return this.map?.dragging() === true || this.axis.dragging() }
 
   /** Zoom buttons, keyboard focus and touch handling for an interactive map; removed for anything else. */
-  private setupMap(scene: Scene, theme: ReturnType<typeof resolveTheme>): void {
+  private setupMap(scene: Scene, theme: Theme): void {
     const on = !!scene.geo && this.options.interactive !== false
-    if (!on) {
-      this.controls?.remove()
-      this.controls = null
-      this.root.removeAttribute('data-map')
-      for (const a of ['role', 'aria-roledescription', 'aria-label', 'aria-keyshortcuts']) this.root.removeAttribute(a)
-      if (this.root.getAttribute('tabindex') === '0' && this.root.dataset.spMapTab) {
-        this.root.removeAttribute('tabindex')
-        delete this.root.dataset.spMapTab
-      }
+    const mod = mapChunk.mod
+    if (!mod) {
+      // Nothing to take down: no map was drawn without this code.
+      if (on) this.need(mapChunk, 'map controls', () => {
+        if (!this.scene) return
+        this.setupMap(this.scene, this.themeNow())
+        const c = this.map?.controls
+        // Before the toolbar, as the first draw would have put them.
+        if (c && c.parentNode !== this.root) this.root.insertBefore(c, this.bar?.el.parentNode === this.root ? this.bar.el : null)
+      })
       return
     }
-    this.root.setAttribute('data-map', '')
-    if (!this.root.hasAttribute('tabindex')) {
-      this.root.tabIndex = 0
-      this.root.dataset.spMapTab = '1'
-    }
-    this.root.setAttribute('aria-keyshortcuts', 'ArrowLeft ArrowRight ArrowUp ArrowDown Shift+ArrowLeft Shift+ArrowRight Shift+ArrowUp Shift+ArrowDown + - 0')
-    this.root.setAttribute('role', 'group')
-    this.root.setAttribute('aria-roledescription', this.t('mapRole'))
-    this.root.setAttribute('aria-label', this.t('mapKeys', { title: scene.title }))
-    if (!this.controls) {
-      const doc = this.host.ownerDocument
-      const box = doc.createElement('div')
-      box.className = 'sp-ctl'
-      const add = (label: UiStringKey, text: string, act: () => void): void => {
-        const b = doc.createElement('button')
-        b.type = 'button'
-        b.textContent = text
-        b.dataset.label = label
-        b.addEventListener('click', e => { e.stopPropagation(); act() })
-        box.appendChild(b)
-      }
-      add('mapZoomIn', '+', () => this.zoomBy(1.5))
-      add('mapZoomOut', '\u2212', () => this.zoomBy(1 / 1.5))
-      add('mapReset', '\u27F2', () => this.reset(true))
-      this.controls = box
-    }
-    for (const b of this.controls.querySelectorAll<HTMLButtonElement>('button')) {
-      const label = this.t(b.dataset.label as UiStringKey)
-      b.setAttribute('aria-label', label)
-      b.title = label
-      b.style.background = `var(--sp-surface, ${theme.colors.surface})`
-      b.style.color = `var(--sp-text, ${theme.colors.text})`
-      b.style.borderColor = `var(--sp-border, ${theme.colors.border})`
-    }
-  }
-
-  /** The view as it is on screen now (it may be ahead of the compiled scene during a gesture). */
-  private liveView(): ViewParams | null {
-    const geo = this.scene?.geo
-    if (!geo) return null
-    return this.cam ? makeView({ ...geo.input, camera: this.cam }) : geo.view
+    this.map ??= new mod.MapControl({
+      root: this.root,
+      scene: () => this.scene,
+      camera: () => this.cam,
+      apply: c => this.applyCamera(c),
+      gestureSoon: () => this.gestureSoon(),
+      endGesture: () => this.endGesture(),
+      reset: () => this.reset(true),
+      text: (key, vars) => this.t(key, vars),
+      hideTip: () => this.hideTip(),
+      clearHighlight: () => this.clearHighlight()
+    })
+    this.map.setup(scene, theme, on)
   }
 
   private applyCamera(c: Camera): void {
     this.cam = c
     if (this.layer?.moveCamera(c)) this.glMoved = true
     else this.schedule(false)
-  }
-
-  private zoomBy(factor: number): void {
-    const v = this.liveView()
-    if (!v) return
-    this.applyCamera(zoomCamera(v, factor))
-    this.gestureSoon()
   }
 
   /** A gesture ended: bring the compiled scene (tooltips, outlines, exports) up to date and tell the host. */
@@ -1602,105 +1591,25 @@ export class SuperPlot {
     if (this.glMoved) this.render(false)
   }
 
-  /** Screen pixels to scene pixels. */
-  private sceneScale(): number {
-    const w = this.root.getBoundingClientRect().width
-    return this.scene && w > 0 ? this.scene.width / w : 1
-  }
-
   private onDown = (e: PointerEvent): void => {
-    if (!this.interactiveMap()) return
-    if (e.pointerType === 'mouse' && e.button !== 0) return
-    if ((e.target as Element | null)?.closest?.('.sp-ctl, .sp-bar, .sp-cv-lk, [data-lk]')) return
-    // No pointer capture yet: a click that never becomes a drag must still reach the mark under it.
-    this.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY })
-    if (this.pointers.size === 1) this.drag = { moved: false, turn: e.shiftKey }
+    if (this.interactiveMap()) this.map?.down(e)
   }
 
   private onDragMove = (e: PointerEvent): void => {
-    const prev = this.pointers.get(e.pointerId)
-    if (!prev || !this.drag) return
-    const now = { x: e.clientX, y: e.clientY }
-    if (this.pointers.size >= 2) {
-      // Pinch: the change in distance between the first two fingers.
-      const [a, b] = [...this.pointers.entries()]
-      const other = a[0] === e.pointerId ? b[1] : a[1]
-      const before = Math.hypot(prev.x - other.x, prev.y - other.y)
-      const after = Math.hypot(now.x - other.x, now.y - other.y)
-      this.pointers.set(e.pointerId, now)
-      if (before > 4 && after > 4) {
-        this.drag.moved = true
-        const v = this.liveView()
-        if (v) this.applyCamera(zoomCamera(v, after / before))
-      }
-      return
-    }
-    const k = this.sceneScale()
-    const dx = (now.x - prev.x) * k, dy = (now.y - prev.y) * k
-    if (!this.drag.moved && Math.hypot(now.x - prev.x, now.y - prev.y) < 3) return
-    this.pointers.set(e.pointerId, now)
-    if (!this.drag.moved) {
-      this.drag.moved = true
-      try { this.root.setPointerCapture?.(e.pointerId) } catch { /* not capturable (synthetic event) */ }
-      this.root.setAttribute('data-drag', '')
-      this.hideTip()
-      this.clearHighlight()
-    }
-    const v = this.liveView()
-    if (v) this.applyCamera(dragCamera(v, dx, dy, this.drag.turn || e.shiftKey))
+    this.map?.move(e)
   }
 
   private onUp = (e: PointerEvent): void => {
-    if (!this.pointers.delete(e.pointerId)) return
-    if (this.pointers.size) return
-    const moved = this.drag?.moved
-    this.drag = null
-    this.root.removeAttribute('data-drag')
-    if (moved) {
-      // The click that follows a drag must not select what is under the pointer.
-      this.justDragged = true
-      setTimeout(() => { this.justDragged = false }, 0)
-      this.endGesture()
-    }
+    this.map?.up(e)
   }
 
   private onWheel = (e: WheelEvent): void => {
-    // Plain scrolling scrolls the page; zoom needs Ctrl/⌘ (a trackpad pinch sends Ctrl too).
-    if (!this.interactiveMap() || !(e.ctrlKey || e.metaKey)) return
-    e.preventDefault()
-    const v = this.liveView()
-    if (!v) return
-    const unit = e.deltaMode === 1 ? 0.05 : e.deltaMode === 2 ? 1 : 0.0025
-    this.applyCamera(zoomCamera(v, Math.exp(-e.deltaY * unit)))
-    this.gestureSoon()
+    if (this.interactiveMap()) this.map?.wheel(e)
   }
 
   /** Arrow keys pan (Shift: turn and tilt), + and - zoom, 0 resets. True when the key was used. */
   private mapKey(e: KeyboardEvent): boolean {
-    if (!this.interactiveMap() || e.altKey || e.ctrlKey || e.metaKey) return false
-    const t = e.target as Element | null
-    if (t && t !== this.root && t.closest?.('button, input, select, textarea, [data-lk]')) return false
-    const v = this.liveView()
-    if (!v) return false
-    const step = 60
-    let c: Camera | null = null
-    switch (e.key) {
-      case 'ArrowLeft': c = e.shiftKey ? clampCamera({ ...v.camera, bearing: v.camera.bearing - 15 }) : dragCamera(v, step, 0); break
-      case 'ArrowRight': c = e.shiftKey ? clampCamera({ ...v.camera, bearing: v.camera.bearing + 15 }) : dragCamera(v, -step, 0); break
-      case 'ArrowUp': c = e.shiftKey ? clampCamera({ ...v.camera, pitch: v.camera.pitch + 5 }) : dragCamera(v, 0, step); break
-      case 'ArrowDown': c = e.shiftKey ? clampCamera({ ...v.camera, pitch: v.camera.pitch - 5 }) : dragCamera(v, 0, -step); break
-      case '+': case '=': c = zoomCamera(v, 1.25); break
-      case '-': case '_': c = zoomCamera(v, 1 / 1.25); break
-      case '0': e.preventDefault(); this.reset(true); return true
-      default: return false
-    }
-    e.preventDefault()
-    // In SVG the redraw replaces the focused region: keep keyboard focus on the map itself.
-    const doc = this.host.ownerDocument
-    if (doc.activeElement !== this.root && this.root.contains(doc.activeElement)) this.root.focus({ preventScroll: true })
-    this.applyCamera(c)
-    this.gestureSoon()
-    return true
+    return this.interactiveMap() && this.map?.key(e) === true
   }
 
   private onScheme = (): void => {

@@ -23,7 +23,7 @@ const make = (name: string): El => {
 afterEach(() => { document.body.innerHTML = '' })
 
 describe('<super-plot> as Vue, Svelte and Angular use it', () => {
-  it('takes spec and options as properties (objects, not JSON) and fires its events', () => {
+  it('takes spec and options as properties (objects, not JSON) and fires its events', async () => {
     defineSuperPlot('sp-props')
     const el = make('sp-props')
     const fromOptions = vi.fn()
@@ -34,6 +34,8 @@ describe('<super-plot> as Vue, Svelte and Angular use it', () => {
     el.spec = bar
     document.body.appendChild(el)
     expect(isDark(el)).toBe(true)
+    // The toolbar's code is loaded on demand.
+    await el.instance!.ready()
     expect([...el.querySelectorAll<HTMLButtonElement>('.sp-bar button')].map(b => b.dataset.tool)).toEqual(['csv'])
     const q1 = el.querySelector('.sp-data[data-s="Q1"]')!
     q1.dispatchEvent(new MouseEvent('pointerover', { bubbles: true }))
@@ -59,7 +61,7 @@ describe('<super-plot> as Vue, Svelte and Angular use it', () => {
     expect(el.instance).not.toBeNull()
   })
 
-  it('toolbar and sync attributes', () => {
+  it('toolbar and sync attributes', async () => {
     defineSuperPlot('sp-attrs')
     const a = make('sp-attrs'), b = make('sp-attrs')
     a.setAttribute('toolbar', '')
@@ -69,6 +71,7 @@ describe('<super-plot> as Vue, Svelte and Angular use it', () => {
     a.spec = bar
     b.spec = bar
     document.body.append(a, b)
+    await Promise.all([a.instance!.ready(), b.instance!.ready()])
     expect([...a.querySelectorAll<HTMLButtonElement>('.sp-bar button')].map(x => x.dataset.tool)).toEqual(['png', 'svg', 'csv', 'table'])
     expect([...b.querySelectorAll<HTMLButtonElement>('.sp-bar button')].map(x => x.dataset.tool)).toEqual(['png', 'sound'])
     a.querySelectorAll('.sp-data[data-i]')[4].dispatchEvent(new MouseEvent('pointerover', { bubbles: true }))

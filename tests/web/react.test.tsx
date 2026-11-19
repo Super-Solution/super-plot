@@ -88,6 +88,7 @@ describe('<SuperPlot> (react)', () => {
     )
     const m = await mount(two(t => `a ${t.title}`))
     expect(renders).toHaveBeenCalledTimes(1)
+    await ref.current!.ready()
     expect([...m.el.querySelectorAll<HTMLButtonElement>('.sp-bar button')].map(b => b.dataset.tool)).toEqual(['csv', 'table'])
     await m.rerender(two(t => `b ${t.title}`))
     expect(renders).toHaveBeenCalledTimes(1)

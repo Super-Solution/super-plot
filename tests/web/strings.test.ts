@@ -36,9 +36,10 @@ const de = {
 }
 
 describe('the web binding\'s own text comes from the strings option', () => {
-  it('toolbar names and the table caption; a change reaches the same buttons', () => {
+  it('toolbar names and the table caption; a change reaches the same buttons', async () => {
     const rows = Array.from({ length: 1001 }, (_, i) => ({ x: i, y: i }))
     const p = new SuperPlot(host, { type: 'scatter', title: 'Punkte', x: 'x', y: 'y', data: rows }, { width: 600, height: 400, animate: false, toolbar: ['csv', 'table'], dataTable: true, strings: de })
+    await p.ready()
     const bar = host.querySelector<HTMLElement>('.sp-bar')!
     expect(bar.getAttribute('aria-label')).toBe('Diagrammwerkzeuge')
     const csv = bar.querySelector<HTMLButtonElement>('[data-tool="csv"]')!
@@ -55,9 +56,9 @@ describe('the web binding\'s own text comes from the strings option', () => {
     expect(host.querySelector('caption')!.textContent).toBe('Punkte : 1000 lignes sur 1001')
   })
 
-  it('a bad override warns once (from the compile) and the binding keeps English for it', () => {
+  it('a bad override warns once (from the compile) and the binding keeps English for it', async () => {
     const issues: string[] = []
-    new SuperPlot(host, ex('line'), { width: 600, height: 400, animate: false, toolbar: ['png'], strings: { toolPngName: 5, toolPgn: 'x' } as never, onIssues: i => issues.push(...i.map(x => x.code)) })
+    await new SuperPlot(host, ex('line'), { width: 600, height: 400, animate: false, toolbar: ['png'], strings: { toolPngName: 5, toolPgn: 'x' } as never, onIssues: i => issues.push(...i.map(x => x.code)) }).ready()
     expect(issues).toEqual(['bad_string', 'unknown_string'])
     expect(host.querySelector('[data-tool="png"]')!.getAttribute('aria-label')).toBe('Download PNG')
   })
@@ -90,9 +91,10 @@ describe('the web binding\'s own text comes from the strings option', () => {
     expect(renderToSvg({ ...ex('sunburst'), focus: ['Asia'] }, { width: 640, height: 420, strings: { breadcrumbRoot: 'Tout' } })).toContain('>Tout</text>')
   })
 
-  it('navigator labels, and its dates in the timeZone option', () => {
+  it('navigator labels, and its dates in the timeZone option', async () => {
     const days = Array.from({ length: 30 }, (_, i) => ({ d: new Date(Date.UTC(2026, 0, 1 + i)).toISOString(), v: i }))
     const p = new SuperPlot(host, { type: 'line', x: 'd', y: 'v', data: days, zoom: 'x' }, { width: 600, height: 400, animate: false, navigator: true, locale: 'en-US', strings: de })
+    await p.ready()
     const nav = host.querySelector<HTMLElement>('.sp-nav')!
     const [win, start, end] = [...nav.querySelectorAll<HTMLElement>('[role="slider"]')]
     expect(nav.getAttribute('aria-label')).toBe('Übersicht über d')
