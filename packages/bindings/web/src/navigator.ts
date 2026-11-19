@@ -1,4 +1,4 @@
-import type { AxisInfo, Scene } from '@supersolutions/super-plot-core/base'
+import type { AxisInfo, Scene, UiStringKey } from '@supersolutions/super-plot-core/base'
 import { invert, pixelOf } from './interact.js'
 
 /** Height of the overview strip below the chart, in px (the strip itself plus a little air). */
@@ -104,6 +104,10 @@ export interface NavOwner {
   /** The viewer moved the window: set the x range (null: full) and report it now, after `ms`, or not yet (false). */
   setX(x: [number, number] | null, notify: number | false): void
   locale(): string | undefined
+  /** The `timeZone` option, for dates in `aria-valuetext` (UTC when unset or unknown). */
+  timeZone(): string | undefined
+  /** A UI string from the `strings` option, placeholders filled. */
+  text(key: UiStringKey, vars?: Record<string, string | number>): string
   /** Theme colours as `var(--sp-*, fallback)` strings. */
   color(token: string): string
 }
@@ -147,7 +151,7 @@ export class Navigator {
     this.he = div('sp-nav-h')
     this.hs.dataset.edge = 'start'
     this.he.dataset.edge = 'end'
-    for (const [s, label] of [[this.win, 'Visible range'], [this.hs, 'Start of the visible range'], [this.he, 'End of the visible range']] as const) {
+    for (const [s, label] of [[this.win, 'navWindow'], [this.hs, 'navStart'], [this.he, 'navEnd']] as const) {
       s.setAttribute('role', 'slider')
       s.setAttribute('aria-orientation', 'horizontal')
       s.tabIndex = 0
@@ -185,11 +189,9 @@ export class Navigator {
     // Theme colours for the window and handles (the handles' face is a pseudo-element, so through properties).
     this.el.style.setProperty('--sp-nav-ink', this.owner.color('info'))
     this.el.style.setProperty('--sp-nav-face', this.owner.color('background'))
-    const name = a.x.field ? ` of ${a.x.field}` : ''
-    this.el.setAttribute('aria-label', `Overview${name}: drag the window or its edges, or use the arrow keys on them, to choose the visible range`)
-    this.win.setAttribute('aria-label', `${this.win.dataset.label}${name}`)
-    this.hs.setAttribute('aria-label', `${this.hs.dataset.label}${name}`)
-    this.he.setAttribute('aria-label', `${this.he.dataset.label}${name}`)
+    const field = a.x.field || 'x'
+    this.el.setAttribute('aria-label', this.owner.text('navOverview', { field }))
+    for (const s of [this.win, this.hs, this.he]) s.setAttribute('aria-label', this.owner.text(s.dataset.label as UiStringKey, { field }))
     this.place()
   }
 
@@ -269,7 +271,7 @@ export class Navigator {
     const fmin = back(a.x, f[0]), fmax = back(a.x, f[1])
     const m = this.minW(f)
     const text = (v: number): string => this.text(a.x, v, f)
-    this.aria(this.win, fmin, fmax, v0, `${text(v0)} to ${text(v1)}`)
+    this.aria(this.win, fmin, fmax, v0, this.owner.text('navRange', { from: text(v0), to: text(v1) }))
     this.aria(this.hs, fmin, back(a.x, w[1] - m), v0, text(v0))
     this.aria(this.he, back(a.x, w[0] + m), fmax, v1, text(v1))
     this.el.toggleAttribute('data-zoomed', !!this.owner.view())
@@ -282,16 +284,18 @@ export class Navigator {
     el.setAttribute('aria-valuetext', text)
   }
 
-  /** A value in axis units, for `aria-valuetext`: a UTC date (and time on short ranges) or a number. */
+  /** A value in axis units, for `aria-valuetext`: a date in the `timeZone` option (and time on short ranges) or a number. */
   private text(a: AxisInfo, v: number, f: [number, number]): string {
     const locale = this.owner.locale()
     if (a.kind === 'time') {
       const short = f[1] - f[0] < 3 * 86_400_000
-      try {
-        return new Intl.DateTimeFormat(locale, { timeZone: 'UTC', year: 'numeric', month: 'short', day: 'numeric', ...(short ? { hour: '2-digit', minute: '2-digit' } : {}) }).format(v)
-      } catch {
-        return new Date(v).toISOString()
+      const opts: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'short', day: 'numeric', ...(short ? { hour: '2-digit', minute: '2-digit' } : {}) }
+      for (const timeZone of [this.owner.timeZone() || 'UTC', 'UTC']) {
+        try {
+          return new Intl.DateTimeFormat(locale, { ...opts, timeZone }).format(v)
+        } catch { /* unknown zone or locale: try UTC, then ISO */ }
       }
+      return new Date(v).toISOString()
     }
     try {
       return new Intl.NumberFormat(locale, { maximumSignificantDigits: 4 }).format(v)

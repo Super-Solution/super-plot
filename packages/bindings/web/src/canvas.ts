@@ -18,6 +18,8 @@ export interface CanvasOwner {
   drillable(): boolean
   /** The last press was a finger or a pen: a miss picks the nearest mark within a few pixels. */
   coarse(): boolean
+  /** The keyboard hint appended to the canvas's accessible name (the `canvasKeys` string). */
+  keysHint(): string
 }
 
 /** Where a mark sits, for keyboard order and for placing its tooltip. */
@@ -213,7 +215,7 @@ export class CanvasLayer {
     this.base.setAttribute('role', 'img')
     // A map has its own keyboard on the plot root; other charts step through their marks from here.
     this.base.tabIndex = scene.geo ? -1 : 0
-    this.base.setAttribute('aria-label', `${scene.title}. ${scene.description}${scene.geo ? '' : ' Use the arrow keys to move between marks.'}`)
+    this.base.setAttribute('aria-label', `${scene.title}. ${scene.description}${scene.geo ? '' : ` ${this.owner.keysHint()}`}`)
     for (const x of [this.ctx, this.tctx, this.octx]) {
       x.setTransform(1, 0, 0, 1, 0, 0)
       x.clearRect(0, 0, this.base.width, this.base.height)

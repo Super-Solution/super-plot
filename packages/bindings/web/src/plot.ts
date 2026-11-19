@@ -1,5 +1,6 @@
 import {
   compilePlot, renderSvg, resolveTheme, estimateWidth, defaultHeight, dataMarkCount, makeView, dragCamera, zoomCamera, clampCamera, plotTable, plotCsv, svgKey, cssVar,
+  resolveStrings, fillString, type UiStringKey, type UiStrings,
   type AxisInfo, type Camera, type Issue, type Mark, type Measure, type PlotPlugin, type RenderOptions, type Scene, type Theme, type Tip, type ViewParams
 } from '@supersolutions/super-plot-core/base'
 import { CanvasLayer, markCenter, nearestMark } from './canvas.js'
@@ -22,13 +23,14 @@ export type ToolbarItem = 'png' | 'svg' | 'csv' | 'table' | 'reset' | 'sound'
 const TOOLBAR_ITEMS: readonly ToolbarItem[] = ['png', 'svg', 'csv', 'table', 'reset', 'sound']
 /** What `toolbar: true` shows ('reset' only on a chart that can zoom). */
 const TOOLBAR_DEFAULT: readonly ToolbarItem[] = ['png', 'svg', 'csv', 'table', 'reset']
-const TOOLBAR_LABELS: Record<ToolbarItem, [text: string, name: string]> = {
-  png: ['PNG', 'Download PNG'],
-  svg: ['SVG', 'Download SVG'],
-  csv: ['CSV', 'Download CSV'],
-  table: ['Table', 'Data table'],
-  reset: ['Reset', 'Reset zoom'],
-  sound: ['Sound', 'Play as sound']
+/** Each button's visible text and accessible name, as keys of the `strings` option. */
+const TOOLBAR_LABELS: Record<ToolbarItem, [text: UiStringKey, name: UiStringKey]> = {
+  png: ['toolPng', 'toolPngName'],
+  svg: ['toolSvg', 'toolSvgName'],
+  csv: ['toolCsv', 'toolCsvName'],
+  table: ['toolTable', 'toolTableName'],
+  reset: ['toolReset', 'toolResetName'],
+  sound: ['toolSound', 'toolSoundName']
 }
 
 /** A download name from a chart title: no path or control characters, at most 80 characters, `chart` when empty. */
@@ -242,6 +244,10 @@ export class SuperPlot {
   private hoverMark: Mark | null = null
   private table: HTMLTableElement | null = null
   private tableOf: unknown = undefined
+  /** The `strings` and `locale` the table was built with. */
+  private tableEnv = ''
+  /** `strings` resolved over the English defaults, for the object it came from. */
+  private ui: { from: unknown; strings: UiStrings } | null = null
   /** `appendRows` keeps its own copy of the rows, so the caller's array is never changed. */
   private rows: unknown[] | null = null
   private appendRaf = 0
@@ -499,19 +505,31 @@ export class SuperPlot {
       ctl = playNotes(Ctor, plan, options.volume ?? 0.25, finished => {
         if (this.sound === ctl) this.sound = null
         this.syncBar()
-        if (!this.disposed) this.announce(finished ? `Finished playing ${scene.title}.` : 'Stopped playing.')
+        if (!this.disposed) this.announce(finished ? this.t('soundFinished', { title: scene.title }) : this.t('soundStopped'))
       })
     } catch (e) {
       this.warn('sonify_unavailable', `Web Audio failed to start: ${e instanceof Error ? e.message : String(e)}.`)
       return idleController()
     }
     this.sound = ctl
-    this.announce(`Playing ${what}: ${plan.notes.length} notes, ${plan.notes.length > 1 ? 'left to right, ' : ''}higher pitch for higher values.`)
+    const n = plan.notes.length
+    this.announce(this.t(n > 1 ? 'soundPlaying' : 'soundPlayingOne', { what, n }))
     this.syncBar()
     return ctl
   }
 
   /** Say something to screen readers: through the canvas view's live region, or this plot's own. */
+  /**
+   * The binding's own text from the `strings` option (the same keys as core's, English by default), placeholders
+   * filled. Bad overrides are already reported by the compile; here they just fall back to English.
+   */
+  private t(key: UiStringKey, vars?: Record<string, string | number>): string {
+    const from = this.options.strings
+    let ui = this.ui
+    if (!ui || ui.from !== from) ui = this.ui = { from, strings: resolveStrings(from, []) }
+    return fillString(ui.strings[key], vars)
+  }
+
   private announce(text: string): void {
     if (this.layer) return this.layer.announce(text)
     if (!this.live) {
@@ -724,7 +742,8 @@ export class SuperPlot {
         dragging: () => this.dragging(),
         hovered: m => this.hovered(m),
         drillable: () => this.drillOn(),
-        coarse: () => this.coarse
+        coarse: () => this.coarse,
+        keysHint: () => this.t('canvasKeys')
       })
       if (this.layer) {
         // One context per plot for its lifetime: creating one costs far more than a redraw.
@@ -819,6 +838,8 @@ export class SuperPlot {
       view: () => this.axis.view?.x ?? null,
       setX: (x, notify) => this.axis.viewX(x, notify),
       locale: () => this.options.locale,
+      timeZone: () => this.options.timeZone,
+      text: (key, vars) => this.t(key, vars),
       color: token => cssVar(this.themeNow(), token)
     })
     const el = this.nav.el
@@ -833,11 +854,11 @@ export class SuperPlot {
    * once without the view (and without plugins) and kept until the data, size, theme or hidden series change.
    */
   private fullScene(scene: Scene): { key: string; scene: Scene } | null {
-    const key = JSON.stringify([this.dataVersion, scene.width, scene.height, [...this.hidden].sort(), this.themeNow().name, this.prefersDark(), this.options.locale ?? ''])
+    const key = JSON.stringify([this.dataVersion, scene.width, scene.height, [...this.hidden].sort(), this.themeNow().name, this.prefersDark(), this.options.locale ?? '', this.options.timeZone ?? '', this.options.strings ?? null])
     if (!this.axis.view) return (this.navFull = { key, scene })
     if (this.navFull?.key === key) return this.navFull
     const o = this.options
-    const r = compilePlot(this.specNow(), { theme: this.themeOpt(), locale: o.locale, width: scene.width, height: scene.height, hidden: this.hidden, measure: this.ssr || this.hydrated ? estimateWidth : this.measure, prefersDark: this.prefersDark() })
+    const r = compilePlot(this.specNow(), { theme: this.themeOpt(), locale: o.locale, timeZone: o.timeZone, strings: o.strings, width: scene.width, height: scene.height, hidden: this.hidden, measure: this.ssr || this.hydrated ? estimateWidth : this.measure, prefersDark: this.prefersDark() })
     return r.ok && navigable(r.scene) ? (this.navFull = { key, scene: r.scene }) : null
   }
 
@@ -866,7 +887,7 @@ export class SuperPlot {
     this.render(true)
     this.options.onDrill?.([...path])
     if (this.disposed) return
-    this.announce(path.length ? `Showing ${path.join(' > ')}.` : 'Showing everything.')
+    this.announce(path.length ? this.t('drillShowing', { path: path.join(' > ') }) : this.t('drillShowingAll'))
     if (!had) return
     if (this.layer) {
       this.layer.el.querySelector<HTMLElement>('canvas[tabindex="0"]')?.focus({ preventScroll: true })
@@ -923,15 +944,15 @@ export class SuperPlot {
     const scene = this.scene
     const spec = this.spec as { x?: unknown } | null
     const cartesian = !!scene?.axes && !scene.panels
-    const head = `${n} new ${cartesian ? 'point' : 'row'}${n === 1 ? '' : 's'}`
+    const head = this.t(cartesian ? (n === 1 ? 'newPoint' : 'newPoints') : (n === 1 ? 'newRow' : 'newRows'), { n })
     const a = scene?.axes
-    if (!a || !cartesian || typeof spec?.x !== 'string' || !row || typeof row !== 'object') return `${head}.`
+    if (!a || !cartesian || typeof spec?.x !== 'string' || !row || typeof row !== 'object') return this.t('newsCount', { count: head })
     const v = axisValue(a.x.kind, (row as Record<string, unknown>)[spec.x])
     const i = v === null ? -1 : syncTarget(scene, { kind: a.x.kind, v })
     const tip = i >= 0 ? scene!.marks[i].tip : undefined
-    if (!tip) return `${head}.`
+    if (!tip) return this.t('newsCount', { count: head })
     const rows = tip.rows.slice(0, 2).map(r => `${r.label} ${r.value}`).join(', ')
-    return `${head}; latest ${[tip.title, rows].filter(Boolean).join(': ')}.`
+    return this.t('newsLatest', { count: head, mark: [tip.title, rows].filter(Boolean).join(': ') })
   }
 
   // ---- toolbar -----------------------------------------------------------------------------
@@ -961,20 +982,24 @@ export class SuperPlot {
       const box = this.bar ?? doc.createElement('div')
       box.className = 'sp-bar'
       box.setAttribute('role', 'toolbar')
-      box.setAttribute('aria-label', 'Chart tools')
       box.replaceChildren(...items.map(k => {
         const b = doc.createElement('button')
         b.type = 'button'
         b.dataset.tool = k
-        const [text, name] = TOOLBAR_LABELS[k]
-        b.textContent = text
-        b.setAttribute('aria-label', name)
-        b.title = name
         b.addEventListener('click', e => { e.stopPropagation(); this.runTool(k) })
         return b
       }))
       this.bar = box
       this.barKey = key
+    }
+    // Labels on every render, so a change of `strings` reaches buttons that stay (and keep focus).
+    this.bar.setAttribute('aria-label', this.t('toolbar'))
+    for (const b of this.bar.querySelectorAll<HTMLButtonElement>('button')) {
+      const [text, name] = TOOLBAR_LABELS[b.dataset.tool as ToolbarItem]
+      const label = this.t(name)
+      if (b.textContent !== this.t(text)) b.textContent = this.t(text)
+      b.setAttribute('aria-label', label)
+      b.title = label
     }
     this.root.setAttribute('data-toolbar', '')
     if (theme) for (const b of this.bar.querySelectorAll<HTMLButtonElement>('button')) {
@@ -1130,13 +1155,15 @@ export class SuperPlot {
     else this.table.removeAttribute('data-visible')
     const after = this.nav?.el.parentNode === this.host ? this.nav.el : this.root
     if (this.table.parentNode !== this.host || this.table.previousSibling !== after) this.host.insertBefore(this.table, after.nextSibling)
-    if (this.tableOf === this.spec) return
+    const env = JSON.stringify([this.options.strings ?? null, this.options.locale ?? ''])
+    if (this.tableOf === this.spec && this.tableEnv === env) return
     this.tableOf = this.spec
+    this.tableEnv = env
     const t = plotTable(this.spec)
     this.table.replaceChildren()
     if (!t) return
     const cap = doc.createElement('caption')
-    cap.textContent = t.total > t.rows.length ? `${t.caption}: first ${t.rows.length} of ${t.total} rows` : t.caption
+    cap.textContent = t.total > t.rows.length ? this.t('tableFirstRows', { caption: t.caption, n: t.rows.length, total: t.total }) : t.caption
     const head = doc.createElement('thead')
     const hr = doc.createElement('tr')
     for (const c of t.columns) {
@@ -1507,27 +1534,29 @@ export class SuperPlot {
     }
     this.root.setAttribute('aria-keyshortcuts', 'ArrowLeft ArrowRight ArrowUp ArrowDown Shift+ArrowLeft Shift+ArrowRight Shift+ArrowUp Shift+ArrowDown + - 0')
     this.root.setAttribute('role', 'group')
-    this.root.setAttribute('aria-roledescription', 'interactive map')
-    this.root.setAttribute('aria-label', `${scene.title}. Drag or use the arrow keys to move, Shift with them to turn and tilt, + and - to zoom, 0 to reset.`)
+    this.root.setAttribute('aria-roledescription', this.t('mapRole'))
+    this.root.setAttribute('aria-label', this.t('mapKeys', { title: scene.title }))
     if (!this.controls) {
       const doc = this.host.ownerDocument
       const box = doc.createElement('div')
       box.className = 'sp-ctl'
-      const add = (label: string, text: string, act: () => void): void => {
+      const add = (label: UiStringKey, text: string, act: () => void): void => {
         const b = doc.createElement('button')
         b.type = 'button'
         b.textContent = text
-        b.setAttribute('aria-label', label)
-        b.title = label
+        b.dataset.label = label
         b.addEventListener('click', e => { e.stopPropagation(); act() })
         box.appendChild(b)
       }
-      add('Zoom in', '+', () => this.zoomBy(1.5))
-      add('Zoom out', '\u2212', () => this.zoomBy(1 / 1.5))
-      add('Reset view', '\u27F2', () => this.reset(true))
+      add('mapZoomIn', '+', () => this.zoomBy(1.5))
+      add('mapZoomOut', '\u2212', () => this.zoomBy(1 / 1.5))
+      add('mapReset', '\u27F2', () => this.reset(true))
       this.controls = box
     }
     for (const b of this.controls.querySelectorAll<HTMLButtonElement>('button')) {
+      const label = this.t(b.dataset.label as UiStringKey)
+      b.setAttribute('aria-label', label)
+      b.title = label
       b.style.background = `var(--sp-surface, ${theme.colors.surface})`
       b.style.color = `var(--sp-text, ${theme.colors.text})`
       b.style.borderColor = `var(--sp-border, ${theme.colors.border})`

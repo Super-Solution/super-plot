@@ -5,9 +5,6 @@ import { closest } from '../util/num.js'
 import { clip, fit } from '../util/text.js'
 import type { HierarchyNode } from './sunburst.js'
 
-/** What the breadcrumb calls the whole tree. */
-export const ROOT_LABEL = 'All'
-
 /** The `focus` field of treemap and sunburst. */
 export const focusField = (levels: string): { kind: 'values'; max: number; desc: string } => ({
   kind: 'values',
@@ -62,7 +59,7 @@ export function checkFocus(root: HierarchyNode, focus: unknown, issues: Issue[],
 export function breadcrumb(c: ChartCtx, area: Rect, focus: string[]): Rect {
   const size = c.size
   const rowH = size + 10
-  const items = [ROOT_LABEL, ...focus]
+  const items = [c.t('breadcrumbRoot'), ...focus]
   // The separator is its own text with a gap each side (SVG collapses the spaces of a ' › ' string).
   const sep = '›'
   const gap = 6
@@ -78,7 +75,7 @@ export function breadcrumb(c: ChartCtx, area: Rect, focus: string[]): Rect {
     c.marks.push(c.text(x, cy, text, { role: 'label', baseline: 'middle', fill: last ? c.c('text') : c.c('info'), weight: last ? 600 : 400, ...(last ? { drill: [...focus] } : {}) }))
     if (!last) {
       const path = focus.slice(0, i)
-      c.marks.push({ type: 'rect', role: 'label', x: x - 3, y: area.y, w: w + 6, h: rowH, fill: 'transparent', drill: path, aria: `Go up to ${clip(name, 60)}` })
+      c.marks.push({ type: 'rect', role: 'label', x: x - 3, y: area.y, w: w + 6, h: rowH, fill: 'transparent', drill: path, aria: c.t('breadcrumbUp', { name: clip(name, 60) }) })
       c.marks.push(c.text(x + w + gap, cy, sep, { role: 'label', baseline: 'middle' }))
     }
     x += w + sepW

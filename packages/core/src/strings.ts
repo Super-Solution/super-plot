@@ -3,8 +3,10 @@ import type { Issue } from './schema.js'
 
 /**
  * Every piece of English that core itself writes into a scene: legend entries it makes up ("Other", the waterfall's
- * "Increase"), tooltip row labels, short value phrases, centre labels and the accessible names of marks. Text that
- * comes from the spec (titles, column names, category values) is not here: it is already the author's language.
+ * "Increase"), tooltip row labels, short value phrases, centre labels and the accessible names of marks. The web
+ * binding's own text (toolbar, keyboard hints, live-region sentences, table caption, navigator) is in the same table,
+ * after core's, so one `strings` object covers both. Text that comes from the spec (titles, column names, category
+ * values) is not here: it is already the author's language.
  *
  * Override any of them with the `strings` render option, a flat object of key to text. `{name}` placeholders are
  * filled in; a placeholder an override leaves out is simply not shown. Descriptions (`scene.description`,
@@ -118,7 +120,58 @@ export const DEFAULT_STRINGS = {
   unitDay: 'd',
   unitHour: 'h',
   unitMinute: 'min',
-  unitSecond: 's'
+  unitSecond: 's',
+
+  /** Drill-down breadcrumb (treemap, sunburst): the whole tree, and the accessible name of an item that goes up. */
+  breadcrumbRoot: 'All',
+  breadcrumbUp: 'Go up to {name}',
+
+  // ---- The web binding's own text (toolbar, keyboard help, live region, navigator). Core never writes these. ----
+  /** Toolbar: the group's name, then each button's visible text and accessible name. */
+  toolbar: 'Chart tools',
+  toolPng: 'PNG',
+  toolPngName: 'Download PNG',
+  toolSvg: 'SVG',
+  toolSvgName: 'Download SVG',
+  toolCsv: 'CSV',
+  toolCsvName: 'Download CSV',
+  toolTable: 'Table',
+  toolTableName: 'Data table',
+  toolReset: 'Reset',
+  toolResetName: 'Reset zoom',
+  toolSound: 'Sound',
+  toolSoundName: 'Play as sound',
+  /** Appended to a canvas chart's accessible name. */
+  canvasKeys: 'Use the arrow keys to move between marks.',
+  /** Interactive maps: the role description, the keyboard help (after the title) and the zoom buttons. */
+  mapRole: 'interactive map',
+  mapKeys: '{title}. Drag or use the arrow keys to move, Shift with them to turn and tilt, + and - to zoom, 0 to reset.',
+  mapZoomIn: 'Zoom in',
+  mapZoomOut: 'Zoom out',
+  mapReset: 'Reset view',
+  /** Caption of a data table that shows only the first rows. */
+  tableFirstRows: '{caption}: first {n} of {total} rows',
+  /** Sonification, read out in the live region. */
+  soundPlaying: 'Playing {what}: {n} notes, left to right, higher pitch for higher values.',
+  soundPlayingOne: 'Playing {what}: one note.',
+  soundFinished: 'Finished playing {title}.',
+  soundStopped: 'Stopped playing.',
+  /** Live data (`appendRows` with `announce`): the count, then the mark at the newest x. */
+  newPoints: '{n} new points',
+  newPoint: '{n} new point',
+  newRows: '{n} new rows',
+  newRow: '{n} new row',
+  newsLatest: '{count}; latest {mark}.',
+  newsCount: '{count}.',
+  /** Drill-down, read out in the live region. */
+  drillShowing: 'Showing {path}.',
+  drillShowingAll: 'Showing everything.',
+  /** Navigator (range slider): the strip, the window, its two handles and a range. */
+  navOverview: 'Overview of {field}: drag the window or its edges, or use the arrow keys on them, to choose the visible range',
+  navWindow: 'Visible range of {field}',
+  navStart: 'Start of the visible range of {field}',
+  navEnd: 'End of the visible range of {field}',
+  navRange: '{from} to {to}'
 } as const
 
 export type UiStringKey = keyof typeof DEFAULT_STRINGS

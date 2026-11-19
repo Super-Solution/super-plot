@@ -216,7 +216,7 @@ A waffle shares `cells` (50 to 400, a multiple of 10) out by largest remainder, 
 
 ## Dates, time zones and UI strings
 
-Three render options (not spec fields, like `locale`). The web binding takes them as options (`new SuperPlot(el, spec, { timeZone, strings })`, `setOptions`); React passes them on mount, but does not yet re-render when only `timeZone` or `strings` change (its option effect lists the older options), and `<super-plot>` has no attribute for them yet.
+Three render options (not spec fields, like `locale`). The web binding takes them as options (`new SuperPlot(el, spec, { timeZone, strings })`, `setOptions`). React's `<SuperPlot>` takes them as props and redraws when any one of them changes (`strings` is compared by value, so an inline object does not redraw on every render). `<super-plot>` has the attributes `locale`, `time-zone` (an IANA name) and `strings` (JSON), and the properties `locale`, `timeZone` and `strings` (an object; what Vue, Svelte and Angular bind); an attribute wins over the property, and the property over the same key in `options`.
 
 ```ts
 renderToSvg(spec, { locale: 'de', timeZone: 'Europe/Berlin', strings: { other: 'Andere', total: 'Summe' } })
@@ -225,6 +225,20 @@ renderToSvg(spec, { locale: 'de', timeZone: 'Europe/Berlin', strings: { other: '
 - **`locale`** already names months and weekdays through `Intl.DateTimeFormat` (`Mär`, `janv.`, `1月5日`) in ticks, tooltips, calendars and descriptions; `en` output is unchanged byte for byte.
 - **`timeZone`** (IANA name, default `UTC`) moves time-axis ticks to local boundaries (midnights, Mondays, first days of months and years; hour ticks on local hours, both 01:00 ticks of a fall-back night) and shows dates and times in that zone in ticks, tooltips, `aria`, the calendar's day assignment and the scene description (`describePlot(spec, { timeZone })` too). Across a daylight-saving change ticks stay on local boundaries. An unknown name is a `bad_time_zone` warning and UTC is used. Data are **instants**: ISO strings without an offset are read as UTC, as everywhere in Super Plot (and in the ports). So date-only data under another zone are midnights UTC that fall between the local day ticks; a `time_zone_dates` warning says so. Give instants with an offset (`2026-03-01T00:00-05:00`) or as timestamps, or keep UTC for calendar dates. Category axes made by `timeUnit` (UTC buckets) keep their UTC labels. The Go and Python ports describe in English and UTC; `timeZone` changes nothing in validation or conformance.
 - **`strings`** overrides the English text core writes into a scene: names it invents ("Other", the waterfall's "Increase", "Decrease", "Total"), tooltip row labels ("Share", "Median", "Running total", "Start", "Duration"), short phrases ("up to {value}", "{value} (missing)"), duration units and the `aria` templates of marks and legend entries ("{label}: toggle series"). `DEFAULT_STRINGS` (exported from core) is the full list of keys with their English text; `{name}` placeholders are filled in. Unknown keys (`unknown_string`, with a "did you mean"), non-strings (`bad_string`) and over-long values (`string_truncated`, 120 characters) warn and keep the English default. Series keys stay stable (the merged slice is still `Other` in `colors`, legend toggles and `datum`); only labels change. Descriptions stay English (the ports reproduce them word for word): set the spec's `description` for another language. Text from the spec (titles, column names, categories) is never translated.
+- **The web binding's own text** reads the same `strings` object, with the same English defaults in `DEFAULT_STRINGS` (one table; these keys come after core's). Core never writes them, so a static SVG is not affected. The keys:
+
+  | Where | Keys (English default) |
+  |---|---|
+  | Toolbar | `toolbar` ("Chart tools", the group's name); `toolPng`, `toolSvg`, `toolCsv`, `toolTable`, `toolReset`, `toolSound` (button text) and the same with `Name` (accessible name and tooltip: "Download PNG", "Data table", "Reset zoom", "Play as sound", ...) |
+  | Canvas | `canvasKeys` ("Use the arrow keys to move between marks.", after the chart's name) |
+  | Maps | `mapRole` ("interactive map"), `mapKeys` ("{title}. Drag or use the arrow keys to move, ..."), `mapZoomIn`, `mapZoomOut`, `mapReset` |
+  | Data table | `tableFirstRows` ("{caption}: first {n} of {total} rows") |
+  | Sound | `soundPlaying` ("Playing {what}: {n} notes, left to right, higher pitch for higher values."), `soundPlayingOne`, `soundFinished` ("Finished playing {title}."), `soundStopped` |
+  | Live data | `newPoint` / `newPoints` ("{n} new points"), `newRow` / `newRows` (charts without axes), `newsLatest` ("{count}; latest {mark}."), `newsCount` ("{count}.") |
+  | Drill-down | `breadcrumbRoot` ("All"), `breadcrumbUp` ("Go up to {name}"), both written by core into the scene; `drillShowing` ("Showing {path}."), `drillShowingAll` |
+  | Navigator | `navOverview`, `navWindow`, `navStart`, `navEnd` (each with `{field}`, the x column), `navRange` ("{from} to {to}", the window's value text) |
+
+  A change through `setOptions({ strings })` relabels the toolbar and map buttons in place (they keep keyboard focus) and rebuilds the table caption. A bad override is reported once by the compile (`unknown_string`, `bad_string`) and the binding keeps English for it. The navigator's dates in `aria-valuetext` follow `timeZone` too (UTC when it is unset or unknown).
 
 ## Agents and MCP
 
@@ -281,9 +295,9 @@ Regenerate the data with `npm run conformance`; `npm run test:ports` and `npm ru
 
 ## Framework notes
 
-- React: `<SuperPlot spec onSelect onIssues onHiddenChange onHover onRender onZoom onBrush onDrill plugins dataTable sync toolbar tooltipFormat navigator drill announce printLight />`; the ref is the `SuperPlot` instance (`appendRows`, `setZoom`, `setBrush`, `toPng`, `toCsv`, `sonify`). `sync` and `toolbar` may be inline objects or arrays (compared by value); `tooltipFormat` and the callbacks always call the latest function without a redraw.
+- React: `<SuperPlot spec onSelect onIssues onHiddenChange onHover onRender onZoom onBrush onDrill plugins dataTable sync toolbar tooltipFormat navigator drill announce printLight locale timeZone strings />`; the ref is the `SuperPlot` instance (`appendRows`, `setZoom`, `setBrush`, `toPng`, `toCsv`, `sonify`). `sync`, `toolbar` and `strings` may be inline objects or arrays (compared by value); `tooltipFormat` and the callbacks always call the latest function without a redraw.
 - shadcn/ui: `theme="shadcn"` reads the project's `--chart-1..5` and surface tokens; nothing to configure.
-- Plain HTML: `<super-plot spec='{"type":"bar",...}' theme="auto" toolbar sync="sales">`. Attributes: `spec` (JSON), `theme`, `locale`, `renderer`, `toolbar` (present for the default buttons, a comma list such as `"png,csv,sound"`, or `"false"`), `sync` (a key), `navigator` and `drill` (flags: present for true, `"false"`). Events add `plot-drill`. Properties: `spec` and `options` (any `SuperPlotOptions` as an object, callbacks included; an attribute wins over the same key). Methods: `appendRows`, `setZoom`, `getZoom`, `setBrush`, `getBrush`, `toSvg`, `toPng`, `toCsv`, `sonify`, and `instance` for the rest.
+- Plain HTML: `<super-plot spec='{"type":"bar",...}' theme="auto" toolbar sync="sales">`. Attributes: `spec` (JSON), `theme`, `locale`, `time-zone`, `strings` (JSON), `renderer`, `toolbar` (present for the default buttons, a comma list such as `"png,csv,sound"`, or `"false"`), `sync` (a key), `navigator` and `drill` (flags: present for true, `"false"`). Events add `plot-drill`. Properties: `spec`, `locale`, `timeZone`, `strings` and `options` (any `SuperPlotOptions` as an object, callbacks included); an attribute wins over a property, a property over the same key in `options`. Methods: `appendRows`, `setZoom`, `getZoom`, `setBrush`, `getBrush`, `toSvg`, `toPng`, `toCsv`, `sonify`, and `instance` for the rest.
 - Next.js and SSR: render `renderToSvg` on the server for a static chart, or mount `<SuperPlot>` on the client (the server renders an empty div). For the web binding see "Server rendering and hydration".
 
 ### Vue, Svelte and Angular

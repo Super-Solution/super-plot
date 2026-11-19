@@ -63,18 +63,19 @@ export const SuperPlot = forwardRef<Plot | null, SuperPlotProps>(function SuperP
     plot.current?.setSpec(spec)
   }, [spec])
 
-  const { theme, locale, width, height, animate, tooltip, hidden, renderer, canvasAbove, webglAbove, interactive, camera, plugins, dataTable, sync, toolbar, navigator, drill, announce, printLight } = options
-  // Inline `sync={{ key: 'a' }}` or `toolbar={['png']}` is a new object every render: compare by value.
+  const { theme, locale, width, height, animate, tooltip, hidden, renderer, canvasAbove, webglAbove, interactive, camera, plugins, dataTable, sync, toolbar, navigator, drill, announce, printLight, timeZone, strings } = options
+  // Inline `sync={{ key: 'a' }}`, `toolbar={['png']}` or `strings={{ total: 'Summe' }}` is a new object every render: compare by value.
   const syncKey = JSON.stringify(sync ?? null)
   const toolbarKey = JSON.stringify(toolbar ?? null)
+  const stringsKey = JSON.stringify(strings ?? null)
   useEffect(() => {
     if (first.current) {
       first.current = false
       return
     }
-    plot.current?.setOptions({ theme, locale, width, height, animate, tooltip, renderer, canvasAbove, webglAbove, interactive, dataTable, sync, toolbar, navigator, drill, announce, printLight, ...(plugins ? { plugins } : {}), ...(hidden ? { hidden } : {}), ...(camera ? { camera } : {}) })
+    plot.current?.setOptions({ theme, locale, width, height, animate, tooltip, renderer, canvasAbove, webglAbove, interactive, dataTable, sync, toolbar, navigator, drill, announce, printLight, timeZone, strings, ...(plugins ? { plugins } : {}), ...(hidden ? { hidden } : {}), ...(camera ? { camera } : {}) })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [theme, locale, width, height, animate, tooltip, hidden, renderer, canvasAbove, webglAbove, interactive, camera, plugins, dataTable, syncKey, toolbarKey, navigator, drill, announce, printLight])
+  }, [theme, locale, width, height, animate, tooltip, hidden, renderer, canvasAbove, webglAbove, interactive, camera, plugins, dataTable, syncKey, toolbarKey, navigator, drill, announce, printLight, timeZone, stringsKey])
 
   return <div ref={host} className={className} style={style} />
 })
