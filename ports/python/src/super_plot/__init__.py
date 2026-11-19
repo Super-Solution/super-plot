@@ -8,6 +8,7 @@ Behaviour is pinned to the reference implementation by `conformance/plot.v1.json
 """
 from __future__ import annotations
 
+from .charts_more import cloud_layout
 from .geo import GEO_LIMITS, GEO_PRESETS, Geography, GeographyError, get_geography, list_geographies, match_region, normalize_region, register_geography, unregister_geography
 from .isotime import MAX_TIME, MIN_TIME, time_bucket
 from .numeric import (
@@ -21,7 +22,7 @@ from .validate import LIMITS, PlotSpecError, Validation, chart_types, describe_p
 __all__ = [
     "AGGREGATE_OPS", "GEO_LIMITS", "GEO_PRESETS", "Geography", "GeographyError", "LIMITS", "MAX_TIME", "MIN_TIME", "PlotSpecError", "TIME_UNITS",
     "TRANSFORM_LIMIT", "TRANSFORM_OPS", "Validation", "WINDOW_OPS", "apply_transform", "bin_counts", "bin_edges", "box_stats",
-    "chart_types", "density_peaks", "describe_plot", "fields_of", "format_duration", "format_percent", "format_value", "get_geography", "is_safe_color",
+    "chart_types", "cloud_layout", "density_peaks", "describe_plot", "fields_of", "format_duration", "format_percent", "format_value", "get_geography", "is_safe_color",
     "kde", "linear_ticks", "list_geographies", "loess", "log_ticks", "match_region", "nice_domain", "nice_log_domain",
     "normalize_region", "quantile", "register_geography", "require_valid", "silverman", "time_bucket", "transform_bin_edges",
     "unregister_geography", "validate_plot", "waffle_cells",

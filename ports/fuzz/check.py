@@ -8,10 +8,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "python" / "src"))
 from super_plot import (  # noqa: E402
-    bin_counts, bin_edges, box_stats, density_peaks, describe_plot, format_value, kde, linear_ticks, loess, log_ticks, nice_domain,
+    bin_counts, bin_edges, box_stats, cloud_layout, density_peaks, describe_plot, format_value, kde, linear_ticks, loess, log_ticks, nice_domain,
     nice_log_domain, silverman, time_bucket, transform_bin_edges, validate_plot, waffle_cells,
 )
-from super_plot.text import format_duration  # noqa: E402
+from super_plot.text import format_duration, format_exact  # noqa: E402
 
 d = json.load(open(sys.argv[1], encoding="utf-8"))
 bad = 0
@@ -62,6 +62,15 @@ for vs, cells, want in d["waffles"]:
 for ms, want in d["durations"]:
     if format_duration(ms) != want:
         report("DURATION", repr(ms), format_duration(ms), want)
+# Round 6: the 3D charts' exact number format, and word cloud layouts (whole pixels, so equal means equal).
+for v, want in d["exacts"]:
+    if format_exact(v) != want:
+        report("EXACT", repr(v), format_exact(v), want)
+for words, widths, width, height, want in d["clouds"]:
+    by_text = {w["text"]: widths[j] for j, w in enumerate(words)}
+    got = cloud_layout(words, width, height, lambda text, size: by_text[text])
+    if got != want:
+        report("CLOUD", len(words), width, height, got, want)
 for i, c in enumerate(d["specs"]):
     v = validate_plot(c["spec"])
     got = sorted((x["severity"], x["code"], x["path"]) for x in v.issues)

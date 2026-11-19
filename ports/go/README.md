@@ -19,7 +19,7 @@ text, err := sp.DescribePlot(spec) // 'Bar chart. 1 category. Highest: APAC (120
 
 `ValidatePlot` and `DescribePlot` take a JSON string, `[]byte`, a `map[string]any`, or any value `encoding/json` can marshal.
 
-A spec's `transform` (steps `filter`, `timeUnit`, `aggregate`, `sort`, `top`, `bin`, `window`, `fold`) is checked and run, as the reference runs it: send raw rows and say "monthly total" in the spec.
+A spec's `transform` (steps `filter`, `timeUnit`, `aggregate`, `sort`, `top`, `bin`, `window`, `fold`, `index`) is checked and run, as the reference runs it: send raw rows and say "monthly total" in the spec.
 
 ```go
 v = sp.ValidatePlot(`{"type":"bar","x":"month","y":"revenue",
@@ -44,12 +44,15 @@ Pass JSON text when you can: when two keys of one transform step are wrong, the 
 | `KDE(values, bandwidth, points)`, `Silverman(values)`, `Density.Peaks()` | Gaussian kernel density, as the violin draws and describes it (bandwidth 0: Silverman's rule; points 0: the default grid) |
 | `Loess(xs, ys, bandwidth, grid)` | the scatter's LOESS trend line |
 | `WaffleCells(values, cells)` | cells per category of a waffle (largest remainder) |
-| `FormatValue(v, "compact")`, `FormatPercent(0.25, 1)`, `ValueFormatter(f)`, `FormatDuration(ms)` | value formats and durations (English) |
+| `CloudLayout(words, width, height, measure)` | where a word cloud puts each word: whole-pixel boxes on a spiral, or `nil` for a word that did not fit. `measure(text, size)` is the host's text width |
+| `FormatValue(v, "compact")`, `FormatPercent(0.25, 1)`, `ValueFormatter(f)`, `FormatDuration(ms)`, `FormatExact(v)` | value formats and durations (English); `FormatExact` is the full value, up to 10 decimals, that the 3D charts' descriptions print |
 | `IsSafeColor(v)` | the colour allow-list used for `colors` |
 
-An `Issue` is `{Severity, Code, Path, Message, Hint}`. `Severity`, `Code` and `Path` are the stable contract; wording may change.
+An `Issue` is `{Severity, Code, Path, Message, Hint}`. `Severity`, `Code` and `Path` are the stable contract; wording may change. `Severity` is `error`, `warning` or `info`: an `info` issue (`dual_axis`, `axis_break`, `perspective_3d`) is a note for whoever reads the chart, and the spec is still valid.
 
-All 27 chart types are covered. Descriptions read dates in UTC (the reference's `timeZone` is a render option the ports do not take). The statistics agree with the reference to the last bit: `fdlibm.go` computes `exp`, `log10`, `cbrt` and powers the way the reference's JavaScript engine does, which is not always what `math` returns.
+Round 6 is covered: `gauge`, `wordcloud`, `scatter3d` and `surface` (with `projection` and the `camera` of a 3D view), a second value axis (`yRight`, `yRightLabel`, `rightDomain`, `formatRight`) and a broken one (`yBreak`) on bar, line and area, with their refusals and the sentences they add to a description, and the `index` transform step.
+
+All 31 chart types are covered. Descriptions read dates in UTC (the reference's `timeZone` is a render option the ports do not take). The statistics agree with the reference to the last bit: `fdlibm.go` computes `exp`, `log10`, `cbrt` and powers the way the reference's JavaScript engine does, which is not always what `math` returns.
 
 ## Develop
 
@@ -59,6 +62,6 @@ go test ./...        # replays conformance/plot.v1.json
 go vet ./...
 ```
 
-From the repository root, `npm run test:ports` runs this and the Python port, and `npm run fuzz:ports` compares ~75,000 random cases per seed (`cmd/fuzzcheck`). See [`../README.md`](../README.md) for how the ports stay identical to the reference.
+From the repository root, `npm run test:ports` runs this and the Python port, and `npm run fuzz:ports` compares ~82,000 random cases per seed (`cmd/fuzzcheck`). See [`../README.md`](../README.md) for how the ports stay identical to the reference.
 
 `superplot/fields.v1.json` is generated; do not edit it (run `npm run conformance`).

@@ -13,7 +13,7 @@ from super_plot import (
     nice_domain, quantile, require_valid, validate_plot, PlotSpecError,
     density_peaks, kde, loess, log_ticks, nice_log_domain, silverman, transform_bin_edges, waffle_cells,
     GeographyError, get_geography, match_region, register_geography, unregister_geography,
-    apply_transform, time_bucket,
+    apply_transform, time_bucket, cloud_layout,
 )
 
 DATA = json.loads((Path(__file__).resolve().parents[3] / "conformance" / "plot.v1.json").read_text(encoding="utf-8"))
@@ -107,6 +107,13 @@ class Conformance(unittest.TestCase):
         self.assertTrue(DATA["waffleCells"])
         for c in DATA["waffleCells"]:
             self.assertEqual(waffle_cells(c["in"]["values"], c["in"]["cells"]), c["out"], str(c["in"]))
+
+    def test_cloud_layout(self):
+        self.assertTrue(DATA["cloudLayout"])
+        for c in DATA["cloudLayout"]:
+            i = c["in"]
+            widths = {(w["size"], w["text"]): i["widths"][k] for k, w in enumerate(i["words"])}
+            self.assertEqual(cloud_layout(i["words"], i["width"], i["height"], lambda text, size: widths[(size, text)]), c["out"], str(i["words"][0]))
 
     def test_formats(self):
         for c in DATA["formats"]:

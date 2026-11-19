@@ -16,7 +16,8 @@ from typing import Any
 
 from ._js import clip as _clip  # noqa: F401  (re-exported for symmetry with the reference)
 from ._js import is_finite_number, is_number, js_string, to_number, ulen, uslice
-from .charts import CHECKS, DESCRIBE, MAP_CHECKS, point_notes
+from .charts import CHECKS as _CHECKS, DESCRIBE as _DESCRIBE, MAP_CHECKS, point_notes
+from .charts_more import CHECKS_MORE, DESCRIBE_MORE
 from .geo import CAMERA_RANGE, Geography, js_trim, resolve_geo
 from .isotime import to_time
 from .numeric import closest
@@ -27,6 +28,8 @@ with resources.files(__package__).joinpath("fields.v1.json").open("r", encoding=
     _DEFS: dict[str, Any] = json.load(_f)
 
 LIMITS: dict[str, int] = _DEFS["limits"]
+CHECKS = {**_CHECKS, **CHECKS_MORE}
+DESCRIBE = {**_DESCRIBE, **DESCRIBE_MORE}
 _CHARTS: dict[str, dict[str, dict[str, Any]]] = {c["type"]: {f["name"]: f for f in c["fields"]} for c in _DEFS["charts"]}
 _ANNOTATION_KEYS = ["axis", "value", "to", "label", "tone"]
 _POINT_ANNOTATION_KEYS = ["x", "y", "label", "tone"]
@@ -166,7 +169,7 @@ def _validate_field(name: str, d: dict[str, Any], value: Any, issues: list, colu
             found[name] = geo
         return value
     if kind == "camera":
-        return _camera(name, value, issues)
+        return _camera(name, value, issues, d)
     if kind == "flag":
         # A column of yes/no values, or a list of the marked values.
         if isinstance(value, str):
@@ -310,16 +313,25 @@ def _annotations(name: str, value: Any, issues: list) -> Any:
     return out
 
 
-def _camera(name: str, value: Any, issues: list) -> Any:
+def _camera(name: str, value: Any, issues: list, d: dict[str, Any]) -> Any:
+    """A camera: the map's (lng, lat, zoom, pitch, bearing), or the keys and limits the field names (the 3D charts)."""
+    keys: list[str] = d.get("keys") or list(CAMERA_RANGE)
+    own: dict[str, list[float]] = d.get("limits") or {}
     if not isinstance(value, dict):
-        return _add(issues, "error", "bad_type", name, 'camera must be an object such as {"lng":121,"lat":24,"zoom":2}.')
+        example = '{"pitch":60,"bearing":35,"zoom":1.5}' if "keys" in d else '{"lng":121,"lat":24,"zoom":2}'
+        return _add(issues, "error", "bad_type", name, f"camera must be an object such as {example}.")
     out: dict[str, Any] = {}
     ok = True
     for k, v in value.items():
-        limits = CAMERA_RANGE.get(k)
+        limits = (own.get(k) or CAMERA_RANGE.get(k)) if k in keys else None
         if limits is None:
-            near = closest(k, list(CAMERA_RANGE))
-            _add(issues, "error", "unknown_field", f"{name}.{k}", f'Unknown camera field "{k}".', f'Did you mean "{near}"?' if near else f"Allowed: {', '.join(CAMERA_RANGE)}.")
+            near = closest(k, keys)
+            allowed = f"Allowed: {', '.join(keys)}."
+            if "keys" in d and k in ("lng", "lat"):
+                hint = f"A 3D chart turns round the centre of its box: lng and lat are map fields. {allowed}"
+            else:
+                hint = f'Did you mean "{near}"?' if near else allowed
+            _add(issues, "error", "unknown_field", f"{name}.{k}", f'Unknown camera field "{k}".', hint)
             ok = False
         elif not is_finite_number(v):
             _add(issues, "error", "bad_type", f"{name}.{k}", f"camera.{k} must be a number, got {_show(v)}.")

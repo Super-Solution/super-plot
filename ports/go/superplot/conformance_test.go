@@ -115,6 +115,15 @@ type conformance struct {
 		} `json:"in"`
 		Out []int `json:"out"`
 	} `json:"waffleCells"`
+	CloudLayout []struct {
+		In struct {
+			Words  []CloudWord `json:"words"`
+			Widths []float64   `json:"widths"`
+			Width  float64     `json:"width"`
+			Height float64     `json:"height"`
+		} `json:"in"`
+		Out []*CloudBox `json:"out"`
+	} `json:"cloudLayout"`
 	Geographies    []geoFixture `json:"geographies"`
 	GeographyCases []struct {
 		geoFixture
@@ -667,6 +676,29 @@ func TestWaffleCells(t *testing.T) {
 	for i, k := range c.WaffleCells {
 		if got := WaffleCells(k.In.Values, k.In.Cells); fmt.Sprint(got) != fmt.Sprint(k.Out) {
 			t.Fatalf("waffleCells[%d]: got %v want %v", i, got, k.Out)
+		}
+	}
+}
+
+func TestCloudLayout(t *testing.T) {
+	c := load(t)
+	if len(c.CloudLayout) == 0 {
+		t.Fatal("no cloudLayout cases")
+	}
+	for i, k := range c.CloudLayout {
+		type word struct {
+			size int
+			text string
+		}
+		widths := map[word]float64{}
+		for j, w := range k.In.Words {
+			widths[word{w.Size, w.Text}] = k.In.Widths[j]
+		}
+		got := CloudLayout(k.In.Words, k.In.Width, k.In.Height, func(text string, size int) float64 { return widths[word{size, text}] })
+		if !reflect.DeepEqual(got, k.Out) {
+			gb, _ := json.Marshal(got)
+			wb, _ := json.Marshal(k.Out)
+			t.Fatalf("cloudLayout[%d]: got %s want %s", i, gb, wb)
 		}
 	}
 }
