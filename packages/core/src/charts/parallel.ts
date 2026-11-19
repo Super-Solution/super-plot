@@ -100,6 +100,9 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
     for (const t of ticks[i]) {
       const y = scales[i].at(t.v)
       c.marks.push({ type: 'line', role: 'axis', x1: x - 3, x2: x, y1: y, y2: y, stroke: axis })
+      // A plate in the background colour keeps the tick label readable where lines cross it.
+      const w = c.measure(t.label, size - 1) + 4
+      c.marks.push({ type: 'rect', role: 'axis', x: r2(x - 5 - w + 2), y: r2(y - (size - 1) * 0.6), w: r2(w), h: r2((size - 1) * 1.2), fill: c.c('background'), opacity: 0.85 })
       c.marks.push(c.text(x - 5, y, t.label, { anchor: 'end', baseline: 'middle', fill: muted, size: size - 1 }))
     }
     c.marks.push(c.text(x, frame.y, fit(dim, Math.max(24, Math.min(gap - 6, 160)), size, c.env.measure, 600), { anchor: 'middle', baseline: 'hanging', weight: 600, fill: c.c('text') }))

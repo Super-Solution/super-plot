@@ -1,14 +1,18 @@
 # Super Plot
 
-Statistical charts for people and agents: bar, line, area, scatter, pie, donut, histogram, box plot, heatmap, radar, treemap, sankey,
-and maps (choropleth, bubbles, 3D columns, raised regions, flows; flat or on a globe, drawn with SVG, canvas or WebGL).
+Statistical charts for people and agents: bar (and lollipop), line, area (and stream graph), scatter, pie, donut, waffle, histogram,
+box plot, violin, beeswarm, heatmap, calendar, waterfall, bullet, bump, timeline, radar, treemap, sunburst, sankey, parallel coordinates,
+funnel, and maps (choropleth, bubbles, 3D columns, raised regions, flows; flat or on a globe, drawn with SVG, canvas or WebGL).
 Super Plot is the sibling of Super Chart: Super Chart draws financial time series (candles, drawing tools),
 Super Plot draws everything else you put in a report or a chat answer.
 
-Status: **local version 0.3.0, not published.** 0.3.0 adds data transforms, zoom, pan and brush with linked charts, small multiples,
-lines over bars, hexagon density, textures, a data table, canvas keyboard access, hover and render events, plugins, live data,
-a shadcn theme, per-chart imports and a 3 to 4 times faster 50,000-point scatter on canvas (see [DESIGN](docs/DESIGN.md#borrowed-from-competitors-p27)). Packages are `private` until the owner decides name and licence
-(see [docs/OPEN-DECISIONS.md](docs/OPEN-DECISIONS.md)).
+Status: **local version 0.4.0, not published.** 0.4.0 takes the strengths of 18 competing libraries, row by row, and says for each one
+what was built, what was refused and why ([docs/COMPETITIVE.md](docs/COMPETITIVE.md), sources in
+[docs/COMPETITORS-2026-11-19.md](docs/COMPETITORS-2026-11-19.md)): 12 more chart types, log scales, error bars and bands, point
+annotations, loess trends, bin/window/fold transforms, synced charts, a navigator, drill-down, an export toolbar and CSV, custom
+tooltips, sonification, server-rendered SVG that the browser adopts, a colour-blind check, time zones and translatable text.
+0.3.0 added transforms, zoom/brush, facets, live data and per-chart imports. Packages are `private` until the owner decides name and
+licence (see [docs/OPEN-DECISIONS.md](docs/OPEN-DECISIONS.md)).
 
 ```
 npm install
