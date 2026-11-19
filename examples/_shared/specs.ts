@@ -62,6 +62,15 @@ export const gallery: { id: string; note: string; spec: Record<string, unknown> 
     spec: { type: 'treemap', title: 'Largest cities', subtitle: 'Population, millions', label: 'city', value: 'pop', format: 'fixed:1', data: [['Tokyo', 37.4], ['Delhi', 31], ['Shanghai', 27.1], ['São Paulo', 22], ['Mexico City', 21.8], ['Cairo', 21.3], ['Mumbai', 20.4], ['Beijing', 20.4], ['Dhaka', 19.6], ['Osaka', 19.2], ['New York', 18.8], ['Karachi', 16.1], ['Taipei', 7.1]].map(([city, pop]) => ({ city, pop })) }
   },
   { id: 'sankey', note: 'Flows between stages, loops refused', spec: by('sankey') },
+  { id: 'waffle', note: 'Countable shares: 100 squares, largest remainder', spec: by('waffle') },
+  {
+    id: 'waffle-facet', note: 'One waffle per year, shared colours',
+    spec: {
+      type: 'waffle', title: 'Energy mix by year', subtitle: 'Share of generation', label: 'source', value: 'twh', facet: 'year', sort: 'none', legend: 'bottom',
+      data: [['2016', 'Fossil', 62], ['2016', 'Nuclear', 18], ['2016', 'Renewable', 20], ['2021', 'Fossil', 54], ['2021', 'Nuclear', 17], ['2021', 'Renewable', 29], ['2026', 'Fossil', 41], ['2026', 'Nuclear', 16], ['2026', 'Renewable', 43]].map(([year, source, twh]) => ({ year, source, twh }))
+    }
+  },
+  { id: 'beeswarm', note: 'Every value as a dot, one lane per group', spec: by('beeswarm') },
   { id: 'choropleth', note: 'Regions coloured by value (invented islands: Super Plot ships no boundaries)', spec: by('choropleth') },
   { id: 'bubble-map', note: 'Places sized by value, on imported land', spec: by('bubble-map') },
   { id: 'column-map', note: '3D columns on a globe: drag to turn', spec: by('column-map') },

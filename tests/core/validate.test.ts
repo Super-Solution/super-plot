@@ -95,7 +95,7 @@ describe('catalog and schema', () => {
   })
   it('lists every chart type with guidance for an agent', () => {
     const types = chartCatalog().map(c => c.type)
-    expect(types).toEqual(['bar', 'line', 'area', 'scatter', 'pie', 'donut', 'histogram', 'box', 'heatmap', 'radar', 'treemap', 'sankey', 'choropleth', 'bubble-map', 'column-map', 'flow-map'])
+    expect(types).toEqual(['bar', 'line', 'area', 'scatter', 'pie', 'donut', 'histogram', 'box', 'heatmap', 'radar', 'treemap', 'sankey', 'waffle', 'beeswarm', 'choropleth', 'bubble-map', 'column-map', 'flow-map'])
     for (const c of chartCatalog()) {
       expect(c.useWhen.length).toBeGreaterThan(40)
       expect(c.fields.find(f => f.name === 'data')?.required).toBe(true)
