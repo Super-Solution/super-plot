@@ -1,10 +1,13 @@
 import {
-  compilePlot, renderSvg, resolveTheme, estimateWidth, defaultHeight, dataMarkCount, makeView, dragCamera, zoomCamera, clampCamera,
-  type Camera, type Issue, type Mark, type Measure, type RenderOptions, type Scene, type Tip, type ViewParams
-} from '@supersolutions/super-plot-core'
-import { CanvasLayer } from './canvas.js'
+  compilePlot, renderSvg, resolveTheme, estimateWidth, defaultHeight, dataMarkCount, makeView, dragCamera, zoomCamera, clampCamera, plotTable,
+  type Camera, type Issue, type Mark, type Measure, type PlotPlugin, type RenderOptions, type Scene, type Tip, type ViewParams
+} from '@supersolutions/super-plot-core/base'
+import { CanvasLayer, markCenter } from './canvas.js'
 import type * as Gl from './gl/index.js'
+import { AxisControl, type BrushSelection, type ZoomRange } from './interact.js'
 import { ensureStyles } from './styles.js'
+
+export type { AxisPick, AxisRange, BrushSelection, ZoomRange } from './interact.js'
 
 export interface SelectEvent {
   /** What the mark carries: the category, series and value (or the bin, slice, cell). */
@@ -13,7 +16,24 @@ export interface SelectEvent {
   tip?: Tip
 }
 
-export interface SuperPlotOptions extends Omit<RenderOptions, 'hidden' | 'measure'> {
+/** What a plugin's `afterDraw` gets: the scene and the surface it was drawn on. */
+export interface DrawTarget {
+  scene: Scene
+  renderer: 'svg' | 'canvas' | 'webgl'
+  /** The chart's `<svg>` (SVG renderer). */
+  svg?: SVGSVGElement
+  /** The topmost 2D context, scaled to scene pixels (canvas and WebGL renderers). */
+  ctx?: CanvasRenderingContext2D
+}
+
+/** After every draw: what drew it and how long compile plus draw took. */
+export interface RenderEvent {
+  renderer: 'svg' | 'canvas' | 'webgl'
+  ms: number
+  scene: Scene
+}
+
+export interface SuperPlotOptions extends Omit<RenderOptions, 'hidden' | 'measure' | 'view' | 'plugins'> {
   /** Play the entrance animation (skipped under `prefers-reduced-motion`). Default true. */
   animate?: boolean
   /** Show the hover tooltip unless the spec says `tooltip: false`. Default true. */
@@ -41,6 +61,21 @@ export interface SuperPlotOptions extends Omit<RenderOptions, 'hidden' | 'measur
   interactive?: boolean
   /** Maps: the viewer moved the camera (once per gesture, when it ends). */
   onCameraChange?: (camera: Camera) => void
+  /** The pointer or keyboard moved onto a mark with data (null: off it). */
+  onHover?: (e: SelectEvent | null) => void
+  /** The chart was drawn (first draw, resize, new data, theme). */
+  onRender?: (e: RenderEvent) => void
+  /** The viewer zoomed or panned (`zoom` in the spec), once per gesture; null when back to the full range. */
+  onZoom?: (zoom: ZoomRange | null) => void
+  /** The viewer brushed a range (`brush` in the spec); null when cleared. `sel.filters` drop into another chart's `transform`. */
+  onBrush?: (sel: BrushSelection | null) => void
+  /** Extensions: `afterCompile` can change the scene, `afterDraw` can draw on what was drawn. A throwing plugin becomes a warning. */
+  plugins?: readonly PlotPlugin<DrawTarget>[]
+  /**
+   * A `<table>` of the data the chart shows (after `transform`, up to 1,000 rows), next to the chart: `true` for
+   * screen readers only, `'visible'` for everyone. Default false.
+   */
+  dataTable?: boolean | 'visible'
 }
 
 let uid = 0
@@ -54,6 +89,12 @@ const loadGl = (): Promise<typeof Gl> => (glLoading ??= import('./gl/index.js').
 const mapKeyOf = (spec: unknown): string => {
   const s = spec as { type?: unknown; geo?: unknown } | null
   return `${String(s?.type)}|${typeof s?.geo === 'string' ? s.geo : s?.geo ? 'inline' : ''}`
+}
+
+/** What identifies "the same chart" for zoom and brush: type and the columns on the axes. */
+const axisKeyOf = (spec: unknown): string => {
+  const s = spec as Record<string, unknown> | null
+  return JSON.stringify([s?.type, s?.x, s?.y, s?.facet, s?.orientation])
 }
 
 /** A map the GPU draws better than SVG: anything with depth. */
@@ -99,6 +140,13 @@ export class SuperPlot {
   private gestureTimer = 0
   private controls: HTMLDivElement | null = null
   private glWaiting = false
+  private axis: AxisControl
+  private hoverMark: Mark | null = null
+  private table: HTMLTableElement | null = null
+  private tableOf: unknown = undefined
+  /** `appendRows` keeps its own copy of the rows, so the caller's array is never changed. */
+  private rows: unknown[] | null = null
+  private appendRaf = 0
 
   constructor(readonly host: HTMLElement, spec: unknown, private options: SuperPlotOptions = {}) {
     const doc = host.ownerDocument
@@ -123,6 +171,15 @@ export class SuperPlot {
     this.root.addEventListener('pointerup', this.onUp)
     this.root.addEventListener('pointercancel', this.onUp)
     this.root.addEventListener('wheel', this.onWheel, { passive: false })
+    this.axis = new AxisControl({
+      root: this.root,
+      scene: () => this.scene,
+      redraw: () => this.schedule(false),
+      zoomChanged: z => this.options.onZoom?.(z),
+      brushChanged: b => this.options.onBrush?.(b),
+      focusPoint: t => this.focusPoint(t),
+      hideTip: () => this.hideTip()
+    })
     if (typeof ResizeObserver !== 'undefined' && options.width === undefined) {
       this.ro = new ResizeObserver(() => this.schedule(false))
       this.ro.observe(host)
@@ -138,9 +195,41 @@ export class SuperPlot {
   setSpec(spec: unknown): void {
     // A different map (type or geography) starts from its own view; new data on the same map keeps the viewer's.
     if (mapKeyOf(spec) !== mapKeyOf(this.spec)) this.cam = null
+    // The same with zoom and brush: they stay while the chart shows the same columns.
+    if (axisKeyOf(spec) !== axisKeyOf(this.spec)) this.axis.reset()
     this.spec = spec
+    this.rows = null
     this.render(true)
   }
+
+  /**
+   * Add rows to the end of the data (a live feed). With `max`, the oldest rows are dropped past that many.
+   * Several calls in one frame draw once; zoom, brush and hidden series stay. The spec you passed is not changed.
+   */
+  appendRows(rows: readonly unknown[], options: { max?: number } = {}): void {
+    const spec = this.spec as Record<string, unknown> | null
+    if (!spec || typeof spec !== 'object' || !rows.length) return
+    if (!this.rows) this.rows = Array.isArray(spec.data) ? [...spec.data] : []
+    for (const r of rows) this.rows.push(r)
+    const max = options.max
+    if (max !== undefined && max >= 0 && this.rows.length > max) this.rows.splice(0, this.rows.length - max)
+    this.spec = { ...spec, data: this.rows }
+    if (this.appendRaf) return
+    this.appendRaf = requestAnimationFrame(() => {
+      this.appendRaf = 0
+      if (!this.disposed) this.render(false)
+    })
+  }
+
+  /** Zoomed axes, or null at the full range. Time axes as ISO strings. */
+  getZoom(): ZoomRange | null { return this.axis.getZoom() }
+  /** Show these ranges (`{ x: [from, to] }`, numbers or ISO dates; null for the full range). Does not fire `onZoom`. */
+  setZoom(zoom: { x?: unknown; y?: unknown } | null): void { this.axis.setZoom(zoom) }
+  resetZoom(): void { this.axis.setZoom(null) }
+  /** The brushed selection, or null. */
+  getBrush(): BrushSelection | null { return this.axis.getBrush() }
+  /** Brush from code: `{ x: [from, to] }` or `{ x: ["A", "B"] }` on categories; null clears. Does not fire `onBrush`. */
+  setBrush(brush: { x?: unknown; y?: unknown } | null): void { this.axis.setBrush(brush) }
 
   /** Change render options (theme, locale, size, ...). */
   setOptions(patch: Partial<SuperPlotOptions>): void {
@@ -227,6 +316,10 @@ export class SuperPlot {
     if (this.disposed) return
     this.disposed = true
     cancelAnimationFrame(this.raf)
+    cancelAnimationFrame(this.appendRaf)
+    this.axis.dispose()
+    this.table?.remove()
+    this.table = null
     clearTimeout(this.enterTimer)
     clearTimeout(this.gestureTimer)
     this.ro?.disconnect()
@@ -284,6 +377,7 @@ export class SuperPlot {
 
   private render(enter: boolean): void {
     if (this.disposed) return
+    const started = performance.now()
     const o = this.options
     const hostW = Math.floor(this.host.getBoundingClientRect().width || this.host.clientWidth)
     const width = o.width ?? (hostW > 0 ? hostW : 640)
@@ -296,11 +390,13 @@ export class SuperPlot {
       if (o.width !== undefined) this.root.style.width = `${o.width}px`
     } else this.root.style.height = ''
     const camera = this.cam ?? o.camera
-    const result = compilePlot(this.spec, { ...o, width, height, hidden: this.hidden, measure: this.measure, prefersDark: this.prefersDark(), ...(camera ? { camera } : {}) })
+    const view = this.axis.view
+    const result = compilePlot(this.spec, { ...o, width, height, hidden: this.hidden, measure: this.measure, prefersDark: this.prefersDark(), ...(camera ? { camera } : {}), ...(view ? { view } : {}) })
     this.glMoved = false
     this.hideTip()
     this.overlay = null
     this.highlighted = null
+    this.hoverMark = null
     if (!result.ok) {
       this.layer?.dispose()
       this.layer = null
@@ -313,6 +409,8 @@ export class SuperPlot {
       err.textContent = result.issues.filter(i => i.severity === 'error').map(i => `${i.path || 'spec'}: ${i.message}${i.hint ? ` ${i.hint}` : ''}`).join('\n')
       this.root.appendChild(err)
       this.root.appendChild(this.tip)
+      this.axis.afterRender()
+      this.syncTable()
       o.onIssues?.(result.issues)
       return
     }
@@ -334,7 +432,8 @@ export class SuperPlot {
         placeTip: (x, y) => this.placeTip(x, y),
         hideTip: () => this.hideTip(),
         activate: m => this.activateMark(m),
-        dragging: () => this.dragging()
+        dragging: () => this.dragging(),
+        hovered: m => this.hovered(m)
       })
       if (this.layer) {
         // One context per plot for its lifetime: creating one costs far more than a redraw.
@@ -346,7 +445,7 @@ export class SuperPlot {
         if (this.layer.el.parentNode !== this.root || this.tip.parentNode !== this.root) this.root.replaceChildren(this.layer.el, this.tip)
         if (this.controls) this.root.appendChild(this.controls)
         this.root.setAttribute('data-renderer', this.layer.renderer)
-        if (changed || enter) o.onIssues?.(result.issues)
+        this.afterDraw(result.scene, started, changed || enter, { ctx: this.layer.drawingContext() })
         return
       }
     }
@@ -363,7 +462,92 @@ export class SuperPlot {
       clearTimeout(this.enterTimer)
       this.enterTimer = window.setTimeout(() => this.root.classList.remove('sp-enter'), 1000)
     }
-    if (changed || enter) o.onIssues?.(result.issues)
+    this.afterDraw(result.scene, started, changed || enter, { svg: this.root.querySelector('svg') ?? undefined })
+  }
+
+  /** Zoom and brush, plugins, the data table, then tell the host. */
+  private afterDraw(scene: Scene, started: number, report: boolean, target: { svg?: SVGSVGElement; ctx?: CanvasRenderingContext2D }): void {
+    const o = this.options
+    this.axis.afterRender()
+    const renderer = this.getRenderer()
+    for (const p of o.plugins ?? []) {
+      if (!p.afterDraw) continue
+      try {
+        p.afterDraw({ scene, renderer, ...target })
+      } catch (e) {
+        this.issues = [...this.issues, { severity: 'warning', code: 'plugin_error', path: '', message: `Plugin "${p.name}" failed in afterDraw: ${e instanceof Error ? e.message : String(e)}.` }]
+        report = true
+      }
+    }
+    this.syncTable()
+    if (report) o.onIssues?.(this.issues)
+    o.onRender?.({ renderer, ms: performance.now() - started, scene })
+  }
+
+  /** The `dataTable` option: rebuilt when the spec changes, not on every resize. */
+  private syncTable(): void {
+    const want = this.options.dataTable
+    if (!want) {
+      this.table?.remove()
+      this.table = null
+      this.tableOf = undefined
+      return
+    }
+    const doc = this.host.ownerDocument
+    if (!this.table) {
+      this.table = doc.createElement('table')
+      this.table.className = 'sp-table'
+    }
+    if (want === 'visible') this.table.setAttribute('data-visible', '')
+    else this.table.removeAttribute('data-visible')
+    if (this.table.parentNode !== this.host) this.host.insertBefore(this.table, this.root.nextSibling)
+    if (this.tableOf === this.spec) return
+    this.tableOf = this.spec
+    const t = plotTable(this.spec)
+    this.table.replaceChildren()
+    if (!t) return
+    const cap = doc.createElement('caption')
+    cap.textContent = t.total > t.rows.length ? `${t.caption}: first ${t.rows.length} of ${t.total} rows` : t.caption
+    const head = doc.createElement('thead')
+    const hr = doc.createElement('tr')
+    for (const c of t.columns) {
+      const th = doc.createElement('th')
+      th.scope = 'col'
+      th.textContent = c.key
+      hr.appendChild(th)
+    }
+    head.appendChild(hr)
+    const body = doc.createElement('tbody')
+    const nf = new Intl.NumberFormat(this.options.locale, { maximumFractionDigits: 6 })
+    for (const row of t.rows) {
+      const tr = doc.createElement('tr')
+      row.forEach((v, i) => {
+        const td = doc.createElement('td')
+        if (t.columns[i].numeric) td.setAttribute('data-n', '')
+        td.textContent = v === null ? '' : typeof v === 'number' ? nf.format(v) : String(v)
+        tr.appendChild(td)
+      })
+      body.appendChild(tr)
+    }
+    this.table.append(cap, head, body)
+  }
+
+  /** The keyboard's mark, in scene pixels: the canvas view's, or the focused SVG mark. */
+  private focusPoint(target?: EventTarget | null): { x: number; y: number } | null {
+    const m = this.layer?.focusedMark() ?? (() => {
+      const el = target ?? this.host.ownerDocument.activeElement
+      const hit = el ? this.markOf(el) : null
+      return hit ? this.scene?.marks[hit.i] ?? null : null
+    })()
+    return m ? markCenter(m) : null
+  }
+
+  /** Tell the host what is under the pointer (or keyboard), once per change. */
+  private hovered(mark: Mark | null): void {
+    const m = mark && (mark.role === 'data' || mark.role === 'hit') && (mark.datum !== undefined || mark.tip) ? mark : null
+    if (m === this.hoverMark) return
+    this.hoverMark = m
+    this.options.onHover?.(m ? { datum: m.datum, series: m.series, tip: m.tip } : null)
   }
 
   /** A WebGL layer for this plot, or null (not loaded yet, unavailable, or a software GPU under `auto`). */
@@ -439,6 +623,7 @@ export class SuperPlot {
     if (this.layer || this.dragging()) return // the canvas view handles its own pointer events
     const m = this.markOf(e.target)
     const mark = m && this.scene?.marks[m.i]
+    this.hovered(mark ?? null)
     if (!m || !mark) return this.clearHighlight()
     if (mark.series !== undefined && mark.role !== 'hit') this.highlight(mark.series)
     else if (mark.role === 'hit') this.showGuide(mark)
@@ -458,11 +643,13 @@ export class SuperPlot {
     this.hideTip()
     this.clearHighlight()
     this.clearGuide()
+    if (!this.layer) this.hovered(null)
   }
 
   private onFocus = (e: FocusEvent): void => {
     const m = this.markOf(e.target)
     const mark = m && this.scene?.marks[m.i]
+    if (mark) this.hovered(mark)
     if (!m || !mark?.tip || !this.tipEnabled()) return
     const r = m.el.getBoundingClientRect()
     this.showTip(mark.tip, r.left + r.width / 2, r.top)
@@ -500,7 +687,8 @@ export class SuperPlot {
       this.render(false)
       return
     }
-    if (mark.role === 'data' && mark.datum !== undefined) this.options.onSelect?.({ datum: mark.datum, series: mark.series, tip: mark.tip })
+    // A hit target (the larger circle round a small dot, a line chart's column) reports what it stands for.
+    if ((mark.role === 'data' || mark.role === 'hit') && mark.datum !== undefined) this.options.onSelect?.({ datum: mark.datum, series: mark.series, tip: mark.tip })
   }
 
   private highlight(series: string): void {
@@ -605,7 +793,7 @@ export class SuperPlot {
     return !!this.scene?.geo && this.options.interactive !== false
   }
 
-  private dragging(): boolean { return this.drag?.moved === true || this.justDragged }
+  private dragging(): boolean { return this.drag?.moved === true || this.justDragged || this.axis.dragging() }
 
   /** Zoom buttons, keyboard focus and touch handling for an interactive map; removed for anything else. */
   private setupMap(scene: Scene, theme: ReturnType<typeof resolveTheme>): void {

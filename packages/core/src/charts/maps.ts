@@ -17,6 +17,9 @@ import { matchRegion, normalizeRegion, resolveGeo, type Geography } from '../geo
 import { makeView, type Camera, type GeoViewKind, type Projection, type ViewInput } from '../geo/view.js'
 import { arcHeight, drawGeo, type ArcDraw, type ColumnDraw, type PointDraw, type RegionDraw } from '../geo/draw.js'
 import { closest } from '../util/num.js'
+import { setGeoResolver } from '../schema.js'
+
+setGeoResolver(resolveGeo)
 
 type Spec = Record<string, any>
 type R = Record<string, unknown>

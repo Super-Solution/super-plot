@@ -1,3 +1,5 @@
+// The tools describe every chart type, so they register them all.
+import './index.js'
 import { chartCatalog, plotJsonSchema } from './catalog.js'
 import { describePlot } from './describe.js'
 import { compilePlot } from './compile.js'
@@ -19,7 +21,7 @@ export interface PlotTool {
   run(args: Record<string, unknown>): unknown
 }
 
-const spec = { type: 'object', description: 'A Super Plot spec: {type, data, ...encodings}. See plot_catalog.' }
+const spec = { type: 'object', description: 'A Super Plot spec: {type, data, ...encodings}. Send raw rows and let `transform` filter, bucket by time and aggregate them (no need to pre-compute). `facet` splits one chart into small multiples. See plot_catalog.' }
 
 export const plotTools: PlotTool[] = [
   {

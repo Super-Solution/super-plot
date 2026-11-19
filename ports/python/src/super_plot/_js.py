@@ -6,6 +6,7 @@ interchangeable when it reproduces the same edge cases, so the few places where 
 """
 from __future__ import annotations
 
+import json as _json
 import math
 import re
 from decimal import ROUND_HALF_UP, Decimal
@@ -13,6 +14,7 @@ from typing import Any
 
 _DEC = re.compile(r"[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?")
 _RADIX = re.compile(r"0[xX][0-9a-fA-F]+|0[bB][01]+|0[oO][0-7]+")
+_INDEX = re.compile(r"0|[1-9][0-9]{0,9}")
 
 
 def is_number(v: Any) -> bool:
@@ -142,3 +144,37 @@ def to_fixed(x: float, digits: int) -> str:
 def pow10(k: int) -> float:
     """10 ** k, correctly rounded."""
     return float(f"1e{k}")
+
+
+def js_keys(d: dict) -> list[str]:
+    """`Object.keys(d)`: array-index keys first, ascending, then the rest in insertion order."""
+    index = [k for k in d if _INDEX.fullmatch(k) and int(k) < 4294967295]
+    if not index:
+        return list(d)
+    first = set(index)
+    return sorted(index, key=int) + [k for k in d if k not in first]
+
+
+def utf16_key(s: str) -> bytes:
+    """A sort key that orders strings as JavaScript's `<` does: by UTF-16 code unit, not by code point."""
+    return s.encode("utf-16-be", "surrogatepass")
+
+
+def json_key(v: Any) -> str:
+    """`JSON.stringify(v)` as an identity: two JSON values get the same text exactly when JavaScript gives them the
+    same text (1 and 1.0 are one number, -0 is 0, object keys keep their order)."""
+    if v is None:
+        return "null"
+    if v is True:
+        return "true"
+    if v is False:
+        return "false"
+    if is_number(v):
+        return number_string(float(v)) if is_finite_number(v) else "null"
+    if isinstance(v, str):
+        return _json.dumps(v, ensure_ascii=False)
+    if isinstance(v, (list, tuple)):
+        return "[" + ",".join(json_key(x) for x in v) + "]"
+    if isinstance(v, dict):
+        return "{" + ",".join(_json.dumps(k, ensure_ascii=False) + ":" + json_key(v[k]) for k in js_keys(v)) + "}"
+    return "null"

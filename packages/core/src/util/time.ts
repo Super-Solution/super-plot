@@ -49,7 +49,8 @@ export function toTime(v: unknown): number | null {
     const t = v.getTime()
     return Number.isFinite(t) ? t : null
   }
-  if (typeof v === 'number') return Number.isFinite(v) ? v : null
+  // A Date holds at most 8.64e15 ms either side of 1970; beyond that formatting throws, so it is not a time.
+  if (typeof v === 'number') return Number.isFinite(v) && Math.abs(v) <= 8.64e15 ? v : null
   if (typeof v !== 'string') return null
   const m = ISO.exec(v.trim())
   if (!m) return null
@@ -116,7 +117,7 @@ export function timeTicks(t0: number, t1: number, count: number, locale: string)
   return values.map(value => ({ value, label: tickLabel(value, step.level, locale) }))
 }
 
-function tickLabel(t: number, level: Step['level'], locale: string): string {
+export function tickLabel(t: number, level: Step['level'], locale: string): string {
   const d = new Date(t)
   if (level === 'year') return String(d.getUTCFullYear())
   if (level === 'month') return d.getUTCMonth() === 0 ? String(d.getUTCFullYear()) : formatTime(t, 'month', locale)

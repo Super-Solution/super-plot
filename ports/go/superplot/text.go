@@ -301,5 +301,8 @@ func civil(days int64) (int64, int, int) {
 // formatDate is "Aug 31, 2026" (UTC) for epoch milliseconds.
 func formatDate(ms float64) string {
 	y, m, d := civil(int64(math.Floor(ms / 86_400_000)))
+	if y <= 0 {
+		y = 1 - y // Intl prints the year of the era: year 0 is "1" (BC)
+	}
 	return fmt.Sprintf("%s %d, %d", months[m-1], d, y)
 }

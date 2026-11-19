@@ -1,6 +1,6 @@
 // Tests (and optionally fuzzes) the Go and Python ports against the reference implementation.
 //   node scripts/ports.mjs            conformance tests of both ports
-//   node scripts/ports.mjs --fuzz     also compare ~60k random numbers and 12k random specs (3 seeds)
+//   node scripts/ports.mjs --fuzz     also compare ~190k random numbers and 15k random specs (3 seeds)
 // A missing toolchain fails the run, so the gate never passes by skipping a port. SKIP_PORTS=1 skips on purpose.
 import { execFileSync, spawnSync } from 'node:child_process'
 import { mkdtempSync, rmSync } from 'node:fs'

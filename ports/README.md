@@ -12,6 +12,7 @@ Super Plot's reference implementation is TypeScript (`packages/`). These are the
 A port is **the half of Super Plot a backend needs**:
 
 - `validate_plot` / `ValidatePlot`: check a spec and get every problem at once, each with a stable `code`, a `path` and a `hint`. This is how an agent's chart gets repaired in one round trip.
+- `transform`: the data steps of a spec (`filter`, `timeUnit`, `aggregate`, `sort`, `top`) are checked and **run**, exactly as the reference runs them. Column fields are checked against the output, the normalized spec's `data` holds the transformed rows, and the description is written from them.
 - `describe_plot` / `DescribePlot`: the plain-language reading of a chart (also its alt text), identical to the TypeScript text.
 - The shared numbers: ticks, nice domains, quantiles, box statistics, histogram bins, value formats (`compact`, `percent`, `currency:USD`...).
 
@@ -24,10 +25,24 @@ English is the only formatting locale in the ports; other locales fall back to i
 Three layers, all run by `npm run gate`:
 
 1. **One source for fields.** `conformance/fields.v1.json` (generated from the TypeScript chart definitions) holds every chart's fields, their kinds, ranges, enums and defaults, plus the English currency table. Both ports embed a copy; validation is data-driven, so adding a field or a chart type does not mean rewriting validation by hand. `npm run conformance` regenerates it and `--check` fails the gate when a copy is stale.
-2. **Conformance data.** `conformance/plot.v1.json` holds about 1,500 cases made by the TypeScript implementation: ticks, quantiles, box stats, bins, 1,370 number and percent formats (every English currency included), every chart's example, 132 validation cases, 45 extra descriptions, and 46 geographies to read (GeoJSON and TopoJSON, sound and broken). Each port has a test that replays them (`python3 -m unittest`, `go test`).
-3. **Differential fuzzing.** `npm run fuzz:ports` generates ~58,000 random numbers and 4,000 random specs of every chart type per seed (messy data included: nulls, numeric strings, dates, unicode, impossible values), asks TypeScript what it says, and compares both ports. It has already paid for itself: it found that `10 ** -4` in V8 is `0.00009999999999999999`, which made the reference's tick step off by one ulp on narrow ranges. The reference now uses an exact power of ten.
+2. **Conformance data.** `conformance/plot.v1.json` holds about 1,800 cases made by the TypeScript implementation: ticks, quantiles, box stats, bins, 1,370 number and percent formats (every English currency included), every chart's example, 175 validation cases, 120 transform pipelines (57 that run, with the rows they leave, and 63 that are refused, one for every way a step can be wrong), 64 extra descriptions, and 46 geographies to read (GeoJSON and TopoJSON, sound and broken). Each port has a test that replays them (`python3 -m unittest`, `go test`).
+3. **Differential fuzzing.** `npm run fuzz:ports` generates ~64,000 random numbers (6,000 `timeUnit` buckets among them) and 5,000 random specs of every chart type per seed (messy data included: nulls, numeric strings, dates, unicode, impossible values), asks TypeScript what it says, and compares both ports. Nearly half of the specs carry a `transform`, tidy or wrong on purpose; for those that stay valid the transformed rows are compared too. It has already paid for itself: it found that `10 ** -4` in V8 is `0.00009999999999999999`, which made the reference's tick step off by one ulp on narrow ranges. The reference now uses an exact power of ten.
 
 The contract for issues is the set of `(severity, code, path)`. Message and hint wording, and the order of issues, are not part of it.
+
+## Transform
+
+`transform` is a list of at most 10 steps that run before the chart reads its columns. Each step is checked against the columns the step before it left, and the first step that is wrong stops the run with one issue (`bad_transform`, `unknown_field`, `no_such_column`, `missing_required`, `bad_type`, `bad_enum`, `bad_value`, `not_time`, `too_many`); a pipeline that leaves no rows is `empty_after_transform`, and `some_not_time` is a warning. The details that have to match the reference, and do:
+
+- **Filter.** `range` is `[from, to)`: from inclusive, to exclusive. Bounds and cells are read as numbers first, then as ISO dates. `equal` and `oneOf` compare as text, the way `String()` prints a value.
+- **timeUnit.** Buckets are UTC and written as ISO dates (`2026-03-01`; hours as `2026-03-01T10:00:00Z`); weeks start on Monday. Only times from 0001-01-01 to the end of 9999 (`MIN_TIME` / `MinTime` to `MAX_TIME` / `MaxTime`) are bucketed; anything outside counts as not a date. Also on its own as `time_bucket` / `TimeBucket`.
+- **Aggregate.** `sum`, `mean`, `median`, `min`, `max`, `count`, `distinct`, plus `count: "<name>"` for the rows per group. Groups keep the type of their value (`1` and `"1"` are two groups; `1` and `1.0` are one), in order of first appearance. Sums add left to right, so the last digit matches too.
+- **Sort and top.** Stable; numbers and dates by value before text, text by UTF-16 code unit as JavaScript compares strings, missing values last.
+
+Two things to know:
+
+- **Go and the order of keys.** When two keys of one step are wrong, the reference names the first one written. A decoded Go map has no order, so pass JSON text (a string or bytes) to get the same one; for a `map[string]any` it is the first in sorted order. Everything else is the same either way. In the same way, `aggregate` in Go tells apart cells that are objects by their content, not by the order of their keys. And Go's JSON decoder turns half of a surrogate pair standing alone into U+FFFD, so such text sorts where U+FFFD does.
+- **Ranges as dates.** `xDomain`, `yDomain` and `domain` accept ISO date strings and come back in the normalized spec as epoch milliseconds, as in the reference.
 
 ## Maps
 
@@ -43,9 +58,9 @@ Three things to know:
 
 1. Change the chart in `packages/core` (its `fields` drive validation).
 2. `npm run build && npm run conformance` regenerates the field file and the cases, and copies the fields into both ports.
-3. If the chart has a cross-field `check` or a `describe`, port it: `python/src/super_plot/charts.py` and `go/superplot/charts.go` (each function names the TypeScript function it mirrors).
+3. If the chart has a cross-field `check` or a `describe`, port it: `python/src/super_plot/charts.py` and `go/superplot/charts.go` (each function names the TypeScript function it mirrors). A new field *kind* (as `transform` was) also needs its case in `validate.py` / `validate.go`; `transform.py` / `transform.go` mirror `packages/core/src/transform.ts`.
 4. `npm run test:ports` (and `npm run fuzz:ports`) must pass.
 
 ## Why the ports have `_js.py` / `js.go`
 
-The reference runs on JavaScript semantics, so a few things are reproduced on purpose: `String(1e21)`, `Number(" 0x10 ")`, `toFixed` rounding half up on the exact binary value, UTF-16 string length for truncation, `Intl` rounding the shortest decimal (1.005 with two decimals is 1.01). They live in one file per port, with the reason next to each.
+The reference runs on JavaScript semantics, so a few things are reproduced on purpose: `String(1e21)`, `Number(" 0x10 ")`, `toFixed` rounding half up on the exact binary value, UTF-16 string length for truncation, `Intl` rounding the shortest decimal (1.005 with two decimals is 1.01), and for `transform` the order of `Object.keys`, string comparison by UTF-16 code unit, and what `JSON.stringify` makes of a group's values. They live in one file per port, with the reason next to each.

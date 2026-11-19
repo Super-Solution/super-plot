@@ -26,7 +26,20 @@ function compileSeries(c: ChartCtx, area: boolean): { series: ReturnType<ChartCt
   const keys = distinct(obs.map(o => o.s))
   const series = c.makeSeries(keys)
   const visible = keys.filter(k => !c.hidden.has(k))
-  const xs = xValues(kind, obs.map(o => o.x))
+  let xs = xValues(kind, obs.map(o => o.x))
+  // A fixed (or zoomed) x range: keep the points inside plus one neighbour each side, so lines run to the edge.
+  const xd = kind !== 'category' ? (s.xDomain as [number | null, number | null] | undefined) : undefined
+  const xFixed = !!xd && (xd[0] !== null || xd[1] !== null)
+  if (xFixed && xs.length) {
+    const nums = xs as number[]
+    const lo = xd![0] ?? nums[0]
+    const hi = xd![1] ?? nums[nums.length - 1]
+    let a = nums.findIndex(v => v >= lo)
+    if (a < 0) a = nums.length
+    let b = nums.length - 1
+    while (b >= 0 && nums[b] > hi) b--
+    xs = nums.slice(Math.max(0, a - 1), Math.min(nums.length, b + 2))
+  }
   const stack = area ? ((s.stack ?? 'none') as string) : 'none'
   const curve = (s.curve ?? 'linear') as Curve
   const xKeyOf = (raw: unknown): number | string | null => (kind === 'category' ? xKey(raw) : kind === 'time' ? toTime(raw) : toNumber(raw))
@@ -64,11 +77,13 @@ function compileSeries(c: ChartCtx, area: boolean): { series: ReturnType<ChartCt
     }
   }
 
-  // y extent.
+  // y extent (inside the x range when it is fixed).
   let lo = Infinity
   let hi = -Infinity
+  const inX = (x: number | string): boolean => !xFixed || ((xd![0] === null || (x as number) >= xd![0]) && (xd![1] === null || (x as number) <= xd![1]))
   if (stack === 'none') {
-    for (const k of visible) for (const v of val.get(k)?.values() ?? []) {
+    for (const k of visible) for (const [x, v] of val.get(k) ?? []) {
+      if (!inX(x)) continue
       if (v < lo) lo = v
       if (v > hi) hi = v
     }
@@ -92,11 +107,11 @@ function compileSeries(c: ChartCtx, area: boolean): { series: ReturnType<ChartCt
   if (kind === 'category') {
     const bs = bandScale(xs as string[], 0)
     xScale = bs
-    xAxis = bandAxis(bs, Object.fromEntries((xs as string[]).map(k => [k, clip(k, 60)])), s.xLabel)
+    xAxis = bandAxis(bs, Object.fromEntries((xs as string[]).map(k => [k, clip(k, 60)])), s.xLabel, c.locale)
   } else {
     const nums = xs as number[]
-    let d0 = nums[0] ?? 0
-    let d1 = nums[nums.length - 1] ?? 1
+    let d0 = xFixed && xd![0] !== null ? xd![0] : nums[0] ?? 0
+    let d1 = xFixed && xd![1] !== null ? xd![1] : nums[nums.length - 1] ?? 1
     if (d0 === d1) {
       d0 -= 1
       d1 += 1
@@ -110,6 +125,9 @@ function compileSeries(c: ChartCtx, area: boolean): { series: ReturnType<ChartCt
   const frame = c.frame({ series, autoSide: 'top' })
   const plot = layoutCartesian(c, frame, xAxis, yAxis)
   drawAnnotations(c, plot, xAxis, yAxis)
+  // Lines that run past a fixed range are cut at the plot's edge.
+  const clipTo = xFixed || (override && (override[0] !== null || override[1] !== null)) ? 'plot' : undefined
+  if (clipTo) c.clips.plot = `M${plot.x} ${plot.y}h${plot.w}v${plot.h}h${-plot.w}Z`
 
   const fmt = c.format
   const intraday = kind === 'time' && hasTimeOfDay(xs as number[])
@@ -133,24 +151,27 @@ function compileSeries(c: ChartCtx, area: boolean): { series: ReturnType<ChartCt
       const top: Pt[] = decimate(run.map(p => [p.px, p.y as number] as Pt), plot.w)
       if (area) {
         const bottom: Pt[] = decimate(run.map(p => [p.px, stack !== 'none' ? p.y0! : yScale.at(Math.max(yScale.domain[0], Math.min(0, yScale.domain[1])))] as Pt), plot.w)
-        marks.push({ type: 'path', role: 'data', series: k, d: areaPath(top, bottom, curve), fill: color, opacity: 0.16, anim: 'fade' })
+        marks.push({ type: 'path', role: 'data', series: k, d: areaPath(top, bottom, curve), fill: color, opacity: 0.16, anim: 'fade', ...(clipTo ? { clip: clipTo } : {}) })
       }
-      marks.push({ type: 'path', role: 'data', series: k, d: curvePath(top, curve), stroke: color, strokeWidth: c.theme.lineWidth, anim: 'draw' })
+      marks.push({ type: 'path', role: 'data', series: k, d: curvePath(top, curve), stroke: color, strokeWidth: c.theme.lineWidth, anim: 'draw', ...(clipTo ? { clip: clipTo } : {}) })
     }
     // Markers: every point when sparse, otherwise only the last one.
     const real = pts.filter(p => p.y !== null) as (Pnt & { y: number })[]
     const dense = real.length > 40 || (s.points === false)
     const show = s.points === true || (!dense && s.points !== false && !area) ? real : real.length && !area && s.points !== false ? [real[real.length - 1]] : []
     for (const p of show) {
+      if (p.px < plot.x - 0.5 || p.px > plot.x + plot.w + 0.5 || p.y < plot.y - 0.5 || p.y > plot.y + plot.h + 0.5) continue
       marks.push({ type: 'circle', role: 'data', series: k, cx: p.px, cy: p.y, r: 4, fill: color, stroke: c.c('background'), strokeWidth: 2, anim: 'fade' })
     }
   }
 
   // Shared tooltip + crosshair, one hit strip per x (thinned to about 400 strips on dense data).
   const cx = xs.map(px)
-  const stride = Math.max(1, Math.ceil(xs.length / 400))
+  const inside: number[] = []
+  for (let i = 0; i < xs.length; i++) if (cx[i] >= plot.x - 0.5 && cx[i] <= plot.x + plot.w + 0.5) inside.push(i)
+  const stride = Math.max(1, Math.ceil(inside.length / 400))
   const anchors: number[] = []
-  for (let i = 0; i < xs.length; i += stride) anchors.push(i)
+  for (let i = 0; i < inside.length; i += stride) anchors.push(inside[i])
   anchors.forEach((i, ai) => {
     const x = xs[i]
     const left = ai === 0 ? plot.x : (cx[anchors[ai - 1]] + cx[i]) / 2
@@ -202,6 +223,7 @@ const SERIES_FIELDS: ChartDef['fields'] = {
   y: { kind: 'columns', role: 'number', required: true, desc: 'Numeric column to plot. Several columns give one line per column (wide-form data).' },
   series: { kind: 'column', role: 'any', desc: 'Column that splits the data into one line per value (long-form data).' },
   xType: { kind: 'enum', values: ['auto', 'category', 'linear', 'time'], default: 'auto', desc: 'How to read `x`. `auto` detects numbers, ISO dates and categories.' },
+  xDomain: { kind: 'domain', desc: 'Fix the horizontal range of a numeric or time x axis (dates as ISO strings). Lines run to the edge and are cut there.' },
   yDomain: { kind: 'domain', desc: 'Fix the vertical range, e.g. [0, 100]. Lines may start anywhere; areas always include 0.' },
   curve: { kind: 'enum', values: ['linear', 'smooth', 'step'], default: 'linear', desc: '`smooth` is monotone (never overshoots the data); `step` holds each value until the next point.' }
 }

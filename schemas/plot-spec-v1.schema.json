@@ -81,6 +81,52 @@
           },
           "description": "Series (or slice/category) name to CSS colour, e.g. {\"Revenue\":\"#2962FF\"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours."
         },
+        "transform": {
+          "type": "array",
+          "maxItems": 10,
+          "items": {
+            "type": "object",
+            "minProperties": 1,
+            "maxProperties": 1,
+            "properties": {
+              "filter": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "timeUnit": {
+                "type": "object",
+                "required": [
+                  "field",
+                  "unit"
+                ]
+              },
+              "aggregate": {
+                "type": "object"
+              },
+              "sort": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "top": {
+                "type": "object",
+                "required": [
+                  "n",
+                  "by"
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+        },
+        "patterns": {
+          "type": "boolean",
+          "description": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
+        },
         "xLabel": {
           "type": "string",
           "maxLength": 80,
@@ -137,6 +183,26 @@
             }
           }
         },
+        "facet": {
+          "type": "string",
+          "description": "Split into small multiples: one panel per value of this column (at most 12), sharing axes, colours and one legend. (name of a column in data)"
+        },
+        "zoom": {
+          "enum": [
+            "none",
+            "x",
+            "xy"
+          ],
+          "description": "Default none. Let the viewer zoom and pan a continuous axis (web binding): Ctrl/⌘-scroll or pinch to zoom, drag to pan, double-click or 0 to reset. Scatter, line and area."
+        },
+        "brush": {
+          "enum": [
+            "none",
+            "x",
+            "xy"
+          ],
+          "description": "Default none. Let the viewer drag out a range to select (web binding). The selection comes back as a filter step, ready for `transform`. With `zoom` too, Shift-drag pans."
+        },
         "x": {
           "type": "string",
           "description": "Column holding the category of each bar. (name of a column in data)"
@@ -191,6 +257,21 @@
           "default": false,
           "description": "Print values on the bars. Keep off for dense charts; the tooltip carries the numbers."
         },
+        "line": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string"
+              }
+            }
+          ],
+          "description": "Combo chart: numeric column(s) drawn as lines with points over vertical bars, on the same value axis (a target, an average). Ignored for horizontal and 100% stacked bars. (column name, or several for wide-form data)"
+        },
         "yDomain": {
           "type": "array",
           "minItems": 2,
@@ -198,6 +279,7 @@
           "items": {
             "type": [
               "number",
+              "string",
               "null"
             ]
           },
@@ -282,6 +364,52 @@
           },
           "description": "Series (or slice/category) name to CSS colour, e.g. {\"Revenue\":\"#2962FF\"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours."
         },
+        "transform": {
+          "type": "array",
+          "maxItems": 10,
+          "items": {
+            "type": "object",
+            "minProperties": 1,
+            "maxProperties": 1,
+            "properties": {
+              "filter": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "timeUnit": {
+                "type": "object",
+                "required": [
+                  "field",
+                  "unit"
+                ]
+              },
+              "aggregate": {
+                "type": "object"
+              },
+              "sort": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "top": {
+                "type": "object",
+                "required": [
+                  "n",
+                  "by"
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+        },
+        "patterns": {
+          "type": "boolean",
+          "description": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
+        },
         "xLabel": {
           "type": "string",
           "maxLength": 80,
@@ -338,6 +466,26 @@
             }
           }
         },
+        "facet": {
+          "type": "string",
+          "description": "Split into small multiples: one panel per value of this column (at most 12), sharing axes, colours and one legend. (name of a column in data)"
+        },
+        "zoom": {
+          "enum": [
+            "none",
+            "x",
+            "xy"
+          ],
+          "description": "Default none. Let the viewer zoom and pan a continuous axis (web binding): Ctrl/⌘-scroll or pinch to zoom, drag to pan, double-click or 0 to reset. Scatter, line and area."
+        },
+        "brush": {
+          "enum": [
+            "none",
+            "x",
+            "xy"
+          ],
+          "description": "Default none. Let the viewer drag out a range to select (web binding). The selection comes back as a filter step, ready for `transform`. With `zoom` too, Shift-drag pans."
+        },
         "x": {
           "type": "string",
           "description": "Column for the horizontal position: numbers, dates (ISO 8601 strings or timestamps) or category names. The kind is detected; override with `xType`. (name of a column in data)"
@@ -371,6 +519,19 @@
           "default": "auto",
           "description": "How to read `x`. `auto` detects numbers, ISO dates and categories."
         },
+        "xDomain": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": [
+              "number",
+              "string",
+              "null"
+            ]
+          },
+          "description": "Fix the horizontal range of a numeric or time x axis (dates as ISO strings). Lines run to the edge and are cut there."
+        },
         "yDomain": {
           "type": "array",
           "minItems": 2,
@@ -378,6 +539,7 @@
           "items": {
             "type": [
               "number",
+              "string",
               "null"
             ]
           },
@@ -475,6 +637,52 @@
           },
           "description": "Series (or slice/category) name to CSS colour, e.g. {\"Revenue\":\"#2962FF\"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours."
         },
+        "transform": {
+          "type": "array",
+          "maxItems": 10,
+          "items": {
+            "type": "object",
+            "minProperties": 1,
+            "maxProperties": 1,
+            "properties": {
+              "filter": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "timeUnit": {
+                "type": "object",
+                "required": [
+                  "field",
+                  "unit"
+                ]
+              },
+              "aggregate": {
+                "type": "object"
+              },
+              "sort": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "top": {
+                "type": "object",
+                "required": [
+                  "n",
+                  "by"
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+        },
+        "patterns": {
+          "type": "boolean",
+          "description": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
+        },
         "xLabel": {
           "type": "string",
           "maxLength": 80,
@@ -531,6 +739,26 @@
             }
           }
         },
+        "facet": {
+          "type": "string",
+          "description": "Split into small multiples: one panel per value of this column (at most 12), sharing axes, colours and one legend. (name of a column in data)"
+        },
+        "zoom": {
+          "enum": [
+            "none",
+            "x",
+            "xy"
+          ],
+          "description": "Default none. Let the viewer zoom and pan a continuous axis (web binding): Ctrl/⌘-scroll or pinch to zoom, drag to pan, double-click or 0 to reset. Scatter, line and area."
+        },
+        "brush": {
+          "enum": [
+            "none",
+            "x",
+            "xy"
+          ],
+          "description": "Default none. Let the viewer drag out a range to select (web binding). The selection comes back as a filter step, ready for `transform`. With `zoom` too, Shift-drag pans."
+        },
         "x": {
           "type": "string",
           "description": "Column for the horizontal position: numbers, dates (ISO 8601 strings or timestamps) or category names. The kind is detected; override with `xType`. (name of a column in data)"
@@ -564,6 +792,19 @@
           "default": "auto",
           "description": "How to read `x`. `auto` detects numbers, ISO dates and categories."
         },
+        "xDomain": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": [
+              "number",
+              "string",
+              "null"
+            ]
+          },
+          "description": "Fix the horizontal range of a numeric or time x axis (dates as ISO strings). Lines run to the edge and are cut there."
+        },
         "yDomain": {
           "type": "array",
           "minItems": 2,
@@ -571,6 +812,7 @@
           "items": {
             "type": [
               "number",
+              "string",
               "null"
             ]
           },
@@ -673,6 +915,52 @@
           },
           "description": "Series (or slice/category) name to CSS colour, e.g. {\"Revenue\":\"#2962FF\"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours."
         },
+        "transform": {
+          "type": "array",
+          "maxItems": 10,
+          "items": {
+            "type": "object",
+            "minProperties": 1,
+            "maxProperties": 1,
+            "properties": {
+              "filter": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "timeUnit": {
+                "type": "object",
+                "required": [
+                  "field",
+                  "unit"
+                ]
+              },
+              "aggregate": {
+                "type": "object"
+              },
+              "sort": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "top": {
+                "type": "object",
+                "required": [
+                  "n",
+                  "by"
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+        },
+        "patterns": {
+          "type": "boolean",
+          "description": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
+        },
         "xLabel": {
           "type": "string",
           "maxLength": 80,
@@ -729,6 +1017,26 @@
             }
           }
         },
+        "facet": {
+          "type": "string",
+          "description": "Split into small multiples: one panel per value of this column (at most 12), sharing axes, colours and one legend. (name of a column in data)"
+        },
+        "zoom": {
+          "enum": [
+            "none",
+            "x",
+            "xy"
+          ],
+          "description": "Default none. Let the viewer zoom and pan a continuous axis (web binding): Ctrl/⌘-scroll or pinch to zoom, drag to pan, double-click or 0 to reset. Scatter, line and area."
+        },
+        "brush": {
+          "enum": [
+            "none",
+            "x",
+            "xy"
+          ],
+          "description": "Default none. Let the viewer drag out a range to select (web binding). The selection comes back as a filter step, ready for `transform`. With `zoom` too, Shift-drag pans."
+        },
         "x": {
           "type": "string",
           "description": "Numeric (or date) column for the horizontal position. (name of a column in data)"
@@ -757,6 +1065,14 @@
           "default": "none",
           "description": "Draw a least-squares line per series."
         },
+        "density": {
+          "enum": [
+            "points",
+            "hex",
+            "auto"
+          ],
+          "description": "Default points. `hex` draws hexagons coloured by how many points fall in each (with a count legend); `auto` does so above 10,000 visible points. Hexagons merge groups."
+        },
         "xType": {
           "enum": [
             "auto",
@@ -773,6 +1089,7 @@
           "items": {
             "type": [
               "number",
+              "string",
               "null"
             ]
           },
@@ -785,6 +1102,7 @@
           "items": {
             "type": [
               "number",
+              "string",
               "null"
             ]
           },
@@ -868,6 +1186,52 @@
             "maxLength": 64
           },
           "description": "Series (or slice/category) name to CSS colour, e.g. {\"Revenue\":\"#2962FF\"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours."
+        },
+        "transform": {
+          "type": "array",
+          "maxItems": 10,
+          "items": {
+            "type": "object",
+            "minProperties": 1,
+            "maxProperties": 1,
+            "properties": {
+              "filter": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "timeUnit": {
+                "type": "object",
+                "required": [
+                  "field",
+                  "unit"
+                ]
+              },
+              "aggregate": {
+                "type": "object"
+              },
+              "sort": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "top": {
+                "type": "object",
+                "required": [
+                  "n",
+                  "by"
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+        },
+        "patterns": {
+          "type": "boolean",
+          "description": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
         },
         "label": {
           "type": "string",
@@ -988,6 +1352,52 @@
           },
           "description": "Series (or slice/category) name to CSS colour, e.g. {\"Revenue\":\"#2962FF\"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours."
         },
+        "transform": {
+          "type": "array",
+          "maxItems": 10,
+          "items": {
+            "type": "object",
+            "minProperties": 1,
+            "maxProperties": 1,
+            "properties": {
+              "filter": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "timeUnit": {
+                "type": "object",
+                "required": [
+                  "field",
+                  "unit"
+                ]
+              },
+              "aggregate": {
+                "type": "object"
+              },
+              "sort": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "top": {
+                "type": "object",
+                "required": [
+                  "n",
+                  "by"
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+        },
+        "patterns": {
+          "type": "boolean",
+          "description": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
+        },
         "label": {
           "type": "string",
           "description": "Column naming each slice. (name of a column in data)"
@@ -1106,6 +1516,52 @@
           },
           "description": "Series (or slice/category) name to CSS colour, e.g. {\"Revenue\":\"#2962FF\"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours."
         },
+        "transform": {
+          "type": "array",
+          "maxItems": 10,
+          "items": {
+            "type": "object",
+            "minProperties": 1,
+            "maxProperties": 1,
+            "properties": {
+              "filter": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "timeUnit": {
+                "type": "object",
+                "required": [
+                  "field",
+                  "unit"
+                ]
+              },
+              "aggregate": {
+                "type": "object"
+              },
+              "sort": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "top": {
+                "type": "object",
+                "required": [
+                  "n",
+                  "by"
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+        },
+        "patterns": {
+          "type": "boolean",
+          "description": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
+        },
         "xLabel": {
           "type": "string",
           "maxLength": 80,
@@ -1161,6 +1617,26 @@
               }
             }
           }
+        },
+        "facet": {
+          "type": "string",
+          "description": "Split into small multiples: one panel per value of this column (at most 12), sharing axes, colours and one legend. (name of a column in data)"
+        },
+        "zoom": {
+          "enum": [
+            "none",
+            "x",
+            "xy"
+          ],
+          "description": "Default none. Let the viewer zoom and pan a continuous axis (web binding): Ctrl/⌘-scroll or pinch to zoom, drag to pan, double-click or 0 to reset. Scatter, line and area."
+        },
+        "brush": {
+          "enum": [
+            "none",
+            "x",
+            "xy"
+          ],
+          "description": "Default none. Let the viewer drag out a range to select (web binding). The selection comes back as a filter step, ready for `transform`. With `zoom` too, Shift-drag pans."
         },
         "value": {
           "type": "string",
@@ -1281,6 +1757,52 @@
           },
           "description": "Series (or slice/category) name to CSS colour, e.g. {\"Revenue\":\"#2962FF\"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours."
         },
+        "transform": {
+          "type": "array",
+          "maxItems": 10,
+          "items": {
+            "type": "object",
+            "minProperties": 1,
+            "maxProperties": 1,
+            "properties": {
+              "filter": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "timeUnit": {
+                "type": "object",
+                "required": [
+                  "field",
+                  "unit"
+                ]
+              },
+              "aggregate": {
+                "type": "object"
+              },
+              "sort": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "top": {
+                "type": "object",
+                "required": [
+                  "n",
+                  "by"
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+        },
+        "patterns": {
+          "type": "boolean",
+          "description": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
+        },
         "xLabel": {
           "type": "string",
           "maxLength": 80,
@@ -1337,6 +1859,26 @@
             }
           }
         },
+        "facet": {
+          "type": "string",
+          "description": "Split into small multiples: one panel per value of this column (at most 12), sharing axes, colours and one legend. (name of a column in data)"
+        },
+        "zoom": {
+          "enum": [
+            "none",
+            "x",
+            "xy"
+          ],
+          "description": "Default none. Let the viewer zoom and pan a continuous axis (web binding): Ctrl/⌘-scroll or pinch to zoom, drag to pan, double-click or 0 to reset. Scatter, line and area."
+        },
+        "brush": {
+          "enum": [
+            "none",
+            "x",
+            "xy"
+          ],
+          "description": "Default none. Let the viewer drag out a range to select (web binding). The selection comes back as a filter step, ready for `transform`. With `zoom` too, Shift-drag pans."
+        },
         "x": {
           "type": "string",
           "description": "Column that defines the groups (one box each). Omit for a single box. (name of a column in data)"
@@ -1365,6 +1907,7 @@
           "items": {
             "type": [
               "number",
+              "string",
               "null"
             ]
           },
@@ -1450,6 +1993,52 @@
           },
           "description": "Series (or slice/category) name to CSS colour, e.g. {\"Revenue\":\"#2962FF\"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours."
         },
+        "transform": {
+          "type": "array",
+          "maxItems": 10,
+          "items": {
+            "type": "object",
+            "minProperties": 1,
+            "maxProperties": 1,
+            "properties": {
+              "filter": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "timeUnit": {
+                "type": "object",
+                "required": [
+                  "field",
+                  "unit"
+                ]
+              },
+              "aggregate": {
+                "type": "object"
+              },
+              "sort": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "top": {
+                "type": "object",
+                "required": [
+                  "n",
+                  "by"
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+        },
+        "patterns": {
+          "type": "boolean",
+          "description": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
+        },
         "x": {
           "type": "string",
           "description": "Column for the horizontal categories. (name of a column in data)"
@@ -1474,6 +2063,7 @@
           "items": {
             "type": [
               "number",
+              "string",
               "null"
             ]
           },
@@ -1567,6 +2157,52 @@
             "maxLength": 64
           },
           "description": "Series (or slice/category) name to CSS colour, e.g. {\"Revenue\":\"#2962FF\"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours."
+        },
+        "transform": {
+          "type": "array",
+          "maxItems": 10,
+          "items": {
+            "type": "object",
+            "minProperties": 1,
+            "maxProperties": 1,
+            "properties": {
+              "filter": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "timeUnit": {
+                "type": "object",
+                "required": [
+                  "field",
+                  "unit"
+                ]
+              },
+              "aggregate": {
+                "type": "object"
+              },
+              "sort": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "top": {
+                "type": "object",
+                "required": [
+                  "n",
+                  "by"
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+        },
+        "patterns": {
+          "type": "boolean",
+          "description": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
         },
         "x": {
           "type": "string",
@@ -1687,6 +2323,52 @@
           },
           "description": "Series (or slice/category) name to CSS colour, e.g. {\"Revenue\":\"#2962FF\"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours."
         },
+        "transform": {
+          "type": "array",
+          "maxItems": 10,
+          "items": {
+            "type": "object",
+            "minProperties": 1,
+            "maxProperties": 1,
+            "properties": {
+              "filter": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "timeUnit": {
+                "type": "object",
+                "required": [
+                  "field",
+                  "unit"
+                ]
+              },
+              "aggregate": {
+                "type": "object"
+              },
+              "sort": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "top": {
+                "type": "object",
+                "required": [
+                  "n",
+                  "by"
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+        },
+        "patterns": {
+          "type": "boolean",
+          "description": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
+        },
         "label": {
           "type": "string",
           "description": "Column naming each tile. (name of a column in data)"
@@ -1784,6 +2466,52 @@
           },
           "description": "Series (or slice/category) name to CSS colour, e.g. {\"Revenue\":\"#2962FF\"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours."
         },
+        "transform": {
+          "type": "array",
+          "maxItems": 10,
+          "items": {
+            "type": "object",
+            "minProperties": 1,
+            "maxProperties": 1,
+            "properties": {
+              "filter": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "timeUnit": {
+                "type": "object",
+                "required": [
+                  "field",
+                  "unit"
+                ]
+              },
+              "aggregate": {
+                "type": "object"
+              },
+              "sort": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "top": {
+                "type": "object",
+                "required": [
+                  "n",
+                  "by"
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+        },
+        "patterns": {
+          "type": "boolean",
+          "description": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
+        },
         "from": {
           "type": "string",
           "description": "Column naming where each flow starts. (name of a column in data)"
@@ -1876,6 +2604,52 @@
           },
           "description": "Series (or slice/category) name to CSS colour, e.g. {\"Revenue\":\"#2962FF\"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours."
         },
+        "transform": {
+          "type": "array",
+          "maxItems": 10,
+          "items": {
+            "type": "object",
+            "minProperties": 1,
+            "maxProperties": 1,
+            "properties": {
+              "filter": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "timeUnit": {
+                "type": "object",
+                "required": [
+                  "field",
+                  "unit"
+                ]
+              },
+              "aggregate": {
+                "type": "object"
+              },
+              "sort": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "top": {
+                "type": "object",
+                "required": [
+                  "n",
+                  "by"
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+        },
+        "patterns": {
+          "type": "boolean",
+          "description": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
+        },
         "geo": {
           "oneOf": [
             {
@@ -1930,6 +2704,7 @@
           "items": {
             "type": [
               "number",
+              "string",
               "null"
             ]
           },
@@ -2070,6 +2845,52 @@
             "maxLength": 64
           },
           "description": "Series (or slice/category) name to CSS colour, e.g. {\"Revenue\":\"#2962FF\"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours."
+        },
+        "transform": {
+          "type": "array",
+          "maxItems": 10,
+          "items": {
+            "type": "object",
+            "minProperties": 1,
+            "maxProperties": 1,
+            "properties": {
+              "filter": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "timeUnit": {
+                "type": "object",
+                "required": [
+                  "field",
+                  "unit"
+                ]
+              },
+              "aggregate": {
+                "type": "object"
+              },
+              "sort": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "top": {
+                "type": "object",
+                "required": [
+                  "n",
+                  "by"
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+        },
+        "patterns": {
+          "type": "boolean",
+          "description": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
         },
         "geo": {
           "oneOf": [
@@ -2258,6 +3079,52 @@
           },
           "description": "Series (or slice/category) name to CSS colour, e.g. {\"Revenue\":\"#2962FF\"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours."
         },
+        "transform": {
+          "type": "array",
+          "maxItems": 10,
+          "items": {
+            "type": "object",
+            "minProperties": 1,
+            "maxProperties": 1,
+            "properties": {
+              "filter": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "timeUnit": {
+                "type": "object",
+                "required": [
+                  "field",
+                  "unit"
+                ]
+              },
+              "aggregate": {
+                "type": "object"
+              },
+              "sort": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "top": {
+                "type": "object",
+                "required": [
+                  "n",
+                  "by"
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+        },
+        "patterns": {
+          "type": "boolean",
+          "description": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
+        },
         "geo": {
           "oneOf": [
             {
@@ -2443,6 +3310,52 @@
             "maxLength": 64
           },
           "description": "Series (or slice/category) name to CSS colour, e.g. {\"Revenue\":\"#2962FF\"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours."
+        },
+        "transform": {
+          "type": "array",
+          "maxItems": 10,
+          "items": {
+            "type": "object",
+            "minProperties": 1,
+            "maxProperties": 1,
+            "properties": {
+              "filter": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "timeUnit": {
+                "type": "object",
+                "required": [
+                  "field",
+                  "unit"
+                ]
+              },
+              "aggregate": {
+                "type": "object"
+              },
+              "sort": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "top": {
+                "type": "object",
+                "required": [
+                  "n",
+                  "by"
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+        },
+        "patterns": {
+          "type": "boolean",
+          "description": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
         },
         "geo": {
           "oneOf": [

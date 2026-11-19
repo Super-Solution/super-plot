@@ -1,12 +1,13 @@
 # Super Plot design
 
 Super Plot draws general statistical charts. Super Chart keeps financial time series (candles, drawing tools, indicators).
-Both follow the Super Lib Kit habits: a language-neutral core, thin framework bindings, one theme vocabulary.
+Both follow the Super Kit principles (`super-dev-docs/docs/03-super-kit-principles.md`, P1 to P37): a language-neutral core,
+thin framework bindings, one theme vocabulary. This page says how Super Plot meets them; P-numbers refer to that page.
 
 ## Pipeline
 
 ```
-spec (JSON) -> validatePlot -> chart.compile(ctx) -> Scene (flat marks, pixel space) -> renderer
+spec (JSON) -> validatePlot (transform runs here) -> chart.compile(ctx) -> plugins.afterCompile -> Scene -> renderer -> plugins.afterDraw
                                                               |-> renderSvg (core, string)
                                                               |-> web mount (DOM, events): SVG, or canvas for dense charts
                                                               |-> drawScene (core, any 2D context) / your native renderer
@@ -16,27 +17,54 @@ spec (JSON) -> validatePlot -> chart.compile(ctx) -> Scene (flat marks, pixel sp
 - The **field DSL** (`packages/core/src/schema.ts`) is the only place a field is declared. Validation, JSON Schema,
   `docs/SPEC.md`, the agent catalog, tests and the gallery all read it, so they cannot disagree.
 - A **chart** is a `ChartDef` (`type, name, summary, useWhen, fields, example, compile, describe`). Twelve are registered: bar, line, area, scatter, pie, donut, histogram, box, heatmap, radar, treemap, sankey.
-- The **scene** is a serializable list of marks (rect, path, circle, line, text) with roles and tooltips. Renderers do not know about charts.
+- The **scene** is a serializable list of marks (rect, path, circle, line, text) with roles and tooltips, plus `axes` (the plot
+  rectangle and each axis's kind, domain, pixel range and column) and `panels` for small multiples. Renderers do not know about
+  charts; the web binding maps pointer pixels back to data through `axes` for zoom, pan and brush.
+- **`transform`** turns raw rows into the rows the chart reads (filter, timeUnit, aggregate, sort, top; at most 10 steps), inside
+  validation, so every later column check sees the output columns and an agent can send raw data plus "monthly average".
 
 ## The eight principles, and where they live
 
 | # | Principle | How it is met |
 |---|---|---|
-| 1 | Agent friendly | `validatePlot` returns every problem at once, each with a stable `code`, a `path` and a `hint` (including "did you mean"). `describePlot` writes plain-language alt text (also the SVG `<desc>`). `chartCatalog()` says when to use each chart and gives a working example. `plotJsonSchema()` is generated. Five read-only tools in `core/tools` (`plot_catalog`, `plot_schema`, `plot_validate`, `plot_describe`, `plot_render_svg`) match Super Chat's `read` authority. |
+| 1 | Agent friendly | `validatePlot` returns every problem at once, each with a stable `code`, a `path` and a `hint` (including "did you mean"). `describePlot` writes plain-language alt text (also the SVG `<desc>`). `chartCatalog()` says when to use each chart and gives a working example. `plotJsonSchema()` is generated. `transform` lets an agent send raw rows and state the aggregation instead of computing it; each step is checked against the columns of the step before, with the same `code`/`path`/`hint` issues. A brush reports plain JSON whose `filters` drop straight into another spec's `transform`. Five read-only tools in `core/tools` (`plot_catalog`, `plot_schema`, `plot_validate`, `plot_describe`, `plot_render_svg`) match Super Chat's `read` authority. |
 | 2 | Multi-framework, multi-language | Core has no DOM. Web is a class plus a `<super-plot>` element (works in Vue, Svelte, Angular, plain HTML; one `global.js` for no bundler). React is a thin binding. The spec is JSON, with a JSON Schema (`schemas/`) and conformance data (`conformance/plot.v1.json`). **Go and Python ports exist** (`ports/`): they validate specs, write the plain-language description and compute the shared numbers, and are held identical to TypeScript by the conformance data and by differential fuzzing. Drawing stays in TypeScript, so a Go or Python service validates and describes and a browser (or Node) draws. A Rust port would be checked against the same data. |
-| 3 | Clean, pluggable, low coupling | `registerChart(def)` adds a chart without touching the pipeline. Shared pieces (frame, cartesian layout, scales, ticks, formatters) are reused by charts, not inherited. Layering is enforced by `scripts/check-package.mjs`: core imports nothing, web imports core, react imports web. |
-| 4 | Easy integration, good DX | One call per surface (`renderToSvg`, `new SuperPlot`, `<SuperPlot>`, `<super-plot>`). Wide and long data both work; dates and numbers are detected. Bad specs show an on-screen panel with the fix, not a blank box. Defaults are sensible (size follows the host, theme `auto`). |
-| 5 | Rich features | Bar (grouped, stacked, normalized, horizontal, value labels), line and area (dates, stacking, smoothing, reference lines and bands, dense-data decimation), scatter (groups, bubbles, trend line), pie and donut (small slices merged into Other), histogram (auto bins, grouped overlay, mean line), box plot (outliers), heatmap, radar (several shapes on one scale), treemap (squarified, optional one-level groups), sankey (flows between stages, loops refused with the path of the loop). Tooltips, hover dimming, crosshair, legend toggle, keyboard access, annotations, PNG and SVG export, `prefers-reduced-motion`. |
-| 6 | Beautiful default, easy to change | TradingView-aligned palette and neutrals, flat and quiet (thin grid, 4 px rounded bar ends, 2 px surface gaps). Three override levels, none needs a fork: CSS variables, a theme object, per-series `colors` in the spec. A colour-vision-safe preset ships too (`theme: 'accessible'` / `'accessible-dark'`: Okabe-Ito hues, blue and vermillion instead of green and red for up and down). See [THEMING.md](THEMING.md). |
+| 3 | Clean, pluggable, low coupling | `registerChart(def)` adds a chart without touching the pipeline. Shared pieces (frame, cartesian layout, scales, ticks, formatters) are reused by charts, not inherited. Layering is enforced by `scripts/check-package.mjs`: core imports nothing, web imports core, react imports web. Extension points: `registerChart`, `registerTheme`, `registerGeography`, and `plugins` (`afterCompile(scene)` may change the scene, `afterDraw({ scene, svg | ctx })` may draw on what was drawn; a throwing plugin becomes a `plugin_error` warning). Charts are tree-shakable: `@supersolutions/super-plot-core/base` plus the chart definitions you register from `/charts` (see INTEGRATION). |
+| 4 | Easy integration, good DX | One call per surface (`renderToSvg`, `new SuperPlot`, `<SuperPlot>`, `<super-plot>`). Wide and long data both work; dates and numbers are detected. Bad specs show an on-screen panel with the fix, not a blank box. Defaults are sensible (size follows the host, theme `auto`). Events for what hosts ask first: `onHover`, `onRender`, `onZoom`, `onBrush`, `onSelect`; `appendRows(rows, { max })` for live data. |
+| 5 | Rich features | Bar (grouped, stacked, normalized, horizontal, value labels), line and area (dates, stacking, smoothing, reference lines and bands, dense-data decimation), scatter (groups, bubbles, trend line), pie and donut (small slices merged into Other), histogram (auto bins, grouped overlay, mean line), box plot (outliers), heatmap, radar (several shapes on one scale), treemap (squarified, optional one-level groups), sankey (flows between stages, loops refused with the path of the loop). Lines over bars on the same axis (`line`), small multiples (`facet`, shared axes and legend, up to 12 panels), hexagon density for dense scatter (`density: "auto"` past 10,000 points, with a count legend and a warning that says so), data transforms, zoom and pan (`zoom`), interval brush (`brush`) with linked charts, live append. Tooltips, hover dimming, crosshair, legend toggle, keyboard access (SVG marks are focusable; on canvas the arrow keys step through marks with outline, tooltip and a spoken label), textures per series (`patterns`), a data table (`dataTable`), annotations, PNG and SVG export, `prefers-reduced-motion`. |
+| 6 | Beautiful default, easy to change | TradingView-aligned palette and neutrals, flat and quiet (thin grid, 4 px rounded bar ends, 2 px surface gaps). Three override levels, none needs a fork: CSS variables, a theme object, per-series `colors` in the spec. A colour-vision-safe preset ships too (`theme: 'accessible'` / `'accessible-dark'`: Okabe-Ito hues, blue and vermillion instead of green and red for up and down). A `shadcn` theme reads shadcn/ui's own tokens (`--chart-1` to `--chart-5`, `--card`, `--foreground`, `--border`, ...), so a shadcn project gets matching charts with no configuration. See [THEMING.md](THEMING.md). |
 | 7 | No useless wrappers | The React binding has no logic of its own. There is no `Chart` factory layer, no per-type component (`<BarChart>`): `type` is data. Public names are short (`SuperPlot`, `renderToSvg`, `validatePlot`). |
 | 8 | Easy with Super Kit | Super Chat's `chart` card converts with `fromChatChartCard` (core/adapters); candlesticks are refused to Super Chart. Tools use the same shape as the other Super tool lists. Theme tokens can alias Super Chart's. See [INTEGRATION.md](INTEGRATION.md). |
 
-### Integration method
+### Integration method (P9 to P16)
+
+- **Abstract the need (P9)**: every addition in 0.3.0 is a general field, event or hook (`zoom`, `brush`, `onHover`, `plugins`, `dataTable`), never an app-shaped option. The library names no product.
 
 - **Parallel abstraction**: a new chart type plugs in behind `ChartDef`; no existing chart changes.
 - **Vertical composability**: the scene is the seam. Anything that produces or consumes a `Scene` (a dashboard, an exporter, an annotation layer) composes with every chart.
 - **No wrapper on wrapper**: bindings call the web class directly; the web class calls core directly.
-- **Docs, performance, security**: `docs/SPEC.md` is generated; see limits below; see Security.
+- **Docs, performance, security (P24, P25)**: `docs/SPEC.md` is generated; numbers come from `scripts/bench.mjs` and `scripts/size.mjs`, with the misses; see limits below; see Security.
+- **No default data, neutral on disputes (P22)**: no boundaries ship; examples generate their sample data in the page and say so.
+
+## Borrowed from competitors (P27)
+
+The competitor review of 2026-11-19 (`super-dev-docs/docs/60-reference/competitive-review-super-plot.md`) is folded in here. Each row is built, tested and documented in 0.3.0.
+
+| Feature in Super Plot | Borrowed from | How it was adapted |
+|---|---|---|
+| `transform`: filter, timeUnit, aggregate, sort, top | Vega-Lite transforms, ECharts datasets | Part of the JSON spec and of validation, so every step gets `code`/`path`/`hint` issues and the ports reproduce it |
+| `zoom`, pan, `brush`; the selection is plain JSON with ready `filters` | Vega-Lite interval selections, uPlot, ECharts dataZoom | Two spec fields, no wrapper; keyboard operable (+, -, 0, Shift+arrows, `[` and `]`); linking is one line in `onBrush` |
+| `onHover`, `onRender`, `afterCompile` and `afterDraw` plugins | Chart.js plugins, uPlot hooks, Recharts custom children | Hooks on the existing class and on `compilePlot`; a failing plugin is a warning, not a broken chart |
+| Per-chart imports (`/base` + `/charts`) | Plotly partial bundles, visx modules | The package root still registers everything, so old code keeps working; validating one bar chart costs 16.1 KB gzip instead of 52.1 KB |
+| `patterns`, `dataTable`, keyboard steps through canvas marks | ECharts decals, Highcharts accessibility module (data table, keyboard), Recharts 3 keyboard defaults | The same scene feeds SVG, canvas and the table; the canvas path keeps every feature of the SVG path |
+| `shadcn` theme on `--chart-1..5` | shadcn/ui charts | A registered theme, not a wrapper; maths and exports use the plain fallbacks |
+| `facet` small multiples | Vega-Lite facet, Observable Plot `fx`/`fy` | Shared axes, colours and one legend; zoom and brush are refused with a warning rather than half-working |
+| `appendRows(rows, { max })` | uPlot streaming | Ring buffer, one draw per frame; zoom, brush and hidden series stay |
+| `density: "auto"` hexagons | Plotly `scattergl` / Highcharts Boost lesson | Announced with a warning code (`density_merges_series`), never silent; points stay points by default |
+| `line` over bars | Vega-Lite layers | One field on the bar chart, still one value axis (no dual axis, on purpose) |
+| Fast dot path: pixels stamped instead of 50,000 arc paths | Highcharts Boost lesson ("a fast mode must not drop features") | Same marks, hover, legend and keyboard; only the rasterisation changes |
+
+Not adopted, with the reason: drawing in a worker with `OffscreenCanvas` (Chart.js; `drawScene` already accepts any 2D context, so a host can do it, but the binding does not yet), declared cross-chart linking (Vega-Lite `resolve`; today linking is one `onBrush` line, see OPEN-DECISIONS), animated transitions between data states (uPlot, visx and Plot skip them too), sonification (Highcharts; postponed), server-rendered SVG hydration (the client redraws).
 
 ## Conventions copied from the sibling libs
 
@@ -62,9 +90,10 @@ spec (JSON) -> validatePlot -> chart.compile(ctx) -> Scene (flat marks, pixel sp
 - Line series with many points are decimated to min and max per pixel column (a 730-point series keeps its shape, a 100k-point one stays cheap).
 - Hover uses at most about 400 hit strips for line charts, not one per point.
 - **SVG is comfortable to about 4,000 data marks; above that the web binding draws on canvas** (`renderer: 'auto'`, the default; force it with `renderer: 'svg' | 'canvas' | 'webgl'`, tune with `canvasAbove`). Same scene, same tooltips, hover highlight, legend toggle, keyboard access (the legend stays real buttons) and PNG export. If a 2D context is not available it falls back to SVG.
-- **WebGL2** takes over dense dots (above `webglAbove`, default 20,000) and 3D maps when the device has a hardware GPU: instanced quads with a signed-distance edge for dots, a depth-buffered mesh for maps (see [MAPS.md](MAPS.md)). Text, axes and legend stay on 2D canvases above and below it. It is a lazily loaded chunk, one context per plot for its life, at most 8 per page; `renderer: 'webgl'` without WebGL, or a lost context, falls back to canvas. Measured on this container, which has no GPU (Chromium falls back to the SwiftShader software rasteriser): the JavaScript side of a 50,000-dot redraw is faster on WebGL (about 110 ms against 200 ms), but the frame as a whole is much slower (about 1.3 s against 0.2 s) because software rasterises the GPU work. That is why `auto` never picks WebGL on a software rasteriser. Speed on a real GPU has not been measured here: run `npm run examples` and open `/canvas/` (WebGL button) or `scripts/bench.mjs` on a machine with one.
+- **WebGL2** takes over dense dots (above `webglAbove`, default 20,000) and 3D maps when the device has a hardware GPU: instanced quads with a signed-distance edge for dots, a depth-buffered mesh for maps (see [MAPS.md](MAPS.md)). Text, axes and legend stay on 2D canvases above and below it. It is a lazily loaded chunk, one context per plot for its life, at most 8 per page; `renderer: 'webgl'` without WebGL, or a lost context, falls back to canvas. Measured on this container, which has no GPU (Chromium falls back to the SwiftShader software rasteriser): the JavaScript side of a 50,000-dot redraw is faster on WebGL (112 ms against 178 ms on canvas), but the first frame as a whole is much slower (about 2.5 s against 0.45 s) because software rasterises the GPU work. That is why `auto` never picks WebGL on a software rasteriser. Speed on a real GPU has not been measured here: run `npm run examples` and open `/canvas/` (WebGL button) or `scripts/bench.mjs` on a machine with one.
 - **Density-adaptive dots**: past 2,000 points a scatter draws smaller dots without the surface ring, so the cloud stays readable and cheap.
-- Measured in Chromium and Node on this container: a 50,000-point scatter compiles in about 90 ms and draws in a few milliseconds (points are batched into one path per colour); hover looks up marks in a 32 px grid index, not by scanning.
+- **Fast dot path (0.3.0)**: runs of 500 or more plain dots are stamped straight into pixels (one anti-aliased coverage pass, then one image draw) instead of building and filling 50,000 arcs. Measured on this container (headless Chromium, 4 vCPU, no GPU), 50,000-point scatter on canvas (`scripts/bench.mjs`, medians): mount 627 ms -> 207 ms, first frame 1,259 ms -> 445 ms, resize redraw 590 ms -> 178 ms; 10,000 points: first frame 230 ms -> 104 ms. What is left is mostly compiling the scene (about 100 ms in Node). Lines and histograms did not change (within noise; line canvas redraw at 10,000 rows measured 19 -> 39 ms in this run, under 50 ms either way). SVG at 50,000 dots is still slow (first frame 1.2 s): that is why `auto` switches to canvas above 4,000 marks. Hover looks up marks in a 32 px grid index, not by scanning.
+- **Bundle size** (`npm run size`, `scripts/bench.mjs`, package-name imports, minified + gzip): everything, 0.2.0 -> 0.3.0: `validatePlot` 46.0 -> 52.1 KB, `renderToSvg` 49.6 -> 57.9 KB, the browser binding 71.4 -> 87.5 KB (single file with the WebGL chunk inlined). The new features cost 6 to 16 KB; the per-chart path more than pays it back (validating a bar chart: 16.1 KB). Correction: the 0.2.0 report quoted 29.7 KB for the validator; that script imported by relative path, which made esbuild drop the chart registrations, so it undercounted. The bench now imports by package name, as an app does.
 - The core canvas drawing (`drawScene`, `buildHitIndex`) takes any object shaped like a 2D context and has no DOM, so a worker with an `OffscreenCanvas` or a native canvas can use it.
 - Exporting a 50,000-point scatter to SVG still makes a heavy file; core says so with a `many_marks` warning above 5,000 points. Aggregate or sample first.
 - The row limit is 50,000 (a validation contract shared with the ports); WebGL could draw far more, but raising the cap is a separate decision. Line series are decimated to min and max per pixel column.
@@ -76,7 +105,10 @@ spec (JSON) -> validatePlot -> chart.compile(ctx) -> Scene (flat marks, pixel sp
 - One value axis. There is no dual-axis chart on purpose; Super Chat cards with right-axis series are converted without them and say so.
 - No funnel or gauge: they overlap with Super Chat cards.
 - Default palette: orange, yellow and cyan fall outside the lightness band the dataviz validator prefers. Kept to stay TradingView-aligned; values are in `PALETTE`. The `accessible` preset passes every validator check in light mode; three of its colours are under 3:1 contrast on white, so they lean on the legend and tooltips (identity is never colour alone).
-- Registering all sixteen charts happens on import of core (`sideEffects`), so there is no tree shaking per chart yet.
+- Zoom and brush work on cartesian charts without `facet`. A category axis can be brushed, not zoomed. A brush's `filters` use the transform's range rule (from inclusive, to exclusive), so a row exactly on the right edge is left out.
+- `appendRows` coalesces to one draw per frame but recompiles the whole scene; there is no incremental layout.
+- `dataTable` lists at most 1,000 rows (the caption says when more exist).
+- Hexagon density merges series into one count (a warning says so).
 - Maps: no boundaries ship, by design; no basemap tiles, labels or roads (this is a statistical map, not a slippy map). Static SVG/canvas maps recompile on every camera move, which gets slow for very detailed geographies: use WebGL (or simplify the file). On SVG, tall raised regions can overlap imperfectly at extreme tilts (painter's order per region); WebGL uses a depth buffer.
 - The ports (Go, Python) do not draw, and format numbers in English only. A native renderer in another language is a separate project (see OPEN-DECISIONS).
 - Visual regression is opt-in (`E2E_VISUAL=1`): baselines are PNGs from one Chromium build and fonts, so they are not part of the default gate.
@@ -87,9 +119,9 @@ spec (JSON) -> validatePlot -> chart.compile(ctx) -> Scene (flat marks, pixel sp
 |---|---|---|
 | Unit (vitest) | numbers, validation, every chart's scene, robustness against hostile specs, canvas drawing and hit index | `npm test` |
 | Web (vitest + jsdom) | tooltip, hover, legend toggle and keyboard, resize, errors, export | `npm test` |
-| Browser (Playwright, real Chromium) | the gallery in light and dark, clicks and hover on every renderer, responsive widths, no console errors, 50k points on canvas and WebGL, WebGL maps against SVG pixels, GPU picking, drag, context-loss fallback, importing a boundary file | `npm run test:e2e` |
+| Browser (Playwright, real Chromium) | the features page (brush linking two charts, Ctrl-wheel zoom and double-click reset on SVG and canvas, canvas keyboard steps with tooltip and spoken label, live data, data table), the gallery in light and dark, clicks and hover on every renderer, responsive widths, no console errors, 50k points on canvas and WebGL, WebGL maps against SVG pixels, GPU picking, drag, context-loss fallback, importing a boundary file | `npm run test:e2e` |
 | Visual regression (opt-in) | pixels of the gallery against stored baselines | `E2E_VISUAL=1 npm run test:e2e` (`E2E_VISUAL=update` to rewrite) |
 | Conformance | generated data is current; each port replays it | `npm run conformance`, `npm run test:ports` |
-| Differential fuzz | ~58,000 random numbers and 4,000 random specs per seed: ports against TypeScript | `npm run fuzz:ports` |
+| Differential fuzz | ~64,000 random numbers and 5,000 random specs per seed (about 45% with a transform), plus timeUnit buckets: ports against TypeScript | `npm run fuzz:ports` |
 
 `npm run gate` runs everything except the visual baselines and the fuzz.

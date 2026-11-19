@@ -7,6 +7,20 @@ export const CSS = `
 .sp-cv-legend{position:absolute;inset:0;pointer-events:none}
 .sp-cv-lk{position:absolute;pointer-events:none;padding:0;margin:0;border:0;background:transparent;border-radius:4px;cursor:pointer}
 .sp-cv-lk:focus-visible{outline:2px solid var(--sp-info,#2962FF);outline-offset:1px}
+.sp-cv>canvas:first-child:focus{outline:none}
+.sp-cv>canvas:first-child:focus-visible{outline:2px solid var(--sp-info,#2962FF);outline-offset:-2px}
+.sp-live,.sp-table caption{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.sp-table{border-collapse:collapse;font:12px/1.4 var(--sp-font,system-ui,sans-serif);color:var(--sp-text,#131722);margin-top:8px;width:100%}
+.sp-table:not([data-visible]){position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.sp-table th,.sp-table td{text-align:left;padding:4px 8px;border-bottom:1px solid var(--sp-border,#E0E3EB)}
+.sp-table td[data-n]{text-align:right;font-variant-numeric:tabular-nums}
+.sp-root[data-axes]{touch-action:pan-y;-webkit-user-select:none;user-select:none}
+.sp-root[data-axes="xy"]{touch-action:none}
+.sp-root[data-axes]:focus{outline:none}
+.sp-root[data-axes]:focus-visible{outline:2px solid var(--sp-info,#2962FF);outline-offset:2px}
+.sp-root[data-brushing]{cursor:crosshair}
+.sp-root[data-panning]{cursor:grabbing}
+.sp-brush{position:absolute;pointer-events:none;z-index:4;background:color-mix(in srgb,var(--sp-info,#2962FF) 14%,transparent);border:1px solid var(--sp-info,#2962FF);box-sizing:border-box;line-height:0}
 .sp-m:focus{outline:none}
 .sp-m:focus-visible{outline:2px solid var(--sp-info,#2962FF);outline-offset:2px}
 .sp-data{transition:opacity .15s ease}

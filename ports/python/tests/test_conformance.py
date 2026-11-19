@@ -10,6 +10,7 @@ from super_plot import (
     bin_counts, bin_edges, box_stats, chart_types, describe_plot, format_percent, format_value, linear_ticks,
     nice_domain, quantile, require_valid, validate_plot, PlotSpecError,
     GeographyError, get_geography, match_region, register_geography, unregister_geography,
+    apply_transform, time_bucket,
 )
 
 DATA = json.loads((Path(__file__).resolve().parents[3] / "conformance" / "plot.v1.json").read_text(encoding="utf-8"))
@@ -104,6 +105,39 @@ class Conformance(unittest.TestCase):
                 same({k: x for k, x in v.spec.items() if k != "data"}, c["normalized"], c["name"])
             else:
                 self.assertIsNone(v.spec, c["name"])
+
+    def test_transform_cases(self):
+        self.assertTrue(DATA["transformCases"])
+        for c in DATA["transformCases"]:
+            v = validate_plot(c["spec"])
+            self.assertEqual(v.ok, c["ok"], c["name"])
+            self.assertEqual(keyed(v.issues), keyed(c["issues"]), c["name"])
+            if not c["ok"]:
+                self.assertIsNone(v.spec, c["name"])
+                with self.assertRaises(PlotSpecError):
+                    describe_plot(c["spec"])
+                continue
+            same({k: x for k, x in v.spec.items() if k != "data"}, c["normalized"], c["name"])
+            # The rows the chart reads after the steps have run.
+            same(v.spec["data"], c["rows"], c["name"] + " rows")
+            self.assertEqual(describe_plot(c["spec"]), c["describe"], c["name"])
+
+    def test_transform_leaves_the_input_alone(self):
+        rows = [{"d": "2026-03-09", "v": 2}, {"d": "soon", "v": 3}]
+        spec = {"type": "bar", "x": "d", "y": "v", "data": rows, "transform": [{"timeUnit": {"field": "d", "unit": "month"}}, {"sort": {"field": "v", "order": "descending"}}]}
+        v = validate_plot(spec)
+        self.assertEqual(v.spec["data"], [{"d": None, "v": 3}, {"d": "2026-03-01", "v": 2}])
+        self.assertEqual(rows, [{"d": "2026-03-09", "v": 2}, {"d": "soon", "v": 3}])
+        self.assertEqual(keyed(v.issues), [("warning", "some_not_time", "transform[0].timeUnit.field")])
+
+    def test_transform_groups_like_javascript(self):
+        # JSON does not tell 1 from 1.0 and Python does; a group is what JSON.stringify makes of its values.
+        rows = [{"k": 1, "v": 1}, {"k": 1.0, "v": 2}, {"k": "1", "v": 4}, {"k": True, "v": 8}, {"k": -0.0, "v": 16}, {"k": 0, "v": 32}, {"v": 64}, {"k": None, "v": 128}]
+        issues: list = []
+        out = apply_transform([{"aggregate": {"groupBy": ["k"], "fields": {"v": "sum"}}}], rows, issues)
+        self.assertEqual(issues, [])
+        self.assertEqual([r["v"] for r in out], [3, 4, 8, 48, 192])
+        self.assertEqual(time_bucket(1767225600000, "week"), "2025-12-29")
 
     def test_describe_cases(self):
         for c in DATA["describeCases"]:

@@ -1,7 +1,6 @@
 // Measures compile, SVG string, SVG DOM mount, canvas draw, hover and bundle sizes.
 // Usage: node scripts/bench.mjs   (needs `npm run build` first). Prints JSON; numbers are medians.
 import { gzipSync, brotliCompressSync } from 'node:zlib'
-import { readFileSync } from 'node:fs'
 import { build } from 'esbuild'
 import { chromium } from 'playwright'
 import { fileURLToPath } from 'node:url'
@@ -41,19 +40,22 @@ if (globalThis.gc) for (const n of sizes) {
   heap.push({ rows: n, specMB: 0, sceneMB: +((a - b) / 1048576).toFixed(1), keep: r.ok })
 }
 
-// Bundle sizes (minified, esbuild) of what an app would actually ship
+// Bundle sizes (minified, esbuild) of what an app would actually ship. Import by package name, as an app does:
+// with relative paths into dist, esbuild applies the packages' sideEffects differently and the numbers are wrong.
 const size = async (code, label) => {
   const r = await build({ stdin: { contents: code, resolveDir: root, loader: 'js' }, bundle: true, minify: true, write: false, format: 'esm', platform: 'browser', treeShaking: true, external: ['react', 'react/jsx-runtime'], logLevel: 'error' })
   const buf = Buffer.from(r.outputFiles[0].contents)
   return { label, minKB: +(buf.length / 1024).toFixed(1), gzipKB: +(gzipSync(buf).length / 1024).toFixed(1), brotliKB: +(brotliCompressSync(buf).length / 1024).toFixed(1) }
 }
 const bundles = [
-  await size(`import {validatePlot} from './packages/core/dist/index.js'; console.log(validatePlot)`, 'core: validatePlot only'),
-  await size(`import {renderToSvg} from './packages/core/dist/index.js'; console.log(renderToSvg)`, 'core: renderToSvg (server/static SVG)'),
-  await size(`import {SuperPlot} from './packages/bindings/web/dist/index.js'; console.log(SuperPlot)`, 'web: SuperPlot (browser mount, all 16 charts; WebGL chunk inlined by this single-file bundle)'),
-  await size(`import {SuperPlot} from './packages/bindings/web/dist/index.js'; import './packages/bindings/web/dist/element.js'; console.log(SuperPlot)`, 'web + <super-plot> element'),
-  await size(`import * as t from './packages/core/dist/tools.js'; console.log(t)`, 'core/tools (agent tools, incl. core)'),
-  await size(readFileSync(root + 'packages/bindings/react/dist/index.js', 'utf8').replace(/^/, ''), 'react binding (excl. react)')
+  await size(`import {validatePlot} from '@supersolutions/super-plot-core'; console.log(validatePlot)`, 'core: validatePlot only'),
+  await size(`import {renderToSvg} from '@supersolutions/super-plot-core'; console.log(renderToSvg)`, 'core: renderToSvg (server/static SVG)'),
+  await size(`import {SuperPlot} from '@supersolutions/super-plot-web'; console.log(SuperPlot)`, 'web: SuperPlot (browser mount, all charts; WebGL chunk inlined by this single-file bundle)'),
+  await size(`import {SuperPlot} from '@supersolutions/super-plot-web'; import '@supersolutions/super-plot-web/element'; console.log(SuperPlot)`, 'web + <super-plot> element'),
+  await size(`import * as t from '@supersolutions/super-plot-core/tools'; console.log(t)`, 'core/tools (agent tools, incl. core)'),
+  await size(`import * as r from '@supersolutions/super-plot-react'; console.log(r)`, 'react binding (excl. react)'),
+  await size(`import {registerChart, validatePlot} from '@supersolutions/super-plot-core/base'; import {bar} from '@supersolutions/super-plot-core/charts'; registerChart(bar); console.log(validatePlot)`, 'core/base + bar: validatePlot (per-chart import)'),
+  await size(`import {SuperPlot} from '@supersolutions/super-plot-web/base'; import {registerChart} from '@supersolutions/super-plot-core/base'; import {bar, line} from '@supersolutions/super-plot-core/charts'; registerChart(bar); registerChart(line); console.log(SuperPlot)`, 'web/base + bar + line (per-chart import)')
 ]
 
 // Browser

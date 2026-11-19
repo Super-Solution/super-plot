@@ -42,6 +42,7 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
   const keys = [...g.keys()]
   const stats = new Map(keys.map(k => [k, boxStats(g.get(k)!)!]))
   const horizontal = s.orientation === 'horizontal'
+  if (horizontal) c.axisFields = { x: s.y, y: s.x }
   const showOut = s.outliers !== false
   let lo = Infinity
   let hi = -Infinity
@@ -54,7 +55,7 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
   const cats = bandScale(keys, 0.4)
   const frame = c.frame({ series: [] })
   const vAxis = valueAxis(c, vScale, { title: horizontal ? s.xLabel ?? String(s.y) : s.yLabel ?? String(s.y), vertical: !horizontal, format: s.format })
-  const cAxis = bandAxis(cats, Object.fromEntries(keys.map(k => [k, clip(k, 60)])), horizontal ? s.yLabel : s.xLabel)
+  const cAxis = bandAxis(cats, Object.fromEntries(keys.map(k => [k, clip(k, 60)])), horizontal ? s.yLabel : s.xLabel, c.locale)
   const plot = horizontal ? layoutCartesian(c, frame, vAxis, cAxis) : layoutCartesian(c, frame, cAxis, vAxis)
   drawAnnotations(c, plot, horizontal ? vAxis : cAxis, horizontal ? cAxis : vAxis)
 

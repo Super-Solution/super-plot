@@ -1,10 +1,11 @@
 import type { ChartCtx } from './context.js'
-import type { Rect } from './scene.js'
+import type { AxisInfo, Rect } from './scene.js'
 import type { BandScale, LinearScale } from './scale.js'
 import { fit } from './util/text.js'
 import { toTime } from './util/time.js'
 import { toNumber } from './util/num.js'
 import { timeTickList } from './scale.js'
+import { tickLabel } from './util/time.js'
 import { tickFormatter } from './util/format.js'
 
 export interface AxisTick { key: number | string; label: string }
@@ -49,6 +50,13 @@ export function layoutCartesian(c: ChartCtx, area: Rect, x: Axis, y: Axis): Rect
 
   x.scale.range = [plot.x, plot.x + plot.w]
   y.scale.range = y.scale.kind === 'band' ? [plot.y, plot.y + plot.h] : [plot.y + plot.h, plot.y]
+  const info = (a: Axis, field: unknown): AxisInfo => {
+    const s = a.scale
+    const f = typeof field === 'string' ? { field } : {}
+    if (s.kind === 'band') return { kind: 'band', domain: [...(s as BandScale).domain], range: [...s.range] as [number, number], ...f }
+    return { kind: s.kind, domain: [...(s as LinearScale).domain] as [number, number], range: [...s.range] as [number, number], ...f }
+  }
+  c.axes = { plot: { ...plot }, x: info(x, c.axisFields?.x ?? c.spec.x), y: info(y, c.axisFields?.y ?? (typeof c.spec.y === 'string' ? c.spec.y : undefined)) }
   const yTicks = y.ticks(plot.h)
 
   const grid = c.c('grid')
@@ -174,6 +182,28 @@ export function valueAxis(c: ChartCtx, scale: LinearScale, o: ValueAxisOptions):
 }
 
 /** A categorical axis: one label per band. */
-export function bandAxis(scale: BandScale, labels: Record<string, string>, title?: string): Axis {
-  return { scale, title, grid: false, ticks: () => scale.domain.map(k => ({ key: k, label: labels[k] ?? k })) }
+export function bandAxis(scale: BandScale, labels: Record<string, string>, title?: string, locale = 'en'): Axis {
+  const dates = dateLabels(scale.domain, labels, locale)
+  return { scale, title, grid: false, ticks: () => scale.domain.map(k => ({ key: k, label: dates?.[k] ?? labels[k] ?? k })) }
+}
+
+const ISO_BUCKET = /^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):00:00(?:\.000)?Z)?$/
+
+/**
+ * Categories that are all ISO dates (what `timeUnit` produces) read like a time axis: "2026, Feb, Mar" for
+ * months, "Jan 5" for days, "14:00" for hours. Only when the chart did not label them itself.
+ */
+export function dateLabels(keys: readonly string[], labels: Record<string, string>, locale: string): Record<string, string> | null {
+  if (!keys.length || keys.some(k => labels[k] !== undefined && labels[k] !== k)) return null
+  const ts: number[] = []
+  for (const k of keys) {
+    const m = ISO_BUCKET.exec(k)
+    if (!m) return null
+    const t = Date.UTC(+m[1], +m[2] - 1, +m[3], m[4] ? +m[4] : 0)
+    if (!Number.isFinite(t)) return null
+    ts.push(t)
+  }
+  const ds = ts.map(t => new Date(t))
+  const level = ds.some(d => d.getUTCHours() !== 0) ? 'hour' : ds.every(d => d.getUTCDate() === 1) ? (ds.every(d => d.getUTCMonth() === 0) ? 'year' : 'month') : 'day'
+  return Object.fromEntries(keys.map((k, i) => [k, tickLabel(ts[i], level, locale)]))
 }

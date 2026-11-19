@@ -5,7 +5,7 @@
  * Picking renders item ids to an offscreen buffer and reads one pixel.
  */
 import earcut from 'earcut'
-import { arcPoints, OBLIQUE, type SceneGeo, type ViewParams } from '@supersolutions/super-plot-core'
+import { arcPoints, OBLIQUE, type SceneGeo, type ViewParams } from '@supersolutions/super-plot-core/base'
 import { ColorParser, pickColor, pickIndex, program, uniforms } from './context.js'
 
 const PROJECT = `

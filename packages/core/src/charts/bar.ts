@@ -4,6 +4,7 @@ import type { Mark, Rect } from '../scene.js'
 import { bandScale, linearScale, niceLinear } from '../scale.js'
 import { bandAxis, drawAnnotations, layoutCartesian, valueAxis } from '../cartesian.js'
 import { detectXKind, distinct, observations, xKey } from '../data.js'
+import { toNumber } from '../util/num.js'
 import { formatPercent } from '../util/format.js'
 import { inkOn } from '../util/color.js'
 import { clip } from '../util/text.js'
@@ -29,13 +30,33 @@ function model(spec: Record<string, any>): Model {
   return { cats, keys, m }
 }
 
+/** Combo chart: columns drawn as lines over vertical bars, on the same value axis (never a second one). */
+function lineCols(spec: Record<string, any>): string[] {
+  if (spec.line === undefined || spec.orientation === 'horizontal' || spec.stack === 'normalize') return []
+  return Array.isArray(spec.line) ? spec.line : [spec.line]
+}
+
 function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
   const s = c.spec
   const { cats, keys, m } = model(s)
-  const series = c.makeSeries(keys)
+  const lines = lineCols(s).filter(k => !keys.includes(k))
+  const series = c.makeSeries([...keys, ...lines])
   const visible = keys.filter(k => !c.hidden.has(k))
   const stack = (s.stack ?? 'none') as 'none' | 'stack' | 'normalize'
   const horizontal = s.orientation === 'horizontal'
+  if (horizontal) c.axisFields = { x: typeof s.y === 'string' ? s.y : undefined, y: s.x }
+  // Line values per category (duplicates summed, like bars).
+  const lineVal = new Map<string, Map<string, number>>()
+  for (const k of lines) {
+    const mm = new Map<string, number>()
+    for (const r of s.data as Record<string, unknown>[]) {
+      const v = toNumber(r[k])
+      if (v === null) continue
+      const cat = xKey(r[s.x])
+      mm.set(cat, (mm.get(cat) ?? 0) + v)
+    }
+    lineVal.set(k, mm)
+  }
   const fmt = c.format
   const labelOf: Record<string, string> = Object.fromEntries(cats.map(k => [k, clip(k, 60)]))
 
@@ -69,6 +90,13 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
     hi = 1
     lo = 0
   }
+  for (const k of lines) {
+    if (c.hidden.has(k)) continue
+    for (const v of lineVal.get(k)!.values()) {
+      hi = Math.max(hi, v)
+      lo = Math.min(lo, v)
+    }
+  }
   const override = s.yDomain as [number | null, number | null] | undefined
   const valueScale = override && (override[0] !== null || override[1] !== null)
     ? linearScale([override[0] ?? lo, override[1] ?? hi])
@@ -80,7 +108,7 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
   const valueTitle = horizontal ? s.xLabel : s.yLabel
   const catTitle = horizontal ? s.yLabel : s.xLabel
   const va = valueAxis(c, valueScale, { title: valueTitle, vertical: !horizontal, format: vfmt })
-  const ca = bandAxis(catScale, labelOf, catTitle)
+  const ca = bandAxis(catScale, labelOf, catTitle, c.locale)
   const plot = horizontal ? layoutCartesian(c, area, va, ca) : layoutCartesian(c, area, ca, va)
   drawAnnotations(c, plot, horizontal ? va : ca, horizontal ? ca : va)
 
@@ -186,7 +214,21 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
       }
     })
   }
-  c.marks.push(...bars, ...labels)
+  const overlay: Mark[] = []
+  lines.forEach((k, li) => {
+    if (c.hidden.has(k)) return
+    const si = keys.length + li
+    const color = series[si].color
+    const pts = cats.flatMap(cat => {
+      const v = lineVal.get(k)!.get(cat)
+      return v === undefined ? [] : [{ cat, v, x: catScale.at(cat), y: valueScale.at(v) }]
+    })
+    if (pts.length > 1) overlay.push({ type: 'path', role: 'data', series: k, d: pts.map((p, i) => `${i ? 'L' : 'M'}${Math.round(p.x * 100) / 100} ${Math.round(p.y * 100) / 100}`).join(''), stroke: color, strokeWidth: c.theme.lineWidth, anim: 'draw' })
+    for (const p of pts) {
+      overlay.push({ type: 'circle', role: 'data', series: k, cx: p.x, cy: p.y, r: 4, fill: color, stroke: c.c('background'), strokeWidth: 2, anim: 'fade', tip: { title: clip(p.cat, 60), rows: [{ label: series[si].label, value: fmt(p.v), color }] }, aria: `${p.cat}, ${series[si].label}: ${fmt(p.v)}`, datum: { x: p.cat, series: k, value: p.v } })
+    }
+  })
+  c.marks.push(...bars, ...labels, ...overlay)
   void (plot satisfies Rect)
   return { series }
 }
@@ -212,6 +254,7 @@ export const bar: ChartDef = {
     orientation: { kind: 'enum', values: ['vertical', 'horizontal'], default: 'vertical', desc: 'Use `horizontal` for long category names or many categories.' },
     sort: { kind: 'enum', values: ['none', 'asc', 'desc'], default: 'none', desc: 'Order categories by their total. `none` keeps the data order (use it for ordered categories such as months).' },
     labels: { kind: 'boolean', default: false, desc: 'Print values on the bars. Keep off for dense charts; the tooltip carries the numbers.' },
+    line: { kind: 'columns', role: 'number', desc: 'Combo chart: numeric column(s) drawn as lines with points over vertical bars, on the same value axis (a target, an average). Ignored for horizontal and 100% stacked bars.' },
     yDomain: { kind: 'domain', desc: 'Fix the value axis range, e.g. [0, 100]. Bars should start at 0; only change it knowingly.' }
   },
   example: {
@@ -238,6 +281,9 @@ export const bar: ChartDef = {
       for (const r of ctx.rows) for (const col of ys) if (typeof r[col as string] === 'number' && (r[col as string] as number) < 0) neg = true
       if (neg) ctx.issues.push({ severity: 'warning', code: 'negative_in_stack', path: 'y', message: 'Negative values in a stacked bar are stacked below the axis; check that is what you want.' })
     }
+    if (spec.line !== undefined && (spec.orientation === 'horizontal' || spec.stack === 'normalize')) {
+      ctx.issues.push({ severity: 'warning', code: 'line_ignored', path: 'line', message: `\`line\` is ignored on ${spec.orientation === 'horizontal' ? 'horizontal' : '100% stacked'} bars.` })
+    }
     const kind = detectXKind('auto', ctx.rows.map(r => r[spec.x as string]))
     if (kind === 'time' && ctx.rows.length > 60) ctx.issues.push({ severity: 'warning', code: 'prefer_line', path: 'type', message: 'Many bars over time: a line or area chart reads better.' })
   },
@@ -255,6 +301,8 @@ export const bar: ChartDef = {
       if (totals.length > 1) t += ` Lowest: ${clip(lo.c, 40)} (${f(lo.v)}).`
       t += ` Total: ${f(totals.reduce((a, b) => a + b.v, 0))}.`
     }
+    const ls = lineCols(spec).filter(k => !keys.includes(k))
+    if (ls.length) t += ` With ${ls.length === 1 ? 'a line' : 'lines'} for ${fmtList(ls)} on the same axis.`
     return t
   }
 }

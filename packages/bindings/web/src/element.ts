@@ -1,5 +1,5 @@
-import type { Camera, Issue } from '@supersolutions/super-plot-core'
-import { SuperPlot, type SelectEvent, type SuperPlotOptions } from './plot.js'
+import type { Camera, Issue } from '@supersolutions/super-plot-core/base'
+import { SuperPlot, type BrushSelection, type SelectEvent, type SuperPlotOptions, type ZoomRange } from './plot.js'
 
 /**
  * `<super-plot>`: the plot as a web component, for any framework (Vue, Svelte, Angular, plain HTML).
@@ -7,8 +7,10 @@ import { SuperPlot, type SelectEvent, type SuperPlotOptions } from './plot.js'
  *   <super-plot theme="dark" spec='{"type":"bar", ...}'></super-plot>
  *
  * Properties: `spec` (object or JSON string), `theme`, `locale`, `renderer` (auto | svg | canvas | webgl).
- * Events (bubbling CustomEvents): `plot-select` (detail: SelectEvent), `plot-issues` (detail: Issue[]) and,
- * for maps, `plot-camera` (detail: Camera) when the viewer moved the map.
+ * Events (bubbling CustomEvents): `plot-select` (detail: SelectEvent), `plot-issues` (detail: Issue[]),
+ * `plot-hover` (SelectEvent or null), `plot-render` (RenderEvent), `plot-zoom` (ZoomRange or null),
+ * `plot-brush` (BrushSelection or null) and, for maps, `plot-camera` (Camera) when the viewer moved the map.
+ * Methods: `appendRows(rows, { max })`, `setZoom()`, `getZoom()`, `setBrush()`, `getBrush()`, `toSvg()`, `toPng()`.
  */
 export function defineSuperPlot(name = 'super-plot'): CustomElementConstructor {
   const existing = customElements.get(name)
@@ -44,8 +46,15 @@ export function defineSuperPlot(name = 'super-plot'): CustomElementConstructor {
       }
     }
 
-    /** The underlying instance, for `toSvg()` / `toPng()` / `getScene()`. */
+    /** The underlying instance, for everything else (`getScene()`, `setCamera()`, ...). */
     get instance(): SuperPlot | null { return this.plot }
+    appendRows(rows: readonly unknown[], options?: { max?: number }): void { this.plot?.appendRows(rows, options) }
+    getZoom(): ZoomRange | null { return this.plot?.getZoom() ?? null }
+    setZoom(z: { x?: unknown; y?: unknown } | null): void { this.plot?.setZoom(z) }
+    getBrush(): BrushSelection | null { return this.plot?.getBrush() ?? null }
+    setBrush(b: { x?: unknown; y?: unknown } | null): void { this.plot?.setBrush(b) }
+    toSvg(): string { if (!this.plot) throw new Error('Not mounted.'); return this.plot.toSvg() }
+    toPng(scale?: number): Promise<Blob> { return this.plot ? this.plot.toPng(scale) : Promise.reject(new Error('Not mounted.')) }
 
     private sync(): void {
       if (!this.isConnected || this._spec === undefined) return
@@ -58,7 +67,11 @@ export function defineSuperPlot(name = 'super-plot'): CustomElementConstructor {
           ...this.pending,
           onSelect: (e: SelectEvent) => this.dispatchEvent(new CustomEvent('plot-select', { detail: e, bubbles: true })),
           onIssues: (issues: Issue[]) => this.dispatchEvent(new CustomEvent('plot-issues', { detail: issues, bubbles: true })),
-          onCameraChange: (camera: Camera) => this.dispatchEvent(new CustomEvent('plot-camera', { detail: camera, bubbles: true }))
+          onCameraChange: (camera: Camera) => this.dispatchEvent(new CustomEvent('plot-camera', { detail: camera, bubbles: true })),
+          onHover: e => this.dispatchEvent(new CustomEvent('plot-hover', { detail: e, bubbles: true })),
+          onRender: e => this.dispatchEvent(new CustomEvent('plot-render', { detail: e, bubbles: true })),
+          onZoom: z => this.dispatchEvent(new CustomEvent('plot-zoom', { detail: z, bubbles: true })),
+          onBrush: b => this.dispatchEvent(new CustomEvent('plot-brush', { detail: b, bubbles: true }))
         })
       }
     }

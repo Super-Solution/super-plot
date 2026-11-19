@@ -66,6 +66,7 @@ function groups(spec: Record<string, any>): Map<string, number[]> {
 
 function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
   const s = c.spec
+  c.axisFields = { x: s.value }
   const g = groups(s)
   const keys = [...g.keys()]
   const series = c.makeSeries(keys)

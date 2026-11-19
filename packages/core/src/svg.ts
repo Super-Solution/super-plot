@@ -1,6 +1,7 @@
 import { resolveVars } from './theme.js'
 import type { Mark, Scene } from './scene.js'
 import { roundedRectPath } from './scene.js'
+import { PATTERN_OPACITY, PATTERN_SIZE, patternAt } from './patterns.js'
 
 export interface SvgOptions {
   /** Add classes and `data-*` hooks so a binding can attach hover, focus and legend toggling. */
@@ -34,11 +35,25 @@ export function renderSvg(scene: Scene, options: SvgOptions = {}): string {
   // Clip ids hash their own path, so several standalone SVGs on one page never borrow each other's clip.
   const clipIds = scene.clips ? Object.keys(scene.clips) : []
   const clipRef = new Map(clipIds.map(k => [k, `${id}-c${hash(scene.clips![k])}`]))
-  const defs = clipIds.length ? `<defs>${clipIds.map(k => `<clipPath id="${escapeXml(clipRef.get(k)!)}"><path d="${escapeXml(scene.clips![k])}"/></clipPath>`).join('')}</defs>` : ''
+  const used = [...new Set(scene.marks.flatMap(m => (m.pattern === undefined ? [] : [m.pattern])))]
+  const ink = escapeXml(rv(scene.background))
+  const patterns = used.map(p => {
+    const t = patternAt(p)
+    const body = (t.lines ? `<path d="${t.lines}" stroke="${ink}" stroke-width="${t.width ?? 1}" fill="none"/>` : '') + (t.dots ?? []).map(([x, y]) => `<circle cx="${x}" cy="${y}" r="${t.r ?? 1}" fill="${ink}"/>`).join('')
+    return `<pattern id="${escapeXml(id)}-p${p}" width="${PATTERN_SIZE}" height="${PATTERN_SIZE}" patternUnits="userSpaceOnUse">${body}</pattern>`
+  })
+  const defsBody = clipIds.map(k => `<clipPath id="${escapeXml(clipRef.get(k)!)}"><path d="${escapeXml(scene.clips![k])}"/></clipPath>`).join('') + patterns.join('')
+  const defs = defsBody ? `<defs>${defsBody}</defs>` : ''
   const body: string[] = []
   scene.marks.forEach((m, i) => {
     if (m.role === 'hit' && !interactive) return
-    body.push(renderMark(m, i, interactive, rv, m.clip !== undefined && clipRef.has(m.clip) ? ` clip-path="url(#${escapeXml(clipRef.get(m.clip)!)})"` : ''))
+    const clip = m.clip !== undefined && clipRef.has(m.clip) ? ` clip-path="url(#${escapeXml(clipRef.get(m.clip)!)})"` : ''
+    body.push(renderMark(m, i, interactive, rv, clip))
+    if (m.pattern !== undefined && (m.type === 'rect' || m.type === 'path')) {
+      // The texture is a second shape on top: no events, no focus, and it grows with the mark's entrance.
+      const over = { ...m, fill: `url(#${id}-p${m.pattern})`, stroke: undefined, strokeWidth: undefined, opacity: (m.opacity ?? 1) * PATTERN_OPACITY } as Mark
+      body.push(renderMark(over, -1, false, s => s, clip).replace(/\/>$/, `${interactive ? ` class="sp-pat${m.anim ? ` sp-a-${m.anim}` : ''}"${m.series !== undefined ? ` data-s="${escapeXml(m.series)}"` : ''}` : ''} pointer-events="none" aria-hidden="true"/>`))
+    }
   })
   const head =
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${n(scene.width)} ${n(scene.height)}" width="${n(scene.width)}" height="${n(scene.height)}"` +

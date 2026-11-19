@@ -2,6 +2,7 @@ import type { Issue, Row, ValidateCtx } from './schema.js'
 import { LIMITS, fieldDefault, validateField } from './schema.js'
 import { chartTypes, fieldsOf, getChart } from './registry.js'
 import { closest } from './util/num.js'
+import { applyTransform, columnsOf } from './transform.js'
 
 export interface ValidationResult {
   /** No errors (warnings are allowed). */
@@ -60,10 +61,19 @@ export function validatePlot(input: unknown): ValidationResult {
   } else if (!rows.every(r => r && typeof r === 'object' && !Array.isArray(r))) {
     issues.push({ severity: 'error', code: 'bad_type', path: 'data', message: 'Every row of data must be an object.' })
   }
-  const dataOk = !issues.some(i => i.path === 'data' && i.severity === 'error')
-  const columns = new Set<string>()
-  if (dataOk) for (const r of (rows as Row[]).slice(0, 200)) for (const k of Object.keys(r)) columns.add(k)
-  const ctx: ValidateCtx = { issues, columns, rows: dataOk ? (rows as Row[]) : [] }
+  let dataOk = !issues.some(i => i.path === 'data' && i.severity === 'error')
+  let data = dataOk ? (rows as Row[]) : []
+  // `transform` runs first: column fields refer to its output.
+  if (dataOk && obj.transform !== undefined && 'transform' in fields) {
+    const out = applyTransform(obj.transform, data, issues)
+    if (!out) dataOk = false
+    else if (!out.length) {
+      issues.push({ severity: 'error', code: 'empty_after_transform', path: 'transform', message: 'The transform left no rows to plot.', hint: 'Loosen the filter, or check its field and values.' })
+      dataOk = false
+    } else data = out
+  }
+  const columns = dataOk ? columnsOf(data) : new Set<string>()
+  const ctx: ValidateCtx = { issues, columns, rows: dataOk ? data : [] }
 
   const out: Record<string, unknown> = { type: def.type }
   for (const [key, value] of Object.entries(obj)) {
@@ -87,7 +97,7 @@ export function validatePlot(input: unknown): ValidationResult {
       if (d !== undefined) out[key] = d
     }
   }
-  if (dataOk) out.data = rows
+  if (dataOk) out.data = data
   if (!issues.some(i => i.severity === 'error')) def.check?.(out, ctx)
 
   const ok = !issues.some(i => i.severity === 'error')

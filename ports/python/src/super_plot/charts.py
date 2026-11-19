@@ -74,6 +74,13 @@ def _bar_model(spec: Spec) -> tuple[list[str], list[str], dict[str, dict[str, fl
     return cats, keys, m
 
 
+def _line_cols(spec: Spec) -> list[str]:
+    """Combo chart: columns drawn as lines over vertical bars. Mirrors `lineCols`."""
+    if "line" not in spec or spec.get("orientation") == "horizontal" or spec.get("stack") == "normalize":
+        return []
+    return spec["line"] if isinstance(spec["line"], list) else [spec["line"]]
+
+
 def _series_ignored(spec: Spec, issues: Issues) -> None:
     if isinstance(spec.get("y"), list) and len(spec["y"]) > 1 and spec.get("series"):
         _issue(issues, "warning", "series_ignored", "series", "`series` is ignored when `y` lists several columns.")
@@ -86,6 +93,8 @@ def _check_bar(spec: Spec, rows: list[dict], issues: Issues) -> None:
         neg = any(is_number(r.get(c)) and r[c] < 0 for r in rows for c in ys)
         if neg:
             _issue(issues, "warning", "negative_in_stack", "y", "Negative values in a stacked bar are stacked below the axis; check that is what you want.")
+    if "line" in spec and (spec.get("orientation") == "horizontal" or spec.get("stack") == "normalize"):
+        _issue(issues, "warning", "line_ignored", "line", f"`line` is ignored on {'horizontal' if spec.get('orientation') == 'horizontal' else '100% stacked'} bars.")
     if detect_x_kind("auto", [r.get(spec["x"]) for r in rows]) == "time" and len(rows) > 60:
         _issue(issues, "warning", "prefer_line", "type", "Many bars over time: a line or area chart reads better.")
 
@@ -107,6 +116,9 @@ def _describe_bar(spec: Spec) -> str:
         if len(totals) > 1:
             t += f" Lowest: {clip(lo['c'], 40)} ({f(lo['v'])})."
         t += f" Total: {f(total([x['v'] for x in totals]))}."
+    ls = [k for k in _line_cols(spec) if k not in keys]
+    if ls:
+        t += f" With {'a line' if len(ls) == 1 else 'lines'} for {_fmt_list(ls)} on the same axis."
     return t
 
 

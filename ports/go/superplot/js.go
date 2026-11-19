@@ -1,9 +1,11 @@
 package superplot
 
 import (
+	"encoding/json"
 	"math"
 	"math/big"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -209,4 +211,109 @@ func toFixed(x float64, digits int) string {
 func pow10(k int) float64 {
 	f, _ := strconv.ParseFloat("1e"+strconv.Itoa(k), 64)
 	return f
+}
+
+// jsKeys is Object.keys(m): array-index keys first, ascending, then the rest as written. raw is the JSON text m was
+// decoded from (a decoded map has forgotten the order); without it the rest come sorted.
+func jsKeys(m map[string]any, raw json.RawMessage) []string {
+	if raw != nil {
+		if keys := keyOrder(raw); len(keys) == len(m) {
+			return keys
+		}
+	}
+	keys := sortedKeys(m)
+	index := func(k string) (uint64, bool) {
+		if !indexRe.MatchString(k) {
+			return 0, false
+		}
+		n, err := strconv.ParseUint(k, 10, 64)
+		return n, err == nil && n < 4294967295
+	}
+	sort.SliceStable(keys, func(i, j int) bool {
+		a, aOK := index(keys[i])
+		b, bOK := index(keys[j])
+		if aOK && bOK {
+			return a < b
+		}
+		return aOK && !bOK
+	})
+	return keys
+}
+
+// rawKey and rawIndex walk JSON text without losing the order of the objects inside; nil when there is no such part.
+func rawKey(raw json.RawMessage, key string) json.RawMessage {
+	var m map[string]json.RawMessage
+	if raw == nil || json.Unmarshal(raw, &m) != nil {
+		return nil
+	}
+	return m[key]
+}
+
+func rawList(raw json.RawMessage) []json.RawMessage {
+	var l []json.RawMessage
+	if raw == nil || json.Unmarshal(raw, &l) != nil {
+		return nil
+	}
+	return l
+}
+
+// utf16Compare orders strings as JavaScript's < does: by UTF-16 code unit, not by code point (they differ when
+// one side has a character beyond U+FFFF and the other one in U+E000..U+FFFF).
+func utf16Compare(a, b string) int {
+	ra, rb := []rune(a), []rune(b)
+	for i := 0; i < len(ra) && i < len(rb); i++ {
+		x, y := ra[i], rb[i]
+		if x == y {
+			continue
+		}
+		if x > 0xffff && y <= 0xffff {
+			x = 0xd800 // any high surrogate sorts the same against a single unit
+		} else if y > 0xffff && x <= 0xffff {
+			y = 0xd800
+		}
+		if x < y {
+			return -1
+		}
+		return 1
+	}
+	return len(ra) - len(rb)
+}
+
+// jsonKey is JSON.stringify(v) as an identity: two JSON values get the same text exactly when JavaScript gives
+// them the same text (-0 is 0). Object keys come sorted: the order they were written in is not known here.
+func jsonKey(b *strings.Builder, v any) {
+	switch x := v.(type) {
+	case bool:
+		b.WriteString(strconv.FormatBool(x))
+	case float64:
+		if isFinite(x) {
+			b.WriteString(numberString(x))
+		} else {
+			b.WriteString("null")
+		}
+	case string:
+		b.WriteString(strconv.Quote(x))
+	case []any:
+		b.WriteByte('[')
+		for i, e := range x {
+			if i > 0 {
+				b.WriteByte(',')
+			}
+			jsonKey(b, e)
+		}
+		b.WriteByte(']')
+	case map[string]any:
+		b.WriteByte('{')
+		for i, k := range sortedKeys(x) {
+			if i > 0 {
+				b.WriteByte(',')
+			}
+			b.WriteString(strconv.Quote(k))
+			b.WriteByte(':')
+			jsonKey(b, x[k])
+		}
+		b.WriteByte('}')
+	default:
+		b.WriteString("null")
+	}
 }

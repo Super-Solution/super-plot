@@ -1,17 +1,45 @@
 {
   "name": "@supersolutions/super-plot-react",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "<SuperPlot> React component: a thin binding over the web mount.",
   "private": true,
   "license": "UNLICENSED",
   "type": "module",
-  "engines": { "node": ">=22" },
-  "sideEffects": false,
-  "files": ["dist", "README.md"],
-  "dependencies": { "@supersolutions/super-plot-web": "0.2.0" },
-  "peerDependencies": { "react": ">=18" },
-  "exports": { ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" } },
+  "engines": {
+    "node": ">=22"
+  },
+  "sideEffects": [
+    "./dist/index.js",
+    "./src/index.tsx"
+  ],
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "dependencies": {
+    "@supersolutions/super-plot-web": "0.3.0"
+  },
+  "peerDependencies": {
+    "react": ">=18"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./base": {
+      "types": "./dist/base.d.ts",
+      "import": "./dist/base.js"
+    }
+  },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "author": "SUPER SOLUTION LABS INC"
+  "author": "SUPER SOLUTION LABS INC",
+  "typesVersions": {
+    "*": {
+      "base": [
+        "./dist/base.d.ts"
+      ]
+    }
+  }
 }

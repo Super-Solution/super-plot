@@ -147,7 +147,7 @@ def _civil(days: int) -> tuple[int, int, int]:
 def format_date(ms: float) -> str:
     """`Aug 31, 2026` (UTC)."""
     y, m, d = _civil(int(ms // 86_400_000))
-    return f"{_MONTHS[m - 1]} {d}, {y}"
+    return f"{_MONTHS[m - 1]} {d}, {y if y > 0 else 1 - y}"  # Intl prints the year of the era: year 0 is "1" (BC)
 
 
 __all__ = ["format_value", "format_percent", "format_date", "value_formatter", "is_value_format", "is_finite_number"]

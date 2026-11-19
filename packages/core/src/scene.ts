@@ -28,6 +28,8 @@ export interface MarkBase {
   focus?: { x: number; y: number; color: string }[]
   /** Free-form payload handed to `onSelect`: the source row(s) of this mark. */
   datum?: unknown
+  /** Texture drawn over the fill (`patterns: true`): index into the pattern set, one per series. */
+  pattern?: number
   opacity?: number
   /** Clip to `scene.clips[clip]` (maps: the world outline and the plot area). */
   clip?: string
@@ -74,6 +76,29 @@ export interface Scene {
   clips?: Record<string, string>
   /** Maps only: the geography and data in longitude/latitude, for renderers that project it themselves (WebGL). */
   geo?: SceneGeo
+  /** Charts on two axes: the plot rectangle and both scales, so a binding can map pixels back to data (zoom, brush). */
+  axes?: SceneAxes
+  /** Small multiples (`facet`): one entry per panel. */
+  panels?: { key: string; plot: Rect }[]
+}
+
+export interface AxisInfo {
+  kind: 'linear' | 'time' | 'band'
+  /** Numbers for linear and time (epoch ms); the categories, in order, for band. */
+  domain: [number, number] | string[]
+  /** Pixel range: [left, right] or [bottom, top]. For band, [first band start, last band end]. */
+  range: [number, number]
+  /** The data column this axis shows, when there is one. */
+  field?: string
+}
+
+export interface SceneAxes {
+  plot: Rect
+  x: AxisInfo
+  y: AxisInfo
+  /** What the spec allows the viewer to do (only where the axes support it). */
+  zoom?: 'x' | 'xy'
+  brush?: 'x' | 'xy'
 }
 
 export interface GeoRegionItem {

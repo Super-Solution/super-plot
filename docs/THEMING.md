@@ -47,6 +47,14 @@ createTheme('light', { alias: { text: ['--sc-text'], grid: ['--sc-grid'], backgr
 Result: `var(--sp-text, var(--sc-text, #131722))`. Check the variable names against Super Chart's current tokens
 before relying on them. A shared theme package would remove the need (see OPEN-DECISIONS).
 
+## shadcn/ui
+
+`theme: 'shadcn'` reads shadcn's own tokens, so a shadcn project's charts follow its theme (light, dark, custom) with no configuration: `--chart-1` to `--chart-5` for the first five series (then the default palette), `--card` / `--background` for the background, `--popover` for tooltips, `--card-foreground` / `--foreground` for text, `--muted-foreground`, `--border` for grid, axis and borders, `--destructive` for negative values. Each still sits behind `--sp-*`, so `--sp-series-1` overrides `--chart-1`. Exports (PNG, `toSvg`, `renderToSvg`) use the plain fallbacks, as for every theme.
+
+## Textures
+
+`patterns: true` in the spec gives each series one of eight 8 px textures (stripes, dots, cross-hatch...) drawn over its fill in the background colour at 60% opacity, on bars, areas, slices, cells and legend swatches, in SVG and canvas alike. Use it for colour-blind readers and greyscale print; the colours do not change.
+
 ## Export
 
 `resolveVars(svg)` replaces every `var(--x, fallback)` with its fallback, for PNG, email and PDF where CSS variables do not exist.

@@ -4,7 +4,10 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 const root = new URL('..', import.meta.url).pathname
 const alias = {
+  '@supersolutions/super-plot-core/base': join(root, 'packages/core/src/base.ts'),
+  '@supersolutions/super-plot-core/charts': join(root, 'packages/core/src/charts.ts'),
   '@supersolutions/super-plot-core': join(root, 'packages/core/src/index.ts'),
+  '@supersolutions/super-plot-web/base': join(root, 'packages/bindings/web/src/base.ts'),
   '@supersolutions/super-plot-web': join(root, 'packages/bindings/web/src/index.ts')
 }
 const r = await build({ entryPoints: [join(root, 'examples/showcase/main.ts')], bundle: true, write: false, format: 'iife', target: 'es2020', minify: true, alias, logLevel: 'warning' })

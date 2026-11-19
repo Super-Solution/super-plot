@@ -4,6 +4,7 @@
  * tens of thousands of marks is drawn here in a few milliseconds; the same scene also feeds `renderSvg`.
  */
 import type { Mark, Scene } from './scene.js'
+import { PATTERN_OPACITY, patternAt } from './patterns.js'
 
 /** The slice of CanvasRenderingContext2D that Super Plot uses. */
 export interface Canvas2D {
@@ -49,6 +50,31 @@ export interface DrawOptions {
   filter?: (mark: Mark, index: number) => boolean
   /** Skip the background fill (a layer drawn over another). */
   transparent?: boolean
+  /** A fill style for texture `i` (`patterns: true`); the web binding builds one from {@link drawPatternTile}. */
+  pattern?: (index: number) => unknown
+  /**
+   * Draw a run of same-style dots without paths, e.g. by stamping pixels. Return false to let the default path
+   * drawing run. The web binding uses this for dense scatter plots, where it is many times faster.
+   */
+  dots?: (run: { cx: Float64Array; cy: Float64Array; r: Float64Array; fill: string; opacity: number; clip?: string }) => boolean
+}
+
+/** Draw texture `index` onto an 8 x 8 tile (scale the context first for a sharper tile) in `ink`. */
+export function drawPatternTile(ctx: Canvas2D, index: number, ink: string, Path2D?: Path2DCtor): void {
+  const t = patternAt(index)
+  ctx.save()
+  if (t.lines && Path2D) {
+    ctx.strokeStyle = ink
+    ctx.lineWidth = t.width ?? 1
+    ctx.stroke(new Path2D(t.lines))
+  }
+  for (const [x, y] of t.dots ?? []) {
+    ctx.beginPath()
+    ctx.arc(x, y, t.r ?? 1, 0, Math.PI * 2)
+    ctx.fillStyle = ink
+    ctx.fill()
+  }
+  ctx.restore()
 }
 
 /** Plain colour from `var(--a, var(--b, #fff))`: the first variable `lookup` knows, else the innermost fallback. */
@@ -132,7 +158,12 @@ export function drawScene(ctx: Canvas2D, scene: Scene, o: DrawOptions = {}): voi
         const stroke = paintOf(m.stroke, rv)
         if (!fill && !stroke) break
         roundedRect(ctx, m.x, m.y, Math.max(0, m.w), Math.max(0, m.h), m.r)
-        if (fill && fill !== 'transparent') { ctx.fillStyle = fill; ctx.fill() }
+        if (fill && fill !== 'transparent') {
+          ctx.fillStyle = fill
+          ctx.fill()
+          const pat = m.pattern !== undefined ? o.pattern?.(m.pattern) : undefined
+          if (pat) { ctx.globalAlpha = (m.opacity ?? 1) * PATTERN_OPACITY; ctx.fillStyle = pat; ctx.fill(); ctx.globalAlpha = m.opacity ?? 1 }
+        }
         if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = m.strokeWidth ?? 1; ctx.stroke() }
         break
       }
@@ -142,6 +173,20 @@ export function drawScene(ctx: Canvas2D, scene: Scene, o: DrawOptions = {}): voi
         while (j + 1 < marks.length && marks[j + 1].type === 'circle' && sameStyle(m, marks[j + 1] as typeof m) && marks[j + 1].clip === m.clip && (!filter || filter(marks[j + 1], j + 1))) j++
         const fill = paintOf(m.fill, rv)
         const stroke = paintOf(m.stroke, rv)
+        if (o.dots && fill && !stroke && j - i >= 500) {
+          const len = j - i + 1
+          const cx = new Float64Array(len), cy = new Float64Array(len), r = new Float64Array(len)
+          for (let k = 0; k < len; k++) {
+            const c = marks[i + k] as typeof m
+            cx[k] = c.cx
+            cy[k] = c.cy
+            r[k] = c.r
+          }
+          if (o.dots({ cx, cy, r, fill, opacity: m.opacity ?? 1, ...(m.clip !== undefined ? { clip: m.clip } : {}) })) {
+            i = j
+            break
+          }
+        }
         ctx.beginPath()
         for (let k = i; k <= j; k++) {
           const c = marks[k] as typeof m
@@ -170,7 +215,19 @@ export function drawScene(ctx: Canvas2D, scene: Scene, o: DrawOptions = {}): voi
         if (!p) { p = new o.Path2D(m.d); o.paths?.set(i, p) }
         const fill = paintOf(m.fill, rv)
         const stroke = paintOf(m.stroke, rv)
-        if (fill) { ctx.fillStyle = fill; if (m.rule) ctx.fill(p, m.rule); else ctx.fill(p) }
+        if (fill) {
+          ctx.fillStyle = fill
+          if (m.rule) ctx.fill(p, m.rule)
+          else ctx.fill(p)
+          const pat = m.pattern !== undefined ? o.pattern?.(m.pattern) : undefined
+          if (pat) {
+            ctx.globalAlpha = (m.opacity ?? 1) * PATTERN_OPACITY
+            ctx.fillStyle = pat
+            if (m.rule) ctx.fill(p, m.rule)
+            else ctx.fill(p)
+            ctx.globalAlpha = m.opacity ?? 1
+          }
+        }
         if (stroke) {
           ctx.strokeStyle = stroke
           ctx.lineWidth = m.strokeWidth ?? 1

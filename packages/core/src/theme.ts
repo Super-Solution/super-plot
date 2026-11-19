@@ -136,6 +136,28 @@ const ACCESSIBLE_TOKENS = { positive: '#0072B2', negative: '#D55E00', info: '#00
 registerTheme(createTheme('light', { name: 'accessible', palette: ACCESSIBLE, colors: ACCESSIBLE_TOKENS }))
 registerTheme(createTheme('dark', { name: 'accessible-dark', palette: ACCESSIBLE, colors: { ...ACCESSIBLE_TOKENS, 'seq-high': '#56B4E9' } }))
 
+/**
+ * `shadcn`: reads a shadcn/ui project's own tokens (Tailwind v4 style, full colour values such as
+ * `--chart-1: oklch(...)`), so a chart matches the app with no setup and follows its `.dark` class. Series 1-5
+ * are `--chart-1..5`; 6-8 fall back to the Super palette. Projects whose tokens are bare HSL channels
+ * (`--chart-1: 12 76% 61%`, Tailwind v3) set `--sp-series-1: hsl(var(--chart-1))` and so on instead.
+ */
+const SHADCN_COLORS: Record<string, string> = {
+  background: 'var(--card, var(--background, #FFFFFF))',
+  surface: 'var(--popover, var(--background, #FFFFFF))',
+  text: 'var(--card-foreground, var(--foreground, #131722))',
+  'text-muted': 'var(--muted-foreground, #5F6270)',
+  grid: 'var(--border, #EEF0F5)',
+  axis: 'var(--border, #D1D4DC)',
+  border: 'var(--border, #D1D4DC)',
+  negative: 'var(--destructive, #F23645)'
+}
+registerTheme(createTheme('light', {
+  name: 'shadcn',
+  colors: SHADCN_COLORS,
+  palette: [...PALETTE.slice(0, 5).map((c, i) => `var(--chart-${i + 1}, ${c})`), ...PALETTE.slice(5)]
+}))
+
 export type ThemeOption = 'light' | 'dark' | 'auto' | string | Theme
 
 /** Turn a render option into a Theme. `'auto'` follows `prefersDark` (the web binding passes the media query). */
@@ -162,7 +184,7 @@ export function seriesVar(theme: Theme, index: number): string {
 }
 
 /** The plain value behind a token (for maths such as colour interpolation). */
-export const tokenValue = (theme: Theme, token: string): string => theme.colors[token] ?? theme.colors.text
+export const tokenValue = (theme: Theme, token: string): string => resolveVars(theme.colors[token] ?? theme.colors.text)
 
 /** Strip `var(--x, fallback)` down to the fallback, for renderers that do not understand CSS variables. */
 export function resolveVars(css: string): string {

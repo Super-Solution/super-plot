@@ -1,19 +1,61 @@
 {
   "name": "@supersolutions/super-plot-core",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Renderer-free statistical charts: spec validation, layout to a scene, SVG output, themes and agent tools. No DOM.",
   "private": true,
   "license": "UNLICENSED",
   "type": "module",
-  "engines": { "node": ">=22" },
-  "sideEffects": ["./dist/index.js"],
-  "files": ["dist", "README.md"],
-  "exports": {
-    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" },
-    "./tools": { "types": "./dist/tools.d.ts", "import": "./dist/tools.js" },
-    "./adapters": { "types": "./dist/adapters.d.ts", "import": "./dist/adapters.js" }
+  "engines": {
+    "node": ">=22"
   },
-  "typesVersions": { "*": { "tools": ["./dist/tools.d.ts"], "adapters": ["./dist/adapters.d.ts"] } },
+  "sideEffects": [
+    "./dist/index.js",
+    "./dist/tools.js",
+    "./src/index.ts",
+    "./src/tools.ts"
+  ],
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./base": {
+      "types": "./dist/base.d.ts",
+      "import": "./dist/base.js"
+    },
+    "./charts": {
+      "types": "./dist/charts.d.ts",
+      "import": "./dist/charts.js"
+    },
+    "./tools": {
+      "types": "./dist/tools.d.ts",
+      "import": "./dist/tools.js"
+    },
+    "./adapters": {
+      "types": "./dist/adapters.d.ts",
+      "import": "./dist/adapters.js"
+    }
+  },
+  "typesVersions": {
+    "*": {
+      "base": [
+        "./dist/base.d.ts"
+      ],
+      "charts": [
+        "./dist/charts.d.ts"
+      ],
+      "tools": [
+        "./dist/tools.d.ts"
+      ],
+      "adapters": [
+        "./dist/adapters.d.ts"
+      ]
+    }
+  },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "author": "SUPER SOLUTION LABS INC"

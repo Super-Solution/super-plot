@@ -760,6 +760,16 @@
           "desc": "Series (or slice/category) name to CSS colour, e.g. {\"Revenue\":\"#2962FF\"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours."
         },
         {
+          "name": "transform",
+          "kind": "transform",
+          "desc": "Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+        },
+        {
+          "name": "patterns",
+          "kind": "boolean",
+          "desc": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
+        },
+        {
           "name": "xLabel",
           "kind": "string",
           "max": 80,
@@ -775,6 +785,32 @@
           "name": "annotations",
           "kind": "annotations",
           "desc": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band."
+        },
+        {
+          "name": "facet",
+          "kind": "column",
+          "role": "any",
+          "desc": "Split into small multiples: one panel per value of this column (at most 12), sharing axes, colours and one legend."
+        },
+        {
+          "name": "zoom",
+          "kind": "enum",
+          "values": [
+            "none",
+            "x",
+            "xy"
+          ],
+          "desc": "Default none. Let the viewer zoom and pan a continuous axis (web binding): Ctrl/⌘-scroll or pinch to zoom, drag to pan, double-click or 0 to reset. Scatter, line and area."
+        },
+        {
+          "name": "brush",
+          "kind": "enum",
+          "values": [
+            "none",
+            "x",
+            "xy"
+          ],
+          "desc": "Default none. Let the viewer drag out a range to select (web binding). The selection comes back as a filter step, ready for `transform`. With `zoom` too, Shift-drag pans."
         },
         {
           "name": "x",
@@ -833,6 +869,12 @@
           "kind": "boolean",
           "default": false,
           "desc": "Print values on the bars. Keep off for dense charts; the tooltip carries the numbers."
+        },
+        {
+          "name": "line",
+          "kind": "columns",
+          "role": "number",
+          "desc": "Combo chart: numeric column(s) drawn as lines with points over vertical bars, on the same value axis (a target, an average). Ignored for horizontal and 100% stacked bars."
         },
         {
           "name": "yDomain",
@@ -915,6 +957,16 @@
           "desc": "Series (or slice/category) name to CSS colour, e.g. {\"Revenue\":\"#2962FF\"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours."
         },
         {
+          "name": "transform",
+          "kind": "transform",
+          "desc": "Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+        },
+        {
+          "name": "patterns",
+          "kind": "boolean",
+          "desc": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
+        },
+        {
           "name": "xLabel",
           "kind": "string",
           "max": 80,
@@ -930,6 +982,32 @@
           "name": "annotations",
           "kind": "annotations",
           "desc": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band."
+        },
+        {
+          "name": "facet",
+          "kind": "column",
+          "role": "any",
+          "desc": "Split into small multiples: one panel per value of this column (at most 12), sharing axes, colours and one legend."
+        },
+        {
+          "name": "zoom",
+          "kind": "enum",
+          "values": [
+            "none",
+            "x",
+            "xy"
+          ],
+          "desc": "Default none. Let the viewer zoom and pan a continuous axis (web binding): Ctrl/⌘-scroll or pinch to zoom, drag to pan, double-click or 0 to reset. Scatter, line and area."
+        },
+        {
+          "name": "brush",
+          "kind": "enum",
+          "values": [
+            "none",
+            "x",
+            "xy"
+          ],
+          "desc": "Default none. Let the viewer drag out a range to select (web binding). The selection comes back as a filter step, ready for `transform`. With `zoom` too, Shift-drag pans."
         },
         {
           "name": "x",
@@ -962,6 +1040,11 @@
           ],
           "default": "auto",
           "desc": "How to read `x`. `auto` detects numbers, ISO dates and categories."
+        },
+        {
+          "name": "xDomain",
+          "kind": "domain",
+          "desc": "Fix the horizontal range of a numeric or time x axis (dates as ISO strings). Lines run to the edge and are cut there."
         },
         {
           "name": "yDomain",
@@ -1060,6 +1143,16 @@
           "desc": "Series (or slice/category) name to CSS colour, e.g. {\"Revenue\":\"#2962FF\"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours."
         },
         {
+          "name": "transform",
+          "kind": "transform",
+          "desc": "Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+        },
+        {
+          "name": "patterns",
+          "kind": "boolean",
+          "desc": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
+        },
+        {
           "name": "xLabel",
           "kind": "string",
           "max": 80,
@@ -1075,6 +1168,32 @@
           "name": "annotations",
           "kind": "annotations",
           "desc": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band."
+        },
+        {
+          "name": "facet",
+          "kind": "column",
+          "role": "any",
+          "desc": "Split into small multiples: one panel per value of this column (at most 12), sharing axes, colours and one legend."
+        },
+        {
+          "name": "zoom",
+          "kind": "enum",
+          "values": [
+            "none",
+            "x",
+            "xy"
+          ],
+          "desc": "Default none. Let the viewer zoom and pan a continuous axis (web binding): Ctrl/⌘-scroll or pinch to zoom, drag to pan, double-click or 0 to reset. Scatter, line and area."
+        },
+        {
+          "name": "brush",
+          "kind": "enum",
+          "values": [
+            "none",
+            "x",
+            "xy"
+          ],
+          "desc": "Default none. Let the viewer drag out a range to select (web binding). The selection comes back as a filter step, ready for `transform`. With `zoom` too, Shift-drag pans."
         },
         {
           "name": "x",
@@ -1107,6 +1226,11 @@
           ],
           "default": "auto",
           "desc": "How to read `x`. `auto` detects numbers, ISO dates and categories."
+        },
+        {
+          "name": "xDomain",
+          "kind": "domain",
+          "desc": "Fix the horizontal range of a numeric or time x axis (dates as ISO strings). Lines run to the edge and are cut there."
         },
         {
           "name": "yDomain",
@@ -1211,6 +1335,16 @@
           "desc": "Series (or slice/category) name to CSS colour, e.g. {\"Revenue\":\"#2962FF\"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours."
         },
         {
+          "name": "transform",
+          "kind": "transform",
+          "desc": "Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+        },
+        {
+          "name": "patterns",
+          "kind": "boolean",
+          "desc": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
+        },
+        {
           "name": "xLabel",
           "kind": "string",
           "max": 80,
@@ -1226,6 +1360,32 @@
           "name": "annotations",
           "kind": "annotations",
           "desc": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band."
+        },
+        {
+          "name": "facet",
+          "kind": "column",
+          "role": "any",
+          "desc": "Split into small multiples: one panel per value of this column (at most 12), sharing axes, colours and one legend."
+        },
+        {
+          "name": "zoom",
+          "kind": "enum",
+          "values": [
+            "none",
+            "x",
+            "xy"
+          ],
+          "desc": "Default none. Let the viewer zoom and pan a continuous axis (web binding): Ctrl/⌘-scroll or pinch to zoom, drag to pan, double-click or 0 to reset. Scatter, line and area."
+        },
+        {
+          "name": "brush",
+          "kind": "enum",
+          "values": [
+            "none",
+            "x",
+            "xy"
+          ],
+          "desc": "Default none. Let the viewer drag out a range to select (web binding). The selection comes back as a filter step, ready for `transform`. With `zoom` too, Shift-drag pans."
         },
         {
           "name": "x",
@@ -1268,6 +1428,16 @@
           ],
           "default": "none",
           "desc": "Draw a least-squares line per series."
+        },
+        {
+          "name": "density",
+          "kind": "enum",
+          "values": [
+            "points",
+            "hex",
+            "auto"
+          ],
+          "desc": "Default points. `hex` draws hexagons coloured by how many points fall in each (with a count legend); `auto` does so above 10,000 visible points. Hexagons merge groups."
         },
         {
           "name": "xType",
@@ -1364,6 +1534,16 @@
           "name": "colors",
           "kind": "colors",
           "desc": "Series (or slice/category) name to CSS colour, e.g. {\"Revenue\":\"#2962FF\"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours."
+        },
+        {
+          "name": "transform",
+          "kind": "transform",
+          "desc": "Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+        },
+        {
+          "name": "patterns",
+          "kind": "boolean",
+          "desc": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
         },
         {
           "name": "label",
@@ -1494,6 +1674,16 @@
           "desc": "Series (or slice/category) name to CSS colour, e.g. {\"Revenue\":\"#2962FF\"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours."
         },
         {
+          "name": "transform",
+          "kind": "transform",
+          "desc": "Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+        },
+        {
+          "name": "patterns",
+          "kind": "boolean",
+          "desc": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
+        },
+        {
           "name": "label",
           "kind": "column",
           "role": "any",
@@ -1622,6 +1812,16 @@
           "desc": "Series (or slice/category) name to CSS colour, e.g. {\"Revenue\":\"#2962FF\"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours."
         },
         {
+          "name": "transform",
+          "kind": "transform",
+          "desc": "Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+        },
+        {
+          "name": "patterns",
+          "kind": "boolean",
+          "desc": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
+        },
+        {
           "name": "xLabel",
           "kind": "string",
           "max": 80,
@@ -1637,6 +1837,32 @@
           "name": "annotations",
           "kind": "annotations",
           "desc": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band."
+        },
+        {
+          "name": "facet",
+          "kind": "column",
+          "role": "any",
+          "desc": "Split into small multiples: one panel per value of this column (at most 12), sharing axes, colours and one legend."
+        },
+        {
+          "name": "zoom",
+          "kind": "enum",
+          "values": [
+            "none",
+            "x",
+            "xy"
+          ],
+          "desc": "Default none. Let the viewer zoom and pan a continuous axis (web binding): Ctrl/⌘-scroll or pinch to zoom, drag to pan, double-click or 0 to reset. Scatter, line and area."
+        },
+        {
+          "name": "brush",
+          "kind": "enum",
+          "values": [
+            "none",
+            "x",
+            "xy"
+          ],
+          "desc": "Default none. Let the viewer drag out a range to select (web binding). The selection comes back as a filter step, ready for `transform`. With `zoom` too, Shift-drag pans."
         },
         {
           "name": "value",
@@ -1756,6 +1982,16 @@
           "desc": "Series (or slice/category) name to CSS colour, e.g. {\"Revenue\":\"#2962FF\"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours."
         },
         {
+          "name": "transform",
+          "kind": "transform",
+          "desc": "Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+        },
+        {
+          "name": "patterns",
+          "kind": "boolean",
+          "desc": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
+        },
+        {
           "name": "xLabel",
           "kind": "string",
           "max": 80,
@@ -1771,6 +2007,32 @@
           "name": "annotations",
           "kind": "annotations",
           "desc": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band."
+        },
+        {
+          "name": "facet",
+          "kind": "column",
+          "role": "any",
+          "desc": "Split into small multiples: one panel per value of this column (at most 12), sharing axes, colours and one legend."
+        },
+        {
+          "name": "zoom",
+          "kind": "enum",
+          "values": [
+            "none",
+            "x",
+            "xy"
+          ],
+          "desc": "Default none. Let the viewer zoom and pan a continuous axis (web binding): Ctrl/⌘-scroll or pinch to zoom, drag to pan, double-click or 0 to reset. Scatter, line and area."
+        },
+        {
+          "name": "brush",
+          "kind": "enum",
+          "values": [
+            "none",
+            "x",
+            "xy"
+          ],
+          "desc": "Default none. Let the viewer drag out a range to select (web binding). The selection comes back as a filter step, ready for `transform`. With `zoom` too, Shift-drag pans."
         },
         {
           "name": "x",
@@ -1880,6 +2142,16 @@
           "name": "colors",
           "kind": "colors",
           "desc": "Series (or slice/category) name to CSS colour, e.g. {\"Revenue\":\"#2962FF\"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours."
+        },
+        {
+          "name": "transform",
+          "kind": "transform",
+          "desc": "Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+        },
+        {
+          "name": "patterns",
+          "kind": "boolean",
+          "desc": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
         },
         {
           "name": "x",
@@ -2001,6 +2273,16 @@
           "desc": "Series (or slice/category) name to CSS colour, e.g. {\"Revenue\":\"#2962FF\"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours."
         },
         {
+          "name": "transform",
+          "kind": "transform",
+          "desc": "Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+        },
+        {
+          "name": "patterns",
+          "kind": "boolean",
+          "desc": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
+        },
+        {
           "name": "x",
           "kind": "column",
           "role": "any",
@@ -2117,6 +2399,16 @@
           "desc": "Series (or slice/category) name to CSS colour, e.g. {\"Revenue\":\"#2962FF\"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours."
         },
         {
+          "name": "transform",
+          "kind": "transform",
+          "desc": "Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+        },
+        {
+          "name": "patterns",
+          "kind": "boolean",
+          "desc": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
+        },
+        {
           "name": "label",
           "kind": "column",
           "role": "any",
@@ -2218,6 +2510,16 @@
           "desc": "Series (or slice/category) name to CSS colour, e.g. {\"Revenue\":\"#2962FF\"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours."
         },
         {
+          "name": "transform",
+          "kind": "transform",
+          "desc": "Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+        },
+        {
+          "name": "patterns",
+          "kind": "boolean",
+          "desc": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
+        },
+        {
           "name": "from",
           "kind": "column",
           "role": "any",
@@ -2312,6 +2614,16 @@
           "name": "colors",
           "kind": "colors",
           "desc": "Series (or slice/category) name to CSS colour, e.g. {\"Revenue\":\"#2962FF\"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours."
+        },
+        {
+          "name": "transform",
+          "kind": "transform",
+          "desc": "Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+        },
+        {
+          "name": "patterns",
+          "kind": "boolean",
+          "desc": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
         },
         {
           "name": "geo",
@@ -2470,6 +2782,16 @@
           "name": "colors",
           "kind": "colors",
           "desc": "Series (or slice/category) name to CSS colour, e.g. {\"Revenue\":\"#2962FF\"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours."
+        },
+        {
+          "name": "transform",
+          "kind": "transform",
+          "desc": "Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+        },
+        {
+          "name": "patterns",
+          "kind": "boolean",
+          "desc": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
         },
         {
           "name": "geo",
@@ -2631,6 +2953,16 @@
           "desc": "Series (or slice/category) name to CSS colour, e.g. {\"Revenue\":\"#2962FF\"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours."
         },
         {
+          "name": "transform",
+          "kind": "transform",
+          "desc": "Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+        },
+        {
+          "name": "patterns",
+          "kind": "boolean",
+          "desc": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
+        },
+        {
           "name": "geo",
           "kind": "geo",
           "required": false,
@@ -2789,6 +3121,16 @@
           "name": "colors",
           "kind": "colors",
           "desc": "Series (or slice/category) name to CSS colour, e.g. {\"Revenue\":\"#2962FF\"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours."
+        },
+        {
+          "name": "transform",
+          "kind": "transform",
+          "desc": "Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+        },
+        {
+          "name": "patterns",
+          "kind": "boolean",
+          "desc": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
         },
         {
           "name": "geo",

@@ -1,7 +1,7 @@
 import type { Issue } from './schema.js'
-import type { Mark, Rect, SceneGeo, SeriesInfo, TextMark } from './scene.js'
+import type { AxisInfo, Mark, Rect, SceneGeo, SeriesInfo, TextMark } from './scene.js'
 import type { RenderEnv } from './theme.js'
-import { cssVar, seriesVar } from './theme.js'
+import { cssVar, resolveVars, seriesVar } from './theme.js'
 import { fit, clip } from './util/text.js'
 import { parseHex } from './util/color.js'
 import { valueFormatter } from './util/format.js'
@@ -23,6 +23,10 @@ export class ChartCtx<S extends Record<string, any> = Record<string, any>> {
   readonly clips: Record<string, string> = {}
   /** Maps: the geography payload for 3D renderers. */
   geo: SceneGeo | undefined
+  /** Set by `layoutCartesian`: the plot rectangle and scales (zoom, brush, facets). */
+  axes: { plot: Rect; x: AxisInfo; y: AxisInfo } | undefined
+  /** Data columns behind the x and y axes, when a chart's axes are not simply `spec.x` / `spec.y`. */
+  axisFields: { x?: string; y?: string } | undefined
   readonly issues: Issue[]
   /** Series keys hidden by the viewer (legend toggles). */
   readonly hidden: Set<string>
@@ -37,7 +41,9 @@ export class ChartCtx<S extends Record<string, any> = Record<string, any>> {
     readonly width: number,
     readonly height: number,
     hidden: Iterable<string>,
-    issues: Issue[]
+    issues: Issue[],
+    /** Top left corner of this chart inside the scene (small multiples draw several charts in one). */
+    readonly origin: { x: number; y: number } = { x: 0, y: 0 }
   ) {
     this.hidden = new Set(hidden)
     this.issues = issues
@@ -69,7 +75,7 @@ export class ChartCtx<S extends Record<string, any> = Record<string, any>> {
   seriesHex(key: string, index: number): string {
     const o = (this.spec.colors as Record<string, string> | undefined)?.[key]
     const p = this.env.theme.palette
-    return o && parseHex(o) ? o : p[((index % p.length) + p.length) % p.length]
+    return o && parseHex(o) ? o : resolveVars(p[((index % p.length) + p.length) % p.length])
   }
 
   makeSeries(keys: string[], labels?: Record<string, string>): SeriesInfo[] {
@@ -89,10 +95,12 @@ export class ChartCtx<S extends Record<string, any> = Record<string, any>> {
     const { spec, pad } = this
     const w = this.width
     const h = this.height
-    let top = pad
-    let bottom = h - pad
-    let right = w - pad
-    const left = pad
+    const ox = this.origin.x
+    const oy = this.origin.y
+    let top = oy + pad
+    let bottom = oy + h - pad
+    let right = ox + w - pad
+    const left = ox + pad
 
     if (spec.title) {
       const size = this.compact ? this.theme.titleSize - 2 : this.theme.titleSize
@@ -120,7 +128,7 @@ export class ChartCtx<S extends Record<string, any> = Record<string, any>> {
         const labelW = Math.max(...opts.series.map(s => this.measure(s.label)), 0)
         const trailW = trailing ? Math.max(...opts.series.map(s => this.measure(trailing(s.key))), 0) + 12 : 0
         const colW = Math.min(Math.max(120, labelW + trailW + 28), w * 0.4)
-        const x0 = w - pad - colW
+        const x0 = ox + w - pad - colW
         const rowH = this.size + 12
         const total = opts.series.length * rowH
         let y = top + Math.max(0, (bottom - top - total) / 2)

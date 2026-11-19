@@ -27,15 +27,17 @@ func floats(v any) []float64 {
 
 func main() {
 	var d struct {
-		Out   [][]any `json:"out"`
-		Ticks [][]any `json:"ticks"`
-		Bins  [][]any `json:"bins"`
-		Specs []struct {
+		Out     [][]any `json:"out"`
+		Ticks   [][]any `json:"ticks"`
+		Bins    [][]any `json:"bins"`
+		Buckets [][]any `json:"buckets"`
+		Specs   []struct {
 			Spec       json.RawMessage `json:"spec"` // as written: a decoded map forgets the order of a Topology's objects
 			OK         bool            `json:"ok"`
 			Issues     [][]string      `json:"issues"`
 			Normalized map[string]any  `json:"normalized"`
 			Describe   *string         `json:"describe"`
+			Rows       []any           `json:"rows"` // what the chart reads after transform; absent without one
 		} `json:"specs"`
 	}
 	b, err := os.ReadFile(os.Args[1])
@@ -89,6 +91,11 @@ func main() {
 			report("BOX", st, bx)
 		}
 	}
+	for _, c := range d.Buckets {
+		if got := sp.TimeBucket(c[0].(float64), c[1].(string)); got != c[2].(string) {
+			report("BUCKET", c[0], c[1], got, c[2])
+		}
+	}
 	for i, c := range d.Specs {
 		v := sp.ValidatePlot([]byte(c.Spec))
 		var got, want []string
@@ -115,14 +122,21 @@ func main() {
 			jb, _ := json.Marshal(n)
 			var back map[string]any
 			_ = json.Unmarshal(jb, &back)
+			var rows []any
+			if c.Rows != nil {
+				rb, _ := json.Marshal(v.Spec["data"])
+				_ = json.Unmarshal(rb, &rows)
+			}
 			if !reflect.DeepEqual(back, c.Normalized) {
 				report("SPEC", i, "normalized")
+			} else if !reflect.DeepEqual(rows, c.Rows) {
+				report("SPEC", i, "rows", rows, c.Rows)
 			} else if text, err := sp.DescribePlot([]byte(c.Spec)); err != nil || text != *c.Describe {
 				report("SPEC", i, "describe", text, *c.Describe)
 			}
 		}
 	}
-	fmt.Printf("go: %d numeric cases, %d specs, %d mismatches\n", len(d.Out)+len(d.Ticks)+len(d.Bins), len(d.Specs), bad)
+	fmt.Printf("go: %d numeric cases, %d specs, %d mismatches\n", len(d.Out)+len(d.Ticks)+len(d.Bins)+len(d.Buckets), len(d.Specs), bad)
 	if bad > 0 {
 		os.Exit(1)
 	}

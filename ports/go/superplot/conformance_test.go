@@ -98,7 +98,8 @@ type conformance struct {
 		} `json:"in"`
 		Out string `json:"out"`
 	} `json:"percents"`
-	DescribeCases []struct {
+	TransformCases []transformCase `json:"transformCases"`
+	DescribeCases  []struct {
 		Name       string   `json:"name"`
 		Spec       any      `json:"spec"`
 		Describe   *string  `json:"describe"`
@@ -378,6 +379,67 @@ func runCases(t *testing.T, cases []validationCase) {
 
 func TestBrokenSpecs(t *testing.T)     { runCases(t, load(t).BrokenSpecs) }
 func TestValidationCases(t *testing.T) { runCases(t, load(t).ValidationCases) }
+
+// transformCase is a spec with a transform: besides the issues and the normalised spec, the rows the chart reads
+// after the steps have run, and the description made from them.
+type transformCase struct {
+	validationCase
+	Rows     []any   `json:"rows"`
+	Describe *string `json:"describe"`
+}
+
+func TestTransformCases(t *testing.T) {
+	var cases []validationCase
+	all := load(t).TransformCases
+	if len(all) == 0 {
+		t.Fatal("no transform cases")
+	}
+	for _, x := range all {
+		cases = append(cases, x.validationCase)
+		v := ValidatePlot(asGiven(x.Spec))
+		if !v.OK {
+			continue
+		}
+		// Through JSON, as a caller would send the rows on.
+		b, err := json.Marshal(v.Spec["data"])
+		var rows any
+		if err == nil {
+			err = json.Unmarshal(b, &rows)
+		}
+		if err != nil || !same(rows, any(x.Rows)) {
+			t.Fatalf("%s: rows\n got %s\nwant %v", x.Name, b, x.Rows)
+		}
+		got, err := DescribePlot(asGiven(x.Spec))
+		if x.Describe == nil || err != nil || got != *x.Describe {
+			t.Fatalf("%s: describe\n got %q (%v)\nwant %v", x.Name, got, err, x.Describe)
+		}
+	}
+	runCases(t, cases)
+}
+
+func TestTransformAcceptsDecodedSpecs(t *testing.T) {
+	// A decoded map has no key order; everything but "which of two bad keys is named" is the same.
+	v := ValidatePlot(map[string]any{"type": "bar", "x": "m", "y": "v", "data": []any{map[string]any{"d": "2026-03-09", "v": 2.0}, map[string]any{"d": "2026-03-20", "v": 3.0}},
+		"transform": []any{map[string]any{"timeUnit": map[string]any{"field": "d", "unit": "month", "as": "m"}}, map[string]any{"aggregate": map[string]any{"groupBy": []any{"m"}, "fields": map[string]any{"v": "sum"}}}}})
+	rows, _ := v.Spec["data"].([]any)
+	if !v.OK || len(rows) != 1 || !reflect.DeepEqual(rows[0], map[string]any{"m": "2026-03-01", "v": 5.0}) {
+		t.Fatalf("got %v %v", v.Issues, v.Spec["data"])
+	}
+}
+
+func TestApplyTransformAlone(t *testing.T) {
+	rows := []map[string]any{{"k": "a", "v": 1.0}, {"k": "b", "v": 5.0}, {"k": "a", "v": 2.0}}
+	out, issues, ok := ApplyTransform(`[{"aggregate":{"groupBy":["k"],"fields":{"v":"sum"}}},{"top":{"n":1,"by":"v"}}]`, rows)
+	if !ok || len(issues) != 0 || len(out) != 1 || out[0]["k"] != "b" || out[0]["v"] != 5.0 {
+		t.Fatalf("got %v %v %v", out, issues, ok)
+	}
+	if _, issues, ok := ApplyTransform([]any{map[string]any{"sort": map[string]any{"field": "nope"}}}, rows); ok || len(issues) != 1 || issues[0].Code != "no_such_column" || issues[0].Path != "transform[0].sort.field" {
+		t.Fatalf("got %v %v", issues, ok)
+	}
+	if got := TimeBucket(1767225600000, "week"); got != "2025-12-29" {
+		t.Fatal(got)
+	}
+}
 
 func TestDescribeCases(t *testing.T) {
 	for _, x := range load(t).DescribeCases {

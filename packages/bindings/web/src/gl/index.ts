@@ -3,7 +3,7 @@
  * (tens of thousands of dots, a map's geography in 3D) and leaves everything else (text, axes, legend) to the
  * 2D canvases above and below it. Loaded on demand, so charts that never need it never download it.
  */
-import { makeView, type Camera, type Mark, type Scene, type ViewParams } from '@supersolutions/super-plot-core'
+import { makeView, type Camera, type Mark, type Scene, type ViewParams } from '@supersolutions/super-plot-core/base'
 import { acquireContext, ColorParser, probeWebGL, releaseContext } from './context.js'
 import { GlMap } from './map.js'
 import { GlMarks, takesMark } from './marks.js'

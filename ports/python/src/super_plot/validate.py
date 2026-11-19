@@ -16,8 +16,10 @@ from ._js import clip as _clip  # noqa: F401  (re-exported for symmetry with the
 from ._js import is_finite_number, is_number, to_number, ulen, uslice
 from .charts import CHECKS, DESCRIBE, MAP_CHECKS
 from .geo import CAMERA_RANGE, Geography, resolve_geo
+from .isotime import to_time
 from .numeric import closest
 from .text import is_value_format
+from .transform import apply_transform, columns_of
 
 with resources.files(__package__).joinpath("fields.v1.json").open("r", encoding="utf-8") as _f:
     _DEFS: dict[str, Any] = json.load(_f)
@@ -95,7 +97,8 @@ def _validate_field(name: str, d: dict[str, Any], value: Any, issues: list, colu
         if is_number(value) and value == 1:
             return 1
         return bad("bad_value", f"version must be 1, got {_show(value)}.")
-    if kind == "data":
+    if kind in ("data", "transform"):
+        # `transform` is checked (and applied) by validate_plot before the column fields.
         return value
     if kind == "string":
         if not isinstance(value, str):
@@ -131,11 +134,13 @@ def _validate_field(name: str, d: dict[str, Any], value: Any, issues: list, colu
             return value
         return bad("bad_value", f'bins must be "auto" or an integer from 1 to 200, got {_show(value)}.')
     if kind == "domain":
-        if not isinstance(value, list) or len(value) != 2 or not all(v is None or is_finite_number(v) for v in value):
-            return bad("bad_value", f'{name} must be [min, max] with numbers or null for "automatic", got {_show(value)}.')
-        if value[0] is not None and value[1] is not None and value[0] >= value[1]:
+        # Dates may be given as ISO strings; they are normalised to epoch milliseconds.
+        norm = [_iso_or_same(v) for v in value] if isinstance(value, list) else value
+        if not isinstance(norm, list) or len(norm) != 2 or not all(v is None or is_finite_number(v) for v in norm):
+            return bad("bad_value", f'{name} must be [min, max] with numbers, ISO dates or null for "automatic", got {_show(value)}.')
+        if norm[0] is not None and norm[1] is not None and norm[0] >= norm[1]:
             return bad("bad_value", f"{name} min must be below max.")
-        return value
+        return norm
     if kind == "colors":
         if not isinstance(value, dict):
             return bad("bad_type", "colors must be an object of name to colour.")
@@ -204,6 +209,14 @@ def _validate_field(name: str, d: dict[str, Any], value: Any, issues: list, colu
     if kind == "columns":
         return names[0] if len(names) == 1 and not isinstance(value, list) else names
     return names[0]
+
+
+def _iso_or_same(v: Any) -> Any:
+    """`typeof v === 'string' ? toTime(v) ?? v : v`."""
+    if isinstance(v, str):
+        t = to_time(v)
+        return v if t is None else t
+    return v
 
 
 def _annotations(name: str, value: Any, issues: list) -> Any:
@@ -299,11 +312,19 @@ def validate_plot(spec: Any) -> Validation:
     elif not all(isinstance(r, dict) for r in rows):
         _add(issues, "error", "bad_type", "data", "Every row of data must be an object.")
     data_ok = not any(i["path"] == "data" and i["severity"] == "error" for i in issues)
-    columns: dict[str, None] = {}  # insertion-ordered, like the keys of the first rows in JavaScript
-    if data_ok:
-        for r in rows[:200]:
-            columns.update(dict.fromkeys(r))
-    valid_rows: list[dict] = rows if data_ok else []
+    data: list[dict] = rows if data_ok else []
+    # `transform` runs first: column fields refer to its output.
+    if data_ok and "transform" in obj and "transform" in defs:
+        moved = apply_transform(obj["transform"], data, issues)
+        if moved is None:
+            data_ok = False
+        elif not moved:
+            _add(issues, "error", "empty_after_transform", "transform", "The transform left no rows to plot.", "Loosen the filter, or check its field and values.")
+            data_ok = False
+        else:
+            data = moved
+    columns: dict[str, None] = columns_of(data) if data_ok else {}  # insertion-ordered, like the keys of the first rows in JavaScript
+    valid_rows: list[dict] = data if data_ok else []
 
     out: dict[str, Any] = {"type": chart}
     found: dict[str, Geography] = {}
@@ -328,7 +349,7 @@ def validate_plot(spec: Any) -> Validation:
         elif _default(d) is not None:
             out[key] = _default(d)
     if data_ok:
-        out["data"] = rows
+        out["data"] = data
     if not any(i["severity"] == "error" for i in issues):
         if chart in CHECKS:
             CHECKS[chart](out, valid_rows, issues)

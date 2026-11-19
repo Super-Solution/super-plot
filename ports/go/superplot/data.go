@@ -45,7 +45,8 @@ type obs struct {
 }
 
 // observations normalises y (one column, many columns, or a series column) into long-form observations.
-func observations(rows []row, x string, y []string, series string) []obs {
+// hasX is false when the spec has no x at all (a column may be named "").
+func observations(rows []row, x string, hasX bool, y []string, series string) []obs {
 	out := []obs{}
 	for _, r := range rows {
 		for _, col := range y {
@@ -54,7 +55,7 @@ func observations(rows []row, x string, y []string, series string) []obs {
 				s = orEmpty(r[series])
 			}
 			var xv any = float64(len(out))
-			if x != "" {
+			if hasX {
 				xv = r[x]
 			}
 			yv, ok := toNumber(r[col])

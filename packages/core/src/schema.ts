@@ -1,8 +1,8 @@
 import { closest, toNumber } from './util/num.js'
 import { isSafeColor } from './util/color.js'
 import { isValueFormat } from './util/format.js'
-import { resolveGeo } from './geo/geography.js'
 import { CAMERA_LIMITS } from './geo/view.js'
+import { toTime } from './util/time.js'
 
 export type Row = Record<string, unknown>
 
@@ -26,9 +26,19 @@ export type FieldDef = { desc: string; required?: boolean } & (
   | { kind: 'version' }
   | { kind: 'geo' }
   | { kind: 'camera' }
+  | { kind: 'transform' }
 )
 
 export type FieldMap = Record<string, FieldDef>
+
+/**
+ * How a `geo` field is checked. The map charts install it when they load, so a bundle without maps does not
+ * carry the geography code.
+ */
+let geoResolver: ((value: unknown, issues: Issue[], path: string) => unknown) | null = null
+export function setGeoResolver(fn: (value: unknown, issues: Issue[], path: string) => unknown): void {
+  geoResolver = fn
+}
 
 export interface Issue {
   severity: 'error' | 'warning'
@@ -54,14 +64,19 @@ export const COMMON_FIELDS: FieldMap = {
   legend: { kind: 'enum', values: ['auto', 'top', 'bottom', 'right', 'none'], default: 'auto', desc: 'Legend placement. `auto` hides it for a single series and picks a side from the available width.' },
   tooltip: { kind: 'boolean', default: true, desc: 'Show a hover tooltip (web binding only).' },
   format: { kind: 'format', desc: 'Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE.' },
-  colors: { kind: 'colors', desc: 'Series (or slice/category) name to CSS colour, e.g. {"Revenue":"#2962FF"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours.' }
+  colors: { kind: 'colors', desc: 'Series (or slice/category) name to CSS colour, e.g. {"Revenue":"#2962FF"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours.' },
+  transform: { kind: 'transform', desc: 'Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output.' },
+  patterns: { kind: 'boolean', desc: 'Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print.' }
 }
 
 /** Extra fields for charts on a pair of axes. */
 export const CARTESIAN_FIELDS: FieldMap = {
   xLabel: { kind: 'string', max: 80, desc: 'Title of the horizontal axis.' },
   yLabel: { kind: 'string', max: 80, desc: 'Title of the vertical axis (include the unit).' },
-  annotations: { kind: 'annotations', desc: 'Reference marks: {axis:"y", value:100, label:"Target"} draws a line; add `to` for a band.' }
+  annotations: { kind: 'annotations', desc: 'Reference marks: {axis:"y", value:100, label:"Target"} draws a line; add `to` for a band.' },
+  facet: { kind: 'column', role: 'any', desc: 'Split into small multiples: one panel per value of this column (at most 12), sharing axes, colours and one legend.' },
+  zoom: { kind: 'enum', values: ['none', 'x', 'xy'], desc: 'Default none. Let the viewer zoom and pan a continuous axis (web binding): Ctrl/⌘-scroll or pinch to zoom, drag to pan, double-click or 0 to reset. Scatter, line and area.' },
+  brush: { kind: 'enum', values: ['none', 'x', 'xy'], desc: 'Default none. Let the viewer drag out a range to select (web binding). The selection comes back as a filter step, ready for `transform`. With `zoom` too, Shift-drag pans.' }
 }
 
 const ANNOTATION_KEYS = ['axis', 'value', 'to', 'label', 'tone']
@@ -94,6 +109,8 @@ export function validateField(name: string, def: FieldDef, value: unknown, ctx: 
     case 'version':
       return value === 1 ? 1 : bad('bad_value', `version must be 1, got ${fmt(value)}.`)
     case 'data':
+    case 'transform':
+      // Checked (and applied) by validatePlot before the column fields.
       return value
     case 'string': {
       if (typeof value !== 'string') return bad('bad_type', `${name} must be a string, got ${fmt(value)}.`)
@@ -126,11 +143,13 @@ export function validateField(name: string, def: FieldDef, value: unknown, ctx: 
       return bad('bad_value', `bins must be "auto" or an integer from 1 to 200, got ${fmt(value)}.`)
     }
     case 'domain': {
-      if (!Array.isArray(value) || value.length !== 2 || !value.every(v => v === null || (typeof v === 'number' && Number.isFinite(v)))) {
-        return bad('bad_value', `${name} must be [min, max] with numbers or null for "automatic", got ${fmt(value)}.`)
+      // Dates may be given as ISO strings; they are normalised to epoch milliseconds.
+      const norm = Array.isArray(value) ? value.map(v => (typeof v === 'string' ? toTime(v) ?? v : v)) : value
+      if (!Array.isArray(norm) || norm.length !== 2 || !norm.every(v => v === null || (typeof v === 'number' && Number.isFinite(v)))) {
+        return bad('bad_value', `${name} must be [min, max] with numbers, ISO dates or null for "automatic", got ${fmt(value)}.`)
       }
-      if (value[0] !== null && value[1] !== null && (value[0] as number) >= (value[1] as number)) return bad('bad_value', `${name} min must be below max.`)
-      return value
+      if (norm[0] !== null && norm[1] !== null && (norm[0] as number) >= (norm[1] as number)) return bad('bad_value', `${name} min must be below max.`)
+      return norm
     }
     case 'colors': {
       if (!value || typeof value !== 'object' || Array.isArray(value)) return bad('bad_type', `colors must be an object of name to colour.`)
@@ -163,7 +182,8 @@ export function validateField(name: string, def: FieldDef, value: unknown, ctx: 
     }
     case 'geo': {
       if (typeof value !== 'string' && (!value || typeof value !== 'object' || Array.isArray(value))) return bad('bad_type', 'geo must be the name of a registered geography or an inline GeoJSON/TopoJSON object.', 'Register boundaries with registerGeography(name, data) and set geo to that name.')
-      return resolveGeo(value, ctx.issues, name) ? value : undefined
+      if (!geoResolver) return bad('unsupported', 'No map chart type is registered.', 'Import the map charts from @supersolutions/super-plot-core/charts and registerChart them.')
+      return geoResolver(value, ctx.issues, name) ? value : undefined
     }
     case 'camera': {
       if (!value || typeof value !== 'object' || Array.isArray(value)) return bad('bad_type', 'camera must be an object such as {"lng":121,"lat":24,"zoom":2}.')
@@ -245,7 +265,8 @@ export function fieldSchema(def: FieldDef): Record<string, unknown> {
     case 'enum': return { enum: [...def.values], ...(def.default !== undefined ? { default: def.default } : {}), description: d }
     case 'format': return { type: 'string', pattern: '^(auto|compact|integer|percent|fixed:\\d{1,2}|currency:[A-Za-z]{3})$', description: d }
     case 'bins': return { oneOf: [{ const: 'auto' }, { type: 'integer', minimum: 1, maximum: 200 }], default: def.default ?? 'auto', description: d }
-    case 'domain': return { type: 'array', minItems: 2, maxItems: 2, items: { type: ['number', 'null'] }, description: d }
+    case 'domain': return { type: 'array', minItems: 2, maxItems: 2, items: { type: ['number', 'string', 'null'] }, description: d }
+    case 'transform': return { type: 'array', maxItems: 10, items: { type: 'object', minProperties: 1, maxProperties: 1, properties: { filter: { type: 'object', required: ['field'] }, timeUnit: { type: 'object', required: ['field', 'unit'] }, aggregate: { type: 'object' }, sort: { type: 'object', required: ['field'] }, top: { type: 'object', required: ['n', 'by'] } }, additionalProperties: false }, description: d }
     case 'colors': return { type: 'object', additionalProperties: { type: 'string', maxLength: 64 }, description: d }
     case 'annotations':
       return {
@@ -271,6 +292,7 @@ export function fieldType(def: FieldDef): string {
     case 'number': return def.integer ? 'integer' : 'number'
     case 'bins': return '`auto` \\| integer'
     case 'domain': return '[min\\|null, max\\|null]'
+    case 'transform': return 'array of steps'
     case 'colors': return 'object'
     case 'annotations': return 'array'
     case 'format': return 'format string'

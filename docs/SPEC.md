@@ -33,9 +33,14 @@ Compares a number across categories with one bar per category (grouped, stacked 
 | `tooltip` | boolean |  | `true` | Show a hover tooltip (web binding only). |
 | `format` | format string |  |  | Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE. |
 | `colors` | object |  |  | Series (or slice/category) name to CSS colour, e.g. {"Revenue":"#2962FF"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours. |
+| `transform` | array of steps |  |  | Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output. |
+| `patterns` | boolean |  |  | Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print. |
 | `xLabel` | string |  |  | Title of the horizontal axis. |
 | `yLabel` | string |  |  | Title of the vertical axis (include the unit). |
 | `annotations` | array |  |  | Reference marks: {axis:"y", value:100, label:"Target"} draws a line; add `to` for a band. |
+| `facet` | column name |  |  | Split into small multiples: one panel per value of this column (at most 12), sharing axes, colours and one legend. |
+| `zoom` | `none` \| `x` \| `xy` |  |  | Default none. Let the viewer zoom and pan a continuous axis (web binding): Ctrl/⌘-scroll or pinch to zoom, drag to pan, double-click or 0 to reset. Scatter, line and area. |
+| `brush` | `none` \| `x` \| `xy` |  |  | Default none. Let the viewer drag out a range to select (web binding). The selection comes back as a filter step, ready for `transform`. With `zoom` too, Shift-drag pans. |
 | `x` | column name | yes |  | Column holding the category of each bar. |
 | `y` | column name or list of column names | yes |  | Numeric column for bar length. Several columns give one series per column (wide-form data). |
 | `series` | column name |  |  | Column that splits each category into series (long-form data). Not needed when `y` lists several columns. |
@@ -43,6 +48,7 @@ Compares a number across categories with one bar per category (grouped, stacked 
 | `orientation` | `vertical` \| `horizontal` |  | `"vertical"` | Use `horizontal` for long category names or many categories. |
 | `sort` | `none` \| `asc` \| `desc` |  | `"none"` | Order categories by their total. `none` keeps the data order (use it for ordered categories such as months). |
 | `labels` | boolean |  | `false` | Print values on the bars. Keep off for dense charts; the tooltip carries the numbers. |
+| `line` | column name or list of column names |  |  | Combo chart: numeric column(s) drawn as lines with points over vertical bars, on the same value axis (a target, an average). Ignored for horizontal and 100% stacked bars. |
 | `yDomain` | [min\|null, max\|null] |  |  | Fix the value axis range, e.g. [0, 100]. Bars should start at 0; only change it knowingly. |
 
 ```json
@@ -105,13 +111,19 @@ Shows how one or more numbers change along an ordered x axis, usually time.
 | `tooltip` | boolean |  | `true` | Show a hover tooltip (web binding only). |
 | `format` | format string |  |  | Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE. |
 | `colors` | object |  |  | Series (or slice/category) name to CSS colour, e.g. {"Revenue":"#2962FF"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours. |
+| `transform` | array of steps |  |  | Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output. |
+| `patterns` | boolean |  |  | Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print. |
 | `xLabel` | string |  |  | Title of the horizontal axis. |
 | `yLabel` | string |  |  | Title of the vertical axis (include the unit). |
 | `annotations` | array |  |  | Reference marks: {axis:"y", value:100, label:"Target"} draws a line; add `to` for a band. |
+| `facet` | column name |  |  | Split into small multiples: one panel per value of this column (at most 12), sharing axes, colours and one legend. |
+| `zoom` | `none` \| `x` \| `xy` |  |  | Default none. Let the viewer zoom and pan a continuous axis (web binding): Ctrl/⌘-scroll or pinch to zoom, drag to pan, double-click or 0 to reset. Scatter, line and area. |
+| `brush` | `none` \| `x` \| `xy` |  |  | Default none. Let the viewer drag out a range to select (web binding). The selection comes back as a filter step, ready for `transform`. With `zoom` too, Shift-drag pans. |
 | `x` | column name | yes |  | Column for the horizontal position: numbers, dates (ISO 8601 strings or timestamps) or category names. The kind is detected; override with `xType`. |
 | `y` | column name or list of column names | yes |  | Numeric column to plot. Several columns give one line per column (wide-form data). |
 | `series` | column name |  |  | Column that splits the data into one line per value (long-form data). |
 | `xType` | `auto` \| `category` \| `linear` \| `time` |  | `"auto"` | How to read `x`. `auto` detects numbers, ISO dates and categories. |
+| `xDomain` | [min\|null, max\|null] |  |  | Fix the horizontal range of a numeric or time x axis (dates as ISO strings). Lines run to the edge and are cut there. |
 | `yDomain` | [min\|null, max\|null] |  |  | Fix the vertical range, e.g. [0, 100]. Lines may start anywhere; areas always include 0. |
 | `curve` | `linear` \| `smooth` \| `step` |  | `"linear"` | `smooth` is monotone (never overshoots the data); `step` holds each value until the next point. |
 | `points` | boolean |  |  | Force markers on (`true`) or off (`false`). Default: markers when there are few points, otherwise only the last point. |
@@ -178,13 +190,19 @@ A line chart with the area under it filled; stacked areas show how parts add up 
 | `tooltip` | boolean |  | `true` | Show a hover tooltip (web binding only). |
 | `format` | format string |  |  | Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE. |
 | `colors` | object |  |  | Series (or slice/category) name to CSS colour, e.g. {"Revenue":"#2962FF"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours. |
+| `transform` | array of steps |  |  | Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output. |
+| `patterns` | boolean |  |  | Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print. |
 | `xLabel` | string |  |  | Title of the horizontal axis. |
 | `yLabel` | string |  |  | Title of the vertical axis (include the unit). |
 | `annotations` | array |  |  | Reference marks: {axis:"y", value:100, label:"Target"} draws a line; add `to` for a band. |
+| `facet` | column name |  |  | Split into small multiples: one panel per value of this column (at most 12), sharing axes, colours and one legend. |
+| `zoom` | `none` \| `x` \| `xy` |  |  | Default none. Let the viewer zoom and pan a continuous axis (web binding): Ctrl/⌘-scroll or pinch to zoom, drag to pan, double-click or 0 to reset. Scatter, line and area. |
+| `brush` | `none` \| `x` \| `xy` |  |  | Default none. Let the viewer drag out a range to select (web binding). The selection comes back as a filter step, ready for `transform`. With `zoom` too, Shift-drag pans. |
 | `x` | column name | yes |  | Column for the horizontal position: numbers, dates (ISO 8601 strings or timestamps) or category names. The kind is detected; override with `xType`. |
 | `y` | column name or list of column names | yes |  | Numeric column to plot. Several columns give one line per column (wide-form data). |
 | `series` | column name |  |  | Column that splits the data into one line per value (long-form data). |
 | `xType` | `auto` \| `category` \| `linear` \| `time` |  | `"auto"` | How to read `x`. `auto` detects numbers, ISO dates and categories. |
+| `xDomain` | [min\|null, max\|null] |  |  | Fix the horizontal range of a numeric or time x axis (dates as ISO strings). Lines run to the edge and are cut there. |
 | `yDomain` | [min\|null, max\|null] |  |  | Fix the vertical range, e.g. [0, 100]. Lines may start anywhere; areas always include 0. |
 | `curve` | `linear` \| `smooth` \| `step` |  | `"linear"` | `smooth` is monotone (never overshoots the data); `step` holds each value until the next point. |
 | `stack` | `none` \| `stack` \| `normalize` |  | `"none"` | `stack` adds series on top of each other; `normalize` shows each series as a share of 100%. |
@@ -251,15 +269,21 @@ Plots each row as a point by two numbers to show relationships, clusters and out
 | `tooltip` | boolean |  | `true` | Show a hover tooltip (web binding only). |
 | `format` | format string |  |  | Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE. |
 | `colors` | object |  |  | Series (or slice/category) name to CSS colour, e.g. {"Revenue":"#2962FF"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours. |
+| `transform` | array of steps |  |  | Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output. |
+| `patterns` | boolean |  |  | Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print. |
 | `xLabel` | string |  |  | Title of the horizontal axis. |
 | `yLabel` | string |  |  | Title of the vertical axis (include the unit). |
 | `annotations` | array |  |  | Reference marks: {axis:"y", value:100, label:"Target"} draws a line; add `to` for a band. |
+| `facet` | column name |  |  | Split into small multiples: one panel per value of this column (at most 12), sharing axes, colours and one legend. |
+| `zoom` | `none` \| `x` \| `xy` |  |  | Default none. Let the viewer zoom and pan a continuous axis (web binding): Ctrl/⌘-scroll or pinch to zoom, drag to pan, double-click or 0 to reset. Scatter, line and area. |
+| `brush` | `none` \| `x` \| `xy` |  |  | Default none. Let the viewer drag out a range to select (web binding). The selection comes back as a filter step, ready for `transform`. With `zoom` too, Shift-drag pans. |
 | `x` | column name | yes |  | Numeric (or date) column for the horizontal position. |
 | `y` | column name | yes |  | Numeric column for the vertical position. |
 | `series` | column name |  |  | Column that colours points by group. |
 | `size` | column name |  |  | Numeric column mapped to bubble area. |
 | `label` | column name |  |  | Column used as each point's name in the tooltip. |
 | `trend` | `none` \| `linear` |  | `"none"` | Draw a least-squares line per series. |
+| `density` | `points` \| `hex` \| `auto` |  |  | Default points. `hex` draws hexagons coloured by how many points fall in each (with a count legend); `auto` does so above 10,000 visible points. Hexagons merge groups. |
 | `xType` | `auto` \| `linear` \| `time` |  | `"auto"` | How to read `x`. |
 | `xDomain` | [min\|null, max\|null] |  |  | Fix the horizontal range. |
 | `yDomain` | [min\|null, max\|null] |  |  | Fix the vertical range. |
@@ -326,6 +350,8 @@ Shows each category's share of a whole as angles of a circle.
 | `tooltip` | boolean |  | `true` | Show a hover tooltip (web binding only). |
 | `format` | format string |  |  | Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE. |
 | `colors` | object |  |  | Series (or slice/category) name to CSS colour, e.g. {"Revenue":"#2962FF"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours. |
+| `transform` | array of steps |  |  | Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output. |
+| `patterns` | boolean |  |  | Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print. |
 | `label` | column name | yes |  | Column naming each slice. |
 | `value` | column name | yes |  | Numeric column giving each slice's size. Rows with the same label are summed; negatives are skipped. |
 | `sort` | `none` \| `asc` \| `desc` |  | `"desc"` | Slice order. `desc` puts the biggest slice first; `none` keeps the data order. |
@@ -386,6 +412,8 @@ A pie chart with a hole; the hole shows the total.
 | `tooltip` | boolean |  | `true` | Show a hover tooltip (web binding only). |
 | `format` | format string |  |  | Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE. |
 | `colors` | object |  |  | Series (or slice/category) name to CSS colour, e.g. {"Revenue":"#2962FF"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours. |
+| `transform` | array of steps |  |  | Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output. |
+| `patterns` | boolean |  |  | Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print. |
 | `label` | column name | yes |  | Column naming each slice. |
 | `value` | column name | yes |  | Numeric column giving each slice's size. Rows with the same label are summed; negatives are skipped. |
 | `sort` | `none` \| `asc` \| `desc` |  | `"desc"` | Slice order. `desc` puts the biggest slice first; `none` keeps the data order. |
@@ -446,9 +474,14 @@ Shows how one measure is distributed by counting values into equal-width bins.
 | `tooltip` | boolean |  | `true` | Show a hover tooltip (web binding only). |
 | `format` | format string |  |  | Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE. |
 | `colors` | object |  |  | Series (or slice/category) name to CSS colour, e.g. {"Revenue":"#2962FF"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours. |
+| `transform` | array of steps |  |  | Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output. |
+| `patterns` | boolean |  |  | Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print. |
 | `xLabel` | string |  |  | Title of the horizontal axis. |
 | `yLabel` | string |  |  | Title of the vertical axis (include the unit). |
 | `annotations` | array |  |  | Reference marks: {axis:"y", value:100, label:"Target"} draws a line; add `to` for a band. |
+| `facet` | column name |  |  | Split into small multiples: one panel per value of this column (at most 12), sharing axes, colours and one legend. |
+| `zoom` | `none` \| `x` \| `xy` |  |  | Default none. Let the viewer zoom and pan a continuous axis (web binding): Ctrl/⌘-scroll or pinch to zoom, drag to pan, double-click or 0 to reset. Scatter, line and area. |
+| `brush` | `none` \| `x` \| `xy` |  |  | Default none. Let the viewer drag out a range to select (web binding). The selection comes back as a filter step, ready for `transform`. With `zoom` too, Shift-drag pans. |
 | `value` | column name | yes |  | Numeric column to bin. |
 | `series` | column name |  |  | Column that splits the values into overlaid histograms sharing one set of bins. |
 | `bins` | `auto` \| integer |  | `"auto"` | `auto` (Freedman-Diaconis, 5-40 bins) or a target bin count (1-200). Edges are rounded to nice numbers. |
@@ -518,9 +551,14 @@ Summarises the distribution of a number for each group: median, quartiles, whisk
 | `tooltip` | boolean |  | `true` | Show a hover tooltip (web binding only). |
 | `format` | format string |  |  | Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE. |
 | `colors` | object |  |  | Series (or slice/category) name to CSS colour, e.g. {"Revenue":"#2962FF"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours. |
+| `transform` | array of steps |  |  | Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output. |
+| `patterns` | boolean |  |  | Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print. |
 | `xLabel` | string |  |  | Title of the horizontal axis. |
 | `yLabel` | string |  |  | Title of the vertical axis (include the unit). |
 | `annotations` | array |  |  | Reference marks: {axis:"y", value:100, label:"Target"} draws a line; add `to` for a band. |
+| `facet` | column name |  |  | Split into small multiples: one panel per value of this column (at most 12), sharing axes, colours and one legend. |
+| `zoom` | `none` \| `x` \| `xy` |  |  | Default none. Let the viewer zoom and pan a continuous axis (web binding): Ctrl/⌘-scroll or pinch to zoom, drag to pan, double-click or 0 to reset. Scatter, line and area. |
+| `brush` | `none` \| `x` \| `xy` |  |  | Default none. Let the viewer drag out a range to select (web binding). The selection comes back as a filter step, ready for `transform`. With `zoom` too, Shift-drag pans. |
 | `x` | column name |  |  | Column that defines the groups (one box each). Omit for a single box. |
 | `y` | column name | yes |  | Numeric column whose distribution is summarised. |
 | `outliers` | boolean |  | `true` | Draw points beyond the whiskers (1.5 x IQR). |
@@ -589,6 +627,8 @@ Colours a grid of cells by a number: one axis per category, darker means larger.
 | `tooltip` | boolean |  | `true` | Show a hover tooltip (web binding only). |
 | `format` | format string |  |  | Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE. |
 | `colors` | object |  |  | Series (or slice/category) name to CSS colour, e.g. {"Revenue":"#2962FF"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours. |
+| `transform` | array of steps |  |  | Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output. |
+| `patterns` | boolean |  |  | Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print. |
 | `x` | column name | yes |  | Column for the horizontal categories. |
 | `y` | column name | yes |  | Column for the vertical categories (first value at the top). |
 | `value` | column name | yes |  | Numeric column giving each cell's colour. Rows with the same x and y are summed. |
@@ -659,6 +699,8 @@ Compares a few items across several measures on spokes around a centre; each ite
 | `tooltip` | boolean |  | `true` | Show a hover tooltip (web binding only). |
 | `format` | format string |  |  | Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE. |
 | `colors` | object |  |  | Series (or slice/category) name to CSS colour, e.g. {"Revenue":"#2962FF"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours. |
+| `transform` | array of steps |  |  | Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output. |
+| `patterns` | boolean |  |  | Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print. |
 | `x` | column name | yes |  | Column naming each spoke (the measures). 3 to 16 distinct values. |
 | `y` | column name or list of column names | yes |  | Numeric column for the distance along the spoke. Several columns give one shape per column (wide-form data). |
 | `series` | column name |  |  | Column that splits the spokes into shapes (long-form data). Not needed when `y` lists several columns. |
@@ -728,6 +770,8 @@ Shows parts of a whole as nested rectangles whose area is the value; an optional
 | `tooltip` | boolean |  | `true` | Show a hover tooltip (web binding only). |
 | `format` | format string |  |  | Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE. |
 | `colors` | object |  |  | Series (or slice/category) name to CSS colour, e.g. {"Revenue":"#2962FF"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours. |
+| `transform` | array of steps |  |  | Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output. |
+| `patterns` | boolean |  |  | Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print. |
 | `label` | column name | yes |  | Column naming each tile. |
 | `value` | column name | yes |  | Numeric column giving each tile's area. Rows with the same group and label are summed; zero and negative values are skipped. |
 | `group` | column name |  |  | Optional column that groups tiles into coloured blocks (one level). Each group becomes a legend entry. |
@@ -795,6 +839,8 @@ Shows how a quantity flows between stages: bands between nodes, the band width i
 | `tooltip` | boolean |  | `true` | Show a hover tooltip (web binding only). |
 | `format` | format string |  |  | Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE. |
 | `colors` | object |  |  | Series (or slice/category) name to CSS colour, e.g. {"Revenue":"#2962FF"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours. |
+| `transform` | array of steps |  |  | Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output. |
+| `patterns` | boolean |  |  | Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print. |
 | `from` | column name | yes |  | Column naming where each flow starts. |
 | `to` | column name | yes |  | Column naming where each flow ends. |
 | `value` | column name | yes |  | Numeric column giving the size of each flow. Rows with the same source and target are summed; zero and negative values are skipped. |
@@ -861,6 +907,8 @@ Colours each region of a map by a number; raise regions by the value for a 3D vi
 | `tooltip` | boolean |  | `true` | Show a hover tooltip (web binding only). |
 | `format` | format string |  |  | Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE. |
 | `colors` | object |  |  | Series (or slice/category) name to CSS colour, e.g. {"Revenue":"#2962FF"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours. |
+| `transform` | array of steps |  |  | Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output. |
+| `patterns` | boolean |  |  | Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print. |
 | `geo` | geography name or GeoJSON/TopoJSON object | yes |  | Region boundaries to colour. The name of a geography registered with registerGeography (Super Plot ships none), or an inline GeoJSON FeatureCollection / TopoJSON Topology (key: feature id, else properties.id, else properties.name). |
 | `region` | column name | yes |  | Column naming each row's region: its key, name or an alias (case ignored). Rows with the same region are summed. |
 | `value` | column name | yes |  | Numeric column that colours the region. |
@@ -935,6 +983,8 @@ Places a circle per row on a map by longitude/latitude (or region), sized by a n
 | `tooltip` | boolean |  | `true` | Show a hover tooltip (web binding only). |
 | `format` | format string |  |  | Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE. |
 | `colors` | object |  |  | Series (or slice/category) name to CSS colour, e.g. {"Revenue":"#2962FF"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours. |
+| `transform` | array of steps |  |  | Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output. |
+| `patterns` | boolean |  |  | Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print. |
 | `geo` | geography name or GeoJSON/TopoJSON object |  |  | Optional boundaries drawn as land under the bubbles (needed when placing by region). The name of a geography registered with registerGeography (Super Plot ships none), or an inline GeoJSON FeatureCollection / TopoJSON Topology (key: feature id, else properties.id, else properties.name). |
 | `lat` | column name |  |  | Latitude column, degrees (-90..90). With lng, places each bubble. |
 | `lng` | column name |  |  | Longitude column, degrees (-180..180). |
@@ -1010,6 +1060,8 @@ Raises a column per row from its place on a globe or a tilted map, height by a n
 | `tooltip` | boolean |  | `true` | Show a hover tooltip (web binding only). |
 | `format` | format string |  |  | Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE. |
 | `colors` | object |  |  | Series (or slice/category) name to CSS colour, e.g. {"Revenue":"#2962FF"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours. |
+| `transform` | array of steps |  |  | Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output. |
+| `patterns` | boolean |  |  | Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print. |
 | `geo` | geography name or GeoJSON/TopoJSON object |  |  | Optional boundaries drawn as land under the columns (needed when placing by region). The name of a geography registered with registerGeography (Super Plot ships none), or an inline GeoJSON FeatureCollection / TopoJSON Topology (key: feature id, else properties.id, else properties.name). |
 | `lat` | column name |  |  | Latitude column, degrees (-90..90). With lng, places each column. |
 | `lng` | column name |  |  | Longitude column, degrees (-180..180). |
@@ -1085,6 +1137,8 @@ Draws an arc from origin to destination per row, width by a number, on a globe o
 | `tooltip` | boolean |  | `true` | Show a hover tooltip (web binding only). |
 | `format` | format string |  |  | Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE. |
 | `colors` | object |  |  | Series (or slice/category) name to CSS colour, e.g. {"Revenue":"#2962FF"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours. |
+| `transform` | array of steps |  |  | Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output. |
+| `patterns` | boolean |  |  | Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print. |
 | `geo` | geography name or GeoJSON/TopoJSON object |  |  | Optional boundaries drawn as land (needed when from/to name regions). The name of a geography registered with registerGeography (Super Plot ships none), or an inline GeoJSON FeatureCollection / TopoJSON Topology (key: feature id, else properties.id, else properties.name). |
 | `from` | column name |  |  | Origin region column (needs geo), or the origin's name when fromLat/fromLng are given. |
 | `to` | column name |  |  | Destination region column (needs geo), or the destination's name. |

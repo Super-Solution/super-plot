@@ -66,6 +66,8 @@ var describers = map[string]func(spec) string{
 
 // --- small accessors over a normalised spec -------------------------------------------------------------
 
+func has(s spec, k string) bool { _, ok := s[k]; return ok }
+
 func str(s spec, k string) string { v, _ := s[k].(string); return v }
 
 func columnList(v any) []string {
@@ -155,7 +157,7 @@ type barModel struct {
 }
 
 func newBarModel(s spec, y []string) barModel {
-	o := observations(rowsOf(s), str(s, "x"), y, str(s, "series"))
+	o := observations(rowsOf(s), str(s, "x"), has(s, "x"), y, str(s, "series"))
 	m := matrix(o)
 	cats, keys := make([]string, len(o)), make([]string, len(o))
 	for i, ob := range o {
@@ -179,6 +181,14 @@ func newBarModel(s spec, y []string) barModel {
 	return barModel{cats, keys, m}
 }
 
+// lineCols are the columns of a combo chart drawn as lines over vertical bars. Mirrors lineCols.
+func lineCols(s spec) []string {
+	if _, given := s["line"]; !given || str(s, "orientation") == "horizontal" || str(s, "stack") == "normalize" {
+		return nil
+	}
+	return columnList(s["line"])
+}
+
 func seriesIgnored(s spec, issues *[]Issue) {
 	if y, ok := s["y"].([]any); ok && len(y) > 1 && str(s, "series") != "" {
 		issue(issues, "warning", "series_ignored", "series", "`series` is ignored when `y` lists several columns.")
@@ -199,6 +209,13 @@ func checkBar(s spec, rows []row, issues *[]Issue) {
 		if neg {
 			issue(issues, "warning", "negative_in_stack", "y", "Negative values in a stacked bar are stacked below the axis; check that is what you want.")
 		}
+	}
+	if _, given := s["line"]; given && (str(s, "orientation") == "horizontal" || str(s, "stack") == "normalize") {
+		on := "100% stacked"
+		if str(s, "orientation") == "horizontal" {
+			on = "horizontal"
+		}
+		issue(issues, "warning", "line_ignored", "line", fmt.Sprintf("`line` is ignored on %s bars.", on))
 	}
 	if detectXKind("auto", values(rows, str(s, "x"))) == "time" && len(rows) > 60 {
 		issue(issues, "warning", "prefer_line", "type", "Many bars over time: a line or area chart reads better.")
@@ -246,13 +263,22 @@ func describeBar(s spec) string {
 		}
 		t += fmt.Sprintf(" Total: %s.", f(total(sum)))
 	}
+	var ls []string
+	for _, k := range lineCols(s) {
+		if !contains(mod.keys, k) {
+			ls = append(ls, k)
+		}
+	}
+	if len(ls) > 0 {
+		t += fmt.Sprintf(" With %s for %s on the same axis.", plural(len(ls), "a line", "lines"), fmtList(ls, 5))
+	}
 	return t
 }
 
 // --- line / area -----------------------------------------------------------------------------------------
 
 func describeSeries(s spec, name string) string {
-	o := observations(rowsOf(s), str(s, "x"), columnList(s["y"]), str(s, "series"))
+	o := observations(rowsOf(s), str(s, "x"), has(s, "x"), columnList(s["y"]), str(s, "series"))
 	xs := make([]any, len(o))
 	keysAll := make([]string, len(o))
 	for i, ob := range o {
@@ -625,7 +651,7 @@ func describeHeatmap(s spec) string {
 // --- radar -----------------------------------------------------------------------------------------------
 
 func radarModel(s spec) ([]string, []string, *omap[*omap[float64]]) {
-	o := observations(rowsOf(s), str(s, "x"), columnList(s["y"]), str(s, "series"))
+	o := observations(rowsOf(s), str(s, "x"), has(s, "x"), columnList(s["y"]), str(s, "series"))
 	axes, keys := make([]string, len(o)), make([]string, len(o))
 	for i, ob := range o {
 		axes[i], keys[i] = keyString(ob.x), ob.s

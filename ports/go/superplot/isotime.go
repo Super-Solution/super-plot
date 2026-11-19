@@ -1,6 +1,7 @@
 package superplot
 
 import (
+	"fmt"
 	"math"
 	"regexp"
 	"strconv"
@@ -49,7 +50,8 @@ func atoi(s string) int64 {
 func toTime(v any) (float64, bool) {
 	switch x := v.(type) {
 	case float64:
-		return x, isFinite(x)
+		// A JavaScript Date holds at most 8.64e15 ms either side of 1970; beyond that it is not a time.
+		return x, math.Abs(x) <= 8.64e15
 	case string:
 		m := isoRe.FindStringSubmatch(jsTrim(x))
 		if m == nil {
@@ -91,4 +93,65 @@ func toTime(v any) (float64, bool) {
 		return float64(t), !math.IsNaN(float64(t))
 	}
 	return 0, false
+}
+
+func floorDiv(a, b int64) int64 {
+	q := a / b
+	if (a%b != 0) && ((a < 0) != (b < 0)) {
+		q--
+	}
+	return q
+}
+
+func civilFromDays(z int64) (y, m, d int64) {
+	z += 719468
+	era := floorDiv(z, 146097)
+	doe := z - era*146097
+	yoe := (doe - doe/1460 + doe/36524 - doe/146096) / 365
+	doy := doe - (365*yoe + yoe/4 - yoe/100)
+	mp := (5*doy + 2) / 153
+	d = doy - (153*mp+2)/5 + 1
+	m = mp - 9
+	if mp < 10 {
+		m = mp + 3
+	}
+	y = yoe + era*400
+	if m <= 2 {
+		y++
+	}
+	return y, m, d
+}
+
+// MinTime and MaxTime bound what timeUnit buckets: 0001-01-01 to the end of 9999, so every bucket is a four-digit
+// ISO date that reads back as a time.
+const (
+	MinTime = -62135596800000
+	MaxTime = 253402300799999
+	dayMs   = 86_400_000
+)
+
+// TimeBucket is the start of the year, quarter, month, week, day or hour holding the epoch-ms time t (between
+// MinTime and MaxTime), as timeUnit writes it: an ISO date in UTC ("2026-03-01"; hours as "2026-03-01T10:00:00Z").
+// Weeks start on Monday. It mirrors bucket in transform.ts.
+func TimeBucket(t float64, unit string) string {
+	ms := int64(t) // new Date(t) drops the fraction, towards zero
+	days := floorDiv(ms, dayMs)
+	y, m, d := civilFromDays(days)
+	day := func(yy, mm, dd int64) string {
+		a, b, c := civilFromDays(daysFromCivil(yy, mm, 1) + dd - 1)
+		return fmt.Sprintf("%04d-%02d-%02d", a, b, c)
+	}
+	switch unit {
+	case "year":
+		return fmt.Sprintf("%04d-01-01", y)
+	case "quarter":
+		return day(y, m-(m-1)%3, 1)
+	case "month":
+		return day(y, m, 1)
+	case "week":
+		return day(y, m, d-((days+3)%7+7)%7) // 1970-01-01 was a Thursday
+	case "day":
+		return day(y, m, d)
+	}
+	return fmt.Sprintf("%sT%02d:00:00Z", day(y, m, d), (ms-days*dayMs)/3_600_000)
 }

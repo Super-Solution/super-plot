@@ -1,3 +1,3 @@
-export { SuperPlot } from './plot.js'
-export type { SuperPlotOptions, SelectEvent } from './plot.js'
-export { defineSuperPlot } from './element.js'
+// Every built-in chart type, registered. For a smaller bundle use `./base` and register only what you need.
+import '@supersolutions/super-plot-core'
+export * from './base.js'

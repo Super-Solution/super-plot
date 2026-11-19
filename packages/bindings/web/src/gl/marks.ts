@@ -3,7 +3,7 @@
  * the same kind, shapes cut by a signed distance in the fragment shader (anti-aliased edge, optional stroke,
  * rounded corners). Positions stay in scene pixels; the vertex shader maps them to clip space.
  */
-import type { Mark, Scene } from '@supersolutions/super-plot-core'
+import type { Mark, Scene } from '@supersolutions/super-plot-core/base'
 import { ColorParser, program, uniforms } from './context.js'
 
 const VS = `#version 300 es

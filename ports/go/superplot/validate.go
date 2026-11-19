@@ -162,7 +162,8 @@ func validateField(name string, d fieldDef, value any, issues *[]Issue, columns 
 			return 1.0
 		}
 		return bad("bad_value", fmt.Sprintf("version must be 1, got %s.", show(value)))
-	case "data":
+	case "data", "transform":
+		// transform is checked (and applied) by ValidatePlot before the column fields.
 		return value
 	case "string":
 		s, ok := value.(string)
@@ -225,7 +226,17 @@ func validateField(name string, d fieldDef, value any, issues *[]Issue, columns 
 		}
 		return bad("bad_value", fmt.Sprintf(`bins must be "auto" or an integer from 1 to 200, got %s.`, show(value)))
 	case "domain":
-		list, ok := value.([]any)
+		// Dates may be given as ISO strings; they are normalised to epoch milliseconds.
+		given, ok := value.([]any)
+		list := make([]any, len(given))
+		for i, v := range given {
+			list[i] = v
+			if s, isStr := v.(string); isStr {
+				if t, isTime := toTime(s); isTime {
+					list[i] = t
+				}
+			}
+		}
 		if ok && len(list) == 2 {
 			for _, v := range list {
 				if f, isNum := v.(float64); v != nil && !(isNum && isFinite(f)) {
@@ -236,7 +247,7 @@ func validateField(name string, d fieldDef, value any, issues *[]Issue, columns 
 			ok = false
 		}
 		if !ok {
-			return bad("bad_value", fmt.Sprintf(`%s must be [min, max] with numbers or null for "automatic", got %s.`, name, show(value)))
+			return bad("bad_value", fmt.Sprintf(`%s must be [min, max] with numbers, ISO dates or null for "automatic", got %s.`, name, show(value)))
 		}
 		lo, loOK := list[0].(float64)
 		hi, hiOK := list[1].(float64)
@@ -530,19 +541,34 @@ func ValidatePlot(input any) Validation {
 	var columns []string
 	var rows []row
 	if dataOK {
-		seen := map[string]bool{}
-		for i, r := range list {
-			m := r.(map[string]any)
-			rows = append(rows, m)
-			if i < 200 {
-				for _, k := range sortedKeys(m) {
-					if !seen[k] {
-						seen[k] = true
-						columns = append(columns, k)
-					}
+		for _, r := range list {
+			rows = append(rows, r.(map[string]any))
+		}
+	}
+	// transform runs first: column fields refer to its output.
+	if steps, given := obj["transform"]; given && dataOK {
+		if _, known := defs["transform"]; known {
+			moved, ok := applyTransform(steps, rawKey(doc, "transform"), rows, &issues, "transform")
+			switch {
+			case !ok:
+				dataOK = false
+			case len(moved) == 0:
+				add(&issues, "error", "empty_after_transform", "transform", "The transform left no rows to plot.", "Loosen the filter, or check its field and values.")
+				dataOK = false
+			default:
+				rows = moved
+				list = make([]any, len(moved))
+				for i, r := range moved {
+					list[i] = r
 				}
+				rowsAny = list
 			}
 		}
+	}
+	if dataOK {
+		columns = columnsOf(rows)
+	} else {
+		rows = nil
 	}
 
 	fieldNames := make([]string, 0, len(defs))

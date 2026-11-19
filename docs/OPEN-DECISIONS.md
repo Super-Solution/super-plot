@@ -7,6 +7,8 @@
 - **Shared theme package: not now.** "Alias" means each library keeps its own tokens (`--sp-*`, `--sc-*`) and Super Plot reads Super Chart's as a fallback (`createTheme('light', { alias: { text: ['--sc-text'] } })`), so a page that themes Super Chart already themes Super Plot. A shared `super-theme` package would replace the aliases with one source of tokens; build it when a third library needs the same tokens.
 - **Canvas renderer, radar, treemap, sankey, browser tests, Go and Python ports**: built (see DESIGN and `ports/`).
 - **WebGL and 3D maps** (owner, 2026-11-19: "一步到位 ... 做到 P3"): built inside the existing packages (no new package names), existing specs and APIs unchanged. **No default boundaries ship**: users import their own; presets are templates only; disputed areas are drawn like any other region unless the spec says `dashed` or `muted` (see MAPS.md).
+- **Competitor features (owner, 2026-11-19: "也把你整理出來的特點也加入進來")**: built in 0.3.0, see DESIGN "Borrowed from competitors": transform, zoom/pan/brush with JSON selections, hover/render events and plugins, per-chart imports, patterns, data table, canvas keyboard steps, shadcn theme, small multiples, live append, hexagon density, lines over bars, the fast dot path. Still local only.
+- **Tree-shakable chart registration**: built (`/base` + `/charts`); the package roots still register everything.
 - **One new runtime dependency** in `super-plot-web`: `earcut` (ISC, about 3 KB, polygon triangulation for WebGL maps), loaded only with the WebGL chunk.
 
 ## Recommended, waiting for the owner
@@ -21,7 +23,8 @@
 4. **Chat plugin package** like Super Chart's (follows the card decision).
 5. **More chart types.** Funnel and gauge overlap with Super Chat cards; add only if a use case asks.
 6. **Vue and Svelte bindings.** The web component already covers them; add native ones only if DX asks for it.
-7. **Tree-shakable chart registration** (import only the charts you use).
+7. **Declared linking between charts** (Vega-Lite style: two specs share a named selection). Today linking is one `onBrush` line in the host; a declared form would need a page-level registry. Build it if hosts keep writing the same line.
 8. **Raise the 50,000-row cap?** WebGL can draw several hundred thousand dots, but the cap is part of the validation contract (ports, conformance). Keep or raise per chart type.
 9. **Basemap tiles or labels** (place names, roads) are out of scope for a statistical map; add only on demand, and never from a proprietary provider by default.
-10. **Docs home.** A page and an ADR for Super Plot in `super-dev-docs` (not in this session's scope).
+10. **Docs home.** The Super Kit principles now live in `super-dev-docs` (PR #7, from another thread); a Super Plot page in its `10-architecture` follows once the library is pushed.
+11. **Row cap for the data table** (1,000) and the hexagon threshold (10,000 points): proposals, easy to change.

@@ -42,7 +42,7 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
   const area = { ...frame, w: frame.w - barW }
   const xScale = bandScale(xs, 0.06)
   const yScale = bandScale(ys, 0.06)
-  const plot = layoutCartesian(c, area, bandAxis(xScale, Object.fromEntries(xs.map(k => [k, clip(k, 40)])), s.xLabel ?? String(s.x)), bandAxis(yScale, Object.fromEntries(ys.map(k => [k, clip(k, 40)])), s.yLabel ?? String(s.y)))
+  const plot = layoutCartesian(c, area, bandAxis(xScale, Object.fromEntries(xs.map(k => [k, clip(k, 40)])), s.xLabel ?? String(s.x), c.locale), bandAxis(yScale, Object.fromEntries(ys.map(k => [k, clip(k, 40)])), s.yLabel ?? String(s.y), c.locale))
   const fmt = c.format
   const cw = xScale.bandwidth
   const ch = yScale.bandwidth

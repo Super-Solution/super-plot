@@ -97,4 +97,28 @@ describe('canvas renderer', () => {
     p.dispose()
     expect(host.querySelector('canvas')).toBeNull()
   })
+  it('the keyboard steps through marks: arrows, Home/End, Enter, read out loud', () => {
+    const hovers: unknown[] = []
+    const selected: unknown[] = []
+    const p = new SuperPlot(host, { type: 'scatter', x: 'x', y: 'y', data: [{ x: 3, y: 1 }, { x: 1, y: 5 }, { x: 2, y: 9 }] }, { width: 600, height: 400, renderer: 'canvas', onHover: e => hovers.push(e?.datum ?? null), onSelect: e => selected.push(e.datum) })
+    const c = host.querySelector('canvas')!
+    expect(c.tabIndex).toBe(0)
+    expect(c.getAttribute('aria-label')).toMatch(/arrow keys/)
+    const key = (k: string): void => { c.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true, cancelable: true })) }
+    key('ArrowRight')
+    expect(hovers.at(-1)).toMatchObject({ x: 1, y: 5 })
+    expect(host.querySelector('.sp-live')!.textContent).toMatch(/5/)
+    key('ArrowRight')
+    expect(hovers.at(-1)).toMatchObject({ x: 2 })
+    key('End')
+    expect(hovers.at(-1)).toMatchObject({ x: 3 })
+    key('ArrowUp')
+    expect(hovers.at(-1)).toMatchObject({ x: 2, y: 9 })
+    key('Home')
+    key('Enter')
+    expect(selected).toEqual([expect.objectContaining({ x: 1 })])
+    c.dispatchEvent(new FocusEvent('blur'))
+    expect(hovers.at(-1)).toBeNull()
+    p.dispose()
+  })
 })

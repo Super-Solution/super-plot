@@ -27,8 +27,12 @@ def _days_in(year: int, month: int) -> int:
 def to_time(v: Any) -> float | None:
     """A time as epoch ms from a number (taken as-is) or an ISO 8601 string; None for anything else."""
     if is_number(v):
-        f = float(v)
-        return f if f == f and f not in (float("inf"), float("-inf")) else None
+        try:
+            f = float(v)
+        except OverflowError:
+            return None
+        # A JavaScript Date holds at most 8.64e15 ms either side of 1970; beyond that it is not a time.
+        return f if abs(f) <= 8.64e15 else None
     if not isinstance(v, str):
         return None
     m = _ISO.fullmatch(v.strip())
@@ -54,3 +58,44 @@ def to_time(v: Any) -> float | None:
     return float(((_days_from_civil(year, month, day) * 24 + h) * 60 + mi) * 60_000 + sec * 1000 + ms - offset)
 
 
+
+
+def _civil_from_days(z: int) -> tuple[int, int, int]:
+    z += 719468
+    era = z // 146097
+    doe = z - era * 146097
+    yoe = (doe - doe // 1460 + doe // 36524 - doe // 146096) // 365
+    doy = doe - (365 * yoe + yoe // 4 - yoe // 100)
+    mp = (5 * doy + 2) // 153
+    d = doy - (153 * mp + 2) // 5 + 1
+    m = mp + 3 if mp < 10 else mp - 9
+    return yoe + era * 400 + (m <= 2), m, d
+
+
+# `timeUnit` buckets times from 0001-01-01 to the end of 9999, so every bucket is a four-digit ISO date `to_time` reads back.
+MIN_TIME = -62135596800000
+MAX_TIME = 253402300799999
+
+
+def time_bucket(t: float, unit: str) -> str:
+    """The start of the bucket holding `t` (UTC, between MIN_TIME and MAX_TIME), as an ISO date (hours: date and
+    time). Weeks start on Monday. Mirrors `bucket` in transform.ts."""
+    ms = int(t)  # new Date(t) drops the fraction, towards zero
+    days = ms // 86_400_000
+    y, m, d = _civil_from_days(days)
+
+    def day(yy: int, mm: int, dd: int) -> str:
+        a, b, c = _civil_from_days(_days_from_civil(yy, mm, 1) + dd - 1)
+        return f"{a:04d}-{b:02d}-{c:02d}"
+
+    if unit == "year":
+        return f"{y:04d}-01-01"
+    if unit == "quarter":
+        return day(y, m - (m - 1) % 3, 1)
+    if unit == "month":
+        return day(y, m, 1)
+    if unit == "week":
+        return day(y, m, d - (days + 3) % 7)  # 1970-01-01 was a Thursday
+    if unit == "day":
+        return day(y, m, d)
+    return f"{day(y, m, d)}T{(ms - days * 86_400_000) // 3_600_000:02d}:00:00Z"
