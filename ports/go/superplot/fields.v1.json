@@ -4364,6 +4364,263 @@
       ]
     },
     {
+      "type": "gauge",
+      "fields": [
+        {
+          "name": "type",
+          "kind": "string",
+          "required": true,
+          "desc": "Chart type: gauge."
+        },
+        {
+          "name": "version",
+          "kind": "version",
+          "desc": "Spec format version. Only 1 exists; may be omitted."
+        },
+        {
+          "name": "data",
+          "kind": "data",
+          "required": true,
+          "desc": "Tabular rows: an array of flat objects, one per observation. Numbers must be numbers (or plain numeric strings)."
+        },
+        {
+          "name": "title",
+          "kind": "string",
+          "max": 120,
+          "desc": "Chart title. State the takeaway or the subject, not \"Chart\"."
+        },
+        {
+          "name": "subtitle",
+          "kind": "string",
+          "max": 200,
+          "desc": "One line of context under the title: unit, period, filter."
+        },
+        {
+          "name": "description",
+          "kind": "string",
+          "max": 1000,
+          "desc": "Long description for screen readers and agents. Generated from the data when omitted."
+        },
+        {
+          "name": "source",
+          "kind": "string",
+          "max": 160,
+          "desc": "Source line shown small under the chart."
+        },
+        {
+          "name": "legend",
+          "kind": "enum",
+          "values": [
+            "auto",
+            "top",
+            "bottom",
+            "right",
+            "none"
+          ],
+          "default": "auto",
+          "desc": "Legend placement. `auto` hides it for a single series and picks a side from the available width."
+        },
+        {
+          "name": "tooltip",
+          "kind": "boolean",
+          "default": true,
+          "desc": "Show a hover tooltip (web binding only)."
+        },
+        {
+          "name": "format",
+          "kind": "format",
+          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+        },
+        {
+          "name": "colors",
+          "kind": "colors",
+          "desc": "Series (or slice/category) name to CSS colour, e.g. {\"Revenue\":\"#2962FF\"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours."
+        },
+        {
+          "name": "transform",
+          "kind": "transform",
+          "desc": "Data steps run before the chart reads its columns, in order (at most 10): filter, timeUnit, aggregate, sort, top, bin (round bins: start and end columns), window (running sum, mean, count, rank, pctChange, lag, lead, movingMean, per group, in a sort order) and fold (wide columns to key/value rows). No expressions. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+        },
+        {
+          "name": "patterns",
+          "kind": "boolean",
+          "desc": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
+        },
+        {
+          "name": "value",
+          "kind": "column",
+          "role": "number",
+          "required": true,
+          "desc": "Numeric column with the value of each gauge. A value outside `min`..`max` is clamped on the arc but printed as it is."
+        },
+        {
+          "name": "label",
+          "kind": "column",
+          "role": "any",
+          "desc": "Column naming each gauge; required with more than one row (one gauge per row, at most 6, in data order)."
+        },
+        {
+          "name": "min",
+          "kind": "number",
+          "default": 0,
+          "desc": "Start of the range: where every arc starts filling."
+        },
+        {
+          "name": "max",
+          "kind": "number",
+          "desc": "End of the range: what a full arc means (100%, the capacity, the plan). Without it the top is rounded up from the largest value, with a `max_derived` warning."
+        },
+        {
+          "name": "target",
+          "kind": "column",
+          "role": "number",
+          "desc": "Numeric column with a target, drawn as a tick across the arc."
+        },
+        {
+          "name": "bands",
+          "kind": "columns",
+          "role": "number",
+          "min": 2,
+          "max": 3,
+          "desc": "Two or three columns holding the upper threshold of each status band, in order along the arc from `min`, e.g. [\"critical\",\"warning\",\"good\"]. Each band is named by its column (printed beside it) and coloured with the theme's negative, warning and positive tones per `bandOrder`."
+        },
+        {
+          "name": "bandOrder",
+          "kind": "enum",
+          "values": [
+            "worst-first",
+            "best-first"
+          ],
+          "default": "worst-first",
+          "desc": "`worst-first`: the first band is critical and the last good (higher is better); `best-first` for measures where lower is better (latency, load)."
+        },
+        {
+          "name": "arc",
+          "kind": "number",
+          "min": 90,
+          "max": 330,
+          "integer": true,
+          "default": 240,
+          "desc": "Sweep of the arc in degrees, open at the bottom: 180 is a half circle."
+        }
+      ]
+    },
+    {
+      "type": "wordcloud",
+      "fields": [
+        {
+          "name": "type",
+          "kind": "string",
+          "required": true,
+          "desc": "Chart type: wordcloud."
+        },
+        {
+          "name": "version",
+          "kind": "version",
+          "desc": "Spec format version. Only 1 exists; may be omitted."
+        },
+        {
+          "name": "data",
+          "kind": "data",
+          "required": true,
+          "desc": "Tabular rows: an array of flat objects, one per observation. Numbers must be numbers (or plain numeric strings)."
+        },
+        {
+          "name": "title",
+          "kind": "string",
+          "max": 120,
+          "desc": "Chart title. State the takeaway or the subject, not \"Chart\"."
+        },
+        {
+          "name": "subtitle",
+          "kind": "string",
+          "max": 200,
+          "desc": "One line of context under the title: unit, period, filter."
+        },
+        {
+          "name": "description",
+          "kind": "string",
+          "max": 1000,
+          "desc": "Long description for screen readers and agents. Generated from the data when omitted."
+        },
+        {
+          "name": "source",
+          "kind": "string",
+          "max": 160,
+          "desc": "Source line shown small under the chart."
+        },
+        {
+          "name": "legend",
+          "kind": "enum",
+          "values": [
+            "auto",
+            "top",
+            "bottom",
+            "right",
+            "none"
+          ],
+          "default": "auto",
+          "desc": "Legend placement. `auto` hides it for a single series and picks a side from the available width."
+        },
+        {
+          "name": "tooltip",
+          "kind": "boolean",
+          "default": true,
+          "desc": "Show a hover tooltip (web binding only)."
+        },
+        {
+          "name": "format",
+          "kind": "format",
+          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+        },
+        {
+          "name": "colors",
+          "kind": "colors",
+          "desc": "Series (or slice/category) name to CSS colour, e.g. {\"Revenue\":\"#2962FF\"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours."
+        },
+        {
+          "name": "transform",
+          "kind": "transform",
+          "desc": "Data steps run before the chart reads its columns, in order (at most 10): filter, timeUnit, aggregate, sort, top, bin (round bins: start and end columns), window (running sum, mean, count, rank, pctChange, lag, lead, movingMean, per group, in a sort order) and fold (wide columns to key/value rows). No expressions. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+        },
+        {
+          "name": "patterns",
+          "kind": "boolean",
+          "desc": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
+        },
+        {
+          "name": "text",
+          "kind": "column",
+          "role": "any",
+          "required": true,
+          "desc": "Column holding each word or short phrase. Rows with the same text are summed."
+        },
+        {
+          "name": "value",
+          "kind": "column",
+          "role": "number",
+          "required": true,
+          "desc": "Numeric column sizing each word (font size grows with its square root). Values at or below zero are left out. At most the 150 largest words are drawn."
+        },
+        {
+          "name": "series",
+          "kind": "column",
+          "role": "any",
+          "desc": "Column naming a group per word (its first row decides): words are coloured by group with a legend. Without it, one hue darkens from small to large words."
+        },
+        {
+          "name": "rotate",
+          "kind": "enum",
+          "values": [
+            "none",
+            "some"
+          ],
+          "default": "none",
+          "desc": "`none` keeps every word horizontal (easiest to read); `some` turns every fourth word in value order a quarter turn, which packs tighter."
+        }
+      ]
+    },
+    {
       "type": "choropleth",
       "fields": [
         {

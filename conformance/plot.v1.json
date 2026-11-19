@@ -3080,6 +3080,524 @@
       ]
     }
   ],
+  "cloudLayout": [
+    {
+      "in": {
+        "words": [
+          {
+            "text": "data",
+            "size": 48,
+            "rotate": false
+          },
+          {
+            "text": "chart",
+            "size": 40,
+            "rotate": false
+          },
+          {
+            "text": "axis",
+            "size": 33,
+            "rotate": false
+          },
+          {
+            "text": "legend",
+            "size": 28,
+            "rotate": false
+          },
+          {
+            "text": "tooltip",
+            "size": 24,
+            "rotate": false
+          },
+          {
+            "text": "scale",
+            "size": 20,
+            "rotate": false
+          },
+          {
+            "text": "tick",
+            "size": 17,
+            "rotate": false
+          },
+          {
+            "text": "grid",
+            "size": 14,
+            "rotate": false
+          },
+          {
+            "text": "label",
+            "size": 12,
+            "rotate": false
+          },
+          {
+            "text": "mark",
+            "size": 10,
+            "rotate": false
+          },
+          {
+            "text": "zoom",
+            "size": 10,
+            "rotate": false
+          },
+          {
+            "text": "brush",
+            "size": 10,
+            "rotate": false
+          }
+        ],
+        "widths": [
+          103.68,
+          108,
+          62.37,
+          83.16,
+          77.76,
+          48.6,
+          32.13,
+          26.46,
+          25.92,
+          24.8,
+          24.8,
+          27
+        ],
+        "width": 320.6,
+        "height": 200
+      },
+      "out": [
+        {
+          "x": 107,
+          "y": 70,
+          "w": 106,
+          "h": 60,
+          "rotate": false
+        },
+        {
+          "x": 97,
+          "y": 20,
+          "w": 110,
+          "h": 50,
+          "rotate": false
+        },
+        {
+          "x": 150,
+          "y": 130,
+          "w": 65,
+          "h": 42,
+          "rotate": false
+        },
+        {
+          "x": 213,
+          "y": 77,
+          "w": 86,
+          "h": 36,
+          "rotate": false
+        },
+        {
+          "x": 67,
+          "y": 132,
+          "w": 80,
+          "h": 31,
+          "rotate": false
+        },
+        {
+          "x": 56,
+          "y": 96,
+          "w": 51,
+          "h": 26,
+          "rotate": false
+        },
+        {
+          "x": 67,
+          "y": 72,
+          "w": 35,
+          "h": 23,
+          "rotate": false
+        },
+        {
+          "x": 222,
+          "y": 113,
+          "w": 29,
+          "h": 19,
+          "rotate": false
+        },
+        {
+          "x": 209,
+          "y": 53,
+          "w": 28,
+          "h": 17,
+          "rotate": false
+        },
+        {
+          "x": 221,
+          "y": 132,
+          "w": 27,
+          "h": 14,
+          "rotate": false
+        },
+        {
+          "x": 65,
+          "y": 57,
+          "w": 27,
+          "h": 14,
+          "rotate": false
+        },
+        {
+          "x": 208,
+          "y": 38,
+          "w": 29,
+          "h": 14,
+          "rotate": false
+        }
+      ]
+    },
+    {
+      "in": {
+        "words": [
+          {
+            "text": "data",
+            "size": 48,
+            "rotate": false
+          },
+          {
+            "text": "chart",
+            "size": 40,
+            "rotate": false
+          },
+          {
+            "text": "axis",
+            "size": 33,
+            "rotate": false
+          },
+          {
+            "text": "legend",
+            "size": 28,
+            "rotate": true
+          },
+          {
+            "text": "tooltip",
+            "size": 24,
+            "rotate": false
+          },
+          {
+            "text": "scale",
+            "size": 20,
+            "rotate": false
+          },
+          {
+            "text": "tick",
+            "size": 17,
+            "rotate": false
+          },
+          {
+            "text": "grid",
+            "size": 14,
+            "rotate": true
+          },
+          {
+            "text": "label",
+            "size": 12,
+            "rotate": false
+          },
+          {
+            "text": "mark",
+            "size": 10,
+            "rotate": false
+          },
+          {
+            "text": "zoom",
+            "size": 10,
+            "rotate": false
+          },
+          {
+            "text": "brush",
+            "size": 10,
+            "rotate": true
+          }
+        ],
+        "widths": [
+          103.68,
+          108,
+          62.37,
+          83.16,
+          77.76,
+          48.6,
+          32.13,
+          26.46,
+          25.92,
+          24.8,
+          24.8,
+          27
+        ],
+        "width": 320,
+        "height": 200
+      },
+      "out": [
+        {
+          "x": 107,
+          "y": 70,
+          "w": 106,
+          "h": 60,
+          "rotate": false
+        },
+        {
+          "x": 97,
+          "y": 20,
+          "w": 110,
+          "h": 50,
+          "rotate": false
+        },
+        {
+          "x": 150,
+          "y": 130,
+          "w": 65,
+          "h": 42,
+          "rotate": false
+        },
+        {
+          "x": 214,
+          "y": 41,
+          "w": 36,
+          "h": 86,
+          "rotate": true
+        },
+        {
+          "x": 67,
+          "y": 132,
+          "w": 80,
+          "h": 31,
+          "rotate": false
+        },
+        {
+          "x": 56,
+          "y": 96,
+          "w": 51,
+          "h": 26,
+          "rotate": false
+        },
+        {
+          "x": 67,
+          "y": 72,
+          "w": 35,
+          "h": 23,
+          "rotate": false
+        },
+        {
+          "x": 219,
+          "y": 129,
+          "w": 19,
+          "h": 29,
+          "rotate": true
+        },
+        {
+          "x": 69,
+          "y": 52,
+          "w": 28,
+          "h": 17,
+          "rotate": false
+        },
+        {
+          "x": 252,
+          "y": 75,
+          "w": 27,
+          "h": 14,
+          "rotate": false
+        },
+        {
+          "x": 256,
+          "y": 93,
+          "w": 27,
+          "h": 14,
+          "rotate": false
+        },
+        {
+          "x": 250,
+          "y": 108,
+          "w": 14,
+          "h": 29,
+          "rotate": true
+        }
+      ]
+    },
+    {
+      "in": {
+        "words": [
+          {
+            "text": "a very long phrase that does not fit",
+            "size": 30,
+            "rotate": false
+          },
+          {
+            "text": "short",
+            "size": 30,
+            "rotate": false
+          },
+          {
+            "text": "tiny",
+            "size": 10,
+            "rotate": false
+          }
+        ],
+        "widths": [
+          512.4,
+          81,
+          18.9
+        ],
+        "width": 180,
+        "height": 90
+      },
+      "out": [
+        null,
+        {
+          "x": 49,
+          "y": 26,
+          "w": 83,
+          "h": 38,
+          "rotate": false
+        },
+        {
+          "x": 28,
+          "y": 40,
+          "w": 21,
+          "h": 14,
+          "rotate": false
+        }
+      ]
+    },
+    {
+      "in": {
+        "words": [
+          {
+            "text": "narrow",
+            "size": 22,
+            "rotate": false
+          },
+          {
+            "text": "tall",
+            "size": 22,
+            "rotate": false
+          },
+          {
+            "text": "box",
+            "size": 22,
+            "rotate": false
+          },
+          {
+            "text": "again",
+            "size": 22,
+            "rotate": false
+          },
+          {
+            "text": "more",
+            "size": 22,
+            "rotate": false
+          },
+          {
+            "text": "words",
+            "size": 22,
+            "rotate": false
+          },
+          {
+            "text": "fill",
+            "size": 22,
+            "rotate": false
+          },
+          {
+            "text": "it",
+            "size": 22,
+            "rotate": false
+          }
+        ],
+        "widths": [
+          78.32,
+          35.64,
+          35.64,
+          53.46,
+          54.56,
+          66.44,
+          29.7,
+          17.82
+        ],
+        "width": 90,
+        "height": 260
+      },
+      "out": [
+        {
+          "x": 5,
+          "y": 116,
+          "w": 81,
+          "h": 29,
+          "rotate": false
+        },
+        {
+          "x": 27,
+          "y": 145,
+          "w": 38,
+          "h": 29,
+          "rotate": false
+        },
+        {
+          "x": 22,
+          "y": 87,
+          "w": 38,
+          "h": 29,
+          "rotate": false
+        },
+        {
+          "x": 13,
+          "y": 58,
+          "w": 56,
+          "h": 29,
+          "rotate": false
+        },
+        {
+          "x": 22,
+          "y": 175,
+          "w": 57,
+          "h": 29,
+          "rotate": false
+        },
+        {
+          "x": 8,
+          "y": 29,
+          "w": 69,
+          "h": 29,
+          "rotate": false
+        },
+        {
+          "x": 34,
+          "y": 204,
+          "w": 32,
+          "h": 29,
+          "rotate": false
+        },
+        {
+          "x": 62,
+          "y": 87,
+          "w": 20,
+          "h": 29,
+          "rotate": false
+        }
+      ]
+    },
+    {
+      "in": {
+        "words": [
+          {
+            "text": "x",
+            "size": 10,
+            "rotate": false
+          }
+        ],
+        "widths": [
+          5.4
+        ],
+        "width": 0,
+        "height": 0
+      },
+      "out": [
+        null
+      ]
+    }
+  ],
   "chartExamples": [
     {
       "type": "bar",
@@ -8827,6 +9345,198 @@
         "tooltip": true
       },
       "describe": "Beeswarm plot \"Response time by region\". 120 values of ms, one dot each, in 3 groups by region (Europe, Americas, Asia). Overall median 87, range 41 to 269. Europe: 40 values, median 75.5, range 41 to 228. Americas: 40 values, median 84, range 54 to 259. Asia: 40 values, median 98.5, range 66 to 269."
+    },
+    {
+      "type": "gauge",
+      "spec": {
+        "type": "gauge",
+        "title": "Cluster utilisation",
+        "subtitle": "Share of provisioned capacity in use, now",
+        "label": "resource",
+        "value": "used",
+        "target": "plan",
+        "bands": [
+          "good",
+          "busy",
+          "saturated"
+        ],
+        "bandOrder": "best-first",
+        "min": 0,
+        "max": 1,
+        "format": "percent",
+        "data": [
+          {
+            "resource": "CPU",
+            "used": 0.72,
+            "plan": 0.7,
+            "good": 0.6,
+            "busy": 0.85,
+            "saturated": 1
+          },
+          {
+            "resource": "Memory",
+            "used": 0.54,
+            "plan": 0.7,
+            "good": 0.6,
+            "busy": 0.85,
+            "saturated": 1
+          },
+          {
+            "resource": "Disk",
+            "used": 0.91,
+            "plan": 0.7,
+            "good": 0.6,
+            "busy": 0.85,
+            "saturated": 1
+          }
+        ]
+      },
+      "valid": true,
+      "issueCodes": [],
+      "normalized": {
+        "type": "gauge",
+        "title": "Cluster utilisation",
+        "subtitle": "Share of provisioned capacity in use, now",
+        "label": "resource",
+        "value": "used",
+        "target": "plan",
+        "bands": [
+          "good",
+          "busy",
+          "saturated"
+        ],
+        "bandOrder": "best-first",
+        "min": 0,
+        "max": 1,
+        "format": "percent",
+        "legend": "auto",
+        "tooltip": true,
+        "arc": 240
+      },
+      "describe": "Gauge \"Cluster utilisation\". 3 values on arcs from 0% to 100%; a filled arc's length is the value's share of that range. CPU: 72%, 72% of the range, in band \"busy\" (60% to 85%), target 70%. Memory: 54%, 54% of the range, in band \"good\" (up to 60%), target 70%. Disk: 91%, 91% of the range, in band \"saturated\" (85% to 100%), target 70%."
+    },
+    {
+      "type": "wordcloud",
+      "spec": {
+        "type": "wordcloud",
+        "title": "What customers mention in reviews",
+        "subtitle": "Mentions per term, 1,200 reviews",
+        "text": "term",
+        "value": "mentions",
+        "format": "integer",
+        "data": [
+          {
+            "term": "delivery",
+            "mentions": 214
+          },
+          {
+            "term": "price",
+            "mentions": 188
+          },
+          {
+            "term": "quality",
+            "mentions": 161
+          },
+          {
+            "term": "support",
+            "mentions": 132
+          },
+          {
+            "term": "battery",
+            "mentions": 118
+          },
+          {
+            "term": "screen",
+            "mentions": 97
+          },
+          {
+            "term": "size",
+            "mentions": 84
+          },
+          {
+            "term": "setup",
+            "mentions": 71
+          },
+          {
+            "term": "refund",
+            "mentions": 63
+          },
+          {
+            "term": "app",
+            "mentions": 58
+          },
+          {
+            "term": "packaging",
+            "mentions": 49
+          },
+          {
+            "term": "warranty",
+            "mentions": 44
+          },
+          {
+            "term": "colour",
+            "mentions": 38
+          },
+          {
+            "term": "manual",
+            "mentions": 31
+          },
+          {
+            "term": "noise",
+            "mentions": 27
+          },
+          {
+            "term": "weight",
+            "mentions": 24
+          },
+          {
+            "term": "charger",
+            "mentions": 21
+          },
+          {
+            "term": "strap",
+            "mentions": 17
+          },
+          {
+            "term": "firmware",
+            "mentions": 15
+          },
+          {
+            "term": "returns",
+            "mentions": 12
+          },
+          {
+            "term": "sound",
+            "mentions": 11
+          },
+          {
+            "term": "buttons",
+            "mentions": 9
+          },
+          {
+            "term": "case",
+            "mentions": 8
+          },
+          {
+            "term": "gift",
+            "mentions": 6
+          }
+        ]
+      },
+      "valid": true,
+      "issueCodes": [],
+      "normalized": {
+        "type": "wordcloud",
+        "title": "What customers mention in reviews",
+        "subtitle": "Mentions per term, 1,200 reviews",
+        "text": "term",
+        "value": "mentions",
+        "format": "integer",
+        "legend": "auto",
+        "tooltip": true,
+        "rotate": "none"
+      },
+      "describe": "Word cloud \"What customers mention in reviews\". 24 words sized by mentions (font size grows with the square root of the value, so a word's area roughly follows it; a long word looks bigger than a short one of the same value). Top 10, largest first: delivery 214, price 188, quality 161, support 132, battery 118, screen 97, size 84, setup 71, refund 63, app 58."
     },
     {
       "type": "choropleth",
@@ -34984,6 +35694,1335 @@
           "severity": "error",
           "code": "out_of_range",
           "path": "radius"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "gauge: one value against a max",
+      "spec": {
+        "type": "gauge",
+        "value": "b",
+        "max": 10,
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "gauge",
+        "value": "b",
+        "max": 10,
+        "legend": "auto",
+        "tooltip": true,
+        "min": 0,
+        "bandOrder": "worst-first",
+        "arc": 240
+      }
+    },
+    {
+      "name": "gauge: several rows need a label",
+      "spec": {
+        "type": "gauge",
+        "value": "b",
+        "max": 10,
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "b": 2
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "missing_required",
+          "path": "label"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "gauge: max derived from the data",
+      "spec": {
+        "type": "gauge",
+        "label": "a",
+        "value": "b",
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "b": 2
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "max_derived",
+          "path": "max"
+        }
+      ],
+      "normalized": {
+        "type": "gauge",
+        "label": "a",
+        "value": "b",
+        "legend": "auto",
+        "tooltip": true,
+        "min": 0,
+        "bandOrder": "worst-first",
+        "arc": 240
+      }
+    },
+    {
+      "name": "gauge: max at or below min",
+      "spec": {
+        "type": "gauge",
+        "label": "a",
+        "value": "b",
+        "min": 5,
+        "max": 5,
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "b": 2
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "bad_range",
+          "path": "max"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "gauge: nothing above min, no max",
+      "spec": {
+        "type": "gauge",
+        "label": "a",
+        "value": "b",
+        "min": 3,
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "b": 2
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "max_required",
+          "path": "max"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "gauge: values outside the range",
+      "spec": {
+        "type": "gauge",
+        "label": "a",
+        "value": "b",
+        "min": 1.5,
+        "max": 1.8,
+        "target": "b",
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "b": 2
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "value_outside_range",
+          "path": "value"
+        },
+        {
+          "severity": "warning",
+          "code": "target_outside_range",
+          "path": "target"
+        }
+      ],
+      "normalized": {
+        "type": "gauge",
+        "label": "a",
+        "value": "b",
+        "min": 1.5,
+        "max": 1.8,
+        "target": "b",
+        "legend": "auto",
+        "tooltip": true,
+        "bandOrder": "worst-first",
+        "arc": 240
+      }
+    },
+    {
+      "name": "gauge: bands, best first, unordered",
+      "spec": {
+        "type": "gauge",
+        "label": "k",
+        "value": "v",
+        "target": "t",
+        "bands": [
+          "p",
+          "q",
+          "r"
+        ],
+        "bandOrder": "best-first",
+        "max": 10,
+        "data": [
+          {
+            "k": "x",
+            "v": 4,
+            "t": 5,
+            "p": 3,
+            "q": 2,
+            "r": 10
+          },
+          {
+            "k": "y",
+            "v": 7,
+            "t": 5,
+            "p": 2,
+            "q": 6,
+            "r": 10
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "bands_not_increasing",
+          "path": "bands"
+        }
+      ],
+      "normalized": {
+        "type": "gauge",
+        "label": "k",
+        "value": "v",
+        "target": "t",
+        "bands": [
+          "p",
+          "q",
+          "r"
+        ],
+        "bandOrder": "best-first",
+        "max": 10,
+        "legend": "auto",
+        "tooltip": true,
+        "min": 0,
+        "arc": 240
+      }
+    },
+    {
+      "name": "gauge: one band column",
+      "spec": {
+        "type": "gauge",
+        "value": "b",
+        "bands": [
+          "b"
+        ],
+        "max": 10,
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "too_few_columns",
+          "path": "bands"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "gauge: arc out of range",
+      "spec": {
+        "type": "gauge",
+        "value": "b",
+        "arc": 360,
+        "max": 10,
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "out_of_range",
+          "path": "arc"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "gauge: bad band order",
+      "spec": {
+        "type": "gauge",
+        "value": "b",
+        "bandOrder": "worst",
+        "max": 10,
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "bad_enum",
+          "path": "bandOrder"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "gauge: seven rows, a repeated label",
+      "spec": {
+        "type": "gauge",
+        "label": "a",
+        "value": "b",
+        "max": 10,
+        "data": [
+          {
+            "a": "g0",
+            "b": 0
+          },
+          {
+            "a": "g1",
+            "b": 1
+          },
+          {
+            "a": "g2",
+            "b": 2
+          },
+          {
+            "a": "g3",
+            "b": 3
+          },
+          {
+            "a": "g4",
+            "b": 4
+          },
+          {
+            "a": "g5",
+            "b": 5
+          },
+          {
+            "a": "g6",
+            "b": 6
+          },
+          {
+            "a": "g0",
+            "b": 1
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "too_many_gauges",
+          "path": "data"
+        },
+        {
+          "severity": "warning",
+          "code": "duplicate_measures",
+          "path": "label"
+        }
+      ],
+      "normalized": {
+        "type": "gauge",
+        "label": "a",
+        "value": "b",
+        "max": 10,
+        "legend": "auto",
+        "tooltip": true,
+        "min": 0,
+        "bandOrder": "worst-first",
+        "arc": 240
+      }
+    },
+    {
+      "name": "gauge: facet is refused",
+      "spec": {
+        "type": "gauge",
+        "value": "b",
+        "max": 10,
+        "facet": "a",
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "unknown_field",
+          "path": "facet"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "wordcloud: ok",
+      "spec": {
+        "type": "wordcloud",
+        "text": "a",
+        "value": "b",
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "b": 2
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "wordcloud",
+        "text": "a",
+        "value": "b",
+        "legend": "auto",
+        "tooltip": true,
+        "rotate": "none"
+      }
+    },
+    {
+      "name": "wordcloud: rotate and groups",
+      "spec": {
+        "type": "wordcloud",
+        "text": "a",
+        "value": "b",
+        "series": "a",
+        "rotate": "some",
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "b": 2
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "wordcloud",
+        "text": "a",
+        "value": "b",
+        "series": "a",
+        "rotate": "some",
+        "legend": "auto",
+        "tooltip": true
+      }
+    },
+    {
+      "name": "wordcloud: patterns do not apply",
+      "spec": {
+        "type": "wordcloud",
+        "text": "a",
+        "value": "b",
+        "patterns": true,
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "b": 2
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "patterns_unsupported",
+          "path": "patterns"
+        }
+      ],
+      "normalized": {
+        "type": "wordcloud",
+        "text": "a",
+        "value": "b",
+        "patterns": true,
+        "legend": "auto",
+        "tooltip": true,
+        "rotate": "none"
+      }
+    },
+    {
+      "name": "wordcloud: bad rotate",
+      "spec": {
+        "type": "wordcloud",
+        "text": "a",
+        "value": "b",
+        "rotate": "all",
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "b": 2
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "bad_enum",
+          "path": "rotate"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "wordcloud: nothing positive",
+      "spec": {
+        "type": "wordcloud",
+        "text": "a",
+        "value": "b",
+        "data": [
+          {
+            "a": "x",
+            "b": 0
+          },
+          {
+            "a": "y",
+            "b": -1
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "no_positive_values",
+          "path": "value"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "wordcloud: some not positive, repeated words",
+      "spec": {
+        "type": "wordcloud",
+        "text": "a",
+        "value": "b",
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "b": 2
+          },
+          {
+            "a": "x",
+            "b": 4
+          },
+          {
+            "a": "z",
+            "b": 0
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "nonpositive_values",
+          "path": "value"
+        }
+      ],
+      "normalized": {
+        "type": "wordcloud",
+        "text": "a",
+        "value": "b",
+        "legend": "auto",
+        "tooltip": true,
+        "rotate": "none"
+      }
+    },
+    {
+      "name": "wordcloud: more than 150 words",
+      "spec": {
+        "type": "wordcloud",
+        "text": "a",
+        "value": "b",
+        "data": [
+          {
+            "a": "w0",
+            "b": 160
+          },
+          {
+            "a": "w1",
+            "b": 159
+          },
+          {
+            "a": "w2",
+            "b": 158
+          },
+          {
+            "a": "w3",
+            "b": 157
+          },
+          {
+            "a": "w4",
+            "b": 156
+          },
+          {
+            "a": "w5",
+            "b": 155
+          },
+          {
+            "a": "w6",
+            "b": 154
+          },
+          {
+            "a": "w7",
+            "b": 153
+          },
+          {
+            "a": "w8",
+            "b": 152
+          },
+          {
+            "a": "w9",
+            "b": 151
+          },
+          {
+            "a": "w10",
+            "b": 150
+          },
+          {
+            "a": "w11",
+            "b": 149
+          },
+          {
+            "a": "w12",
+            "b": 148
+          },
+          {
+            "a": "w13",
+            "b": 147
+          },
+          {
+            "a": "w14",
+            "b": 146
+          },
+          {
+            "a": "w15",
+            "b": 145
+          },
+          {
+            "a": "w16",
+            "b": 144
+          },
+          {
+            "a": "w17",
+            "b": 143
+          },
+          {
+            "a": "w18",
+            "b": 142
+          },
+          {
+            "a": "w19",
+            "b": 141
+          },
+          {
+            "a": "w20",
+            "b": 140
+          },
+          {
+            "a": "w21",
+            "b": 139
+          },
+          {
+            "a": "w22",
+            "b": 138
+          },
+          {
+            "a": "w23",
+            "b": 137
+          },
+          {
+            "a": "w24",
+            "b": 136
+          },
+          {
+            "a": "w25",
+            "b": 135
+          },
+          {
+            "a": "w26",
+            "b": 134
+          },
+          {
+            "a": "w27",
+            "b": 133
+          },
+          {
+            "a": "w28",
+            "b": 132
+          },
+          {
+            "a": "w29",
+            "b": 131
+          },
+          {
+            "a": "w30",
+            "b": 130
+          },
+          {
+            "a": "w31",
+            "b": 129
+          },
+          {
+            "a": "w32",
+            "b": 128
+          },
+          {
+            "a": "w33",
+            "b": 127
+          },
+          {
+            "a": "w34",
+            "b": 126
+          },
+          {
+            "a": "w35",
+            "b": 125
+          },
+          {
+            "a": "w36",
+            "b": 124
+          },
+          {
+            "a": "w37",
+            "b": 123
+          },
+          {
+            "a": "w38",
+            "b": 122
+          },
+          {
+            "a": "w39",
+            "b": 121
+          },
+          {
+            "a": "w40",
+            "b": 120
+          },
+          {
+            "a": "w41",
+            "b": 119
+          },
+          {
+            "a": "w42",
+            "b": 118
+          },
+          {
+            "a": "w43",
+            "b": 117
+          },
+          {
+            "a": "w44",
+            "b": 116
+          },
+          {
+            "a": "w45",
+            "b": 115
+          },
+          {
+            "a": "w46",
+            "b": 114
+          },
+          {
+            "a": "w47",
+            "b": 113
+          },
+          {
+            "a": "w48",
+            "b": 112
+          },
+          {
+            "a": "w49",
+            "b": 111
+          },
+          {
+            "a": "w50",
+            "b": 110
+          },
+          {
+            "a": "w51",
+            "b": 109
+          },
+          {
+            "a": "w52",
+            "b": 108
+          },
+          {
+            "a": "w53",
+            "b": 107
+          },
+          {
+            "a": "w54",
+            "b": 106
+          },
+          {
+            "a": "w55",
+            "b": 105
+          },
+          {
+            "a": "w56",
+            "b": 104
+          },
+          {
+            "a": "w57",
+            "b": 103
+          },
+          {
+            "a": "w58",
+            "b": 102
+          },
+          {
+            "a": "w59",
+            "b": 101
+          },
+          {
+            "a": "w60",
+            "b": 100
+          },
+          {
+            "a": "w61",
+            "b": 99
+          },
+          {
+            "a": "w62",
+            "b": 98
+          },
+          {
+            "a": "w63",
+            "b": 97
+          },
+          {
+            "a": "w64",
+            "b": 96
+          },
+          {
+            "a": "w65",
+            "b": 95
+          },
+          {
+            "a": "w66",
+            "b": 94
+          },
+          {
+            "a": "w67",
+            "b": 93
+          },
+          {
+            "a": "w68",
+            "b": 92
+          },
+          {
+            "a": "w69",
+            "b": 91
+          },
+          {
+            "a": "w70",
+            "b": 90
+          },
+          {
+            "a": "w71",
+            "b": 89
+          },
+          {
+            "a": "w72",
+            "b": 88
+          },
+          {
+            "a": "w73",
+            "b": 87
+          },
+          {
+            "a": "w74",
+            "b": 86
+          },
+          {
+            "a": "w75",
+            "b": 85
+          },
+          {
+            "a": "w76",
+            "b": 84
+          },
+          {
+            "a": "w77",
+            "b": 83
+          },
+          {
+            "a": "w78",
+            "b": 82
+          },
+          {
+            "a": "w79",
+            "b": 81
+          },
+          {
+            "a": "w80",
+            "b": 80
+          },
+          {
+            "a": "w81",
+            "b": 79
+          },
+          {
+            "a": "w82",
+            "b": 78
+          },
+          {
+            "a": "w83",
+            "b": 77
+          },
+          {
+            "a": "w84",
+            "b": 76
+          },
+          {
+            "a": "w85",
+            "b": 75
+          },
+          {
+            "a": "w86",
+            "b": 74
+          },
+          {
+            "a": "w87",
+            "b": 73
+          },
+          {
+            "a": "w88",
+            "b": 72
+          },
+          {
+            "a": "w89",
+            "b": 71
+          },
+          {
+            "a": "w90",
+            "b": 70
+          },
+          {
+            "a": "w91",
+            "b": 69
+          },
+          {
+            "a": "w92",
+            "b": 68
+          },
+          {
+            "a": "w93",
+            "b": 67
+          },
+          {
+            "a": "w94",
+            "b": 66
+          },
+          {
+            "a": "w95",
+            "b": 65
+          },
+          {
+            "a": "w96",
+            "b": 64
+          },
+          {
+            "a": "w97",
+            "b": 63
+          },
+          {
+            "a": "w98",
+            "b": 62
+          },
+          {
+            "a": "w99",
+            "b": 61
+          },
+          {
+            "a": "w100",
+            "b": 60
+          },
+          {
+            "a": "w101",
+            "b": 59
+          },
+          {
+            "a": "w102",
+            "b": 58
+          },
+          {
+            "a": "w103",
+            "b": 57
+          },
+          {
+            "a": "w104",
+            "b": 56
+          },
+          {
+            "a": "w105",
+            "b": 55
+          },
+          {
+            "a": "w106",
+            "b": 54
+          },
+          {
+            "a": "w107",
+            "b": 53
+          },
+          {
+            "a": "w108",
+            "b": 52
+          },
+          {
+            "a": "w109",
+            "b": 51
+          },
+          {
+            "a": "w110",
+            "b": 50
+          },
+          {
+            "a": "w111",
+            "b": 49
+          },
+          {
+            "a": "w112",
+            "b": 48
+          },
+          {
+            "a": "w113",
+            "b": 47
+          },
+          {
+            "a": "w114",
+            "b": 46
+          },
+          {
+            "a": "w115",
+            "b": 45
+          },
+          {
+            "a": "w116",
+            "b": 44
+          },
+          {
+            "a": "w117",
+            "b": 43
+          },
+          {
+            "a": "w118",
+            "b": 42
+          },
+          {
+            "a": "w119",
+            "b": 41
+          },
+          {
+            "a": "w120",
+            "b": 40
+          },
+          {
+            "a": "w121",
+            "b": 39
+          },
+          {
+            "a": "w122",
+            "b": 38
+          },
+          {
+            "a": "w123",
+            "b": 37
+          },
+          {
+            "a": "w124",
+            "b": 36
+          },
+          {
+            "a": "w125",
+            "b": 35
+          },
+          {
+            "a": "w126",
+            "b": 34
+          },
+          {
+            "a": "w127",
+            "b": 33
+          },
+          {
+            "a": "w128",
+            "b": 32
+          },
+          {
+            "a": "w129",
+            "b": 31
+          },
+          {
+            "a": "w130",
+            "b": 30
+          },
+          {
+            "a": "w131",
+            "b": 29
+          },
+          {
+            "a": "w132",
+            "b": 28
+          },
+          {
+            "a": "w133",
+            "b": 27
+          },
+          {
+            "a": "w134",
+            "b": 26
+          },
+          {
+            "a": "w135",
+            "b": 25
+          },
+          {
+            "a": "w136",
+            "b": 24
+          },
+          {
+            "a": "w137",
+            "b": 23
+          },
+          {
+            "a": "w138",
+            "b": 22
+          },
+          {
+            "a": "w139",
+            "b": 21
+          },
+          {
+            "a": "w140",
+            "b": 20
+          },
+          {
+            "a": "w141",
+            "b": 19
+          },
+          {
+            "a": "w142",
+            "b": 18
+          },
+          {
+            "a": "w143",
+            "b": 17
+          },
+          {
+            "a": "w144",
+            "b": 16
+          },
+          {
+            "a": "w145",
+            "b": 15
+          },
+          {
+            "a": "w146",
+            "b": 14
+          },
+          {
+            "a": "w147",
+            "b": 13
+          },
+          {
+            "a": "w148",
+            "b": 12
+          },
+          {
+            "a": "w149",
+            "b": 11
+          },
+          {
+            "a": "w150",
+            "b": 10
+          },
+          {
+            "a": "w151",
+            "b": 9
+          },
+          {
+            "a": "w152",
+            "b": 8
+          },
+          {
+            "a": "w153",
+            "b": 7
+          },
+          {
+            "a": "w154",
+            "b": 6
+          },
+          {
+            "a": "w155",
+            "b": 5
+          },
+          {
+            "a": "w156",
+            "b": 4
+          },
+          {
+            "a": "w157",
+            "b": 3
+          },
+          {
+            "a": "w158",
+            "b": 2
+          },
+          {
+            "a": "w159",
+            "b": 1
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "too_many_words",
+          "path": "text"
+        }
+      ],
+      "normalized": {
+        "type": "wordcloud",
+        "text": "a",
+        "value": "b",
+        "legend": "auto",
+        "tooltip": true,
+        "rotate": "none"
+      }
+    },
+    {
+      "name": "wordcloud: value not numeric",
+      "spec": {
+        "type": "wordcloud",
+        "text": "b",
+        "value": "a",
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "b": 2
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "not_numeric",
+          "path": "value"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "wordcloud: facet is refused",
+      "spec": {
+        "type": "wordcloud",
+        "text": "a",
+        "value": "b",
+        "facet": "a",
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "b": 2
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "unknown_field",
+          "path": "facet"
         }
       ],
       "normalized": null
@@ -71455,6 +73494,874 @@
       },
       "describe": "Parallel coordinates. 6 rows across 3 measures (a, b, c). Ranges: a 0.0 to 5.0; b 0.0 to 10.0; c 0.0 to 3.0. Strongest link between neighbouring axes: a and b (r = -1.00).",
       "issueCodes": []
+    },
+    {
+      "name": "gauge: derived max, below min, no value",
+      "spec": {
+        "type": "gauge",
+        "label": "k",
+        "value": "v",
+        "target": "t",
+        "min": 2,
+        "format": "fixed:1",
+        "data": [
+          {
+            "k": "a",
+            "v": 7.25,
+            "t": 9
+          },
+          {
+            "k": "b",
+            "v": 1
+          },
+          {
+            "k": "c",
+            "v": null,
+            "t": 3
+          }
+        ]
+      },
+      "describe": "Gauge. 3 values on arcs from 2.0 to 9.0 (the maximum was rounded up from the data, not given); a filled arc's length is the value's share of that range. a: 7.3, 75% of the range, target 9.0. b: 1.0, below the minimum of 2.0 (the arc is empty). c: no value.",
+      "issueCodes": [
+        "max_derived",
+        "value_outside_range"
+      ]
+    },
+    {
+      "name": "gauge: bands, above every band and above max",
+      "spec": {
+        "type": "gauge",
+        "label": "k",
+        "value": "v",
+        "bands": [
+          "lo",
+          "hi"
+        ],
+        "min": -10,
+        "max": 10,
+        "data": [
+          {
+            "k": "a",
+            "v": -10,
+            "lo": 0,
+            "hi": 5
+          },
+          {
+            "k": "b",
+            "v": 7,
+            "lo": 0,
+            "hi": 5
+          },
+          {
+            "k": "c",
+            "v": 12,
+            "lo": 0,
+            "hi": 5
+          }
+        ]
+      },
+      "describe": "Gauge. 3 values on arcs from -10 to 10; a filled arc's length is the value's share of that range. a: -10, 0% of the range, in band \"lo\" (up to 0). b: 7, 85% of the range, above every band. c: 12, above the maximum of 10 (the arc is full), above every band.",
+      "issueCodes": [
+        "value_outside_range"
+      ]
+    },
+    {
+      "name": "gauge: seven rows (one not drawn)",
+      "spec": {
+        "type": "gauge",
+        "label": "k",
+        "value": "v",
+        "max": 1,
+        "format": "percent",
+        "data": [
+          {
+            "k": "g0",
+            "v": 0
+          },
+          {
+            "k": "g1",
+            "v": 0.125
+          },
+          {
+            "k": "g2",
+            "v": 0.25
+          },
+          {
+            "k": "g3",
+            "v": 0.375
+          },
+          {
+            "k": "g4",
+            "v": 0.5
+          },
+          {
+            "k": "g5",
+            "v": 0.625
+          },
+          {
+            "k": "g6",
+            "v": 0.75
+          }
+        ]
+      },
+      "describe": "Gauge. 6 values on arcs from 0% to 100%; a filled arc's length is the value's share of that range. g0: 0%, 0% of the range. g1: 12.5%, 12.5% of the range. g2: 25%, 25% of the range. g3: 37.5%, 37.5% of the range. g4: 50%, 50% of the range. g5: 62.5%, 62.5% of the range. 1 more row is not drawn.",
+      "issueCodes": [
+        "too_many_gauges"
+      ]
+    },
+    {
+      "name": "wordcloud: one word",
+      "spec": {
+        "type": "wordcloud",
+        "text": "w",
+        "value": "n",
+        "data": [
+          {
+            "w": "solo",
+            "n": 3
+          }
+        ]
+      },
+      "describe": "Word cloud. 1 word sized by n (font size grows with the square root of the value, so a word's area roughly follows it; a long word looks bigger than a short one of the same value). The word: solo 3.",
+      "issueCodes": []
+    },
+    {
+      "name": "wordcloud: groups, sums, ties keep data order",
+      "spec": {
+        "type": "wordcloud",
+        "text": "w",
+        "value": "n",
+        "series": "g",
+        "format": "compact",
+        "data": [
+          {
+            "w": "b",
+            "n": 2000,
+            "g": "p"
+          },
+          {
+            "w": "a",
+            "n": 1500,
+            "g": "q"
+          },
+          {
+            "w": "b",
+            "n": 500,
+            "g": "q"
+          },
+          {
+            "w": "c",
+            "n": 2500,
+            "g": "p"
+          },
+          {
+            "w": " d ",
+            "n": 2500
+          },
+          {
+            "w": "e",
+            "n": 0
+          }
+        ]
+      },
+      "describe": "Word cloud. 4 words sized by n (font size grows with the square root of the value, so a word's area roughly follows it; a long word looks bigger than a short one of the same value). All words, largest first: b 2.5K, c 2.5K, d 2.5K, a 1.5K. Coloured by g: p, no g, q.",
+      "issueCodes": [
+        "nonpositive_values"
+      ]
+    },
+    {
+      "name": "wordcloud: more than 150 words",
+      "spec": {
+        "type": "wordcloud",
+        "text": "w",
+        "value": "n",
+        "data": [
+          {
+            "w": "w0",
+            "n": 1
+          },
+          {
+            "w": "w1",
+            "n": 2
+          },
+          {
+            "w": "w2",
+            "n": 3
+          },
+          {
+            "w": "w3",
+            "n": 4
+          },
+          {
+            "w": "w4",
+            "n": 5
+          },
+          {
+            "w": "w5",
+            "n": 6
+          },
+          {
+            "w": "w6",
+            "n": 7
+          },
+          {
+            "w": "w7",
+            "n": 8
+          },
+          {
+            "w": "w8",
+            "n": 9
+          },
+          {
+            "w": "w9",
+            "n": 10
+          },
+          {
+            "w": "w10",
+            "n": 11
+          },
+          {
+            "w": "w11",
+            "n": 12
+          },
+          {
+            "w": "w12",
+            "n": 13
+          },
+          {
+            "w": "w13",
+            "n": 1
+          },
+          {
+            "w": "w14",
+            "n": 2
+          },
+          {
+            "w": "w15",
+            "n": 3
+          },
+          {
+            "w": "w16",
+            "n": 4
+          },
+          {
+            "w": "w17",
+            "n": 5
+          },
+          {
+            "w": "w18",
+            "n": 6
+          },
+          {
+            "w": "w19",
+            "n": 7
+          },
+          {
+            "w": "w20",
+            "n": 8
+          },
+          {
+            "w": "w21",
+            "n": 9
+          },
+          {
+            "w": "w22",
+            "n": 10
+          },
+          {
+            "w": "w23",
+            "n": 11
+          },
+          {
+            "w": "w24",
+            "n": 12
+          },
+          {
+            "w": "w25",
+            "n": 13
+          },
+          {
+            "w": "w26",
+            "n": 1
+          },
+          {
+            "w": "w27",
+            "n": 2
+          },
+          {
+            "w": "w28",
+            "n": 3
+          },
+          {
+            "w": "w29",
+            "n": 4
+          },
+          {
+            "w": "w30",
+            "n": 5
+          },
+          {
+            "w": "w31",
+            "n": 6
+          },
+          {
+            "w": "w32",
+            "n": 7
+          },
+          {
+            "w": "w33",
+            "n": 8
+          },
+          {
+            "w": "w34",
+            "n": 9
+          },
+          {
+            "w": "w35",
+            "n": 10
+          },
+          {
+            "w": "w36",
+            "n": 11
+          },
+          {
+            "w": "w37",
+            "n": 12
+          },
+          {
+            "w": "w38",
+            "n": 13
+          },
+          {
+            "w": "w39",
+            "n": 1
+          },
+          {
+            "w": "w40",
+            "n": 2
+          },
+          {
+            "w": "w41",
+            "n": 3
+          },
+          {
+            "w": "w42",
+            "n": 4
+          },
+          {
+            "w": "w43",
+            "n": 5
+          },
+          {
+            "w": "w44",
+            "n": 6
+          },
+          {
+            "w": "w45",
+            "n": 7
+          },
+          {
+            "w": "w46",
+            "n": 8
+          },
+          {
+            "w": "w47",
+            "n": 9
+          },
+          {
+            "w": "w48",
+            "n": 10
+          },
+          {
+            "w": "w49",
+            "n": 11
+          },
+          {
+            "w": "w50",
+            "n": 12
+          },
+          {
+            "w": "w51",
+            "n": 13
+          },
+          {
+            "w": "w52",
+            "n": 1
+          },
+          {
+            "w": "w53",
+            "n": 2
+          },
+          {
+            "w": "w54",
+            "n": 3
+          },
+          {
+            "w": "w55",
+            "n": 4
+          },
+          {
+            "w": "w56",
+            "n": 5
+          },
+          {
+            "w": "w57",
+            "n": 6
+          },
+          {
+            "w": "w58",
+            "n": 7
+          },
+          {
+            "w": "w59",
+            "n": 8
+          },
+          {
+            "w": "w60",
+            "n": 9
+          },
+          {
+            "w": "w61",
+            "n": 10
+          },
+          {
+            "w": "w62",
+            "n": 11
+          },
+          {
+            "w": "w63",
+            "n": 12
+          },
+          {
+            "w": "w64",
+            "n": 13
+          },
+          {
+            "w": "w65",
+            "n": 1
+          },
+          {
+            "w": "w66",
+            "n": 2
+          },
+          {
+            "w": "w67",
+            "n": 3
+          },
+          {
+            "w": "w68",
+            "n": 4
+          },
+          {
+            "w": "w69",
+            "n": 5
+          },
+          {
+            "w": "w70",
+            "n": 6
+          },
+          {
+            "w": "w71",
+            "n": 7
+          },
+          {
+            "w": "w72",
+            "n": 8
+          },
+          {
+            "w": "w73",
+            "n": 9
+          },
+          {
+            "w": "w74",
+            "n": 10
+          },
+          {
+            "w": "w75",
+            "n": 11
+          },
+          {
+            "w": "w76",
+            "n": 12
+          },
+          {
+            "w": "w77",
+            "n": 13
+          },
+          {
+            "w": "w78",
+            "n": 1
+          },
+          {
+            "w": "w79",
+            "n": 2
+          },
+          {
+            "w": "w80",
+            "n": 3
+          },
+          {
+            "w": "w81",
+            "n": 4
+          },
+          {
+            "w": "w82",
+            "n": 5
+          },
+          {
+            "w": "w83",
+            "n": 6
+          },
+          {
+            "w": "w84",
+            "n": 7
+          },
+          {
+            "w": "w85",
+            "n": 8
+          },
+          {
+            "w": "w86",
+            "n": 9
+          },
+          {
+            "w": "w87",
+            "n": 10
+          },
+          {
+            "w": "w88",
+            "n": 11
+          },
+          {
+            "w": "w89",
+            "n": 12
+          },
+          {
+            "w": "w90",
+            "n": 13
+          },
+          {
+            "w": "w91",
+            "n": 1
+          },
+          {
+            "w": "w92",
+            "n": 2
+          },
+          {
+            "w": "w93",
+            "n": 3
+          },
+          {
+            "w": "w94",
+            "n": 4
+          },
+          {
+            "w": "w95",
+            "n": 5
+          },
+          {
+            "w": "w96",
+            "n": 6
+          },
+          {
+            "w": "w97",
+            "n": 7
+          },
+          {
+            "w": "w98",
+            "n": 8
+          },
+          {
+            "w": "w99",
+            "n": 9
+          },
+          {
+            "w": "w100",
+            "n": 10
+          },
+          {
+            "w": "w101",
+            "n": 11
+          },
+          {
+            "w": "w102",
+            "n": 12
+          },
+          {
+            "w": "w103",
+            "n": 13
+          },
+          {
+            "w": "w104",
+            "n": 1
+          },
+          {
+            "w": "w105",
+            "n": 2
+          },
+          {
+            "w": "w106",
+            "n": 3
+          },
+          {
+            "w": "w107",
+            "n": 4
+          },
+          {
+            "w": "w108",
+            "n": 5
+          },
+          {
+            "w": "w109",
+            "n": 6
+          },
+          {
+            "w": "w110",
+            "n": 7
+          },
+          {
+            "w": "w111",
+            "n": 8
+          },
+          {
+            "w": "w112",
+            "n": 9
+          },
+          {
+            "w": "w113",
+            "n": 10
+          },
+          {
+            "w": "w114",
+            "n": 11
+          },
+          {
+            "w": "w115",
+            "n": 12
+          },
+          {
+            "w": "w116",
+            "n": 13
+          },
+          {
+            "w": "w117",
+            "n": 1
+          },
+          {
+            "w": "w118",
+            "n": 2
+          },
+          {
+            "w": "w119",
+            "n": 3
+          },
+          {
+            "w": "w120",
+            "n": 4
+          },
+          {
+            "w": "w121",
+            "n": 5
+          },
+          {
+            "w": "w122",
+            "n": 6
+          },
+          {
+            "w": "w123",
+            "n": 7
+          },
+          {
+            "w": "w124",
+            "n": 8
+          },
+          {
+            "w": "w125",
+            "n": 9
+          },
+          {
+            "w": "w126",
+            "n": 10
+          },
+          {
+            "w": "w127",
+            "n": 11
+          },
+          {
+            "w": "w128",
+            "n": 12
+          },
+          {
+            "w": "w129",
+            "n": 13
+          },
+          {
+            "w": "w130",
+            "n": 1
+          },
+          {
+            "w": "w131",
+            "n": 2
+          },
+          {
+            "w": "w132",
+            "n": 3
+          },
+          {
+            "w": "w133",
+            "n": 4
+          },
+          {
+            "w": "w134",
+            "n": 5
+          },
+          {
+            "w": "w135",
+            "n": 6
+          },
+          {
+            "w": "w136",
+            "n": 7
+          },
+          {
+            "w": "w137",
+            "n": 8
+          },
+          {
+            "w": "w138",
+            "n": 9
+          },
+          {
+            "w": "w139",
+            "n": 10
+          },
+          {
+            "w": "w140",
+            "n": 11
+          },
+          {
+            "w": "w141",
+            "n": 12
+          },
+          {
+            "w": "w142",
+            "n": 13
+          },
+          {
+            "w": "w143",
+            "n": 1
+          },
+          {
+            "w": "w144",
+            "n": 2
+          },
+          {
+            "w": "w145",
+            "n": 3
+          },
+          {
+            "w": "w146",
+            "n": 4
+          },
+          {
+            "w": "w147",
+            "n": 5
+          },
+          {
+            "w": "w148",
+            "n": 6
+          },
+          {
+            "w": "w149",
+            "n": 7
+          },
+          {
+            "w": "w150",
+            "n": 8
+          },
+          {
+            "w": "w151",
+            "n": 9
+          },
+          {
+            "w": "w152",
+            "n": 10
+          },
+          {
+            "w": "w153",
+            "n": 11
+          },
+          {
+            "w": "w154",
+            "n": 12
+          },
+          {
+            "w": "w155",
+            "n": 13
+          },
+          {
+            "w": "w156",
+            "n": 1
+          },
+          {
+            "w": "w157",
+            "n": 2
+          },
+          {
+            "w": "w158",
+            "n": 3
+          },
+          {
+            "w": "w159",
+            "n": 4
+          },
+          {
+            "w": "w160",
+            "n": 5
+          },
+          {
+            "w": "w161",
+            "n": 6
+          },
+          {
+            "w": "w162",
+            "n": 7
+          },
+          {
+            "w": "w163",
+            "n": 8
+          },
+          {
+            "w": "w164",
+            "n": 9
+          },
+          {
+            "w": "w165",
+            "n": 10
+          },
+          {
+            "w": "w166",
+            "n": 11
+          },
+          {
+            "w": "w167",
+            "n": 12
+          },
+          {
+            "w": "w168",
+            "n": 13
+          },
+          {
+            "w": "w169",
+            "n": 1
+          }
+        ]
+      },
+      "describe": "Word cloud. 170 words sized by n (font size grows with the square root of the value, so a word's area roughly follows it; a long word looks bigger than a short one of the same value). Only the 150 largest are drawn. Top 10, largest first: w12 13, w25 13, w38 13, w51 13, w64 13, w77 13, w90 13, w103 13, w116 13, w129 13.",
+      "issueCodes": [
+        "too_many_words"
+      ]
     },
     {
       "name": "explicit description wins",
