@@ -2051,7 +2051,201 @@
           "name": "outliers",
           "kind": "boolean",
           "default": true,
-          "desc": "Draw points beyond the whiskers (1.5 x IQR)."
+          "desc": "Draw points beyond the whiskers (1.5 x IQR). Kept for older specs: `points` replaces it and wins when both are set."
+        },
+        {
+          "name": "points",
+          "kind": "enum",
+          "values": [
+            "outliers",
+            "all",
+            "none"
+          ],
+          "desc": "Which observations to draw as dots. `outliers` (the default, or `none` when `outliers` is false): only those beyond the whiskers. `all`: every value, as a small dot spread sideways by a fixed jitter (the same every time) over the box."
+        },
+        {
+          "name": "orientation",
+          "kind": "enum",
+          "values": [
+            "vertical",
+            "horizontal"
+          ],
+          "default": "vertical",
+          "desc": "`horizontal` suits long group names."
+        },
+        {
+          "name": "yDomain",
+          "kind": "domain",
+          "desc": "Fix the value axis range."
+        }
+      ]
+    },
+    {
+      "type": "violin",
+      "fields": [
+        {
+          "name": "type",
+          "kind": "string",
+          "required": true,
+          "desc": "Chart type: violin."
+        },
+        {
+          "name": "version",
+          "kind": "version",
+          "desc": "Spec format version. Only 1 exists; may be omitted."
+        },
+        {
+          "name": "data",
+          "kind": "data",
+          "required": true,
+          "desc": "Tabular rows: an array of flat objects, one per observation. Numbers must be numbers (or plain numeric strings)."
+        },
+        {
+          "name": "title",
+          "kind": "string",
+          "max": 120,
+          "desc": "Chart title. State the takeaway or the subject, not \"Chart\"."
+        },
+        {
+          "name": "subtitle",
+          "kind": "string",
+          "max": 200,
+          "desc": "One line of context under the title: unit, period, filter."
+        },
+        {
+          "name": "description",
+          "kind": "string",
+          "max": 1000,
+          "desc": "Long description for screen readers and agents. Generated from the data when omitted."
+        },
+        {
+          "name": "source",
+          "kind": "string",
+          "max": 160,
+          "desc": "Source line shown small under the chart."
+        },
+        {
+          "name": "legend",
+          "kind": "enum",
+          "values": [
+            "auto",
+            "top",
+            "bottom",
+            "right",
+            "none"
+          ],
+          "default": "auto",
+          "desc": "Legend placement. `auto` hides it for a single series and picks a side from the available width."
+        },
+        {
+          "name": "tooltip",
+          "kind": "boolean",
+          "default": true,
+          "desc": "Show a hover tooltip (web binding only)."
+        },
+        {
+          "name": "format",
+          "kind": "format",
+          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+        },
+        {
+          "name": "colors",
+          "kind": "colors",
+          "desc": "Series (or slice/category) name to CSS colour, e.g. {\"Revenue\":\"#2962FF\"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours."
+        },
+        {
+          "name": "transform",
+          "kind": "transform",
+          "desc": "Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+        },
+        {
+          "name": "patterns",
+          "kind": "boolean",
+          "desc": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
+        },
+        {
+          "name": "xLabel",
+          "kind": "string",
+          "max": 80,
+          "desc": "Title of the horizontal axis."
+        },
+        {
+          "name": "yLabel",
+          "kind": "string",
+          "max": 80,
+          "desc": "Title of the vertical axis (include the unit)."
+        },
+        {
+          "name": "annotations",
+          "kind": "annotations",
+          "desc": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band."
+        },
+        {
+          "name": "facet",
+          "kind": "column",
+          "role": "any",
+          "desc": "Split into small multiples: one panel per value of this column (at most 12), sharing axes, colours and one legend."
+        },
+        {
+          "name": "zoom",
+          "kind": "enum",
+          "values": [
+            "none",
+            "x",
+            "xy"
+          ],
+          "desc": "Default none. Let the viewer zoom and pan a continuous axis (web binding): Ctrl/⌘-scroll or pinch to zoom, drag to pan, double-click or 0 to reset. Scatter, line and area."
+        },
+        {
+          "name": "brush",
+          "kind": "enum",
+          "values": [
+            "none",
+            "x",
+            "xy"
+          ],
+          "desc": "Default none. Let the viewer drag out a range to select (web binding). The selection comes back as a filter step, ready for `transform`. With `zoom` too, Shift-drag pans."
+        },
+        {
+          "name": "x",
+          "kind": "column",
+          "role": "any",
+          "desc": "Column that defines the groups (one violin each). Omit for a single violin."
+        },
+        {
+          "name": "y",
+          "kind": "column",
+          "role": "number",
+          "required": true,
+          "desc": "Numeric column whose distribution is drawn."
+        },
+        {
+          "name": "bandwidth",
+          "kind": "number",
+          "min": 0,
+          "desc": "Gaussian kernel bandwidth in the units of y (must be above 0). Default: Silverman's rule, 0.9 x min(sd, IQR / 1.34) x n^(-1/5), per group. Larger is smoother."
+        },
+        {
+          "name": "inner",
+          "kind": "enum",
+          "values": [
+            "box",
+            "quartiles",
+            "none"
+          ],
+          "default": "box",
+          "desc": "What to draw inside each violin: a thin box plot (quartile box, whiskers, a dot at the median), dashed quartile lines with a solid median, or nothing."
+        },
+        {
+          "name": "points",
+          "kind": "enum",
+          "values": [
+            "outliers",
+            "all",
+            "none"
+          ],
+          "default": "none",
+          "desc": "Observations drawn as dots: none, the outliers beyond the box plot's whiskers (1.5 x IQR), or all of them, spread across the violin's width at that value by a fixed jitter (the same every time)."
         },
         {
           "name": "orientation",
@@ -2196,6 +2390,120 @@
           "kind": "string",
           "max": 80,
           "desc": "Title of the vertical axis (default: the y column)."
+        }
+      ]
+    },
+    {
+      "type": "calendar",
+      "fields": [
+        {
+          "name": "type",
+          "kind": "string",
+          "required": true,
+          "desc": "Chart type: calendar."
+        },
+        {
+          "name": "version",
+          "kind": "version",
+          "desc": "Spec format version. Only 1 exists; may be omitted."
+        },
+        {
+          "name": "data",
+          "kind": "data",
+          "required": true,
+          "desc": "Tabular rows: an array of flat objects, one per observation. Numbers must be numbers (or plain numeric strings)."
+        },
+        {
+          "name": "title",
+          "kind": "string",
+          "max": 120,
+          "desc": "Chart title. State the takeaway or the subject, not \"Chart\"."
+        },
+        {
+          "name": "subtitle",
+          "kind": "string",
+          "max": 200,
+          "desc": "One line of context under the title: unit, period, filter."
+        },
+        {
+          "name": "description",
+          "kind": "string",
+          "max": 1000,
+          "desc": "Long description for screen readers and agents. Generated from the data when omitted."
+        },
+        {
+          "name": "source",
+          "kind": "string",
+          "max": 160,
+          "desc": "Source line shown small under the chart."
+        },
+        {
+          "name": "legend",
+          "kind": "enum",
+          "values": [
+            "auto",
+            "top",
+            "bottom",
+            "right",
+            "none"
+          ],
+          "default": "auto",
+          "desc": "Legend placement. `auto` hides it for a single series and picks a side from the available width."
+        },
+        {
+          "name": "tooltip",
+          "kind": "boolean",
+          "default": true,
+          "desc": "Show a hover tooltip (web binding only)."
+        },
+        {
+          "name": "format",
+          "kind": "format",
+          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+        },
+        {
+          "name": "colors",
+          "kind": "colors",
+          "desc": "Series (or slice/category) name to CSS colour, e.g. {\"Revenue\":\"#2962FF\"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours."
+        },
+        {
+          "name": "transform",
+          "kind": "transform",
+          "desc": "Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+        },
+        {
+          "name": "patterns",
+          "kind": "boolean",
+          "desc": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
+        },
+        {
+          "name": "x",
+          "kind": "column",
+          "role": "x",
+          "required": true,
+          "desc": "Date column: ISO dates (\"2026-03-14\") or epoch milliseconds. Days are UTC; a time of day is dropped and rows on the same day are summed."
+        },
+        {
+          "name": "value",
+          "kind": "column",
+          "role": "number",
+          "required": true,
+          "desc": "Numeric column giving each day's colour."
+        },
+        {
+          "name": "weekStart",
+          "kind": "enum",
+          "values": [
+            "monday",
+            "sunday"
+          ],
+          "default": "monday",
+          "desc": "First weekday, the top row."
+        },
+        {
+          "name": "domain",
+          "kind": "domain",
+          "desc": "Fix the colour scale range, e.g. [0, 20], to compare several calendars."
         }
       ]
     },
@@ -2974,6 +3282,113 @@
       ]
     },
     {
+      "type": "sunburst",
+      "fields": [
+        {
+          "name": "type",
+          "kind": "string",
+          "required": true,
+          "desc": "Chart type: sunburst."
+        },
+        {
+          "name": "version",
+          "kind": "version",
+          "desc": "Spec format version. Only 1 exists; may be omitted."
+        },
+        {
+          "name": "data",
+          "kind": "data",
+          "required": true,
+          "desc": "Tabular rows: an array of flat objects, one per observation. Numbers must be numbers (or plain numeric strings)."
+        },
+        {
+          "name": "title",
+          "kind": "string",
+          "max": 120,
+          "desc": "Chart title. State the takeaway or the subject, not \"Chart\"."
+        },
+        {
+          "name": "subtitle",
+          "kind": "string",
+          "max": 200,
+          "desc": "One line of context under the title: unit, period, filter."
+        },
+        {
+          "name": "description",
+          "kind": "string",
+          "max": 1000,
+          "desc": "Long description for screen readers and agents. Generated from the data when omitted."
+        },
+        {
+          "name": "source",
+          "kind": "string",
+          "max": 160,
+          "desc": "Source line shown small under the chart."
+        },
+        {
+          "name": "legend",
+          "kind": "enum",
+          "values": [
+            "auto",
+            "top",
+            "bottom",
+            "right",
+            "none"
+          ],
+          "default": "auto",
+          "desc": "Legend placement. `auto` hides it for a single series and picks a side from the available width."
+        },
+        {
+          "name": "tooltip",
+          "kind": "boolean",
+          "default": true,
+          "desc": "Show a hover tooltip (web binding only)."
+        },
+        {
+          "name": "format",
+          "kind": "format",
+          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+        },
+        {
+          "name": "colors",
+          "kind": "colors",
+          "desc": "Series (or slice/category) name to CSS colour, e.g. {\"Revenue\":\"#2962FF\"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours."
+        },
+        {
+          "name": "transform",
+          "kind": "transform",
+          "desc": "Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+        },
+        {
+          "name": "patterns",
+          "kind": "boolean",
+          "desc": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
+        },
+        {
+          "name": "path",
+          "kind": "columns",
+          "role": "any",
+          "min": 1,
+          "max": 6,
+          "required": true,
+          "desc": "Columns that form the hierarchy, outermost group first, e.g. [\"region\",\"country\",\"city\"] (1 to 6 levels). A row whose level is empty stops there and still counts toward its parents."
+        },
+        {
+          "name": "value",
+          "kind": "column",
+          "role": "number",
+          "required": true,
+          "desc": "Numeric column giving each row's size. Rows on the same path are summed; zero and negative values are skipped."
+        },
+        {
+          "name": "labels",
+          "kind": "boolean",
+          "default": true,
+          "desc": "Print names on arcs large enough."
+        }
+      ]
+    },
+    {
       "type": "sankey",
       "fields": [
         {
@@ -3076,6 +3491,106 @@
           "role": "number",
           "required": true,
           "desc": "Numeric column giving the size of each flow. Rows with the same source and target are summed; zero and negative values are skipped."
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "fields": [
+        {
+          "name": "type",
+          "kind": "string",
+          "required": true,
+          "desc": "Chart type: parallel."
+        },
+        {
+          "name": "version",
+          "kind": "version",
+          "desc": "Spec format version. Only 1 exists; may be omitted."
+        },
+        {
+          "name": "data",
+          "kind": "data",
+          "required": true,
+          "desc": "Tabular rows: an array of flat objects, one per observation. Numbers must be numbers (or plain numeric strings)."
+        },
+        {
+          "name": "title",
+          "kind": "string",
+          "max": 120,
+          "desc": "Chart title. State the takeaway or the subject, not \"Chart\"."
+        },
+        {
+          "name": "subtitle",
+          "kind": "string",
+          "max": 200,
+          "desc": "One line of context under the title: unit, period, filter."
+        },
+        {
+          "name": "description",
+          "kind": "string",
+          "max": 1000,
+          "desc": "Long description for screen readers and agents. Generated from the data when omitted."
+        },
+        {
+          "name": "source",
+          "kind": "string",
+          "max": 160,
+          "desc": "Source line shown small under the chart."
+        },
+        {
+          "name": "legend",
+          "kind": "enum",
+          "values": [
+            "auto",
+            "top",
+            "bottom",
+            "right",
+            "none"
+          ],
+          "default": "auto",
+          "desc": "Legend placement. `auto` hides it for a single series and picks a side from the available width."
+        },
+        {
+          "name": "tooltip",
+          "kind": "boolean",
+          "default": true,
+          "desc": "Show a hover tooltip (web binding only)."
+        },
+        {
+          "name": "format",
+          "kind": "format",
+          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+        },
+        {
+          "name": "colors",
+          "kind": "colors",
+          "desc": "Series (or slice/category) name to CSS colour, e.g. {\"Revenue\":\"#2962FF\"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours."
+        },
+        {
+          "name": "transform",
+          "kind": "transform",
+          "desc": "Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+        },
+        {
+          "name": "patterns",
+          "kind": "boolean",
+          "desc": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
+        },
+        {
+          "name": "dimensions",
+          "kind": "columns",
+          "role": "number",
+          "min": 2,
+          "max": 12,
+          "required": true,
+          "desc": "Numeric columns, one vertical axis each, left to right (2 to 12). Each axis gets its own rounded scale."
+        },
+        {
+          "name": "series",
+          "kind": "column",
+          "role": "any",
+          "desc": "Optional column that colours the lines by group, with a legend."
         }
       ]
     },

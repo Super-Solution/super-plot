@@ -88,6 +88,33 @@ describe('canvas renderer', () => {
     canvas.dispatchEvent(new MouseEvent('pointerleave', { bubbles: true }))
     expect(host.querySelector('.sp-tip')!.hasAttribute('data-show')).toBe(false)
   })
+  it('hits an unfilled path along its stroke, not inside its outline (parallel coordinates)', () => {
+    const win = window as unknown as { Path2D?: unknown }
+    const had = win.Path2D
+    win.Path2D = class { constructor(readonly d?: string) {} }
+    let want = ''
+    let strokeTests = 0
+    // Every fill test says "inside"; only the wanted line's stroke is under the pointer.
+    HTMLCanvasElement.prototype.getContext = (() => {
+      const ctx = stub() as unknown as Record<string, unknown>
+      ctx.isPointInPath = () => true
+      ctx.isPointInStroke = (path: { d?: string }) => { strokeTests++; return path.d === want }
+      return ctx
+    }) as unknown as typeof HTMLCanvasElement.prototype.getContext
+    const spec = chartCatalog().find(c => c.type === 'parallel')!.example
+    const p = new SuperPlot(host, spec, { width: 600, height: 400, renderer: 'canvas' })
+    const target = p.getScene()!.marks.filter(m => m.type === 'path' && m.role === 'data')[3]
+    if (target.type !== 'path') throw new Error('expected a line')
+    want = target.d
+    const canvas = host.querySelector('canvas')!
+    canvas.getBoundingClientRect = host.getBoundingClientRect
+    canvas.dispatchEvent(new MouseEvent('pointermove', { clientX: 300, clientY: 200, bubbles: true }))
+    expect(strokeTests).toBeGreaterThan(0)
+    expect(host.querySelector('.sp-tip')!.textContent).toContain(target.tip!.title)
+    expect(host.querySelector('.sp-tip')!.textContent).toContain(target.tip!.rows[0].value)
+    p.dispose()
+    win.Path2D = had
+  })
   it('switching back to SVG removes the canvases; dispose cleans up', () => {
     const p = new SuperPlot(host, bar, { width: 600, height: 400, renderer: 'canvas' })
     p.setOptions({ renderer: 'svg' })

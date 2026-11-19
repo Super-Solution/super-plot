@@ -8,7 +8,7 @@ import { join, dirname } from 'node:path'
 
 const root = new URL('..', import.meta.url).pathname
 const core = await import(pathToFileURL(join(root, 'packages/core/dist/index.js')).href)
-const { linearTicks, niceDomain, quantile, boxStats, binEdges, binCounts, validatePlot, describePlot, chartCatalog, getChart, chartTypes, COMMON_FIELDS, CARTESIAN_FIELDS, LIMITS } = core
+const { linearTicks, niceDomain, quantile, boxStats, binEdges, binCounts, kde, silverman, densityPeaks, validatePlot, describePlot, chartCatalog, getChart, chartTypes, COMMON_FIELDS, CARTESIAN_FIELDS, LIMITS } = core
 const { registerGeography, unregisterGeography, getGeography, matchRegion, GeographyError, GEO_LIMITS, CAMERA_LIMITS } = core
 
 const r = v => (typeof v === 'number' ? Math.round(v * 1e9) / 1e9 : v)
@@ -22,6 +22,18 @@ const boxIn = [[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], [1, 2, 2, 3, 3, 3, 4, 4, 5, 40],
 const box = boxIn.map(v => ({ in: v, out: boxStats(v) }))
 const binIn = [{ values: [1, 2, 2, 3, 3, 3, 4, 4, 5, 9], bins: 4 }, { values: [0, 10, 20, 30, 40, 50], bins: 'auto' }, { values: [1.5, 2.5, 3.5, 9.5], bins: 3 }]
 const bins = binIn.map(c => { const edges = binEdges(c.values, c.bins); return { in: c, out: { edges, counts: binCounts(c.values, edges) } } })
+
+// Violin densities: Silverman's bandwidth, the grid (its size included) and the Gaussian sum, and the peaks.
+const densityIn = [
+  { values: [1, 2, 2, 3, 3, 3, 4, 4, 5, 9] },
+  { values: [1, 2, 2, 3, 3, 3, 4, 4, 5, 9], bandwidth: 0.5 },
+  { values: [5, 5, 5, 5, 5, 5, 5, 9] },
+  { values: [10, 10.4, 10.8, 11.2, 30, 30.4, 30.8, 31.2, 10.2, 30.6] },
+  { values: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 100] },
+  { values: [4, 4, 4] },
+  { values: [7] }
+]
+const density = densityIn.map(c => { const d = kde(c.values, c.bandwidth); return { in: c, out: { silverman: silverman(c.values), ...d, peaks: densityPeaks(d) } } })
 
 const withoutData = spec => { const { data, ...rest } = spec; return rest }
 
@@ -333,6 +345,27 @@ const VALIDATION = [
   ['sankey: loop', { type: 'sankey', from: 'a', to: 'c', value: 'b', data: [{ a: 'x', c: 'y', b: 1 }, { a: 'y', c: 'z', b: 1 }, { a: 'z', c: 'x', b: 1 }] }],
   ['sankey: skipped flows', { type: 'sankey', from: 'a', to: 'c', value: 'b', data: [{ a: 'x', c: 'y', b: 1 }, { a: 'x', c: 'x', b: 1 }, { a: 'y', c: 'z', b: 0 }] }],
   ['sankey: too many nodes', { type: 'sankey', from: 'a', to: 'c', value: 'b', data: rowsOf(41, i => ({ a: `n${i}`, c: `n${i + 1}`, b: 1 })) }],
+  ['box: points all', { type: 'box', y: 'b', points: 'all', data: B }],
+  ['box: points with outliers false', { type: 'box', y: 'b', points: 'outliers', outliers: false, data: B }],
+  ['box: patterns', { type: 'box', y: 'b', patterns: true, data: B }],
+  ['violin: ok', { type: 'violin', x: 'a', y: 'b', data: rowsOf(12, i => ({ a: i % 2 ? 'p' : 'q', b: i * 1.5 })) }],
+  ['violin: bandwidth zero, few values', { type: 'violin', y: 'b', bandwidth: 0, data: B }],
+  ['violin: bad inner', { type: 'violin', y: 'b', inner: 'boxes', data: B }],
+  ['calendar: ok', { type: 'calendar', x: 'd', value: 'b', data: [{ d: '2026-01-01', b: 1 }, { d: 1767312000000, b: 2 }] }],
+  ['calendar: no dates', { type: 'calendar', x: 'a', value: 'b', data: B }],
+  ['calendar: some not dates, too many years', { type: 'calendar', x: 'd', value: 'b', weekStart: 'sunday', data: [...rowsOf(7, i => ({ d: `${2018 + i}-05-05`, b: i })), { d: 'soon', b: 1 }] }],
+  ['calendar: bad weekStart', { type: 'calendar', x: 'd', value: 'b', weekStart: 'saturday', data: [{ d: '2026-01-01', b: 1 }] }],
+  ['sunburst: ok', { type: 'sunburst', path: ['a', 'c'], value: 'b', data: [{ a: 'x', c: 'y', b: 1 }, { a: 'x', c: 'z', b: 2 }] }],
+  ['sunburst: one column as a string', { type: 'sunburst', path: 'a', value: 'b', data: B }],
+  ['sunburst: duplicate level, skipped values', { type: 'sunburst', path: ['a', 'a'], value: 'b', data: [{ a: 'x', b: 1 }, { a: 'y', b: -1 }] }],
+  ['sunburst: too many levels', { type: 'sunburst', path: ['a', 'b', 'c', 'd', 'e', 'f', 'g'], value: 'v', data: [{ a: 1, b: 1, c: 1, d: 1, e: 1, f: 1, g: 1, v: 1 }] }],
+  ['sunburst: empty path', { type: 'sunburst', path: [], value: 'b', data: B }],
+  ['parallel: ok', { type: 'parallel', dimensions: ['b', 'c'], series: 'a', data: [{ a: 'x', b: 1, c: 2 }, { a: 'y', b: 3, c: 1 }] }],
+  ['parallel: one dimension', { type: 'parallel', dimensions: ['b'], data: B }],
+  ['parallel: a single string', { type: 'parallel', dimensions: 'b', data: B }],
+  ['parallel: thirteen dimensions', { type: 'parallel', dimensions: rowsOf(13, i => `c${i}`), data: [Object.fromEntries(rowsOf(13, i => [`c${i}`, i]))] }],
+  ['parallel: incomplete rows, duplicate, patterns', { type: 'parallel', dimensions: ['b', 'c', 'b'], patterns: true, data: [{ b: 1, c: 2 }, { b: 2 }] }],
+  ['parallel: sampled', { type: 'parallel', dimensions: ['b', 'c'], data: rowsOf(2001, i => ({ b: i, c: i % 7 })) }],
   ['sankey: too many flows', { type: 'sankey', from: 'a', to: 'c', value: 'b', data: rowsOf(301, i => ({ a: `s${i % 20}`, c: `t${Math.floor(i / 20)}`, b: 1 })) }],
   ['waterfall: total column and list', { type: 'waterfall', x: 'a', y: 'b', total: 't', data: [{ a: 'x', b: 1, t: 'Yes' }, { a: 'y', b: 2, t: 0 }] }],
   ['waterfall: total list with a typo and a number', { type: 'waterfall', x: 'a', y: 'b', total: ['y', 'xx', 3], data: B }],
@@ -415,6 +448,14 @@ const describeCases = [
   D('bullet: seven measures on their own scales (list is cut)', { type: 'bullet', x: 'k', value: 'v', target: 't', scale: 'each', data: rowsOf(7, i => ({ k: `m${i}`, v: i * 10, t: i === 3 ? 0 : 25 })) }),
   D('bump: rank column, gaps and dates', { type: 'bump', x: 'd', rank: 'r', series: 's', data: [{ d: '2026-03-01', s: 'p', r: 2 }, { d: '2026-01-01', s: 'p', r: 1 }, { d: '2026-01-01', s: 'q', r: 2 }, { d: '2026-03-01', s: 'q', r: 1 }, { d: '2026-02-01', s: 'q', r: 1 }] }),
   D('bump: wide form, ascending, ties keep series order', { type: 'bump', x: 'x', y: ['a', 'b', 'c'], rankBy: 'asc', data: [{ x: 'r1', a: 3, b: 3, c: 1 }, { x: 'r2', a: 1, b: 2, c: 3 }] }),
+  D('violin: fixed bandwidth, two groups', { type: 'violin', x: 'g', y: 'v', bandwidth: 2, format: 'fixed:1', data: [1, 2, 2, 3, 3, 3, 4, 4, 5, 9, 20, 21, 21, 22, 40].map((v, i) => ({ v, g: i < 10 ? 'a' : 'b' })) }),
+  D('violin: one value repeated', { type: 'violin', y: 'v', data: [{ v: 3 }, { v: 3 }, { v: 3 }] }),
+  D('calendar: timestamps summed per UTC day, gaps', { type: 'calendar', x: 't', value: 'v', data: [{ t: Date.UTC(2026, 2, 2, 23, 30), v: 2 }, { t: '2026-03-02T08:00:00Z', v: 1 }, { t: '2026-03-05', v: 0 }, { t: '2026-03-09T01:00:00+02:00', v: 4 }] }),
+  D('calendar: two years', { type: 'calendar', x: 'd', value: 'v', format: 'compact', data: [{ d: '2025-12-30', v: 1200 }, { d: '2026-01-02', v: 800 }, { d: '2026-01-03', v: 800 }] }),
+  D('calendar: past five years', { type: 'calendar', x: 'd', value: 'v', data: rowsOf(7, i => ({ d: `${2018 + i}-05-05`, v: i })) }),
+  D('sunburst: ragged rows stop at an empty level', { type: 'sunburst', path: ['a', 'b'], value: 'v', data: [{ a: 'x', b: 'p', v: 3 }, { a: 'x', b: '', v: 1 }, { a: 'y', b: null, v: 2 }, { a: 'z', b: 'q', v: 0 }] }),
+  D('sunburst: one level', { type: 'sunburst', path: 'a', value: 'v', data: [{ a: 'x', v: 1 }, { a: 'y', v: 3 }] }),
+  D('parallel: no groups, negative link', { type: 'parallel', dimensions: ['a', 'b', 'c'], format: 'fixed:1', data: rowsOf(6, i => ({ a: i, b: 10 - i * 2, c: (i * 3) % 4 })) }),
   D('explicit description wins', { type: 'bar', x: 'a', y: 'b', description: 'Written by hand.', data: B }),
   D('unicode and long labels', { type: 'bar', x: 'k', y: 'v', title: '營收 by 地區 😀', data: [{ k: '台灣'.repeat(30), v: 3 }, { k: 'B 😀', v: 1 }] }),
   D('does not validate', { type: 'bar', x: 'nope', y: 'b', data: B }),
@@ -618,6 +659,7 @@ const doc = rows({
   niceDomain: nice,
   quantile: quant,
   boxStats: box,
+  density,
   histogramBins: bins,
   chartExamples: examples,
   brokenSpecs: broken,

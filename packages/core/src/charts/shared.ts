@@ -1,5 +1,8 @@
 import type { Row } from '../schema.js'
-import { toNumber } from '../util/num.js'
+import { r2, toNumber } from '../util/num.js'
+import type { ChartCtx } from '../context.js'
+import { mix } from '../util/color.js'
+import { tokenValue } from '../theme.js'
 import { clip } from '../util/text.js'
 import { xKey } from '../data.js'
 import type { ValueFormat } from '../util/format.js'
@@ -36,4 +39,39 @@ export const numCol = (rows: Row[], col: string): number[] => {
     if (n !== null) out.push(n)
   }
   return out
+}
+
+/** SVG path of a ring sector (a pie slice when `r0` is 0), angles in radians clockwise from the x axis. */
+export const arc = (cx: number, cy: number, r0: number, r1: number, a0: number, a1: number): string => {
+  const pt = (r: number, a: number): string => `${r2(cx + r * Math.cos(a))} ${r2(cy + r * Math.sin(a))}`
+  const large = a1 - a0 > Math.PI ? 1 : 0
+  if (a1 - a0 >= Math.PI * 2 - 1e-6) {
+    const m = a0 + Math.PI
+    const outer = `M${pt(r1, a0)}A${r1} ${r1} 0 1 1 ${pt(r1, m)}A${r1} ${r1} 0 1 1 ${pt(r1, a0)}`
+    return r0 > 0 ? `${outer}M${pt(r0, a0)}A${r0} ${r0} 0 1 0 ${pt(r0, m)}A${r0} ${r0} 0 1 0 ${pt(r0, a0)}Z` : outer + 'Z'
+  }
+  if (r0 <= 0) return `M${cx} ${cy}L${pt(r1, a0)}A${r1} ${r1} 0 ${large} 1 ${pt(r1, a1)}Z`
+  return `M${pt(r1, a0)}A${r1} ${r1} 0 ${large} 1 ${pt(r1, a1)}L${pt(r0, a1)}A${r0} ${r0} 0 ${large} 0 ${pt(r0, a0)}Z`
+}
+
+/**
+ * The single-hue sequential colour scale of heatmaps and calendars: `seq-low` at `lo` to `seq-high` at `hi`,
+ * clamped. Plain hex, so labels can pick a contrasting ink.
+ */
+export function seqScale(c: ChartCtx, lo: number, hi: number): (v: number) => string {
+  const low = tokenValue(c.theme, 'seq-low')
+  const high = tokenValue(c.theme, 'seq-high')
+  return v => mix(low, high, hi === lo ? 1 : Math.max(0, Math.min(1, (v - lo) / (hi - lo))))
+}
+
+/** Vertical colour ramp legend for {@link seqScale}: high at the top, the two ends labelled. */
+export function seqLegend(c: ChartCtx, x: number, y0: number, h: number, lo: number, hi: number): void {
+  const low = tokenValue(c.theme, 'seq-low')
+  const high = tokenValue(c.theme, 'seq-high')
+  const n = 24
+  for (let i = 0; i < n; i++) {
+    c.marks.push({ type: 'rect', role: 'legend', x, y: y0 + (h / n) * i, w: 12, h: h / n + 0.5, fill: mix(high, low, i / (n - 1)) })
+  }
+  c.marks.push(c.text(x + 18, y0 + 4, c.format(hi), { role: 'legend', baseline: 'middle', size: c.size - 1 }))
+  c.marks.push(c.text(x + 18, y0 + h - 4, c.format(lo), { role: 'legend', baseline: 'middle', size: c.size - 1 }))
 }

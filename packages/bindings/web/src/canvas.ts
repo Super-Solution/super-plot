@@ -235,6 +235,14 @@ export class CanvasLayer {
         p = new P(m.d)
         paths.set(i, p)
       }
+      // An unfilled path (a parallel-coordinates line, a point-mass violin) is hit along its stroke, with a few px of slack.
+      if ((!m.fill || m.fill === 'none' || m.fill === 'transparent') && typeof this.ctx.isPointInStroke === 'function') {
+        this.ctx.save()
+        this.ctx.lineWidth = Math.max(6, (m.strokeWidth ?? 1) + 4)
+        const hit = this.ctx.isPointInStroke(p as Path2D, px * this.dpr, py * this.dpr)
+        this.ctx.restore()
+        return hit
+      }
       return this.ctx.isPointInPath(p as Path2D, px * this.dpr, py * this.dpr, m.rule === 'evenodd' ? 'evenodd' : 'nonzero')
     }) ?? -1
     if (hit >= 0 || !this.gl || this.gl.isLost || !this.scene?.geo) return hit

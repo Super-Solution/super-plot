@@ -3,11 +3,10 @@ import type { ChartCtx } from '../context.js'
 import { bandScale } from '../scale.js'
 import { bandAxis, layoutCartesian } from '../cartesian.js'
 import { distinct } from '../data.js'
-import { inkOn, mix } from '../util/color.js'
+import { inkOn } from '../util/color.js'
 import { toNumber } from '../util/num.js'
-import { tokenValue } from '../theme.js'
 import { clip } from '../util/text.js'
-import { formatter, lead } from './shared.js'
+import { formatter, lead, seqLegend, seqScale } from './shared.js'
 
 interface Cell { x: string; y: string; v: number }
 
@@ -34,9 +33,7 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
   const dom = s.domain as [number | null, number | null] | undefined
   const lo = dom?.[0] ?? Math.min(...vals)
   const hi = dom?.[1] ?? Math.max(...vals)
-  const low = tokenValue(c.theme, 'seq-low')
-  const high = tokenValue(c.theme, 'seq-high')
-  const color = (v: number): string => mix(low, high, hi === lo ? 1 : Math.max(0, Math.min(1, (v - lo) / (hi - lo))))
+  const color = seqScale(c, lo, hi)
   const frame = c.frame({ series: [] })
   const barW = c.compact ? 0 : 64
   const area = { ...frame, w: frame.w - barW }
@@ -60,12 +57,7 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
     const x = plot.x + plot.w + 22
     const h = Math.min(plot.h, 160)
     const y0 = plot.y + (plot.h - h) / 2
-    const n = 24
-    for (let i = 0; i < n; i++) {
-      c.marks.push({ type: 'rect', role: 'legend', x, y: y0 + (h / n) * i, w: 12, h: h / n + 0.5, fill: mix(high, low, i / (n - 1)) })
-    }
-    c.marks.push(c.text(x + 18, y0 + 4, fmt(hi), { role: 'legend', baseline: 'middle', size: c.size - 1 }))
-    c.marks.push(c.text(x + 18, y0 + h - 4, fmt(lo), { role: 'legend', baseline: 'middle', size: c.size - 1 }))
+    seqLegend(c, x, y0, h, lo, hi)
   }
   return { series: [] }
 }

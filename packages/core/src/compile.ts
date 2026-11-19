@@ -52,7 +52,7 @@ export type CompileResult =
 export const MAX_FACETS = 12
 
 export function defaultHeight(type: string, width: number): number {
-  const ratio = type === 'pie' || type === 'donut' ? 0.62 : type === 'radar' ? 0.85 : type === 'column-map' || type === 'flow-map' ? 0.75 : 0.6
+  const ratio = type === 'pie' || type === 'donut' ? 0.62 : type === 'radar' ? 0.85 : type === 'sunburst' || type === 'column-map' || type === 'flow-map' ? 0.75 : type === 'calendar' ? 0.34 : 0.6
   return Math.round(clamp(width * ratio, 220, 520))
 }
 
@@ -174,7 +174,7 @@ function facet(def: ChartDef, spec: Record<string, any>, env: RenderEnv, width: 
   const area = top.frame({ series })
   const size = top.size
   const xTitle = spec.xLabel ?? (def.type === 'scatter' ? spec.x : def.type === 'histogram' ? spec.value : undefined)
-  const yTitle = spec.yLabel ?? (def.type === 'scatter' || def.type === 'box' ? spec.y : undefined)
+  const yTitle = spec.yLabel ?? (def.type === 'scatter' || def.type === 'box' || def.type === 'violin' ? spec.y : undefined)
   const inner: Rect = { x: area.x + (yTitle ? size + 8 : 0), y: area.y, w: area.w - (yTitle ? size + 8 : 0), h: area.h - (xTitle ? size + 8 : 0) }
   const n = keys.length
   const cols = clamp(Math.round(Math.sqrt((n * inner.w) / Math.max(1, inner.h) / 1.4)), 1, n)

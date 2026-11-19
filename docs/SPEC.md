@@ -561,7 +561,8 @@ Summarises the distribution of a number for each group: median, quartiles, whisk
 | `brush` | `none` \| `x` \| `xy` |  |  | Default none. Let the viewer drag out a range to select (web binding). The selection comes back as a filter step, ready for `transform`. With `zoom` too, Shift-drag pans. |
 | `x` | column name |  |  | Column that defines the groups (one box each). Omit for a single box. |
 | `y` | column name | yes |  | Numeric column whose distribution is summarised. |
-| `outliers` | boolean |  | `true` | Draw points beyond the whiskers (1.5 x IQR). |
+| `outliers` | boolean |  | `true` | Draw points beyond the whiskers (1.5 x IQR). Kept for older specs: `points` replaces it and wins when both are set. |
+| `points` | `outliers` \| `all` \| `none` |  |  | Which observations to draw as dots. `outliers` (the default, or `none` when `outliers` is false): only those beyond the whiskers. `all`: every value, as a small dot spread sideways by a fixed jitter (the same every time) over the box. |
 | `orientation` | `vertical` \| `horizontal` |  | `"vertical"` | `horizontal` suits long group names. |
 | `yDomain` | [min\|null, max\|null] |  |  | Fix the value axis range. |
 
@@ -605,6 +606,84 @@ Summarises the distribution of a number for each group: median, quartiles, whisk
     {
       "carrier": "Aero",
       "days": 9.4
+    },
+```
+
+## `violin` — Violin plot
+
+Shows the shape of a number's distribution for each group as a mirrored density curve, with a thin box plot inside.
+
+**Use when:** Comparing distributions across groups when the shape matters: two peaks, a long tail, a cluster that a box plot would hide. Needs ~20+ values per group; with fewer, the smoothing invents shape, so use a box plot or points: "all".
+
+| Field | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `type` | string | yes |  | Chart type: violin. |
+| `version` | `1` |  |  | Spec format version. Only 1 exists; may be omitted. |
+| `data` | array of rows | yes |  | Tabular rows: an array of flat objects, one per observation. Numbers must be numbers (or plain numeric strings). |
+| `title` | string |  |  | Chart title. State the takeaway or the subject, not "Chart". |
+| `subtitle` | string |  |  | One line of context under the title: unit, period, filter. |
+| `description` | string |  |  | Long description for screen readers and agents. Generated from the data when omitted. |
+| `source` | string |  |  | Source line shown small under the chart. |
+| `legend` | `auto` \| `top` \| `bottom` \| `right` \| `none` |  | `"auto"` | Legend placement. `auto` hides it for a single series and picks a side from the available width. |
+| `tooltip` | boolean |  | `true` | Show a hover tooltip (web binding only). |
+| `format` | format string |  |  | Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE. |
+| `colors` | object |  |  | Series (or slice/category) name to CSS colour, e.g. {"Revenue":"#2962FF"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours. |
+| `transform` | array of steps |  |  | Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output. |
+| `patterns` | boolean |  |  | Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print. |
+| `xLabel` | string |  |  | Title of the horizontal axis. |
+| `yLabel` | string |  |  | Title of the vertical axis (include the unit). |
+| `annotations` | array |  |  | Reference marks: {axis:"y", value:100, label:"Target"} draws a line; add `to` for a band. |
+| `facet` | column name |  |  | Split into small multiples: one panel per value of this column (at most 12), sharing axes, colours and one legend. |
+| `zoom` | `none` \| `x` \| `xy` |  |  | Default none. Let the viewer zoom and pan a continuous axis (web binding): Ctrl/⌘-scroll or pinch to zoom, drag to pan, double-click or 0 to reset. Scatter, line and area. |
+| `brush` | `none` \| `x` \| `xy` |  |  | Default none. Let the viewer drag out a range to select (web binding). The selection comes back as a filter step, ready for `transform`. With `zoom` too, Shift-drag pans. |
+| `x` | column name |  |  | Column that defines the groups (one violin each). Omit for a single violin. |
+| `y` | column name | yes |  | Numeric column whose distribution is drawn. |
+| `bandwidth` | number |  |  | Gaussian kernel bandwidth in the units of y (must be above 0). Default: Silverman's rule, 0.9 x min(sd, IQR / 1.34) x n^(-1/5), per group. Larger is smoother. |
+| `inner` | `box` \| `quartiles` \| `none` |  | `"box"` | What to draw inside each violin: a thin box plot (quartile box, whiskers, a dot at the median), dashed quartile lines with a solid median, or nothing. |
+| `points` | `outliers` \| `all` \| `none` |  | `"none"` | Observations drawn as dots: none, the outliers beyond the box plot's whiskers (1.5 x IQR), or all of them, spread across the violin's width at that value by a fixed jitter (the same every time). |
+| `orientation` | `vertical` \| `horizontal` |  | `"vertical"` | `horizontal` suits long group names. |
+| `yDomain` | [min\|null, max\|null] |  |  | Fix the value axis range. |
+
+```json
+{
+  "type": "violin",
+  "title": "Session length by plan",
+  "subtitle": "Minutes per session; Team users split into two habits",
+  "x": "plan",
+  "y": "minutes",
+  "yLabel": "Minutes",
+  "data": [
+    {
+      "plan": "Free",
+      "minutes": 34.1
+    },
+    {
+      "plan": "Free",
+      "minutes": 6.2
+    },
+    {
+      "plan": "Free",
+      "minutes": 4.5
+    },
+    {
+      "plan": "Free",
+      "minutes": 6.2
+    },
+    {
+      "plan": "Free",
+      "minutes": 6.3
+    },
+    {
+      "plan": "Free",
+      "minutes": 38.7
+    },
+    {
+      "plan": "Free",
+      "minutes": 4.2
+    },
+    {
+      "plan": "Free",
+      "minutes": 6.4
     },
 ```
 
@@ -678,6 +757,75 @@ Colours a grid of cells by a number: one axis per category, darker means larger.
     },
     {
       "day": "Tue",
+```
+
+## `calendar` — Calendar heatmap
+
+One cell per day, weeks as columns and weekdays as rows, coloured by a number: a year of activity at a glance.
+
+**Use when:** Daily values over months or years where weekly rhythm and streaks matter (commits, sales per day, sleep, energy use). Days without data stay empty, distinct from zero. Not for a few weeks (use a bar or line chart) or more than 5 years.
+
+| Field | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `type` | string | yes |  | Chart type: calendar. |
+| `version` | `1` |  |  | Spec format version. Only 1 exists; may be omitted. |
+| `data` | array of rows | yes |  | Tabular rows: an array of flat objects, one per observation. Numbers must be numbers (or plain numeric strings). |
+| `title` | string |  |  | Chart title. State the takeaway or the subject, not "Chart". |
+| `subtitle` | string |  |  | One line of context under the title: unit, period, filter. |
+| `description` | string |  |  | Long description for screen readers and agents. Generated from the data when omitted. |
+| `source` | string |  |  | Source line shown small under the chart. |
+| `legend` | `auto` \| `top` \| `bottom` \| `right` \| `none` |  | `"auto"` | Legend placement. `auto` hides it for a single series and picks a side from the available width. |
+| `tooltip` | boolean |  | `true` | Show a hover tooltip (web binding only). |
+| `format` | format string |  |  | Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE. |
+| `colors` | object |  |  | Series (or slice/category) name to CSS colour, e.g. {"Revenue":"#2962FF"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours. |
+| `transform` | array of steps |  |  | Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output. |
+| `patterns` | boolean |  |  | Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print. |
+| `x` | column name | yes |  | Date column: ISO dates ("2026-03-14") or epoch milliseconds. Days are UTC; a time of day is dropped and rows on the same day are summed. |
+| `value` | column name | yes |  | Numeric column giving each day's colour. |
+| `weekStart` | `monday` \| `sunday` |  | `"monday"` | First weekday, the top row. |
+| `domain` | [min\|null, max\|null] |  |  | Fix the colour scale range, e.g. [0, 20], to compare several calendars. |
+
+```json
+{
+  "type": "calendar",
+  "title": "Commits per day",
+  "subtitle": "2026, one repository",
+  "x": "date",
+  "value": "commits",
+  "data": [
+    {
+      "date": "2026-01-01",
+      "commits": 9
+    },
+    {
+      "date": "2026-01-02",
+      "commits": 2
+    },
+    {
+      "date": "2026-01-03",
+      "commits": 1
+    },
+    {
+      "date": "2026-01-04",
+      "commits": 1
+    },
+    {
+      "date": "2026-01-05",
+      "commits": 6
+    },
+    {
+      "date": "2026-01-07",
+      "commits": 3
+    },
+    {
+      "date": "2026-01-08",
+      "commits": 7
+    },
+    {
+      "date": "2026-01-09",
+      "commits": 6
+    },
+    {
 ```
 
 ## `waterfall` — Waterfall chart
@@ -1055,6 +1203,74 @@ Shows parts of a whole as nested rectangles whose area is the value; an optional
     {
 ```
 
+## `sunburst` — Sunburst
+
+Shows a hierarchy as rings: the first level in the middle ring, each level outside it split by its share of the parent.
+
+**Use when:** Parts of a whole across 2 to 4 levels (region > country > city, department > team), when the nesting matters as much as the sizes. Ring area distorts comparisons; for exact sizes use a treemap or a bar chart. Not for values that can be negative.
+
+| Field | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `type` | string | yes |  | Chart type: sunburst. |
+| `version` | `1` |  |  | Spec format version. Only 1 exists; may be omitted. |
+| `data` | array of rows | yes |  | Tabular rows: an array of flat objects, one per observation. Numbers must be numbers (or plain numeric strings). |
+| `title` | string |  |  | Chart title. State the takeaway or the subject, not "Chart". |
+| `subtitle` | string |  |  | One line of context under the title: unit, period, filter. |
+| `description` | string |  |  | Long description for screen readers and agents. Generated from the data when omitted. |
+| `source` | string |  |  | Source line shown small under the chart. |
+| `legend` | `auto` \| `top` \| `bottom` \| `right` \| `none` |  | `"auto"` | Legend placement. `auto` hides it for a single series and picks a side from the available width. |
+| `tooltip` | boolean |  | `true` | Show a hover tooltip (web binding only). |
+| `format` | format string |  |  | Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE. |
+| `colors` | object |  |  | Series (or slice/category) name to CSS colour, e.g. {"Revenue":"#2962FF"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours. |
+| `transform` | array of steps |  |  | Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output. |
+| `patterns` | boolean |  |  | Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print. |
+| `path` | column name or list of column names | yes |  | Columns that form the hierarchy, outermost group first, e.g. ["region","country","city"] (1 to 6 levels). A row whose level is empty stops there and still counts toward its parents. |
+| `value` | column name | yes |  | Numeric column giving each row's size. Rows on the same path are summed; zero and negative values are skipped. |
+| `labels` | boolean |  | `true` | Print names on arcs large enough. |
+
+```json
+{
+  "type": "sunburst",
+  "title": "Sales by region, country and city",
+  "subtitle": "USD thousands",
+  "path": [
+    "region",
+    "country",
+    "city"
+  ],
+  "value": "sales",
+  "format": "compact",
+  "data": [
+    {
+      "region": "Europe",
+      "country": "Germany",
+      "city": "Berlin",
+      "sales": 320
+    },
+    {
+      "region": "Europe",
+      "country": "Germany",
+      "city": "Munich",
+      "sales": 210
+    },
+    {
+      "region": "Europe",
+      "country": "France",
+      "city": "Paris",
+      "sales": 380
+    },
+    {
+      "region": "Europe",
+      "country": "France",
+      "city": "Lyon",
+      "sales": 90
+    },
+    {
+      "region": "Europe",
+      "country": "Spain",
+      "city": "Madrid",
+```
+
 ## `sankey` — Sankey diagram
 
 Shows how a quantity flows between stages: bands between nodes, the band width is the amount.
@@ -1121,6 +1337,73 @@ Shows how a quantity flows between stages: bands between nodes, the band width i
       "sessions": 3600
     },
     {
+```
+
+## `parallel` — Parallel coordinates
+
+Draws each row as a line across several vertical axes, one per measure, to compare many measures at once.
+
+**Use when:** Rows described by 3 to 12 numeric measures (cars by price, power, weight and range; runs by their metrics), looking for clusters, trade-offs and outliers. Each axis has its own scale. Not for two measures (use a scatter plot) or for exact values.
+
+| Field | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `type` | string | yes |  | Chart type: parallel. |
+| `version` | `1` |  |  | Spec format version. Only 1 exists; may be omitted. |
+| `data` | array of rows | yes |  | Tabular rows: an array of flat objects, one per observation. Numbers must be numbers (or plain numeric strings). |
+| `title` | string |  |  | Chart title. State the takeaway or the subject, not "Chart". |
+| `subtitle` | string |  |  | One line of context under the title: unit, period, filter. |
+| `description` | string |  |  | Long description for screen readers and agents. Generated from the data when omitted. |
+| `source` | string |  |  | Source line shown small under the chart. |
+| `legend` | `auto` \| `top` \| `bottom` \| `right` \| `none` |  | `"auto"` | Legend placement. `auto` hides it for a single series and picks a side from the available width. |
+| `tooltip` | boolean |  | `true` | Show a hover tooltip (web binding only). |
+| `format` | format string |  |  | Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE. |
+| `colors` | object |  |  | Series (or slice/category) name to CSS colour, e.g. {"Revenue":"#2962FF"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours. |
+| `transform` | array of steps |  |  | Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output. |
+| `patterns` | boolean |  |  | Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print. |
+| `dimensions` | list of 2 to 12 column names | yes |  | Numeric columns, one vertical axis each, left to right (2 to 12). Each axis gets its own rounded scale. |
+| `series` | column name |  |  | Optional column that colours the lines by group, with a legend. |
+
+```json
+{
+  "type": "parallel",
+  "title": "Cars: price, power, weight and range",
+  "subtitle": "Each line is one model",
+  "dimensions": [
+    "price",
+    "power",
+    "weight",
+    "range"
+  ],
+  "series": "drive",
+  "data": [
+    {
+      "model": "M1",
+      "drive": "Electric",
+      "price": 71,
+      "power": 346,
+      "weight": 1850,
+      "range": 533
+    },
+    {
+      "model": "M2",
+      "drive": "Hybrid",
+      "price": 24,
+      "power": 185,
+      "weight": 1531,
+      "range": 768
+    },
+    {
+      "model": "M3",
+      "drive": "Petrol",
+      "price": 44,
+      "power": 248,
+      "weight": 1358,
+      "range": 776
+    },
+    {
+      "model": "M4",
+      "drive": "Electric",
+      "price": 49,
 ```
 
 ## `funnel` — Funnel chart
