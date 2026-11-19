@@ -52,6 +52,26 @@ el('live-toggle').addEventListener('click', e => {
   else { timer = window.setInterval(() => plots.live.appendRows([tick()], { max: 240 }), 250); b.textContent = 'Pause' }
 })
 
+// ---- transitions ---------------------------------------------------------------------------
+const TEAMS = ['Payments', 'Platform', 'Growth', 'Mobile', 'Data', 'Infra']
+let round = 0
+let tseed = 5
+const trnd = (): number => ((tseed = (Math.imul(tseed, 1664525) + 1013904223) >>> 0) / 2 ** 32)
+/** A few teams with new counts each round; one joins and one leaves now and then. */
+const teamSpec = (): Row => ({
+  type: 'bar', x: 'team', y: 'count', title: 'Tickets this week', subtitle: `Round ${round + 1}`,
+  data: TEAMS.filter((_, i) => (i + round) % 5 !== 0).map(team => ({ team, count: Math.round(20 + 80 * trnd()) }))
+})
+const firstTeams = teamSpec()
+plots.trans = new SuperPlot(el('trans'), firstTeams, { transition: true })
+plots.transCv = new SuperPlot(el('trans-cv'), firstTeams, { transition: true, renderer: 'canvas' })
+el('trans-next').addEventListener('click', () => {
+  round++
+  const spec = teamSpec()
+  plots.trans.setSpec(spec)
+  plots.transCv.setSpec(spec)
+})
+
 // ---- transform, facet, combo ---------------------------------------------------------------
 plots.monthly = new SuperPlot(el('monthly'), {
   type: 'bar', x: 'month', y: 'revenue', series: 'region', stack: 'stack', data: sales, format: 'compact',

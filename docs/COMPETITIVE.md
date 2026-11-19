@@ -84,7 +84,7 @@ Status marks: ✅ built · 🚧 built with a stated limit · ⛔ refused on purp
 | range slider / navigator | ✅ | `navigator: true` with keyboard sliders |
 | drill-down with breadcrumbs | ✅ | `focus` spec field on treemap and sunburst; the web binding drills on click/Enter, Escape goes up, `onDrill` |
 | entrance animation | ✅ | `animate`, skipped under reduced motion |
-| animated data transitions | ⛔ | uPlot, visx and Plot skip them on purpose; motion between states hides what changed and costs every redraw |
+| animated data transitions | ✅ | `transition` web option (round 6), **off by default**: marks matched by series and datum move, new bars grow from zero, gone marks fade; axes, labels, tooltips, aria and the data table show the new state at once; skipped under reduced motion, on a hidden page, on the first draw, during gestures, on WebGL, above 5,000 marks and for fast `appendRows` streams; at most 1,000 ms; SVG and canvas. uPlot, visx and Plot refuse them because motion can hide what changed: hence opt-in, short, and documented as a risk |
 | export toolbar | ✅ | `toolbar` (PNG, SVG, CSV, table, reset, sound), off by default; `toPng`, `toSvg`, `toCsv`, core `plotCsv` with formula-injection protection |
 | input widgets bound to parameters | ⛔ | A host's job (P9: no app-specific UI in the lib); selections and `transform` filters are the hand-off |
 | undo/redo, context menu, on-chart drawing tools | ⛔ | Editor features; drawings belong to Super Chart |
@@ -100,7 +100,7 @@ Status marks: ✅ built · 🚧 built with a stated limit · ⛔ refused on purp
 | colour-blind check | ✅ | `colors_indistinct` warning on user colours (Machado 2009, OKLab); the default palettes measured (default min 14.0, accessible 9.6) |
 | sonification | ✅ | `sonify()`; pure `sonifyNotes()` |
 | forced colours / high contrast | ✅ | `forced-colors` and `prefers-contrast` rules |
-| reduced motion | ✅ | Entrance animation off |
+| reduced motion | ✅ | Entrance animation and data transitions off (read live) |
 | live data announcements | ✅ | After `appendRows`, throttled |
 | print | ✅ | `@media print` rules |
 | translatable UI text | ✅ | `strings` render option (`DEFAULT_STRINGS`), `locale`, `timeZone` |
@@ -124,4 +124,4 @@ Status marks: ✅ built · 🚧 built with a stated limit · ⛔ refused on purp
 
 ## What was not copied, in one place
 
-Candlestick, non-map 3D, pictorial bars, dual axis, broken axis, an expression language, animated data transitions, LTTB, input widgets, editor features (undo, drawing tools, context menus), voice and tactile export. Each has its reason above. Network-style charts, Arrow input and drawing in a worker are open, not refused.
+Candlestick, non-map 3D, pictorial bars, dual axis, broken axis, an expression language, LTTB, input widgets, editor features (undo, drawing tools, context menus), voice and tactile export. Each has its reason above. Gauge, word cloud and animated data transitions, refused until round 5, are built in round 6 at the owner's request, safe by default and with the risks stated in their rows. Network-style charts, Arrow input and drawing in a worker are open, not refused.

@@ -46,6 +46,16 @@ button { font: inherit; border: 1px solid var(--line); background: #fff; border-
   </section>
 
   <section>
+    <h2>Transitions between data states (opt-in)</h2>
+    <p><code>transition: true</code>: matched bars move, new ones grow, gone ones fade; axes, labels and tooltips show the new data at once. Off by default and never under reduced motion. SVG on the left, canvas on the right.</p>
+    <div class="grid">
+      <div class="card"><div id="trans" class="plot"></div></div>
+      <div class="card"><div id="trans-cv" class="plot"></div></div>
+    </div>
+    <p class="out"><button id="trans-next" type="button">New data</button></p>
+  </section>
+
+  <section>
     <h2>Transform, small multiples, lines over bars</h2>
     <p><code>transform</code> buckets daily rows by month and sums them; <code>facet</code> draws one panel per region on shared axes; <code>line</code> adds a target over the bars.</p>
     <div class="grid">

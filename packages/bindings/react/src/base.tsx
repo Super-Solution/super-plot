@@ -3,7 +3,7 @@
 import { forwardRef, useEffect, useRef, type CSSProperties, type ForwardedRef } from 'react'
 import { SuperPlot as Plot, type SuperPlotOptions } from '@supersolutions/super-plot-web/base'
 
-export type { BrushSelection, DrawTarget, RenderEvent, SelectEvent, SonifyController, SonifyOptions, SuperPlotOptions, SyncOptions, TipContent, ToolbarItem, ZoomRange } from '@supersolutions/super-plot-web/base'
+export type { BrushSelection, DrawTarget, RenderEvent, SelectEvent, SonifyController, SonifyOptions, SuperPlotOptions, SyncOptions, TipContent, ToolbarItem, TransitionOptions, ZoomRange } from '@supersolutions/super-plot-web/base'
 
 export interface SuperPlotProps extends SuperPlotOptions {
   /** The plot spec. Create it once or memoize it: a new object re-renders the chart. */
@@ -17,7 +17,7 @@ export interface SuperPlotProps extends SuperPlotOptions {
  * update it, unmount disposes it. Safe under Strict Mode and server rendering (the DOM work
  * happens in an effect; on the server use `renderToSvg` from core for a static chart).
  * The ref is the underlying `SuperPlot` instance (`toSvg()`, `toPng()`, `toCsv()`, `sonify()`, `getScene()`).
- * `sync` and `toolbar` may be inline objects or arrays (compared by value); `tooltipFormat` always calls the
+ * `sync`, `toolbar` and `transition` may be inline objects or arrays (compared by value); `tooltipFormat` always calls the
  * latest function, like the callbacks.
  */
 export const SuperPlot = forwardRef<Plot | null, SuperPlotProps>(function SuperPlot({ spec, className, style, ...options }, ref) {
@@ -65,19 +65,20 @@ export const SuperPlot = forwardRef<Plot | null, SuperPlotProps>(function SuperP
     plot.current?.setSpec(spec)
   }, [spec])
 
-  const { theme, locale, width, height, animate, tooltip, hidden, renderer, canvasAbove, webglAbove, interactive, camera, plugins, dataTable, sync, toolbar, navigator, drill, announce, printLight, timeZone, strings } = options
+  const { theme, locale, width, height, animate, transition, tooltip, hidden, renderer, canvasAbove, webglAbove, interactive, camera, plugins, dataTable, sync, toolbar, navigator, drill, announce, printLight, timeZone, strings } = options
   // Inline `sync={{ key: 'a' }}`, `toolbar={['png']}` or `strings={{ total: 'Summe' }}` is a new object every render: compare by value.
   const syncKey = JSON.stringify(sync ?? null)
   const toolbarKey = JSON.stringify(toolbar ?? null)
   const stringsKey = JSON.stringify(strings ?? null)
+  const transitionKey = JSON.stringify(transition ?? null)
   useEffect(() => {
     if (first.current) {
       first.current = false
       return
     }
-    plot.current?.setOptions({ theme, locale, width, height, animate, tooltip, renderer, canvasAbove, webglAbove, interactive, dataTable, sync, toolbar, navigator, drill, announce, printLight, timeZone, strings, ...(plugins ? { plugins } : {}), ...(hidden ? { hidden } : {}), ...(camera ? { camera } : {}) })
+    plot.current?.setOptions({ theme, locale, width, height, animate, transition, tooltip, renderer, canvasAbove, webglAbove, interactive, dataTable, sync, toolbar, navigator, drill, announce, printLight, timeZone, strings, ...(plugins ? { plugins } : {}), ...(hidden ? { hidden } : {}), ...(camera ? { camera } : {}) })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [theme, locale, width, height, animate, tooltip, hidden, renderer, canvasAbove, webglAbove, interactive, camera, plugins, dataTable, syncKey, toolbarKey, navigator, drill, announce, printLight, timeZone, stringsKey])
+  }, [theme, locale, width, height, animate, transitionKey, tooltip, hidden, renderer, canvasAbove, webglAbove, interactive, camera, plugins, dataTable, syncKey, toolbarKey, navigator, drill, announce, printLight, timeZone, stringsKey])
 
   return <div ref={host} className={className} style={style} />
 })
