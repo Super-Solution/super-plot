@@ -35,7 +35,8 @@ export const SuperPlot = forwardRef<Plot | null, SuperPlotProps>(function SuperP
       // Callbacks read the latest props, so inline handlers never force a re-mount.
       onSelect: e => latest.current.onSelect?.(e),
       onIssues: i => latest.current.onIssues?.(i),
-      onHiddenChange: h => latest.current.onHiddenChange?.(h)
+      onHiddenChange: h => latest.current.onHiddenChange?.(h),
+      onCameraChange: c => latest.current.onCameraChange?.(c)
     })
     plot.current = p
     expose(p)
@@ -54,14 +55,14 @@ export const SuperPlot = forwardRef<Plot | null, SuperPlotProps>(function SuperP
     plot.current?.setSpec(spec)
   }, [spec])
 
-  const { theme, locale, width, height, animate, tooltip, hidden } = options
+  const { theme, locale, width, height, animate, tooltip, hidden, renderer, canvasAbove, webglAbove, interactive, camera } = options
   useEffect(() => {
     if (first.current) {
       first.current = false
       return
     }
-    plot.current?.setOptions({ theme, locale, width, height, animate, tooltip, ...(hidden ? { hidden } : {}) })
-  }, [theme, locale, width, height, animate, tooltip, hidden])
+    plot.current?.setOptions({ theme, locale, width, height, animate, tooltip, renderer, canvasAbove, webglAbove, interactive, ...(hidden ? { hidden } : {}), ...(camera ? { camera } : {}) })
+  }, [theme, locale, width, height, animate, tooltip, hidden, renderer, canvasAbove, webglAbove, interactive, camera])
 
   return <div ref={host} className={className} style={style} />
 })

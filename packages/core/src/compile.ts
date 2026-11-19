@@ -7,6 +7,7 @@ import type { Issue } from './schema.js'
 import { cssVar, resolveTheme, type Theme, type ThemeOption } from './theme.js'
 import { estimateWidth, type Measure } from './util/text.js'
 import { clamp } from './util/num.js'
+import type { Camera } from './geo/view.js'
 
 export interface RenderOptions {
   /** Pixel width. Default 640. */
@@ -23,6 +24,8 @@ export interface RenderOptions {
   hidden?: Iterable<string>
   /** Text measurer; the web binding passes a canvas-backed one. */
   measure?: Measure
+  /** Maps: overrides the spec's camera (the web binding passes the viewer's drag and zoom). */
+  camera?: Partial<Camera>
 }
 
 export type CompileResult =
@@ -30,7 +33,7 @@ export type CompileResult =
   | { ok: false; issues: Issue[] }
 
 export function defaultHeight(type: string, width: number): number {
-  const ratio = type === 'pie' || type === 'donut' ? 0.62 : type === 'radar' ? 0.85 : 0.6
+  const ratio = type === 'pie' || type === 'donut' ? 0.62 : type === 'radar' ? 0.85 : type === 'column-map' || type === 'flow-map' ? 0.75 : 0.6
   return Math.round(clamp(width * ratio, 220, 520))
 }
 
@@ -45,7 +48,7 @@ export function compilePlot(input: unknown, options: RenderOptions = {}): Compil
   const width = Math.round(clamp(options.width ?? 640, 120, 4000))
   const height = Math.round(clamp(options.height ?? defaultHeight(spec.type, width), 100, 4000))
   const issues = [...v.issues]
-  const ctx = new ChartCtx(spec, { theme, locale, measure: options.measure ?? estimateWidth }, width, height, options.hidden ?? [], issues)
+  const ctx = new ChartCtx(spec, { theme, locale, measure: options.measure ?? estimateWidth, ...(options.camera ? { camera: options.camera } : {}) }, width, height, options.hidden ?? [], issues)
   const { series } = def.compile(ctx)
   const title = typeof spec.title === 'string' && spec.title ? spec.title : def.name
   const description = typeof spec.description === 'string' && spec.description ? spec.description : def.describe(spec, { locale })
@@ -57,7 +60,9 @@ export function compilePlot(input: unknown, options: RenderOptions = {}): Compil
     description,
     marks: ctx.marks,
     series,
-    type: spec.type
+    type: spec.type,
+    ...(Object.keys(ctx.clips).length ? { clips: ctx.clips } : {}),
+    ...(ctx.geo ? { geo: ctx.geo } : {})
   }
   return { ok: true, scene, issues, spec }
 }

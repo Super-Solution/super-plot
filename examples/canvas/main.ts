@@ -1,6 +1,6 @@
 import { SuperPlot } from '@supersolutions/super-plot-web'
 
-type R = 'auto' | 'svg' | 'canvas'
+type R = 'auto' | 'svg' | 'canvas' | 'webgl'
 const rnd = (seed: number) => () => ((seed = (seed * 1664525 + 1013904223) % 4294967296) / 4294967296)
 const gauss = (r: () => number): number => Math.sqrt(-2 * Math.log(r() || 1e-9)) * Math.cos(2 * Math.PI * r())
 

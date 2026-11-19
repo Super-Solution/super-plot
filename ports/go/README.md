@@ -24,6 +24,7 @@ text, err := sp.DescribePlot(spec) // 'Bar chart. 1 category. Highest: APAC (120
 | `ValidatePlot(spec)` | `Validation{OK, Issues, Spec}`; `Spec` is the normalised spec when `OK` |
 | `RequireValid(spec)` | the normalised spec, or a `*SpecError` (carries `.Issues`) |
 | `DescribePlot(spec)` | plain-language reading, identical to the TypeScript text |
+| `RegisterGeography(name, data, opts)` | make region boundaries (GeoJSON or TopoJSON) available to map charts as `"geo": "<name>"`; returns the warnings, or a `*GeographyError`. Also `UnregisterGeography`, `Geographies`, `GeoPresets`, `GeoProperty` |
 | `ChartTypes()` | the chart types |
 | `LinearTicks`, `NiceDomain`, `Quantile`, `ComputeBoxStats`, `BinEdges`, `BinCounts` | the shared numbers |
 | `FormatValue(v, "compact")`, `FormatPercent(0.25, 1)`, `ValueFormatter(f)` | value formats (English) |

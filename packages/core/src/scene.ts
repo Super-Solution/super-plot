@@ -29,10 +29,17 @@ export interface MarkBase {
   /** Free-form payload handed to `onSelect`: the source row(s) of this mark. */
   datum?: unknown
   opacity?: number
+  /** Clip to `scene.clips[clip]` (maps: the world outline and the plot area). */
+  clip?: string
+  /**
+   * `geo`: part of a map's geography, also present in `scene.geo`. A 3D renderer draws `scene.geo` itself
+   * and skips these; the SVG and canvas renderers draw them like any mark.
+   */
+  layer?: 'geo'
 }
 
 export interface RectMark extends MarkBase { type: 'rect'; x: number; y: number; w: number; h: number; r?: number | [number, number, number, number]; fill?: string; stroke?: string; strokeWidth?: number }
-export interface PathMark extends MarkBase { type: 'path'; d: string; fill?: string; stroke?: string; strokeWidth?: number; dash?: string }
+export interface PathMark extends MarkBase { type: 'path'; d: string; fill?: string; stroke?: string; strokeWidth?: number; dash?: string; /** Fill rule; `evenodd` cuts holes from region outlines. */ rule?: 'evenodd' }
 export interface CircleMark extends MarkBase { type: 'circle'; cx: number; cy: number; r: number; fill?: string; stroke?: string; strokeWidth?: number }
 export interface LineMark extends MarkBase { type: 'line'; x1: number; y1: number; x2: number; y2: number; stroke: string; strokeWidth?: number; dash?: string }
 export interface TextMark extends MarkBase {
@@ -63,6 +70,41 @@ export interface Scene {
   marks: Mark[]
   series: SeriesInfo[]
   type: string
+  /** Clip paths referenced by marks' `clip`. */
+  clips?: Record<string, string>
+  /** Maps only: the geography and data in longitude/latitude, for renderers that project it themselves (WebGL). */
+  geo?: SceneGeo
+}
+
+export interface GeoRegionItem {
+  /** Polygons of [outer, ...holes]; each ring is interleaved [lng, lat, ...], longitudes unwrapped. */
+  polygons: Float64Array[][]
+  fill: string
+  stroke: string
+  strokeWidth: number
+  dashed?: boolean
+  /** 0..1 of the view's height unit; 0 lies flat. */
+  height: number
+  /** Index of the scene mark that carries this item's tooltip and datum, or -1 (basemap). */
+  mark: number
+}
+export interface GeoPointItem { lng: number; lat: number; r: number; fill: string; stroke: string; opacity: number; mark: number }
+export interface GeoColumnItem { lng: number; lat: number; height: number; width: number; fill: string; mark: number }
+export interface GeoArcItem { from: [number, number]; to: [number, number]; height: number; width: number; stroke: string; opacity: number; mark: number }
+
+export interface SceneGeo {
+  /** The resolved view (plain numbers: see `makeView`). */
+  view: import('./geo/view.js').ViewParams
+  /** The view's inputs: give them a new camera with `makeView` to move without recompiling. */
+  input: import('./geo/view.js').ViewInput
+  /** Globe only: the sea behind the regions. */
+  sphere: { fill: string; stroke: string } | null
+  /** Graticule stroke colour, or null. */
+  graticule: string | null
+  regions: GeoRegionItem[]
+  points: GeoPointItem[]
+  columns: GeoColumnItem[]
+  arcs: GeoArcItem[]
 }
 
 export interface Rect { x: number; y: number; w: number; h: number }

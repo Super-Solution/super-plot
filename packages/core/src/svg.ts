@@ -16,6 +16,13 @@ export interface SvgOptions {
 const ESC: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }
 export const escapeXml = (s: string): string => s.replace(/[&<>"']/g, c => ESC[c])
 
+/** FNV-1a, base 36: a short deterministic id for a string. */
+function hash(s: string): string {
+  let h = 0x811c9dc5
+  for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 0x01000193)
+  return (h >>> 0).toString(36)
+}
+
 const n = (v: number): string => (Number.isFinite(v) ? String(Math.round(v * 100) / 100) : '0')
 
 /** Serialise a scene to a standalone SVG string. Deterministic: same scene, same bytes. */
@@ -24,16 +31,20 @@ export function renderSvg(scene: Scene, options: SvgOptions = {}): string {
   const id = options.idPrefix ?? 'sp'
   const interactive = options.interactive === true
   const font = rv(options.font ?? 'system-ui, sans-serif')
+  // Clip ids hash their own path, so several standalone SVGs on one page never borrow each other's clip.
+  const clipIds = scene.clips ? Object.keys(scene.clips) : []
+  const clipRef = new Map(clipIds.map(k => [k, `${id}-c${hash(scene.clips![k])}`]))
+  const defs = clipIds.length ? `<defs>${clipIds.map(k => `<clipPath id="${escapeXml(clipRef.get(k)!)}"><path d="${escapeXml(scene.clips![k])}"/></clipPath>`).join('')}</defs>` : ''
   const body: string[] = []
   scene.marks.forEach((m, i) => {
     if (m.role === 'hit' && !interactive) return
-    body.push(renderMark(m, i, interactive, rv))
+    body.push(renderMark(m, i, interactive, rv, m.clip !== undefined && clipRef.has(m.clip) ? ` clip-path="url(#${escapeXml(clipRef.get(m.clip)!)})"` : ''))
   })
   const head =
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${n(scene.width)} ${n(scene.height)}" width="${n(scene.width)}" height="${n(scene.height)}"` +
     ` role="img" aria-labelledby="${id}-t ${id}-d" style="font-family:${escapeXml(font)}">` +
     `<title id="${id}-t">${escapeXml(scene.title)}</title><desc id="${id}-d">${escapeXml(scene.description)}</desc>` +
-    `<rect width="${n(scene.width)}" height="${n(scene.height)}" fill="${escapeXml(rv(scene.background))}"/>`
+    `<rect width="${n(scene.width)}" height="${n(scene.height)}" fill="${escapeXml(rv(scene.background))}"/>` + defs
   return head + body.join('') + '</svg>'
 }
 
@@ -41,10 +52,10 @@ function paint(attr: string, v: string | undefined, rv: (s: string) => string): 
   return v === undefined ? '' : ` ${attr}="${escapeXml(rv(v))}"`
 }
 
-function renderMark(m: Mark, i: number, interactive: boolean, rv: (s: string) => string): string {
-  const hooks = interactive
+function renderMark(m: Mark, i: number, interactive: boolean, rv: (s: string) => string, clip: string): string {
+  const hooks = clip + (interactive
     ? ` class="sp-m sp-${m.role}${m.anim ? ` sp-a-${m.anim}` : ''}" data-i="${i}"${m.series !== undefined ? ` data-s="${escapeXml(m.series)}"` : ''}${m.legendKey !== undefined ? ` data-lk="${escapeXml(m.legendKey)}"` : ''}${m.tip && m.role !== 'hit' && m.legendKey === undefined ? ' tabindex="0"' : ''}${m.legendKey !== undefined ? ` role="button" tabindex="0" aria-label="${escapeXml(m.aria ?? m.legendKey)}"` : m.aria ? ` role="img" aria-label="${escapeXml(m.aria)}"` : ''}`
-    : ''
+    : '')
   const op = m.opacity !== undefined && m.opacity !== 1 ? ` opacity="${n(m.opacity)}"` : ''
   switch (m.type) {
     case 'rect': {
@@ -55,7 +66,7 @@ function renderMark(m: Mark, i: number, interactive: boolean, rv: (s: string) =>
       return `<rect x="${n(m.x)}" y="${n(m.y)}" width="${n(Math.max(0, m.w))}" height="${n(Math.max(0, m.h))}"${radius ? ` rx="${n(radius)}"` : ''}${paint('fill', m.fill ?? 'none', rv)}${paint('stroke', m.stroke, rv)}${m.strokeWidth ? ` stroke-width="${n(m.strokeWidth)}"` : ''}${op}${hooks}/>`
     }
     case 'path':
-      return `<path d="${escapeXml(m.d)}"${paint('fill', m.fill ?? 'none', rv)}${paint('stroke', m.stroke, rv)}${m.strokeWidth ? ` stroke-width="${n(m.strokeWidth)}" stroke-linejoin="round" stroke-linecap="round"` : ''}${m.dash ? ` stroke-dasharray="${escapeXml(m.dash)}"` : ''}${m.anim === 'draw' && interactive ? ' pathLength="1"' : ''}${op}${hooks}/>`
+      return `<path d="${escapeXml(m.d)}"${m.rule ? ` fill-rule="${m.rule}"` : ''}${paint('fill', m.fill ?? 'none', rv)}${paint('stroke', m.stroke, rv)}${m.strokeWidth ? ` stroke-width="${n(m.strokeWidth)}" stroke-linejoin="round" stroke-linecap="round"` : ''}${m.dash ? ` stroke-dasharray="${escapeXml(m.dash)}"` : ''}${m.anim === 'draw' && interactive ? ' pathLength="1"' : ''}${op}${hooks}/>`
     case 'circle':
       return `<circle cx="${n(m.cx)}" cy="${n(m.cy)}" r="${n(m.r)}"${paint('fill', m.fill ?? 'none', rv)}${paint('stroke', m.stroke, rv)}${m.strokeWidth ? ` stroke-width="${n(m.strokeWidth)}"` : ''}${op}${hooks}/>`
     case 'line':

@@ -61,11 +61,13 @@ spec (JSON) -> validatePlot -> chart.compile(ctx) -> Scene (flat marks, pixel sp
 
 - Line series with many points are decimated to min and max per pixel column (a 730-point series keeps its shape, a 100k-point one stays cheap).
 - Hover uses at most about 400 hit strips for line charts, not one per point.
-- **SVG is comfortable to about 4,000 data marks; above that the web binding draws on canvas** (`renderer: 'auto'`, the default; force it with `renderer: 'svg' | 'canvas'`, tune with `canvasAbove`). Same scene, same tooltips, hover highlight, legend toggle, keyboard access (the legend stays real buttons) and PNG export. If a 2D context is not available it falls back to SVG.
+- **SVG is comfortable to about 4,000 data marks; above that the web binding draws on canvas** (`renderer: 'auto'`, the default; force it with `renderer: 'svg' | 'canvas' | 'webgl'`, tune with `canvasAbove`). Same scene, same tooltips, hover highlight, legend toggle, keyboard access (the legend stays real buttons) and PNG export. If a 2D context is not available it falls back to SVG.
+- **WebGL2** takes over dense dots (above `webglAbove`, default 20,000) and 3D maps when the device has a hardware GPU: instanced quads with a signed-distance edge for dots, a depth-buffered mesh for maps (see [MAPS.md](MAPS.md)). Text, axes and legend stay on 2D canvases above and below it. It is a lazily loaded chunk, one context per plot for its life, at most 8 per page; `renderer: 'webgl'` without WebGL, or a lost context, falls back to canvas. Measured on this container, which has no GPU (Chromium falls back to the SwiftShader software rasteriser): the JavaScript side of a 50,000-dot redraw is faster on WebGL (about 110 ms against 200 ms), but the frame as a whole is much slower (about 1.3 s against 0.2 s) because software rasterises the GPU work. That is why `auto` never picks WebGL on a software rasteriser. Speed on a real GPU has not been measured here: run `npm run examples` and open `/canvas/` (WebGL button) or `scripts/bench.mjs` on a machine with one.
+- **Density-adaptive dots**: past 2,000 points a scatter draws smaller dots without the surface ring, so the cloud stays readable and cheap.
 - Measured in Chromium and Node on this container: a 50,000-point scatter compiles in about 90 ms and draws in a few milliseconds (points are batched into one path per colour); hover looks up marks in a 32 px grid index, not by scanning.
 - The core canvas drawing (`drawScene`, `buildHitIndex`) takes any object shaped like a 2D context and has no DOM, so a worker with an `OffscreenCanvas` or a native canvas can use it.
 - Exporting a 50,000-point scatter to SVG still makes a heavy file; core says so with a `many_marks` warning above 5,000 points. Aggregate or sample first.
-- The row limit is 50,000; line series are decimated to min and max per pixel column.
+- The row limit is 50,000 (a validation contract shared with the ports); WebGL could draw far more, but raising the cap is a separate decision. Line series are decimated to min and max per pixel column.
 
 ## Known limits (honest list)
 
@@ -74,7 +76,8 @@ spec (JSON) -> validatePlot -> chart.compile(ctx) -> Scene (flat marks, pixel sp
 - One value axis. There is no dual-axis chart on purpose; Super Chat cards with right-axis series are converted without them and say so.
 - No funnel or gauge: they overlap with Super Chat cards.
 - Default palette: orange, yellow and cyan fall outside the lightness band the dataviz validator prefers. Kept to stay TradingView-aligned; values are in `PALETTE`. The `accessible` preset passes every validator check in light mode; three of its colours are under 3:1 contrast on white, so they lean on the legend and tooltips (identity is never colour alone).
-- Registering all twelve charts happens on import of core (`sideEffects`), so there is no tree shaking per chart yet.
+- Registering all sixteen charts happens on import of core (`sideEffects`), so there is no tree shaking per chart yet.
+- Maps: no boundaries ship, by design; no basemap tiles, labels or roads (this is a statistical map, not a slippy map). Static SVG/canvas maps recompile on every camera move, which gets slow for very detailed geographies: use WebGL (or simplify the file). On SVG, tall raised regions can overlap imperfectly at extreme tilts (painter's order per region); WebGL uses a depth buffer.
 - The ports (Go, Python) do not draw, and format numbers in English only. A native renderer in another language is a separate project (see OPEN-DECISIONS).
 - Visual regression is opt-in (`E2E_VISUAL=1`): baselines are PNGs from one Chromium build and fonts, so they are not part of the default gate.
 
@@ -84,7 +87,7 @@ spec (JSON) -> validatePlot -> chart.compile(ctx) -> Scene (flat marks, pixel sp
 |---|---|---|
 | Unit (vitest) | numbers, validation, every chart's scene, robustness against hostile specs, canvas drawing and hit index | `npm test` |
 | Web (vitest + jsdom) | tooltip, hover, legend toggle and keyboard, resize, errors, export | `npm test` |
-| Browser (Playwright, real Chromium) | the gallery in light and dark, clicks and hover on both renderers, responsive widths, no console errors, 50k-point canvas | `npm run test:e2e` |
+| Browser (Playwright, real Chromium) | the gallery in light and dark, clicks and hover on every renderer, responsive widths, no console errors, 50k points on canvas and WebGL, WebGL maps against SVG pixels, GPU picking, drag, context-loss fallback, importing a boundary file | `npm run test:e2e` |
 | Visual regression (opt-in) | pixels of the gallery against stored baselines | `E2E_VISUAL=1 npm run test:e2e` (`E2E_VISUAL=update` to rewrite) |
 | Conformance | generated data is current; each port replays it | `npm run conformance`, `npm run test:ports` |
 | Differential fuzz | ~58,000 random numbers and 4,000 random specs per seed: ports against TypeScript | `npm run fuzz:ports` |

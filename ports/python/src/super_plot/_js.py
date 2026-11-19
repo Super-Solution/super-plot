@@ -21,7 +21,10 @@ def is_number(v: Any) -> bool:
 
 
 def is_finite_number(v: Any) -> bool:
-    return is_number(v) and math.isfinite(float(v))
+    try:
+        return is_number(v) and math.isfinite(float(v))
+    except OverflowError:  # an integer literal beyond a double is Infinity in JavaScript
+        return False
 
 
 def to_number(v: Any) -> float | None:

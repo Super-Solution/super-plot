@@ -9,8 +9,9 @@ import { heatmap } from './charts/heatmap.js'
 import { radar } from './charts/radar.js'
 import { treemap } from './charts/treemap.js'
 import { sankey } from './charts/sankey.js'
+import { bubbleMap, choropleth, columnMap, flowMap } from './charts/maps.js'
 
-for (const def of [bar, line, areaChart, scatter, pie, donut, histogram, box, heatmap, radar, treemap, sankey]) registerChart(def)
+for (const def of [bar, line, areaChart, scatter, pie, donut, histogram, box, heatmap, radar, treemap, sankey, choropleth, bubbleMap, columnMap, flowMap]) registerChart(def)
 
 export { compilePlot, compileOrThrow, renderToSvg, defaultHeight } from './compile.js'
 export type { RenderOptions, CompileResult } from './compile.js'
@@ -42,3 +43,10 @@ export { binEdges, binCounts } from './charts/histogram.js'
 export { boxStats } from './charts/box.js'
 export { linearTicks, niceDomain, quantile } from './util/num.js'
 export { timeTicks } from './util/time.js'
+export { registerGeography, unregisterGeography, getGeography, listGeographies, readGeography, matchRegion, normalizeRegion, GeographyError, GEO_PRESETS, GEO_LIMITS } from './geo/geography.js'
+export type { Geography, GeographyOptions, GeoRegion, Ring } from './geo/geography.js'
+export { makeView, project, projectFlat, unprojectFlat, dragCamera, zoomCamera, defaultCamera, clampCamera, slerp, angularDistance, worldOutline, OBLIQUE, CAMERA_LIMITS } from './geo/view.js'
+export type { Camera, ViewParams, ViewInput, Projection, GeoViewKind, Projected } from './geo/view.js'
+export { arcPoints } from './geo/draw.js'
+export type { SceneGeo, GeoRegionItem, GeoPointItem, GeoColumnItem, GeoArcItem } from './scene.js'
+export { isMapType } from './charts/maps.js'

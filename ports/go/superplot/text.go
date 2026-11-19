@@ -33,7 +33,10 @@ type fieldDef struct {
 }
 
 type tables struct {
-	Limits     map[string]int `json:"limits"`
+	Limits    map[string]int `json:"limits"`
+	GeoLimits map[string]int `json:"geoLimits"`
+	// Camera is the allowed range of each camera field.
+	Camera     map[string][2]float64 `json:"camera"`
 	Currencies map[string]struct {
 		Symbol string `json:"symbol"`
 		Digits int    `json:"digits"`

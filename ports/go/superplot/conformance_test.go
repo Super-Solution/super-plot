@@ -12,7 +12,11 @@ import (
 
 // Runs the shared conformance data (conformance/plot.v1.json) against this implementation.
 
-type issueKey struct{ Severity, Code, Path string }
+type issueKey struct {
+	Severity string `json:"severity"`
+	Code     string `json:"code"`
+	Path     string `json:"path"`
+}
 
 type conformance struct {
 	Version     int `json:"version"`
@@ -64,6 +68,20 @@ type conformance struct {
 		Normalized map[string]any `json:"normalized"`
 		Describe   *string        `json:"describe"`
 	} `json:"chartExamples"`
+	Geographies    []geoFixture `json:"geographies"`
+	GeographyCases []struct {
+		geoFixture
+		As      string     `json:"as"`
+		Preset  string     `json:"preset"`
+		OK      bool       `json:"ok"`
+		Issues  []issueKey `json:"issues"`
+		Regions []struct {
+			Key      string `json:"key"`
+			Name     string `json:"name"`
+			Disputed bool   `json:"disputed"`
+		} `json:"regions"`
+		Matches [][2]any `json:"matches"`
+	} `json:"geographyCases"`
 	BrokenSpecs     []validationCase `json:"brokenSpecs"`
 	ValidationCases []validationCase `json:"validationCases"`
 	Formats         []struct {
@@ -88,10 +106,51 @@ type conformance struct {
 	} `json:"describeCases"`
 }
 
+// geoFixture is a geography to register. Data stays JSON text: the first object of a Topology is the first one
+// written, and a decoded map has forgotten which that was.
+type geoFixture struct {
+	Name    string          `json:"name"`
+	Data    json.RawMessage `json:"data"`
+	Options struct {
+		Object      string            `json:"object"`
+		Key         string            `json:"key"`
+		Name        string            `json:"name"`
+		Disputed    string            `json:"disputed"`
+		Aliases     map[string]string `json:"aliases"`
+		Attribution string            `json:"attribution"`
+	} `json:"options"`
+}
+
+func (g geoFixture) options() GeographyOptions {
+	o := GeographyOptions{Object: g.Options.Object, Aliases: g.Options.Aliases, Attribution: g.Options.Attribution}
+	if g.Options.Key != "" {
+		o.Key = GeoProperty(g.Options.Key)
+	}
+	if g.Options.Name != "" {
+		o.Name = GeoProperty(g.Options.Name)
+	}
+	if g.Options.Disputed != "" {
+		o.Disputed = GeoProperty(g.Options.Disputed)
+	}
+	return o
+}
+
+// input is the fixture's data as a caller would pass it.
+func (g geoFixture) input() any { return asGiven(g.Data) }
+
+// asGiven is a case's input as a caller would pass it: the text itself for a JSON string, the document otherwise.
+func asGiven(raw json.RawMessage) any {
+	var text string
+	if json.Unmarshal(raw, &text) == nil {
+		return text
+	}
+	return []byte(raw)
+}
+
 type validationCase struct {
-	Name   string `json:"name"`
-	Spec   any    `json:"spec"`
-	OK     bool   `json:"ok"`
+	Name   string          `json:"name"`
+	Spec   json.RawMessage `json:"spec"`
+	OK     bool            `json:"ok"`
 	Issues []struct {
 		Severity string `json:"severity"`
 		Code     string `json:"code"`
@@ -100,17 +159,38 @@ type validationCase struct {
 	Normalized map[string]any `json:"normalized"`
 }
 
+func read() (conformance, error) {
+	var c conformance
+	b, err := os.ReadFile("../../../conformance/plot.v1.json")
+	if err == nil {
+		err = json.Unmarshal(b, &c)
+	}
+	return c, err
+}
+
 func load(t *testing.T) conformance {
 	t.Helper()
-	b, err := os.ReadFile("../../../conformance/plot.v1.json")
+	c, err := read()
 	if err != nil {
 		t.Fatal(err)
 	}
-	var c conformance
-	if err := json.Unmarshal(b, &c); err != nil {
-		t.Fatal(err)
-	}
 	return c
+}
+
+// TestMain registers the geographies that the validation and description cases name.
+func TestMain(m *testing.M) {
+	c, err := read()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	for _, g := range c.Geographies {
+		if _, err := RegisterGeography(g.Name, g.input(), g.options()); err != nil {
+			fmt.Fprintln(os.Stderr, g.Name, err)
+			os.Exit(1)
+		}
+	}
+	os.Exit(m.Run())
 }
 
 func near(a, b float64) bool {
@@ -275,7 +355,7 @@ func TestChartExamples(t *testing.T) {
 
 func runCases(t *testing.T, cases []validationCase) {
 	for _, x := range cases {
-		v := ValidatePlot(x.Spec)
+		v := ValidatePlot(asGiven(x.Spec))
 		if v.OK != x.OK {
 			t.Fatalf("%s: ok=%v issues=%v", x.Name, v.OK, v.Issues)
 		}
@@ -311,6 +391,79 @@ func TestDescribeCases(t *testing.T) {
 		if err != nil || got != *x.Describe {
 			t.Fatalf("%s:\n got %q (%v)\nwant %q", x.Name, got, err, *x.Describe)
 		}
+	}
+}
+
+func TestGeographyCases(t *testing.T) {
+	for _, x := range load(t).GeographyCases {
+		opts := x.options()
+		if x.Preset != "" {
+			preset, ok := GeoPresets[x.Preset]
+			if !ok {
+				t.Fatalf("%s: no preset %q", x.Name, x.Preset)
+			}
+			opts = preset
+		}
+		issues, err := RegisterGeography(x.As, x.input(), opts)
+		if ge, failed := err.(*GeographyError); failed {
+			issues = ge.Issues
+		} else if err != nil {
+			t.Fatalf("%s: %v", x.Name, err)
+		}
+		want := append([]issueKey{}, x.Issues...)
+		sort.Slice(want, func(i, j int) bool { return fmt.Sprint(want[i]) < fmt.Sprint(want[j]) })
+		if (err == nil) != x.OK || !reflect.DeepEqual(append([]issueKey{}, keyed(issues)...), want) {
+			t.Fatalf("%s: ok=%v issues\n got %v\nwant %v", x.Name, err == nil, keyed(issues), want)
+		}
+		geoMu.RLock()
+		geo := geoRegistry[x.As]
+		geoMu.RUnlock()
+		if !x.OK {
+			if geo != nil {
+				t.Fatalf("%s: registered although it failed", x.Name)
+			}
+			continue
+		}
+		if !UnregisterGeography(x.As) {
+			t.Fatalf("%s: not registered", x.Name)
+		}
+		if len(geo.regions) != len(x.Regions) {
+			t.Fatalf("%s: regions %v want %v", x.Name, geo.regions, x.Regions)
+		}
+		for i, r := range x.Regions {
+			if got := geo.regions[i]; got.key != r.Key || got.name != r.Name || got.disputed != r.Disputed {
+				t.Fatalf("%s: region %d is %+v want %+v", x.Name, i, got, r)
+			}
+		}
+		for _, m := range x.Matches {
+			want, _ := m[1].(string)
+			if got := geo.lookup[normalizeRegion(m[0])]; got != want {
+				t.Fatalf("%s: %q matches %q want %q", x.Name, m[0], got, want)
+			}
+		}
+	}
+}
+
+func TestGeographyRegistry(t *testing.T) {
+	if _, err := RegisterGeography("not a name!", `{}`); err == nil {
+		t.Fatal("expected an error")
+	}
+	fc := map[string]any{"type": "FeatureCollection", "features": []any{map[string]any{
+		"type": "Feature", "id": "N", "properties": map[string]any{"name": "North"},
+		"geometry": map[string]any{"type": "Polygon", "coordinates": []any{[]any{[]float64{0, 0}, []float64{1, 0}, []float64{1, 1}}}},
+	}}}
+	key := func(p map[string]any, id any) any { return fmt.Sprint(id, "-", p["name"]) }
+	if warnings, err := RegisterGeography("conf-fn", fc, GeographyOptions{Key: key}); err != nil || len(warnings) != 0 {
+		t.Fatal(warnings, err)
+	}
+	if v := ValidatePlot(`{"type":"choropleth","geo":"conf-fn","region":"r","value":"v","data":[{"r":"n-north","v":1}]}`); !v.OK {
+		t.Fatal(v.Issues)
+	}
+	if !contains(Geographies(), "conf-fn") || !UnregisterGeography("conf-fn") || UnregisterGeography("conf-fn") {
+		t.Fatal("registry out of step")
+	}
+	if v := ValidatePlot(`{"type":"choropleth","geo":"conf-fn","region":"r","value":"v","data":[{"r":"n-north","v":1}]}`); v.OK || v.Issues[0].Code != "unknown_geography" {
+		t.Fatal(v.Issues)
 	}
 }
 

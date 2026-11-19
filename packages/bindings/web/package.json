@@ -1,20 +1,40 @@
 {
   "name": "@supersolutions/super-plot-web",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Mount Super Plot in the browser: resize, tooltip, hover, legend toggle, export; plus a <super-plot> web component.",
   "private": true,
   "license": "UNLICENSED",
   "type": "module",
-  "engines": { "node": ">=22" },
+  "engines": {
+    "node": ">=22"
+  },
   "sideEffects": false,
-  "files": ["dist", "README.md"],
-  "dependencies": { "@supersolutions/super-plot-core": "0.1.0" },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "dependencies": {
+    "@supersolutions/super-plot-core": "0.2.0",
+    "earcut": "3.0.2"
+  },
   "exports": {
-    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" },
-    "./element": { "types": "./dist/element.d.ts", "import": "./dist/element.js" },
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./element": {
+      "types": "./dist/element.d.ts",
+      "import": "./dist/element.js"
+    },
     "./global": "./dist/super-plot.global.js"
   },
-  "typesVersions": { "*": { "element": ["./dist/element.d.ts"] } },
+  "typesVersions": {
+    "*": {
+      "element": [
+        "./dist/element.d.ts"
+      ]
+    }
+  },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "author": "SUPER SOLUTION LABS INC"

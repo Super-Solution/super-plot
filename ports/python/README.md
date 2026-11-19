@@ -25,6 +25,7 @@ validate_plot(fixed).spec              # normalised: defaults filled in, values 
 | `validate_plot(spec)` | `Validation(ok, issues, spec)`; `spec` is the normalised spec when `ok` |
 | `require_valid(spec)` | the normalised spec, or `PlotSpecError` (carries `.issues`) |
 | `describe_plot(spec)` | plain-language reading, identical to the TypeScript text |
+| `register_geography(name, data, options)` | make region boundaries (GeoJSON or TopoJSON) available to map charts as `geo: "<name>"`; returns the warnings, raises `GeographyError`. Also `unregister_geography`, `get_geography`, `list_geographies`, `match_region`, `GEO_PRESETS` |
 | `chart_types()`, `fields_of(type)` | what charts exist and which fields each takes |
 | `linear_ticks`, `nice_domain`, `quantile`, `box_stats`, `bin_edges`, `bin_counts` | the shared numbers |
 | `format_value(v, "compact")`, `format_percent(0.25)` | value formats (English) |

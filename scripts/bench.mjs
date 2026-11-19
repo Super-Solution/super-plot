@@ -50,7 +50,7 @@ const size = async (code, label) => {
 const bundles = [
   await size(`import {validatePlot} from './packages/core/dist/index.js'; console.log(validatePlot)`, 'core: validatePlot only'),
   await size(`import {renderToSvg} from './packages/core/dist/index.js'; console.log(renderToSvg)`, 'core: renderToSvg (server/static SVG)'),
-  await size(`import {SuperPlot} from './packages/bindings/web/dist/index.js'; console.log(SuperPlot)`, 'web: SuperPlot (browser mount, all 12 charts)'),
+  await size(`import {SuperPlot} from './packages/bindings/web/dist/index.js'; console.log(SuperPlot)`, 'web: SuperPlot (browser mount, all 16 charts; WebGL chunk inlined by this single-file bundle)'),
   await size(`import {SuperPlot} from './packages/bindings/web/dist/index.js'; import './packages/bindings/web/dist/element.js'; console.log(SuperPlot)`, 'web + <super-plot> element'),
   await size(`import * as t from './packages/core/dist/tools.js'; console.log(t)`, 'core/tools (agent tools, incl. core)'),
   await size(readFileSync(root + 'packages/bindings/react/dist/index.js', 'utf8').replace(/^/, ''), 'react binding (excl. react)')
@@ -63,7 +63,8 @@ await page.setContent('<!doctype html><body style="margin:0"><div id="h" style="
 await page.addScriptTag({ path: root + 'packages/bindings/web/dist/super-plot.global.js' })
 const cdp = await page.context().newCDPSession(page)
 const browserRes = []
-for (const [name, make] of Object.entries(specs)) for (const n of sizes) for (const renderer of ['svg', 'canvas']) {
+for (const [name, make] of Object.entries(specs)) for (const n of sizes) for (const renderer of ['svg', 'canvas', 'webgl']) {
+  if (renderer === 'webgl' && name === 'line') continue // lines are paths: nothing for the GPU layer to take
   const spec = make(n)
   const r = await page.evaluate(async ({ spec, renderer }) => {
     const raf = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))
@@ -81,7 +82,7 @@ for (const [name, make] of Object.entries(specs)) for (const n of sizes) for (co
       if (i === 4) {
         // resize/redraw (what a window drag or setSpec costs) and hover
         const t3 = performance.now(); p.setOptions({ width: 880 }); const t4 = performance.now(); await raf(); out.redrawMs = t4 - t3; out.redrawFrameMs = performance.now() - t3
-        const el = renderer === 'canvas' ? host.querySelector('canvas') : host.querySelector('svg')
+        const el = renderer !== 'svg' ? host.querySelector('canvas') : host.querySelector('svg')
         const b = el.getBoundingClientRect(); const times = []
         for (let k = 0; k < 40; k++) { const a = performance.now(); el.dispatchEvent(new PointerEvent('pointermove', { clientX: b.x + 100 + k * 13, clientY: b.y + 150 + (k % 7) * 30, bubbles: true })); times.push(performance.now() - a) }
         times.sort((x, y) => x - y); out.hoverMs = times[Math.floor(times.length / 2)]
@@ -95,5 +96,38 @@ for (const [name, make] of Object.entries(specs)) for (const n of sizes) for (co
   const mem = await page.evaluate(() => performance.memory.usedJSHeapSize)
   browserRes.push({ chart: name, rows: n, asked: renderer, ...r, jsHeapMB: +(mem / 1048576).toFixed(0) })
 }
+// Maps: first frame, and the cost of one camera step (a drag frame) per renderer.
+const maps = []
+const mapSpecs = {
+  'choropleth-raised': { ...core.chartCatalog().find(c => c.type === 'choropleth').example, extrude: true },
+  'column-map-globe': core.chartCatalog().find(c => c.type === 'column-map').example,
+  'flow-map-globe': core.chartCatalog().find(c => c.type === 'flow-map').example
+}
+for (const [name, spec] of Object.entries(mapSpecs)) for (const renderer of ['svg', 'canvas', 'webgl']) {
+  const r = await page.evaluate(async ({ spec, renderer }) => {
+    const raf = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))
+    const host = document.getElementById('h'); host.replaceChildren()
+    let p = new SuperPlot.SuperPlot(host, spec, { renderer, animate: false })
+    await raf(); await raf() // the WebGL chunk loads on first use
+    p.dispose(); host.replaceChildren()
+    const t0 = performance.now()
+    p = new SuperPlot.SuperPlot(host, spec, { renderer, animate: false })
+    await raf()
+    const first = performance.now() - t0
+    const steps = []
+    for (let k = 0; k < 30; k++) {
+      const a = performance.now()
+      host.querySelector('.sp-root').dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }))
+      await new Promise(r => requestAnimationFrame(r))
+      steps.push(performance.now() - a)
+    }
+    steps.sort((x, y) => x - y)
+    const out = { renderer: p.getRenderer(), firstFrameMs: first, cameraStepMs: steps[15] }
+    p.dispose()
+    return out
+  }, { spec, renderer })
+  maps.push({ map: name, asked: renderer, ...r })
+}
+const gpu = await page.evaluate(() => { const gl = document.createElement('canvas').getContext('webgl2'); if (!gl) return 'none'; const i = gl.getExtension('WEBGL_debug_renderer_info'); return String(i ? gl.getParameter(i.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER)) })
 await browser.close()
-console.log(JSON.stringify({ machine: { cpus: (await import('node:os')).cpus().length, model: (await import('node:os')).cpus()[0].model, node: process.version }, node, heap, bundles, browser: browserRes }, null, 1))
+console.log(JSON.stringify({ machine: { cpus: (await import('node:os')).cpus().length, model: (await import('node:os')).cpus()[0].model, node: process.version, gpu }, node, heap, bundles, browser: browserRes, maps }, null, 1))

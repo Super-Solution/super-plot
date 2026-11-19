@@ -31,11 +31,11 @@ func main() {
 		Ticks [][]any `json:"ticks"`
 		Bins  [][]any `json:"bins"`
 		Specs []struct {
-			Spec       map[string]any `json:"spec"`
-			OK         bool           `json:"ok"`
-			Issues     [][]string     `json:"issues"`
-			Normalized map[string]any `json:"normalized"`
-			Describe   *string        `json:"describe"`
+			Spec       json.RawMessage `json:"spec"` // as written: a decoded map forgets the order of a Topology's objects
+			OK         bool            `json:"ok"`
+			Issues     [][]string      `json:"issues"`
+			Normalized map[string]any  `json:"normalized"`
+			Describe   *string         `json:"describe"`
 		} `json:"specs"`
 	}
 	b, err := os.ReadFile(os.Args[1])
@@ -90,7 +90,7 @@ func main() {
 		}
 	}
 	for i, c := range d.Specs {
-		v := sp.ValidatePlot(c.Spec)
+		v := sp.ValidatePlot([]byte(c.Spec))
 		var got, want []string
 		for _, x := range v.Issues {
 			got = append(got, x.Severity+"|"+x.Code+"|"+x.Path)
@@ -117,7 +117,7 @@ func main() {
 			_ = json.Unmarshal(jb, &back)
 			if !reflect.DeepEqual(back, c.Normalized) {
 				report("SPEC", i, "normalized")
-			} else if text, err := sp.DescribePlot(c.Spec); err != nil || text != *c.Describe {
+			} else if text, err := sp.DescribePlot([]byte(c.Spec)); err != nil || text != *c.Describe {
 				report("SPEC", i, "describe", text, *c.Describe)
 			}
 		}

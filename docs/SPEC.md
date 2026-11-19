@@ -842,3 +842,304 @@ Shows how a quantity flows between stages: bands between nodes, the band width i
     {
 ```
 
+## `choropleth` — Choropleth map
+
+Colours each region of a map by a number; raise regions by the value for a 3D view.
+
+**Use when:** Comparing a rate or share across countries, provinces or districts. Map rates (per person, percent), not raw totals, or big regions dominate. Needs region boundaries (geo). For exact ranking use a sorted bar chart.
+
+| Field | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `type` | string | yes |  | Chart type: choropleth. |
+| `version` | `1` |  |  | Spec format version. Only 1 exists; may be omitted. |
+| `data` | array of rows | yes |  | Tabular rows: an array of flat objects, one per observation. Numbers must be numbers (or plain numeric strings). |
+| `title` | string |  |  | Chart title. State the takeaway or the subject, not "Chart". |
+| `subtitle` | string |  |  | One line of context under the title: unit, period, filter. |
+| `description` | string |  |  | Long description for screen readers and agents. Generated from the data when omitted. |
+| `source` | string |  |  | Source line shown small under the chart. |
+| `legend` | `auto` \| `top` \| `bottom` \| `right` \| `none` |  | `"auto"` | Legend placement. `auto` hides it for a single series and picks a side from the available width. |
+| `tooltip` | boolean |  | `true` | Show a hover tooltip (web binding only). |
+| `format` | format string |  |  | Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE. |
+| `colors` | object |  |  | Series (or slice/category) name to CSS colour, e.g. {"Revenue":"#2962FF"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours. |
+| `geo` | geography name or GeoJSON/TopoJSON object | yes |  | Region boundaries to colour. The name of a geography registered with registerGeography (Super Plot ships none), or an inline GeoJSON FeatureCollection / TopoJSON Topology (key: feature id, else properties.id, else properties.name). |
+| `region` | column name | yes |  | Column naming each row's region: its key, name or an alias (case ignored). Rows with the same region are summed. |
+| `value` | column name | yes |  | Numeric column that colours the region. |
+| `view` | `flat` \| `globe` |  | `"flat"` | `flat`: a world projection fitted to the data (tilt it with camera.pitch). `globe`: a sphere the viewer can turn. |
+| `scale` | `sequential` \| `diverging` |  | `"sequential"` | `sequential`: light to dark for magnitude. `diverging`: two hues around 0 (or the middle) for above/below. |
+| `domain` | [min\|null, max\|null] |  |  | Fix the colour range, e.g. [0, 100], to compare maps. |
+| `extrude` | boolean |  | `false` | Raise each region by its value (3D). The flat view tilts to 40 degrees unless the camera says otherwise. |
+| `projection` | `equal-earth` \| `mercator` \| `equirectangular` |  | `"equal-earth"` | Flat view only. `equal-earth` keeps areas true (best for comparing regions); `mercator` keeps shapes for zoomed-in maps. |
+| `camera` | {lng, lat, zoom, pitch, bearing} |  |  | Starting view: {lng, lat} centre in degrees, zoom (1 fits the data), pitch (0-70 degrees of tilt, flat view) and bearing (degrees). The viewer can drag and zoom from there. |
+| `disputed` | `same` \| `dashed` \| `muted` |  | `"same"` | How to draw regions your geography marks as disputed: `same` as any other (no judgement), `dashed` outline, or `muted` fill with a dashed outline. Super Plot never decides what is disputed. |
+| `graticule` | boolean |  |  | Draw meridians and parallels every 30 degrees. Default: on for the globe and for flat maps without geo, off otherwise. |
+
+```json
+{
+  "type": "choropleth",
+  "title": "Rainfall across the Example Islands",
+  "subtitle": "Annual total, mm (invented data on invented islands)",
+  "geo": {
+    "type": "FeatureCollection",
+    "features": [
+      {
+        "type": "Feature",
+        "id": "Alba",
+        "properties": {
+          "name": "Alba"
+        },
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                1.663,
+                -0.96
+              ],
+              [
+                1.663,
+                0.96
+              ],
+              [
+                0,
+                1.92
+              ],
+              [
+                -1.663,
+                0.96
+              ],
+              [
+                -1.663,
+                -0.96
+              ],
+              [
+                0,
+                -1.92
+```
+
+## `bubble-map` — Bubble map
+
+Places a circle per row on a map by longitude/latitude (or region), sized by a number and coloured by group.
+
+**Use when:** Showing where things are and how big they are: cities, sites, events, stores. Totals belong here rather than on a choropleth. Tens of thousands of points are fine (the web binding switches renderer). Use `geo` only to draw land under the points.
+
+| Field | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `type` | string | yes |  | Chart type: bubble-map. |
+| `version` | `1` |  |  | Spec format version. Only 1 exists; may be omitted. |
+| `data` | array of rows | yes |  | Tabular rows: an array of flat objects, one per observation. Numbers must be numbers (or plain numeric strings). |
+| `title` | string |  |  | Chart title. State the takeaway or the subject, not "Chart". |
+| `subtitle` | string |  |  | One line of context under the title: unit, period, filter. |
+| `description` | string |  |  | Long description for screen readers and agents. Generated from the data when omitted. |
+| `source` | string |  |  | Source line shown small under the chart. |
+| `legend` | `auto` \| `top` \| `bottom` \| `right` \| `none` |  | `"auto"` | Legend placement. `auto` hides it for a single series and picks a side from the available width. |
+| `tooltip` | boolean |  | `true` | Show a hover tooltip (web binding only). |
+| `format` | format string |  |  | Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE. |
+| `colors` | object |  |  | Series (or slice/category) name to CSS colour, e.g. {"Revenue":"#2962FF"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours. |
+| `geo` | geography name or GeoJSON/TopoJSON object |  |  | Optional boundaries drawn as land under the bubbles (needed when placing by region). The name of a geography registered with registerGeography (Super Plot ships none), or an inline GeoJSON FeatureCollection / TopoJSON Topology (key: feature id, else properties.id, else properties.name). |
+| `lat` | column name |  |  | Latitude column, degrees (-90..90). With lng, places each bubble. |
+| `lng` | column name |  |  | Longitude column, degrees (-180..180). |
+| `region` | column name |  |  | Instead of lat/lng: a region column; each bubble sits at its region's centre (needs geo). |
+| `size` | column name |  |  | Numeric column mapped to bubble area (negative values are skipped). |
+| `series` | column name |  |  | Column that colours bubbles by group. |
+| `label` | column name |  |  | Column used as each bubble's name in the tooltip. |
+| `view` | `flat` \| `globe` |  | `"flat"` | `flat`: a world projection fitted to the data (tilt it with camera.pitch). `globe`: a sphere the viewer can turn. |
+| `projection` | `equal-earth` \| `mercator` \| `equirectangular` |  | `"equal-earth"` | Flat view only. `equal-earth` keeps areas true (best for comparing regions); `mercator` keeps shapes for zoomed-in maps. |
+| `camera` | {lng, lat, zoom, pitch, bearing} |  |  | Starting view: {lng, lat} centre in degrees, zoom (1 fits the data), pitch (0-70 degrees of tilt, flat view) and bearing (degrees). The viewer can drag and zoom from there. |
+| `disputed` | `same` \| `dashed` \| `muted` |  | `"same"` | How to draw regions your geography marks as disputed: `same` as any other (no judgement), `dashed` outline, or `muted` fill with a dashed outline. Super Plot never decides what is disputed. |
+| `graticule` | boolean |  |  | Draw meridians and parallels every 30 degrees. Default: on for the globe and for flat maps without geo, off otherwise. |
+
+```json
+{
+  "type": "bubble-map",
+  "title": "Harbour traffic, Example Islands",
+  "subtitle": "Ships per week (invented)",
+  "geo": {
+    "type": "FeatureCollection",
+    "features": [
+      {
+        "type": "Feature",
+        "id": "Alba",
+        "properties": {
+          "name": "Alba"
+        },
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                1.663,
+                -0.96
+              ],
+              [
+                1.663,
+                0.96
+              ],
+              [
+                0,
+                1.92
+              ],
+              [
+                -1.663,
+                0.96
+              ],
+              [
+                -1.663,
+                -0.96
+              ],
+              [
+                0,
+                -1.92
+```
+
+## `column-map` — 3D column map
+
+Raises a column per row from its place on a globe or a tilted map, height by a number.
+
+**Use when:** Showing totals at places in 3D (population of cities, sales per store) where a bubble would overlap. Tall columns hide what is behind them: let the viewer turn the map, and give a ranked list too. For exact comparison use a bar chart.
+
+| Field | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `type` | string | yes |  | Chart type: column-map. |
+| `version` | `1` |  |  | Spec format version. Only 1 exists; may be omitted. |
+| `data` | array of rows | yes |  | Tabular rows: an array of flat objects, one per observation. Numbers must be numbers (or plain numeric strings). |
+| `title` | string |  |  | Chart title. State the takeaway or the subject, not "Chart". |
+| `subtitle` | string |  |  | One line of context under the title: unit, period, filter. |
+| `description` | string |  |  | Long description for screen readers and agents. Generated from the data when omitted. |
+| `source` | string |  |  | Source line shown small under the chart. |
+| `legend` | `auto` \| `top` \| `bottom` \| `right` \| `none` |  | `"auto"` | Legend placement. `auto` hides it for a single series and picks a side from the available width. |
+| `tooltip` | boolean |  | `true` | Show a hover tooltip (web binding only). |
+| `format` | format string |  |  | Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE. |
+| `colors` | object |  |  | Series (or slice/category) name to CSS colour, e.g. {"Revenue":"#2962FF"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours. |
+| `geo` | geography name or GeoJSON/TopoJSON object |  |  | Optional boundaries drawn as land under the columns (needed when placing by region). The name of a geography registered with registerGeography (Super Plot ships none), or an inline GeoJSON FeatureCollection / TopoJSON Topology (key: feature id, else properties.id, else properties.name). |
+| `lat` | column name |  |  | Latitude column, degrees (-90..90). With lng, places each column. |
+| `lng` | column name |  |  | Longitude column, degrees (-180..180). |
+| `region` | column name |  |  | Instead of lat/lng: a region column; each column sits at its region's centre (needs geo). |
+| `value` | column name | yes |  | Numeric column giving each column's height (negative values are skipped). |
+| `series` | column name |  |  | Column that colours columns by group. |
+| `label` | column name |  |  | Column used as each column's name in the tooltip. |
+| `view` | `flat` \| `globe` |  | `"globe"` | `flat`: a world projection fitted to the data (tilt it with camera.pitch). `globe`: a sphere the viewer can turn. |
+| `projection` | `equal-earth` \| `mercator` \| `equirectangular` |  | `"equal-earth"` | Flat view only. `equal-earth` keeps areas true (best for comparing regions); `mercator` keeps shapes for zoomed-in maps. |
+| `camera` | {lng, lat, zoom, pitch, bearing} |  |  | Starting view: {lng, lat} centre in degrees, zoom (1 fits the data), pitch (0-70 degrees of tilt, flat view) and bearing (degrees). The viewer can drag and zoom from there. |
+| `disputed` | `same` \| `dashed` \| `muted` |  | `"same"` | How to draw regions your geography marks as disputed: `same` as any other (no judgement), `dashed` outline, or `muted` fill with a dashed outline. Super Plot never decides what is disputed. |
+| `graticule` | boolean |  |  | Draw meridians and parallels every 30 degrees. Default: on for the globe and for flat maps without geo, off otherwise. |
+
+```json
+{
+  "type": "column-map",
+  "title": "Readings by station",
+  "subtitle": "Invented monitoring network",
+  "lat": "lat",
+  "lng": "lng",
+  "value": "reading",
+  "label": "station",
+  "series": "network",
+  "camera": {
+    "lng": 20,
+    "lat": 15
+  },
+  "data": [
+    {
+      "station": "A1",
+      "network": "Coastal",
+      "lat": 38,
+      "lng": -9,
+      "reading": 42
+    },
+    {
+      "station": "B2",
+      "network": "Coastal",
+      "lat": -34,
+      "lng": 18,
+      "reading": 77
+    },
+    {
+      "station": "C3",
+      "network": "Inland",
+      "lat": 9,
+      "lng": 38,
+      "reading": 55
+    },
+    {
+      "station": "D4",
+      "network": "Inland",
+      "lat": 52,
+      "lng": 13,
+```
+
+## `flow-map` — Flow map
+
+Draws an arc from origin to destination per row, width by a number, on a globe or a flat map.
+
+**Use when:** Showing movement between places: trade, migration, flights, shipments. Keep it to the biggest flows (a few hundred at most) or the map turns to string. Origins and destinations are lat/lng columns, or regions with a geography.
+
+| Field | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `type` | string | yes |  | Chart type: flow-map. |
+| `version` | `1` |  |  | Spec format version. Only 1 exists; may be omitted. |
+| `data` | array of rows | yes |  | Tabular rows: an array of flat objects, one per observation. Numbers must be numbers (or plain numeric strings). |
+| `title` | string |  |  | Chart title. State the takeaway or the subject, not "Chart". |
+| `subtitle` | string |  |  | One line of context under the title: unit, period, filter. |
+| `description` | string |  |  | Long description for screen readers and agents. Generated from the data when omitted. |
+| `source` | string |  |  | Source line shown small under the chart. |
+| `legend` | `auto` \| `top` \| `bottom` \| `right` \| `none` |  | `"auto"` | Legend placement. `auto` hides it for a single series and picks a side from the available width. |
+| `tooltip` | boolean |  | `true` | Show a hover tooltip (web binding only). |
+| `format` | format string |  |  | Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE. |
+| `colors` | object |  |  | Series (or slice/category) name to CSS colour, e.g. {"Revenue":"#2962FF"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours. |
+| `geo` | geography name or GeoJSON/TopoJSON object |  |  | Optional boundaries drawn as land (needed when from/to name regions). The name of a geography registered with registerGeography (Super Plot ships none), or an inline GeoJSON FeatureCollection / TopoJSON Topology (key: feature id, else properties.id, else properties.name). |
+| `from` | column name |  |  | Origin region column (needs geo), or the origin's name when fromLat/fromLng are given. |
+| `to` | column name |  |  | Destination region column (needs geo), or the destination's name. |
+| `fromLat` | column name |  |  | Origin latitude column, degrees. |
+| `fromLng` | column name |  |  | Origin longitude column, degrees. |
+| `toLat` | column name |  |  | Destination latitude column, degrees. |
+| `toLng` | column name |  |  | Destination longitude column, degrees. |
+| `value` | column name |  |  | Numeric column giving each arc's width. |
+| `series` | column name |  |  | Column that colours arcs by group. |
+| `view` | `flat` \| `globe` |  | `"globe"` | `flat`: a world projection fitted to the data (tilt it with camera.pitch). `globe`: a sphere the viewer can turn. |
+| `projection` | `equal-earth` \| `mercator` \| `equirectangular` |  | `"equal-earth"` | Flat view only. `equal-earth` keeps areas true (best for comparing regions); `mercator` keeps shapes for zoomed-in maps. |
+| `camera` | {lng, lat, zoom, pitch, bearing} |  |  | Starting view: {lng, lat} centre in degrees, zoom (1 fits the data), pitch (0-70 degrees of tilt, flat view) and bearing (degrees). The viewer can drag and zoom from there. |
+| `disputed` | `same` \| `dashed` \| `muted` |  | `"same"` | How to draw regions your geography marks as disputed: `same` as any other (no judgement), `dashed` outline, or `muted` fill with a dashed outline. Super Plot never decides what is disputed. |
+| `graticule` | boolean |  |  | Draw meridians and parallels every 30 degrees. Default: on for the globe and for flat maps without geo, off otherwise. |
+
+```json
+{
+  "type": "flow-map",
+  "title": "Shipments between depots",
+  "subtitle": "Containers per month (invented)",
+  "from": "origin",
+  "to": "dest",
+  "fromLat": "olat",
+  "fromLng": "olng",
+  "toLat": "dlat",
+  "toLng": "dlng",
+  "value": "boxes",
+  "camera": {
+    "lng": 30,
+    "lat": 20
+  },
+  "data": [
+    {
+      "origin": "Depot A",
+      "dest": "Depot C",
+      "olat": 38,
+      "olng": -9,
+      "dlat": 25,
+      "dlng": 55,
+      "boxes": 1200
+    },
+    {
+      "origin": "Depot B",
+      "dest": "Depot C",
+      "olat": -34,
+      "olng": 18,
+      "dlat": 25,
+      "dlng": 55,
+      "boxes": 640
+    },
+    {
+      "origin": "Depot C",
+      "dest": "Depot D",
+      "olat": 25,
+      "olng": 55,
+      "dlat": 1.3,
+```
+

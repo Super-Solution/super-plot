@@ -9,6 +9,7 @@ import { join, dirname } from 'node:path'
 const root = new URL('..', import.meta.url).pathname
 const core = await import(pathToFileURL(join(root, 'packages/core/dist/index.js')).href)
 const { linearTicks, niceDomain, quantile, boxStats, binEdges, binCounts, validatePlot, describePlot, chartCatalog, getChart, chartTypes, COMMON_FIELDS, CARTESIAN_FIELDS, LIMITS } = core
+const { registerGeography, unregisterGeography, getGeography, matchRegion, GeographyError, GEO_LIMITS, CAMERA_LIMITS } = core
 
 const r = v => (typeof v === 'number' ? Math.round(v * 1e9) / 1e9 : v)
 const rows = o => JSON.parse(JSON.stringify(o, (_, v) => (typeof v === 'number' ? r(v) : v)))
@@ -44,6 +45,174 @@ const broken = [
 
 const rowsOf = (n, f) => Array.from({ length: n }, (_, i) => f(i))
 const B = [{ a: 'x', b: 1 }, { a: 'y', b: 2 }]
+
+// ---- maps ------------------------------------------------------------------------------------------------
+// Invented boundaries (squares in the open sea), so no case makes a political claim.
+const sq = (x, y, s = 1) => [[x, y], [x + s, y], [x + s, y + s], [x, y + s], [x, y]]
+const feat = (id, name, ring, props = {}) => ({ type: 'Feature', ...(id === undefined ? {} : { id }), properties: { ...(name === undefined ? {} : { name }), ...props }, geometry: { type: 'Polygon', coordinates: [ring] } })
+const FC = (...features) => ({ type: 'FeatureCollection', features })
+const G3 = FC(feat('N', 'North', sq(0, 2)), feat('S', 'South', sq(0, 0)), feat('E', 'East Isle', sq(2, 0)))
+// Two squares, delta-encoded: `zones` (the first object, though not the first in the alphabet) and `areas`.
+const TOPO = {
+  type: 'Topology',
+  transform: { scale: [0.5, 0.5], translate: [10, 20] },
+  arcs: [[[0, 0], [2, 0], [0, 2], [-2, 0], [0, -2]], [[4, 0], [2, 0], [0, 2], [-2, 0], [0, -2]]],
+  objects: {
+    zones: { type: 'GeometryCollection', geometries: [
+      { type: 'Polygon', id: 'A', properties: { name: 'Alpha' }, arcs: [[0]] },
+      { type: 'MultiPolygon', id: 'B', properties: { name: 'Beta' }, arcs: [[[-2]]] },
+      { type: 'Point', id: 'P', coordinates: [1, 1] }
+    ] },
+    areas: { type: 'Polygon', id: 'Z', properties: { name: 'Zed' }, arcs: [[1]] }
+  }
+}
+
+// Geographies every implementation registers (by `name`, with `options`) before it replays the cases below.
+// `options` holds property names only (`key`, `name`, `disputed`), `object`, `aliases` and `attribution`.
+const GEOGRAPHIES = [
+  { name: 'conf-islands', data: G3, options: { aliases: { 'the north': 'N', 'Eastern  Island': 'E' }, attribution: 'Invented' } },
+  { name: 'conf-zones', data: TOPO, options: {} }
+]
+for (const g of GEOGRAPHIES) registerGeography(g.name, g.data, g.options)
+
+// Reading a geography: `registerGeography(name, data, options | preset)`. The contract is whether it is accepted,
+// the set of (severity, code, path), the regions (key, name, disputed) in order, and what the probes match.
+const PROBES = ['N', ' north ', 'NORTH', 'East  Isle', 'east\tisle', 'the North', 'eastern island', 'West', '', null, 7, 'i̇stanbul', 'İSTANBUL', 'οδός', 'ΟΔΌΣ', 'οδόσ', 'Alpha', 'b', 'zed']
+const bad25 = Array.from({ length: 25 }, (_, i) => feat(`r${i}`, `R${i}`, [[i, 0], [i + 1, 0], [i, 100]]))
+const GEOGRAPHY = [
+  ['geojson: ok', G3],
+  ['geojson: JSON text', JSON.stringify(G3)],
+  ['geojson: broken JSON text', '{"type":"FeatureCollection",'],
+  ['geojson: not an object', [1, 2]],
+  ['geojson: invalid name', G3, {}, 'not a name!'],
+  ['geojson: key, name and disputed properties', FC(feat('x', 'ignored', sq(0, 0), { code: 'AA', label: 'First', contested: true }), feat('y', 'ignored', sq(2, 0), { code: 'BB', contested: 'yes' })), { key: 'code', name: 'label', disputed: 'contested' }],
+  ['geojson: key property missing', FC(feat('x', 'One', sq(0, 0), { code: 'AA' }), feat('y', 'Two', sq(2, 0))), { key: 'code' }],
+  ['geojson: aliases, one points nowhere', G3, { aliases: { Nord: 'N', Nowhere: 'X', 'south': 'E' } }],
+  ['geojson: duplicate keys are merged', FC(feat('N', 'North', sq(0, 2)), feat('N', 'North again', sq(4, 4)), feat('S', 'South', sq(0, 0)))],
+  ['geojson: key from properties.id, then properties.name', FC(feat(undefined, 'Named', sq(0, 0)), feat(undefined, 'Has id', sq(2, 0), { id: 'pid' }), feat(null, undefined, sq(4, 0)), feat('', 'Empty id', sq(6, 0)))],
+  ['geojson: numeric ids, trimmed and long names', FC(feat(7, '  Seven  ', sq(0, 0)), feat(2.5, 'N'.repeat(130), sq(2, 0)), feat(1e21, 12, sq(4, 0)), feat(true, 'Bool id', sq(6, 0)))],
+  ['geojson: names that collide with keys', FC(feat('a', 'B', sq(0, 0)), feat('b', 'A', sq(2, 0)), feat('C', 'c', sq(4, 0)), feat('c', 'lower', sq(6, 0)))],
+  ['geojson: case mapping of İ and final sigma', FC(feat('TR', 'İstanbul', sq(0, 0)), feat('GR', 'ΟΔΌΣ', sq(2, 0)))],
+  ['geojson: points and missing geometry are skipped', FC(feat('N', 'North', sq(0, 2)), { type: 'Feature', id: 'P', properties: {}, geometry: { type: 'Point', coordinates: [0, 0] } }, { type: 'Feature', id: 'Q', properties: {}, geometry: null }, { type: 'Feature', id: 'L', properties: {} })],
+  ['geojson: nothing usable', FC({ type: 'Feature', id: 'P', properties: {}, geometry: { type: 'LineString', coordinates: [[0, 0], [1, 1]] } })],
+  ['geojson: empty polygon is dropped', FC(feat('N', 'North', sq(0, 2)), { type: 'Feature', id: 'E', properties: {}, geometry: { type: 'MultiPolygon', coordinates: [] } }, { type: 'Feature', id: 'F', properties: {}, geometry: { type: 'Polygon', coordinates: [] } })],
+  ['geojson: multipolygon with a hole', FC({ type: 'Feature', id: 'M', properties: { name: 'Multi' }, geometry: { type: 'MultiPolygon', coordinates: [[sq(0, 0, 4), sq(1, 1)], [sq(10, 10)]] } })],
+  ['geojson: unclosed ring is closed', FC(feat('T', 'Triangle', [[0, 0], [1, 0], [0, 1]]))],
+  ['geojson: degenerate rings are skipped', FC(feat('N', 'North', sq(0, 2)), feat('H', 'Bad hole', [[0, 0], [1, 0]]), { type: 'Feature', id: 'O', properties: {}, geometry: { type: 'MultiPolygon', coordinates: [[[[0, 0], [1, 0]], [[0, 0], [1, 'unread']]], [sq(5, 5), [[5, 5], [6, 5]], sq(5.2, 5.2, 0.2)]] } })],
+  ['geojson: only degenerate rings', FC(feat('T', 'Two points', [[0, 0], [1, 0]]), feat('U', 'Closed pair', [[0, 0], [1, 0], [0, 0]]), feat('V', 'Empty ring', []))],
+  ['geojson: a bare Feature', feat('N', 'North', sq(0, 2))],
+  ['geojson: no type', { features: [] }],
+  ['geojson: features is not an array', { type: 'FeatureCollection', features: {} }],
+  ['geojson: broken features', FC(5, { type: 'Thing' }, { type: 'Feature', geometry: 'x' }, { type: 'Feature', id: 'a', geometry: { type: 'Polygon', coordinates: 3 } }, { type: 'Feature', id: 'b', geometry: { type: 'Polygon', coordinates: [5] } }, { type: 'Feature', id: 'c', geometry: { type: 'MultiPolygon', coordinates: [[sq(0, 0)], 4] } }, { type: 'Feature', id: 'd', geometry: { type: 'MultiPolygon', coordinates: [[[[0, 0], [1, '2'], [1, 1]]]] } }, { type: 'Feature', id: 'e', geometry: { type: 'Polygon', coordinates: [[[0, 0], [1], [1, 1]]] } }, feat('ok', 'Fine', sq(0, 0)))],
+  ['geojson: projected and swapped coordinates', FC(feat('m', 'Metres', [[500000, 4649776], [500100, 4649776], [500100, 4649876]]), feat('s', 'Swapped', [[10, 95], [11, 95], [11, 96]]), feat('w', 'Wide but allowed', [[350, 0], [360, 0], [360, 10]]), feat('x', 'Too wide', [[361, 0], [362, 0], [362, 1]]))],
+  ['geojson: errors stop at the limit', FC(feat(undefined, undefined, sq(0, 0)), ...bad25, { type: 'Feature', id: 'P', properties: {}, geometry: { type: 'Point', coordinates: [0, 0] } })],
+  ['topojson: quantized, the first object', TOPO],
+  ['topojson: object option', TOPO, { object: 'areas' }],
+  ['topojson: unknown object', TOPO, { object: 'zone' }],
+  ['topojson: array-index object names come first', { ...TOPO, objects: { zones: TOPO.objects.zones, 10: TOPO.objects.areas, 9: { type: 'Polygon', id: 'nine', arcs: [[0]] } } }],
+  ['topojson: not quantized, arcs stitched and reversed', { type: 'Topology', arcs: [[[0, 0], [2, 0]], [[2, 0], [2, 2], [0, 2]], [[0, 0], [0, 2]], []], objects: { o: { type: 'GeometryCollection', geometries: [{ type: 'Polygon', id: 'sq', arcs: [[0, 1, -3]] }, { type: 'Polygon', id: 'open', arcs: [[3, 0, 1]] }, { type: null, id: 'n' }, { id: 'u' }] } } }],
+  ['topojson: bad arc indexes', { type: 'Topology', arcs: [[[0, 0], [1, 0], [1, 1], [0, 0]]], objects: { o: { type: 'GeometryCollection', geometries: [{ type: 'Polygon', id: 'a', arcs: [[1]] }, { type: 'Polygon', id: 'b', arcs: [[-2]] }, { type: 'Polygon', id: 'c', arcs: [[0.5]] }, { type: 'Polygon', id: 'd', arcs: [['0']] }, { type: 'Polygon', id: 'e', arcs: [[]] }, { type: 'Polygon', id: 'f', arcs: 3 }, { type: 'MultiPolygon', id: 'g', arcs: 3 }, { type: 'MultiPolygon', id: 'h', arcs: [[[0]], 3] }, { type: 'Polygon', id: 'i', arcs: [[-4294967297]] }, { type: 'Polygon', id: 'j', arcs: [[-4294967296]] }, { type: 'Polygon', id: 'ok', arcs: [[-1]] }, 4, null] } } }],
+  ['topojson: degenerate rings are skipped', { type: 'Topology', arcs: [[[0, 0], [1, 0], [1, 1], [0, 0]], [[0, 0], [1, 0]], []], objects: { o: { type: 'GeometryCollection', geometries: [{ type: 'Polygon', id: 'a', arcs: [[1], [9]] }, { type: 'Polygon', id: 'b', arcs: [[0], [2], [-1]] }, { type: 'MultiPolygon', id: 'c', arcs: [[[1]], [[0]]] }, { type: 'MultiPolygon', id: 'd', arcs: [[[2]]] }, { type: 'Polygon', id: 'e', arcs: [] }] } } }],
+  ['topojson: bad transform', { ...TOPO, transform: { scale: [1, '1'], translate: [0, 0] } }],
+  ['topojson: null transform', { ...TOPO, transform: null }],
+  ['topojson: no objects', { type: 'Topology', arcs: [], objects: {} }],
+  ['topojson: no arcs', { type: 'Topology', objects: TOPO.objects }],
+  ['topojson: bad arcs', { type: 'Topology', arcs: [[[0, 0], [1, 0]], 7], objects: TOPO.objects }],
+  ['topojson: bad arc position', { type: 'Topology', arcs: [[[0, 0], [1]]], objects: TOPO.objects }],
+  ['topojson: decoded arc out of range', { ...TOPO, transform: { scale: [100, 100], translate: [0, 0] } }],
+  ['topojson: geometries is not an array', { ...TOPO, objects: { o: { type: 'GeometryCollection' } } }],
+  ['topojson: empty multipolygon is dropped', { ...TOPO, objects: { o: { type: 'GeometryCollection', geometries: [{ type: 'MultiPolygon', id: 'none', arcs: [] }, { type: 'Polygon', id: 'A', arcs: [[0]] }] } } }],
+  ['preset: world-atlas', { ...TOPO, objects: { land: TOPO.objects.areas, countries: { type: 'GeometryCollection', geometries: [{ type: 'Polygon', id: '004', properties: { name: 'First' }, arcs: [[0]] }, { type: 'Polygon', id: 8, properties: { name: 'Second' }, arcs: [[1]] }] } } }, 'world-atlas'],
+  ['preset: natural-earth-admin0', FC(feat('f1', 'x', sq(0, 0), { ISO_A3: 'AAA', ADM0_A3: 'AA0', NAME: 'Aland', ADMIN: 'Admin A', TYPE: 'Sovereign country' }), feat('f2', 'x', sq(2, 0), { ISO_A3: '-99', ADM0_A3: 'BB0', NAME: null, ADMIN: 'Admin B', TYPE: 'Disputed' }), feat('f3', 'x', sq(4, 0), { ISO_A3: 5, ADM0_A3: 'CC0', TYPE: 'Indeterminate area' }), feat('f4', 'x', sq(6, 0), { NAME: 'No code' })), 'natural-earth-admin0'],
+  ['preset: natural-earth-admin1', FC(feat('f1', 'One', sq(0, 0), { iso_3166_2: 'AA-01', adm1_code: 'AA-1' }), feat('f2', 'Two', sq(2, 0), { iso_3166_2: null, adm1_code: 'AA-2' }), feat('f3', 'Three', sq(4, 0), { iso_3166_2: '', adm1_code: 'AA-3' })), 'natural-earth-admin1'],
+  ['preset: geoboundaries', FC(feat('f1', 'x', sq(0, 0), { shapeISO: 'AAA', shapeGroup: 'G1', shapeID: 'i1', shapeName: 'One' }), feat('f2', 'x', sq(2, 0), { shapeISO: '', shapeGroup: 'G2', shapeID: 'i2', shapeName: 'Two' }), feat('f3', 'x', sq(4, 0), { shapeISO: 0, shapeGroup: null, shapeID: 'i3' }), feat('f4', 'x', sq(6, 0), { shapeISO: [], shapeGroup: 'G4', shapeID: 'i4' })), 'geoboundaries']
+].map(([name, data, options = {}, as = 'conf-case']) => {
+  const pin = i => ({ severity: i.severity, code: i.code, path: i.path })
+  const base = { name, as, data, ...(typeof options === 'string' ? { preset: options } : { options }) }
+  try {
+    const issues = registerGeography(as, data, options)
+    const g = getGeography(as)
+    const out = { ...base, ok: true, issues: issues.map(pin), regions: g.regions.map(x => ({ key: x.key, name: x.name, disputed: x.disputed })), matches: PROBES.map(p => [p, matchRegion(g, p) ?? null]) }
+    unregisterGeography(as)
+    return out
+  } catch (e) {
+    if (!(e instanceof GeographyError)) throw e
+    return { ...base, ok: false, issues: e.issues.map(pin), regions: null, matches: null }
+  }
+})
+
+const P = [{ place: 'Quay', lat: 3.4, lng: 1.2, n: 42, k: 'a' }, { place: 'Pier', lat: -2.1, lng: -3.3, n: 18, k: 'b' }]
+const RV = [{ r: 'N', v: 10 }, { r: 'South', v: 4 }, { r: ' east  isle ', v: 7 }]
+const FL = [{ a: 'N', b: 'S', n: 5 }, { a: 'S', b: 'East Isle', n: 2 }]
+const FLL = [{ a: 'One', b: 'Two', alat: 1, alng: 2, blat: 3, blng: 4, n: 5 }, { a: 'Two', b: 'Three', alat: 3, alng: 4, blat: -5, blng: 6, n: 9 }]
+const fll = { fromLat: 'alat', fromLng: 'alng', toLat: 'blat', toLng: 'blng' }
+const MAP_VALIDATION = [
+  ['map: unknown geography name', { type: 'choropleth', geo: 'nowhere-registered', region: 'r', value: 'v', data: RV }],
+  ['map: geography name close to a registered one', { type: 'choropleth', geo: 'conf-island', region: 'r', value: 'v', data: RV }],
+  ['map: empty geography name', { type: 'choropleth', geo: '', region: 'r', value: 'v', data: RV }],
+  ['map: geo is a number', { type: 'choropleth', geo: 5, region: 'r', value: 'v', data: RV }],
+  ['map: geo is an array', { type: 'bubble-map', geo: [G3], lat: 'lat', lng: 'lng', data: P }],
+  ['map: geo is null', { type: 'bubble-map', geo: null, lat: 'lat', lng: 'lng', data: P }],
+  ['map: choropleth without geo', { type: 'choropleth', region: 'r', value: 'v', data: RV }],
+  ['map: registered geography, matched by key, name and spacing', { type: 'choropleth', geo: 'conf-islands', region: 'r', value: 'v', data: RV }],
+  ['map: registered geography, matched by alias', { type: 'choropleth', geo: 'conf-islands', region: 'r', value: 'v', data: [{ r: 'The North', v: 1 }, { r: 'eastern island', v: 2 }] }],
+  ['map: registered TopoJSON geography', { type: 'choropleth', geo: 'conf-zones', region: 'r', value: 'v', extrude: true, view: 'globe', data: [{ r: 'alpha', v: 1 }, { r: 'B', v: 2 }] }],
+  ['map: camera ok', { type: 'bubble-map', lat: 'lat', lng: 'lng', camera: { lng: 121, lat: 24, zoom: 2, pitch: 30, bearing: -45 }, data: P }],
+  ['map: camera empty', { type: 'bubble-map', lat: 'lat', lng: 'lng', camera: {}, data: P }],
+  ['map: camera at the limits', { type: 'bubble-map', lat: 'lat', lng: 'lng', camera: { lng: -180, lat: 90, zoom: 0.5, pitch: 70, bearing: 360 }, data: P }],
+  ['map: bad camera field', { type: 'bubble-map', lat: 'lat', lng: 'lng', camera: { lon: 121, lat: 24, tilt: 3 }, data: P }],
+  ['map: camera is not an object', { type: 'bubble-map', lat: 'lat', lng: 'lng', camera: [121, 24], data: P }],
+  ['map: camera is a string', { type: 'bubble-map', lat: 'lat', lng: 'lng', camera: 'north', data: P }],
+  ['map: camera value is not a number', { type: 'bubble-map', lat: 'lat', lng: 'lng', camera: { lng: '121', lat: null, zoom: true }, data: P }],
+  ['map: camera out of range', { type: 'bubble-map', lat: 'lat', lng: 'lng', camera: { lng: 181, lat: -91, zoom: 0.4, pitch: 71, bearing: 400 }, data: P }],
+  ['map: bad projection, view and disputed', { type: 'bubble-map', lat: 'lat', lng: 'lng', projection: 'mercatr', view: 'sphere', disputed: 'hidden', graticule: 'yes', data: P }],
+  ['map: lat column out of range', { type: 'bubble-map', lat: 'lat', lng: 'lng', data: [{ lat: 120, lng: 20 }, { lat: -95.5, lng: 30 }] }],
+  ['map: lng column out of range', { type: 'bubble-map', lat: 'lat', lng: 'lng', data: [{ lat: 12, lng: 200 }, { lat: -5, lng: '181' }] }],
+  ['map: some lat and lng values out of range', { type: 'bubble-map', lat: 'lat', lng: 'lng', data: [{ lat: 120, lng: 20 }, { lat: 45, lng: 300 }, { lat: 90, lng: -180 }, { lat: 'n/a', lng: '' }, { lat: null, lng: 5 }] }],
+  ['map: lat and lng swapped (projected metres)', { type: 'column-map', lat: 'y', lng: 'x', value: 'v', data: [{ x: 500000, y: 4649776, v: 1 }] }],
+  ['map: lat column is not numeric', { type: 'bubble-map', lat: 'place', lng: 'lng', data: P }],
+  ['map: lat column does not exist', { type: 'bubble-map', lat: 'latitude', lng: 'lng', data: P }],
+  ['choropleth: region not found in geography (some)', { type: 'choropleth', geo: G3, region: 'r', value: 'v', data: [...RV, { r: 'Nroth', v: 1 }, { r: 'Atlantis', v: 2 }, { r: null, v: 3 }, { r: '', v: 3 }] }],
+  ['choropleth: region not found in geography (none)', { type: 'choropleth', geo: G3, region: 'r', value: 'v', data: [{ r: 'Atlantis', v: 2 }, { r: 'Lemuria', v: 3 }] }],
+  ['choropleth: region not found in a registered geography', { type: 'choropleth', geo: 'conf-islands', region: 'r', value: 'v', data: [{ r: 'Atlantis', v: 2 }] }],
+  ['choropleth: region values that are not strings', { type: 'choropleth', geo: FC(feat(7, 'Seven', sq(0, 0)), feat('true', 'Yes', sq(2, 0)), feat('1,2', 'List', sq(4, 0))), region: 'r', value: 'v', data: [{ r: 7, v: 1 }, { r: true, v: 2 }, { r: [1, 2], v: 3 }, { r: { a: 1 }, v: 4 }] }],
+  ['choropleth: no row has a region and a value', { type: 'choropleth', geo: G3, region: 'r', value: 'v', data: [{ r: 'N', v: null }, { r: null, v: 3 }, { r: '', v: 4 }] }],
+  ['choropleth: TopoJSON inline geography', { type: 'choropleth', geo: TOPO, region: 'r', value: 'v', data: [{ r: 'A', v: 1 }, { r: 'beta', v: 2 }, { r: 'Zed', v: 3 }] }],
+  ['choropleth: TopoJSON inline, broken', { type: 'choropleth', geo: { ...TOPO, arcs: [TOPO.arcs[0]] }, region: 'r', value: 'v', data: [{ r: 'A', v: 1 }] }],
+  ['choropleth: duplicate region keys', { type: 'choropleth', geo: FC(feat('N', 'North', sq(0, 2)), feat('N', 'North again', sq(4, 4)), feat('S', 'South', sq(0, 0))), region: 'r', value: 'v', data: [{ r: 'north', v: 1 }, { r: 'North again', v: 2 }, { r: 'S', v: 3 }] }],
+  ['choropleth: inline geography with skipped features', { type: 'choropleth', geo: FC(feat('N', 'North', sq(0, 2)), feat(undefined, undefined, sq(0, 0)), { type: 'Feature', id: 'P', properties: {}, geometry: { type: 'Point', coordinates: [0, 0] } }), region: 'r', value: 'v', data: [{ r: 'N', v: 1 }] }],
+  ['choropleth: inline geography with broken rings', { type: 'choropleth', geo: FC(feat('N', 'North', [[0, 0], [1, 0]]), feat('S', 'South', [[0, 0], [1, 0], [1, 100]]), feat('E', 'East', sq(2, 0))), region: 'r', value: 'v', data: RV }],
+  ['choropleth: inline geography with a degenerate ring', { type: 'choropleth', geo: FC(feat('N', 'North', [[0, 0], [1, 0]]), feat('S', 'South', sq(0, 0)), feat('E', 'East Isle', sq(2, 0))), region: 'r', value: 'v', data: RV }],
+  ['choropleth: inline geography is a bare Feature', { type: 'choropleth', geo: feat('N', 'North', sq(0, 2)), region: 'r', value: 'v', data: RV }],
+  ['choropleth: inline geography with nothing usable', { type: 'choropleth', geo: FC(), region: 'r', value: 'v', data: RV }],
+  ['choropleth: ok with every map field', { type: 'choropleth', geo: G3, region: 'r', value: 'v', view: 'globe', scale: 'diverging', domain: [0, 10], extrude: true, projection: 'mercator', disputed: 'muted', graticule: false, camera: { zoom: 2 }, data: RV }],
+  ['bubble-map: ok by lat and lng', { type: 'bubble-map', lat: 'lat', lng: 'lng', size: 'n', series: 'k', label: 'place', data: P }],
+  ['bubble-map: ok by region', { type: 'bubble-map', geo: G3, region: 'r', size: 'v', data: RV }],
+  ['bubble-map: lat without lng', { type: 'bubble-map', lat: 'lat', data: P }],
+  ['bubble-map: lng without lat', { type: 'bubble-map', lng: 'lng', data: P }],
+  ['bubble-map: no place fields', { type: 'bubble-map', size: 'n', data: P }],
+  ['bubble-map: region without a geography', { type: 'bubble-map', region: 'place', data: P }],
+  ['bubble-map: lat and lng win over an unmatched region', { type: 'bubble-map', geo: G3, region: 'place', lat: 'lat', lng: 'lng', data: P }],
+  ['bubble-map: regions unmatched', { type: 'bubble-map', geo: G3, region: 'place', data: P }],
+  ['bubble-map: some regions unmatched', { type: 'bubble-map', geo: G3, region: 'r', data: [...RV, { r: 'Atlantis', v: 1 }] }],
+  ['bubble-map: no usable points', { type: 'bubble-map', lat: 'lat', lng: 'lng', size: 'n', data: [{ lat: 1, lng: 2, n: -4 }, { lat: 100, lng: 2, n: 3 }, { lat: 5, lng: 6, n: 'big' }, { lat: 5, lng: null, n: 1 }] }],
+  ['column-map: ok', { type: 'column-map', lat: 'lat', lng: 'lng', value: 'n', data: P }],
+  ['column-map: negative values', { type: 'column-map', lat: 'lat', lng: 'lng', value: 'n', data: [...P, { lat: 1, lng: 1, n: -3 }, { lat: 2, lng: 2, n: '-4' }] }],
+  ['column-map: missing value', { type: 'column-map', lat: 'lat', lng: 'lng', data: P }],
+  ['column-map: by region, some unmatched', { type: 'column-map', geo: 'conf-islands', region: 'r', value: 'v', view: 'flat', data: [...RV, { r: 'Atlantis', v: -1 }] }],
+  ['column-map: no place fields', { type: 'column-map', value: 'n', data: P }],
+  ['flow-map: ok by lat and lng', { type: 'flow-map', ...fll, from: 'a', to: 'b', value: 'n', data: FLL }],
+  ['flow-map: ok by regions', { type: 'flow-map', geo: G3, from: 'a', to: 'b', value: 'n', data: FL }],
+  ['flow-map: three of four coordinates', { type: 'flow-map', fromLat: 'alat', fromLng: 'alng', toLng: 'blng', data: FLL }],
+  ['flow-map: one coordinate', { type: 'flow-map', toLng: 'blng', from: 'a', to: 'b', data: FLL }],
+  ['flow-map: nothing given', { type: 'flow-map', data: FL }],
+  ['flow-map: from without to', { type: 'flow-map', geo: G3, from: 'a', data: FL }],
+  ['flow-map: to without from', { type: 'flow-map', geo: G3, to: 'b', data: FL }],
+  ['flow-map: regions without a geography', { type: 'flow-map', from: 'a', to: 'b', data: FL }],
+  ['flow-map: regions unmatched on both ends', { type: 'flow-map', geo: G3, from: 'a', to: 'b', data: [...FL, { a: 'Atlantis', b: 'N', n: 1 }, { a: 'N', b: 'Lemuria', n: 1 }] }],
+  ['flow-map: no destination matches', { type: 'flow-map', geo: G3, from: 'a', to: 'b', data: [{ a: 'N', b: 'Lemuria', n: 1 }] }],
+  ['flow-map: no usable flows', { type: 'flow-map', ...fll, value: 'n', data: [{ alat: 1, alng: 2, blat: 3, blng: 4, n: -1 }, { alat: 1, alng: 2, blat: 99, blng: 4, n: 5 }, { alat: 1, alng: 2, blat: 3, blng: null, n: 5 }] }]
+]
 
 // Validation cases. The contract is the set of (severity, code, path); order and message text are not.
 const VALIDATION = [
@@ -113,7 +282,8 @@ const VALIDATION = [
   ['sankey: loop', { type: 'sankey', from: 'a', to: 'c', value: 'b', data: [{ a: 'x', c: 'y', b: 1 }, { a: 'y', c: 'z', b: 1 }, { a: 'z', c: 'x', b: 1 }] }],
   ['sankey: skipped flows', { type: 'sankey', from: 'a', to: 'c', value: 'b', data: [{ a: 'x', c: 'y', b: 1 }, { a: 'x', c: 'x', b: 1 }, { a: 'y', c: 'z', b: 0 }] }],
   ['sankey: too many nodes', { type: 'sankey', from: 'a', to: 'c', value: 'b', data: rowsOf(41, i => ({ a: `n${i}`, c: `n${i + 1}`, b: 1 })) }],
-  ['sankey: too many flows', { type: 'sankey', from: 'a', to: 'c', value: 'b', data: rowsOf(301, i => ({ a: `s${i % 20}`, c: `t${Math.floor(i / 20)}`, b: 1 })) }]
+  ['sankey: too many flows', { type: 'sankey', from: 'a', to: 'c', value: 'b', data: rowsOf(301, i => ({ a: `s${i % 20}`, c: `t${Math.floor(i / 20)}`, b: 1 })) }],
+  ...MAP_VALIDATION
 ].map(([name, spec]) => {
   const v = validatePlot(spec)
   return { name, spec, ok: v.ok, issues: v.issues.map(i => ({ severity: i.severity, code: i.code, path: i.path })), normalized: v.spec ? withoutData(v.spec) : null }
@@ -164,7 +334,20 @@ const describeCases = [
   D('sankey: two sources, merged flows', { type: 'sankey', from: 'a', to: 'b', value: 'v', format: 'integer', data: [{ a: 'x', b: 'm', v: 3.2 }, { a: 'y', b: 'm', v: 2 }, { a: 'x', b: 'm', v: 1 }, { a: 'm', b: 'z', v: 6.2 }] }),
   D('explicit description wins', { type: 'bar', x: 'a', y: 'b', description: 'Written by hand.', data: B }),
   D('unicode and long labels', { type: 'bar', x: 'k', y: 'v', title: '營收 by 地區 😀', data: [{ k: '台灣'.repeat(30), v: 3 }, { k: 'B 😀', v: 1 }] }),
-  D('does not validate', { type: 'bar', x: 'nope', y: 'b', data: B })
+  D('does not validate', { type: 'bar', x: 'nope', y: 'b', data: B }),
+  D('choropleth: registered geography, raised, duplicates summed', { type: 'choropleth', geo: 'conf-islands', region: 'r', value: 'v', extrude: true, format: 'fixed:1', title: 'Rain', data: [...RV, { r: 'N', v: 2.5 }, { r: 'n', v: 100 }, { r: 'S', v: null }] }),
+  D('choropleth: inline geography, one region', { type: 'choropleth', geo: G3, region: 'r', value: 'v', data: [{ r: 'N', v: -3 }] }),
+  D('choropleth: ties keep the first', { type: 'choropleth', geo: G3, region: 'r', value: 'v', format: 'percent', data: [{ r: 'N', v: 0.5 }, { r: 'S', v: 0.5 }, { r: 'East Isle', v: 0.5 }] }),
+  D('bubble-map: places only', { type: 'bubble-map', lat: 'lat', lng: 'lng', data: [...P, { lat: 91, lng: 0 }, { lat: '12.5', lng: '-7' }] }),
+  D('bubble-map: sized, grouped, labelled', { type: 'bubble-map', lat: 'lat', lng: 'lng', size: 'n', series: 'k', label: 'place', format: 'compact', data: [...P, { place: null, lat: 0, lng: 0, n: 42000, k: 'a' }, { place: 'Skipped', lat: 0, lng: 0, n: -1, k: 'c' }] }),
+  D('bubble-map: by region, unnamed and unmatched rows', { type: 'bubble-map', geo: G3, region: 'r', size: 'v', data: [...RV, { r: 'Atlantis', v: 99 }, { r: null, v: 1000 }] }),
+  D('bubble-map: one group is not listed', { type: 'bubble-map', lat: 'lat', lng: 'lng', series: 'k', data: [P[0], { ...P[1], k: 'a' }] }),
+  D('column-map: globe, groups, total', { type: 'column-map', lat: 'lat', lng: 'lng', value: 'n', series: 'k', label: 'place', format: 'integer', data: [...P, { place: 'Low', lat: 9, lng: 9, n: -5, k: 'z' }] }),
+  D('column-map: tilted map by region', { type: 'column-map', geo: 'conf-islands', region: 'r', value: 'v', view: 'flat', title: 'Sales', data: RV }),
+  D('column-map: nothing to raise', { type: 'column-map', lat: 'lat', lng: 'lng', value: 'n', data: [{ lat: 1, lng: 1, n: -3 }, { lat: 95, lng: 1, n: 3 }] }),
+  D('flow-map: weighted, by coordinates', { type: 'flow-map', ...fll, from: 'a', to: 'b', value: 'n', format: 'currency:USD', data: FLL }),
+  D('flow-map: unweighted, unnamed', { type: 'flow-map', ...fll, data: FLL }),
+  D('flow-map: by regions', { type: 'flow-map', geo: G3, from: 'a', to: 'b', value: 'n', series: 'a', data: [...FL, { a: ' N ', b: 'S', n: 5 }] })
 ]
 
 // English currency symbols and default fraction digits, straight from Intl, so a port never guesses them.
@@ -177,6 +360,9 @@ const currencies = Object.fromEntries(Intl.supportedValuesOf('currency').map(cod
 const fields = {
   version: 1,
   limits: LIMITS,
+  // Maps: the size limits of a geography, and the allowed range of each camera field.
+  geoLimits: GEO_LIMITS,
+  camera: { lng: [-180, 180], lat: [-90, 90], ...CAMERA_LIMITS },
   currencies,
   charts: chartTypes().map(type => {
     const def = getChart(type)
@@ -195,6 +381,8 @@ const doc = rows({
   histogramBins: bins,
   chartExamples: examples,
   brokenSpecs: broken,
+  geographies: GEOGRAPHIES,
+  geographyCases: GEOGRAPHY,
   validationCases: VALIDATION,
   formats,
   percents,

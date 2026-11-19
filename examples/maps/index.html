@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Super Plot: maps</title>
+<style>
+:root { --bg: #f4f5f7; --ink: #131722; --muted: #5f6270; --line: #d1d4dc; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", sans-serif; }
+main { max-width: 1100px; margin: 0 auto; padding: 32px 16px 64px; }
+h1 { margin: 0; font-size: 28px; letter-spacing: -.02em; }
+h2 { font-size: 18px; margin: 32px 0 4px; }
+p { color: var(--muted); margin: 6px 0 0; max-width: 760px; }
+.bar { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; margin: 18px 0 12px; }
+.seg { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: #fff; }
+.seg button { border: 0; background: none; color: var(--muted); padding: 6px 12px; font: inherit; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: #2962ff; color: #fff; }
+.stat { font-variant-numeric: tabular-nums; color: var(--muted); }
+.stat b { color: var(--ink); }
+.card { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 4px; }
+#plot { height: 560px; }
+.import { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); align-items: end; margin-top: 12px; }
+.import label { display: grid; gap: 4px; font-size: 13px; color: var(--muted); }
+.import input, .import select { font: inherit; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; background: #fff; color: var(--ink); }
+#issues { margin: 10px 0 0; padding-left: 18px; color: var(--muted); font-size: 13px; }
+#issues li.error { color: #b3261e; }
+.hint { font-size: 13px; }
+kbd { font: 12px ui-monospace, Menlo, monospace; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 4px; background: #fff; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Maps</h1>
+  <p>Choropleth, bubbles, 3D columns, raised regions and flows, flat or on a globe. Super Plot ships <b>no boundaries</b>: the examples use invented islands, and you can import your own file below.</p>
+  <p class="hint">Drag to move. <kbd>Shift</kbd> + drag to turn and tilt. <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + scroll or pinch to zoom. Keyboard: arrows, <kbd>Shift</kbd> + arrows, <kbd>+</kbd> <kbd>−</kbd> <kbd>0</kbd>.</p>
+  <div class="bar">
+    <div class="seg" id="chart" role="group" aria-label="Chart"></div>
+    <div class="seg" id="view" role="group" aria-label="View"></div>
+    <div class="seg" id="r" role="group" aria-label="Renderer"></div>
+  </div>
+  <div class="stat" id="stat" aria-live="polite"></div>
+  <div class="card"><div id="plot"></div></div>
+
+  <h2>Use your own boundaries</h2>
+  <p>A GeoJSON FeatureCollection or a TopoJSON file, in longitude/latitude degrees. Pick a template if the file comes from a common source, so the join key and names are found for you. Which areas count as disputed, and how they are drawn, comes from your file; Super Plot draws every region the same unless you choose otherwise.</p>
+  <div class="import">
+    <label>File <input type="file" id="file" accept=".json,.geojson,.topojson,application/json"></label>
+    <label>Template <select id="preset"><option value="">None (feature id, then properties.id, then properties.name)</option></select></label>
+    <label>Key property (optional) <input id="keyProp" placeholder="e.g. ISO_A3"></label>
+    <label>Disputed areas <select id="disputed"><option value="same">Same as other regions</option><option value="dashed">Dashed outline</option><option value="muted">Muted fill, dashed</option></select></label>
+  </div>
+  <ul id="issues"></ul>
+</main>
+<script type="module" src="./main.js"></script>
+</body>
+</html>

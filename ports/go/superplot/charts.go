@@ -29,6 +29,14 @@ var checks = map[string]func(spec, []row, *[]Issue){
 	"sankey":  checkSankey,
 }
 
+// mapChecks are the checks of the map charts: they also get the geography that geo resolved to (nil without geo).
+var mapChecks = map[string]func(spec, []row, *[]Issue, *geography){
+	"choropleth": checkChoropleth,
+	"bubble-map": checkBubbleMap,
+	"column-map": checkColumnMap,
+	"flow-map":   checkFlowMap,
+}
+
 var describers = map[string]func(spec) string{
 	"bar":  describeBar,
 	"line": func(s spec) string { return describeSeries(s, "Line chart") },
@@ -41,15 +49,19 @@ var describers = map[string]func(spec) string{
 		}
 		return describeSeries(s, "Area chart")
 	},
-	"scatter":   describeScatter,
-	"pie":       func(s spec) string { return describePie(s, "Pie chart") },
-	"donut":     func(s spec) string { return describePie(s, "Donut chart") },
-	"histogram": describeHistogram,
-	"box":       describeBox,
-	"heatmap":   describeHeatmap,
-	"radar":     describeRadar,
-	"treemap":   describeTreemap,
-	"sankey":    describeSankey,
+	"scatter":    describeScatter,
+	"pie":        func(s spec) string { return describePie(s, "Pie chart") },
+	"donut":      func(s spec) string { return describePie(s, "Donut chart") },
+	"histogram":  describeHistogram,
+	"box":        describeBox,
+	"heatmap":    describeHeatmap,
+	"radar":      describeRadar,
+	"treemap":    describeTreemap,
+	"sankey":     describeSankey,
+	"choropleth": describeChoropleth,
+	"bubble-map": describeBubbleMap,
+	"column-map": describeColumnMap,
+	"flow-map":   describeFlowMap,
 }
 
 // --- small accessors over a normalised spec -------------------------------------------------------------
@@ -901,4 +913,400 @@ func describeSankey(s spec) string {
 	big := firstMax(ls, func(l *link) float64 { return l.value })
 	return fmt.Sprintf("%s %d nodes, %d flows; %s enters from %s and ends in %s. Largest flow: %s to %s (%s).",
 		lead(s, "Sankey diagram"), len(nodes.keys), len(ls), f(total(entering)), fmtList(sources, 4), fmtList(sinks, 4), clip(big.source, 30), clip(big.target, 30), f(big.value))
+}
+
+// --- maps ------------------------------------------------------------------------------------------------
+// Mirrors packages/core/src/charts/maps.ts. The descriptions read the data's own spelling of a region, so they
+// need no geography; only the checks do.
+
+// blank is v === null || v === undefined || v === ”.
+func blank(v any) bool {
+	s, isStr := v.(string)
+	return v == nil || (isStr && s == "")
+}
+
+// checkRegions warns about data values that name no region; it is an error when none match at all.
+func checkRegions(s spec, rows []row, issues *[]Issue, geo *geography, fields ...string) {
+	if geo == nil {
+		return
+	}
+	names := make([]string, len(geo.regions))
+	for i, r := range geo.regions {
+		names[i] = r.name
+	}
+	for _, name := range fields {
+		col := str(s, name)
+		if col == "" {
+			continue
+		}
+		seen := newOmap[string]()
+		for _, r := range rows {
+			v := r[col]
+			if blank(v) {
+				continue
+			}
+			if k := normalizeRegion(v); !seen.has(k) {
+				seen.set(k, jsTrim(jsString(v)))
+			}
+		}
+		var unmatched []string
+		for _, k := range seen.keys {
+			if _, ok := geo.lookup[k]; !ok {
+				unmatched = append(unmatched, seen.m[k])
+			}
+		}
+		if len(unmatched) == 0 {
+			continue
+		}
+		where := "the inline geography"
+		if g, ok := s["geo"].(string); ok {
+			where = fmt.Sprintf("geography %q", g)
+		}
+		if len(unmatched) == len(seen.keys) {
+			var keys []string
+			for i := 0; i < len(geo.regions) && i < 8; i++ {
+				keys = append(keys, geo.regions[i].key)
+			}
+			issue(issues, "error", "no_regions_matched", name, fmt.Sprintf("None of the %d values in %q match a region of %s.", len(seen.keys), col, where),
+				"Regions are matched by key, name or alias (case ignored). Some keys: "+fmtList(keys, 8)+".")
+			continue
+		}
+		var near, clipped []string
+		for i, u := range unmatched {
+			clipped = append(clipped, clip(u, 40))
+			if m, ok := closest(u, names); ok && i < 5 {
+				near = append(near, fmt.Sprintf("%q for %q", m, clip(u, 40)))
+			}
+		}
+		hint := "Add aliases when registering the geography, or fix the names in the data."
+		if len(near) > 0 {
+			hint = "Did you mean " + strings.Join(near, ", ") + "? Or add aliases when registering the geography."
+		}
+		issue(issues, "warning", "unmatched_regions", name,
+			fmt.Sprintf("%d of %d values in %q match no region of %s and are left out: %s.", len(unmatched), len(seen.keys), col, where, fmtList(clipped, 8)), hint)
+	}
+}
+
+func checkPlaces(s spec, issues *[]Issue, lat, lng, region string) bool {
+	hasLat, hasLng := str(s, lat) != "", str(s, lng) != ""
+	switch {
+	case hasLat && !hasLng:
+		issue(issues, "error", "missing_required", lng, fmt.Sprintf("%q is set, so %q is needed too.", lat, lng))
+		return false
+	case hasLng && !hasLat:
+		issue(issues, "error", "missing_required", lat, fmt.Sprintf("%q is set, so %q is needed too.", lng, lat))
+		return false
+	case hasLat && hasLng:
+		return true
+	}
+	if region != "" && str(s, region) != "" {
+		if _, ok := s["geo"]; !ok {
+			issue(issues, "error", "missing_required", "geo", fmt.Sprintf("%q places rows at regions, which needs a geography.", region), "Set geo to a registered geography, or give lat and lng columns instead.")
+			return false
+		}
+		return true
+	}
+	or := ""
+	if region != "" {
+		or = fmt.Sprintf(", or %q with a geography", region)
+	}
+	issue(issues, "error", "missing_required", lat, fmt.Sprintf("Give %q and %q columns%s.", lat, lng, or), "Longitude and latitude in degrees (WGS 84).")
+	return false
+}
+
+// onMap reports whether a row has a usable place: valid latitude and longitude, or (without them) a region value.
+func onMap(s spec, r row, lat, lng, region string) bool {
+	if str(s, lat) != "" && str(s, lng) != "" {
+		la, laOK := toNumber(r[str(s, lat)])
+		lo, loOK := toNumber(r[str(s, lng)])
+		return laOK && loOK && math.Abs(la) <= 90 && math.Abs(lo) <= 180
+	}
+	return str(s, region) != "" && !blank(r[str(s, region)])
+}
+
+// seriesOf is the row's group, or "" when the spec has no series column.
+func seriesOf(s spec, r row) string {
+	if c := str(s, "series"); c != "" {
+		return orEmpty(r[c])
+	}
+	return ""
+}
+
+type regionValue struct {
+	label string
+	value float64
+}
+
+// rawValues are the region values grouped by the data's own spelling.
+func rawValues(s spec, rows []row) []*regionValue {
+	sums := newOmap[*regionValue]()
+	for _, r := range rows {
+		v, ok := toNumber(r[str(s, "value")])
+		raw := r[str(s, "region")]
+		if !ok || blank(raw) {
+			continue
+		}
+		key := jsTrim(jsString(raw))
+		if cur, ok := sums.get(key); ok {
+			cur.value += v
+		} else {
+			sums.set(key, &regionValue{key, v})
+		}
+	}
+	return sums.values()
+}
+
+func checkChoropleth(s spec, rows []row, issues *[]Issue, geo *geography) {
+	checkRegions(s, rows, issues, geo, "region")
+	if !anyError(*issues) && len(rawValues(s, rows)) == 0 {
+		issue(issues, "error", "no_values", "value", "No row has both a region and a numeric value.")
+	}
+}
+
+func describeChoropleth(s spec) string {
+	vals := rawValues(s, rowsOf(s))
+	f := formatter(s)
+	if len(vals) == 0 {
+		return lead(s, "Choropleth map") + " No values."
+	}
+	on := ""
+	if g, ok := s["geo"].(string); ok {
+		on = fmt.Sprintf(" of \"%s\"", clip(g, 64))
+	}
+	raised := ""
+	if b, _ := s["extrude"].(bool); b {
+		raised = " and raised by it"
+	}
+	hi := firstMax(vals, func(v *regionValue) float64 { return v.value })
+	lo := firstMin(vals, func(v *regionValue) float64 { return v.value })
+	return fmt.Sprintf("%s %d regions%s coloured by %s%s. Highest: %s (%s). Lowest: %s (%s).",
+		lead(s, "Choropleth map"), len(vals), on, str(s, "value"), raised, clip(hi.label, 40), f(hi.value), clip(lo.label, 40), f(lo.value))
+}
+
+func placeName(s spec, r row) string {
+	if c := str(s, "label"); c != "" {
+		return orEmpty(r[c])
+	}
+	if c := str(s, "region"); c != "" {
+		return jsTrim(orEmpty(r[c]))
+	}
+	return ""
+}
+
+type place struct {
+	name    string
+	size    float64
+	hasSize bool
+	s       string
+}
+
+// rawPlaces are the places for the description and the checks: no geography needed.
+func rawPlaces(s spec, rows []row) []place {
+	out := []place{}
+	sizeCol := str(s, "size")
+	for _, r := range rows {
+		if !onMap(s, r, "lat", "lng", "region") {
+			continue
+		}
+		p := place{name: placeName(s, r), s: seriesOf(s, r)}
+		if sizeCol != "" {
+			if p.size, p.hasSize = toNumber(r[sizeCol]); !p.hasSize || p.size < 0 {
+				continue
+			}
+		}
+		out = append(out, p)
+	}
+	return out
+}
+
+func groupsText(groups []string) string {
+	if len(groups) > 1 {
+		return fmt.Sprintf(", in %d groups (%s)", len(groups), fmtList(groups, 5))
+	}
+	return ""
+}
+
+func orDefault(s, fallback string) string {
+	if s == "" {
+		return fallback
+	}
+	return s
+}
+
+func checkBubbleMap(s spec, rows []row, issues *[]Issue, geo *geography) {
+	if !checkPlaces(s, issues, "lat", "lng", "region") {
+		return
+	}
+	if str(s, "lat") == "" {
+		checkRegions(s, rows, issues, geo, "region")
+	}
+	if !anyError(*issues) && len(rawPlaces(s, rows)) == 0 {
+		issue(issues, "error", "no_points", "data", "No row has a usable place (and size, when set).")
+	}
+}
+
+func describeBubbleMap(s spec) string {
+	ps := rawPlaces(s, rowsOf(s))
+	f := formatter(s)
+	var groups []string
+	if str(s, "series") != "" {
+		names := make([]string, len(ps))
+		for i, p := range ps {
+			names[i] = p.s
+		}
+		groups = distinct(names)
+	}
+	sizedBy := ""
+	if c := str(s, "size"); c != "" {
+		sizedBy = " sized by " + c
+	}
+	t := fmt.Sprintf("%s %d places%s%s.", lead(s, "Bubble map"), len(ps), sizedBy, groupsText(groups))
+	var sized []place
+	for _, p := range ps {
+		if p.hasSize {
+			sized = append(sized, p)
+		}
+	}
+	if len(sized) > 0 {
+		big := firstMax(sized, func(p place) float64 { return p.size })
+		t += fmt.Sprintf(" Largest: %s (%s).", clip(orDefault(big.name, "unnamed"), 40), f(big.size))
+	}
+	return t
+}
+
+func checkColumnMap(s spec, rows []row, issues *[]Issue, geo *geography) {
+	if !checkPlaces(s, issues, "lat", "lng", "region") {
+		return
+	}
+	if str(s, "lat") == "" {
+		checkRegions(s, rows, issues, geo, "region")
+	}
+	neg := 0
+	for _, r := range rows {
+		if v, ok := toNumber(r[str(s, "value")]); ok && v < 0 {
+			neg++
+		}
+	}
+	if neg > 0 {
+		issue(issues, "warning", "negative_skipped", "value", fmt.Sprintf("%d negative values are skipped: a column cannot be lower than the ground.", neg), `Use a choropleth with scale "diverging" for values above and below zero.`)
+	}
+}
+
+func describeColumnMap(s spec) string {
+	f := formatter(s)
+	var cols []place
+	var names []string
+	sum := 0.0
+	for _, r := range rowsOf(s) {
+		v, ok := toNumber(r[str(s, "value")])
+		if !ok || v < 0 || !onMap(s, r, "lat", "lng", "region") {
+			continue
+		}
+		p := place{name: placeName(s, r), size: v, s: seriesOf(s, r)}
+		cols = append(cols, p)
+		names = append(names, p.s)
+		sum += v
+	}
+	if len(cols) == 0 {
+		return lead(s, "3D column map") + " No values."
+	}
+	top := firstMax(cols, func(p place) float64 { return p.size })
+	var groups []string
+	if str(s, "series") != "" {
+		groups = distinct(names)
+	}
+	on := "globe"
+	if str(s, "view") == "flat" {
+		on = "tilted map"
+	}
+	return fmt.Sprintf("%s %d columns of %s on a %s%s, totalling %s. Tallest: %s (%s).",
+		lead(s, "3D column map"), len(cols), str(s, "value"), on, groupsText(groups), f(sum), clip(orDefault(top.name, "unnamed"), 40), f(top.size))
+}
+
+var flowLL = []string{"fromLat", "fromLng", "toLat", "toLng"}
+
+type flow struct {
+	from, to string
+	v        float64
+	hasV     bool
+}
+
+func rawFlows(s spec, rows []row) []flow {
+	out := []flow{}
+	valueCol := str(s, "value")
+	for _, r := range rows {
+		if !onMap(s, r, "fromLat", "fromLng", "from") || !onMap(s, r, "toLat", "toLng", "to") {
+			continue
+		}
+		var fl flow
+		if valueCol != "" {
+			if fl.v, fl.hasV = toNumber(r[valueCol]); !fl.hasV || fl.v < 0 {
+				continue
+			}
+		}
+		if c := str(s, "from"); c != "" {
+			fl.from = jsTrim(orEmpty(r[c]))
+		}
+		if c := str(s, "to"); c != "" {
+			fl.to = jsTrim(orEmpty(r[c]))
+		}
+		out = append(out, fl)
+	}
+	return out
+}
+
+func checkFlowMap(s spec, rows []row, issues *[]Issue, geo *geography) {
+	given, missing := 0, ""
+	for _, k := range flowLL {
+		if str(s, k) != "" {
+			given++
+		} else if missing == "" {
+			missing = k
+		}
+	}
+	if given > 0 && given < 4 {
+		issue(issues, "error", "missing_required", missing, "Give all four of fromLat, fromLng, toLat and toLng, or none of them.")
+		return
+	}
+	if given == 0 {
+		if str(s, "from") == "" || str(s, "to") == "" {
+			path := "from"
+			if str(s, "from") != "" {
+				path = "to"
+			}
+			issue(issues, "error", "missing_required", path, "Give from and to region columns (with geo), or fromLat/fromLng/toLat/toLng columns.")
+			return
+		}
+		if _, ok := s["geo"]; !ok {
+			issue(issues, "error", "missing_required", "geo", "from and to name regions, which needs a geography.", "Set geo to a registered geography, or give fromLat/fromLng/toLat/toLng columns.")
+			return
+		}
+		checkRegions(s, rows, issues, geo, "from", "to")
+	}
+	if !anyError(*issues) && len(rawFlows(s, rows)) == 0 {
+		issue(issues, "error", "no_points", "data", "No row has a usable origin and destination (and value, when set).")
+	}
+}
+
+func describeFlowMap(s spec) string {
+	fs := rawFlows(s, rowsOf(s))
+	f := formatter(s)
+	weightedBy := ""
+	if c := str(s, "value"); c != "" {
+		weightedBy = " weighted by " + c
+	}
+	t := fmt.Sprintf("%s %d flows%s.", lead(s, "Flow map"), len(fs), weightedBy)
+	var weighted []flow
+	sum := 0.0
+	for _, x := range fs {
+		if x.hasV {
+			weighted = append(weighted, x)
+			sum += x.v
+		}
+	}
+	if len(weighted) > 0 {
+		big := firstMax(weighted, func(x flow) float64 { return x.v })
+		t += fmt.Sprintf(" Total %s. Largest: %s to %s (%s).", f(sum), clip(orDefault(big.from, "origin"), 30), clip(orDefault(big.to, "destination"), 30), f(big.v))
+	}
+	return t
 }

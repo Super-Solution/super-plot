@@ -1797,6 +1797,771 @@
           "description": "Numeric column giving the size of each flow. Rows with the same source and target are summed; zero and negative values are skipped. (name of a column in data)"
         }
       }
+    },
+    {
+      "title": "Choropleth map",
+      "description": "Colours each region of a map by a number; raise regions by the value for a 3D view. Comparing a rate or share across countries, provinces or districts. Map rates (per person, percent), not raw totals, or big regions dominate. Needs region boundaries (geo). For exact ranking use a sorted bar chart.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "data",
+        "geo",
+        "region",
+        "value"
+      ],
+      "properties": {
+        "type": {
+          "const": "choropleth"
+        },
+        "version": {
+          "const": 1,
+          "description": "Spec format version. Only 1 exists; may be omitted."
+        },
+        "data": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 50000,
+          "items": {
+            "type": "object"
+          },
+          "description": "Tabular rows: an array of flat objects, one per observation. Numbers must be numbers (or plain numeric strings)."
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 120,
+          "description": "Chart title. State the takeaway or the subject, not \"Chart\"."
+        },
+        "subtitle": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "One line of context under the title: unit, period, filter."
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 1000,
+          "description": "Long description for screen readers and agents. Generated from the data when omitted."
+        },
+        "source": {
+          "type": "string",
+          "maxLength": 160,
+          "description": "Source line shown small under the chart."
+        },
+        "legend": {
+          "enum": [
+            "auto",
+            "top",
+            "bottom",
+            "right",
+            "none"
+          ],
+          "default": "auto",
+          "description": "Legend placement. `auto` hides it for a single series and picks a side from the available width."
+        },
+        "tooltip": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show a hover tooltip (web binding only)."
+        },
+        "format": {
+          "type": "string",
+          "pattern": "^(auto|compact|integer|percent|fixed:\\d{1,2}|currency:[A-Za-z]{3})$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+        },
+        "colors": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "description": "Series (or slice/category) name to CSS colour, e.g. {\"Revenue\":\"#2962FF\"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours."
+        },
+        "geo": {
+          "oneOf": [
+            {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"
+            },
+            {
+              "type": "object",
+              "required": [
+                "type"
+              ],
+              "properties": {
+                "type": {
+                  "enum": [
+                    "FeatureCollection",
+                    "Topology"
+                  ]
+                }
+              }
+            }
+          ],
+          "description": "Region boundaries to colour. The name of a geography registered with registerGeography (Super Plot ships none), or an inline GeoJSON FeatureCollection / TopoJSON Topology (key: feature id, else properties.id, else properties.name)."
+        },
+        "region": {
+          "type": "string",
+          "description": "Column naming each row's region: its key, name or an alias (case ignored). Rows with the same region are summed. (name of a column in data)"
+        },
+        "value": {
+          "type": "string",
+          "description": "Numeric column that colours the region. (name of a column in data)"
+        },
+        "view": {
+          "enum": [
+            "flat",
+            "globe"
+          ],
+          "default": "flat",
+          "description": "`flat`: a world projection fitted to the data (tilt it with camera.pitch). `globe`: a sphere the viewer can turn."
+        },
+        "scale": {
+          "enum": [
+            "sequential",
+            "diverging"
+          ],
+          "default": "sequential",
+          "description": "`sequential`: light to dark for magnitude. `diverging`: two hues around 0 (or the middle) for above/below."
+        },
+        "domain": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "description": "Fix the colour range, e.g. [0, 100], to compare maps."
+        },
+        "extrude": {
+          "type": "boolean",
+          "default": false,
+          "description": "Raise each region by its value (3D). The flat view tilts to 40 degrees unless the camera says otherwise."
+        },
+        "projection": {
+          "enum": [
+            "equal-earth",
+            "mercator",
+            "equirectangular"
+          ],
+          "default": "equal-earth",
+          "description": "Flat view only. `equal-earth` keeps areas true (best for comparing regions); `mercator` keeps shapes for zoomed-in maps."
+        },
+        "camera": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "lng": {
+              "type": "number",
+              "minimum": -180,
+              "maximum": 180
+            },
+            "lat": {
+              "type": "number",
+              "minimum": -90,
+              "maximum": 90
+            },
+            "zoom": {
+              "type": "number",
+              "minimum": 0.5,
+              "maximum": 40
+            },
+            "pitch": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 70
+            },
+            "bearing": {
+              "type": "number",
+              "minimum": -360,
+              "maximum": 360
+            }
+          },
+          "description": "Starting view: {lng, lat} centre in degrees, zoom (1 fits the data), pitch (0-70 degrees of tilt, flat view) and bearing (degrees). The viewer can drag and zoom from there."
+        },
+        "disputed": {
+          "enum": [
+            "same",
+            "dashed",
+            "muted"
+          ],
+          "default": "same",
+          "description": "How to draw regions your geography marks as disputed: `same` as any other (no judgement), `dashed` outline, or `muted` fill with a dashed outline. Super Plot never decides what is disputed."
+        },
+        "graticule": {
+          "type": "boolean",
+          "description": "Draw meridians and parallels every 30 degrees. Default: on for the globe and for flat maps without geo, off otherwise."
+        }
+      }
+    },
+    {
+      "title": "Bubble map",
+      "description": "Places a circle per row on a map by longitude/latitude (or region), sized by a number and coloured by group. Showing where things are and how big they are: cities, sites, events, stores. Totals belong here rather than on a choropleth. Tens of thousands of points are fine (the web binding switches renderer). Use `geo` only to draw land under the points.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "data"
+      ],
+      "properties": {
+        "type": {
+          "const": "bubble-map"
+        },
+        "version": {
+          "const": 1,
+          "description": "Spec format version. Only 1 exists; may be omitted."
+        },
+        "data": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 50000,
+          "items": {
+            "type": "object"
+          },
+          "description": "Tabular rows: an array of flat objects, one per observation. Numbers must be numbers (or plain numeric strings)."
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 120,
+          "description": "Chart title. State the takeaway or the subject, not \"Chart\"."
+        },
+        "subtitle": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "One line of context under the title: unit, period, filter."
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 1000,
+          "description": "Long description for screen readers and agents. Generated from the data when omitted."
+        },
+        "source": {
+          "type": "string",
+          "maxLength": 160,
+          "description": "Source line shown small under the chart."
+        },
+        "legend": {
+          "enum": [
+            "auto",
+            "top",
+            "bottom",
+            "right",
+            "none"
+          ],
+          "default": "auto",
+          "description": "Legend placement. `auto` hides it for a single series and picks a side from the available width."
+        },
+        "tooltip": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show a hover tooltip (web binding only)."
+        },
+        "format": {
+          "type": "string",
+          "pattern": "^(auto|compact|integer|percent|fixed:\\d{1,2}|currency:[A-Za-z]{3})$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+        },
+        "colors": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "description": "Series (or slice/category) name to CSS colour, e.g. {\"Revenue\":\"#2962FF\"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours."
+        },
+        "geo": {
+          "oneOf": [
+            {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"
+            },
+            {
+              "type": "object",
+              "required": [
+                "type"
+              ],
+              "properties": {
+                "type": {
+                  "enum": [
+                    "FeatureCollection",
+                    "Topology"
+                  ]
+                }
+              }
+            }
+          ],
+          "description": "Optional boundaries drawn as land under the bubbles (needed when placing by region). The name of a geography registered with registerGeography (Super Plot ships none), or an inline GeoJSON FeatureCollection / TopoJSON Topology (key: feature id, else properties.id, else properties.name)."
+        },
+        "lat": {
+          "type": "string",
+          "description": "Latitude column, degrees (-90..90). With lng, places each bubble. (name of a column in data)"
+        },
+        "lng": {
+          "type": "string",
+          "description": "Longitude column, degrees (-180..180). (name of a column in data)"
+        },
+        "region": {
+          "type": "string",
+          "description": "Instead of lat/lng: a region column; each bubble sits at its region's centre (needs geo). (name of a column in data)"
+        },
+        "size": {
+          "type": "string",
+          "description": "Numeric column mapped to bubble area (negative values are skipped). (name of a column in data)"
+        },
+        "series": {
+          "type": "string",
+          "description": "Column that colours bubbles by group. (name of a column in data)"
+        },
+        "label": {
+          "type": "string",
+          "description": "Column used as each bubble's name in the tooltip. (name of a column in data)"
+        },
+        "view": {
+          "enum": [
+            "flat",
+            "globe"
+          ],
+          "default": "flat",
+          "description": "`flat`: a world projection fitted to the data (tilt it with camera.pitch). `globe`: a sphere the viewer can turn."
+        },
+        "projection": {
+          "enum": [
+            "equal-earth",
+            "mercator",
+            "equirectangular"
+          ],
+          "default": "equal-earth",
+          "description": "Flat view only. `equal-earth` keeps areas true (best for comparing regions); `mercator` keeps shapes for zoomed-in maps."
+        },
+        "camera": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "lng": {
+              "type": "number",
+              "minimum": -180,
+              "maximum": 180
+            },
+            "lat": {
+              "type": "number",
+              "minimum": -90,
+              "maximum": 90
+            },
+            "zoom": {
+              "type": "number",
+              "minimum": 0.5,
+              "maximum": 40
+            },
+            "pitch": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 70
+            },
+            "bearing": {
+              "type": "number",
+              "minimum": -360,
+              "maximum": 360
+            }
+          },
+          "description": "Starting view: {lng, lat} centre in degrees, zoom (1 fits the data), pitch (0-70 degrees of tilt, flat view) and bearing (degrees). The viewer can drag and zoom from there."
+        },
+        "disputed": {
+          "enum": [
+            "same",
+            "dashed",
+            "muted"
+          ],
+          "default": "same",
+          "description": "How to draw regions your geography marks as disputed: `same` as any other (no judgement), `dashed` outline, or `muted` fill with a dashed outline. Super Plot never decides what is disputed."
+        },
+        "graticule": {
+          "type": "boolean",
+          "description": "Draw meridians and parallels every 30 degrees. Default: on for the globe and for flat maps without geo, off otherwise."
+        }
+      }
+    },
+    {
+      "title": "3D column map",
+      "description": "Raises a column per row from its place on a globe or a tilted map, height by a number. Showing totals at places in 3D (population of cities, sales per store) where a bubble would overlap. Tall columns hide what is behind them: let the viewer turn the map, and give a ranked list too. For exact comparison use a bar chart.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "data",
+        "value"
+      ],
+      "properties": {
+        "type": {
+          "const": "column-map"
+        },
+        "version": {
+          "const": 1,
+          "description": "Spec format version. Only 1 exists; may be omitted."
+        },
+        "data": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 50000,
+          "items": {
+            "type": "object"
+          },
+          "description": "Tabular rows: an array of flat objects, one per observation. Numbers must be numbers (or plain numeric strings)."
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 120,
+          "description": "Chart title. State the takeaway or the subject, not \"Chart\"."
+        },
+        "subtitle": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "One line of context under the title: unit, period, filter."
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 1000,
+          "description": "Long description for screen readers and agents. Generated from the data when omitted."
+        },
+        "source": {
+          "type": "string",
+          "maxLength": 160,
+          "description": "Source line shown small under the chart."
+        },
+        "legend": {
+          "enum": [
+            "auto",
+            "top",
+            "bottom",
+            "right",
+            "none"
+          ],
+          "default": "auto",
+          "description": "Legend placement. `auto` hides it for a single series and picks a side from the available width."
+        },
+        "tooltip": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show a hover tooltip (web binding only)."
+        },
+        "format": {
+          "type": "string",
+          "pattern": "^(auto|compact|integer|percent|fixed:\\d{1,2}|currency:[A-Za-z]{3})$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+        },
+        "colors": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "description": "Series (or slice/category) name to CSS colour, e.g. {\"Revenue\":\"#2962FF\"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours."
+        },
+        "geo": {
+          "oneOf": [
+            {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"
+            },
+            {
+              "type": "object",
+              "required": [
+                "type"
+              ],
+              "properties": {
+                "type": {
+                  "enum": [
+                    "FeatureCollection",
+                    "Topology"
+                  ]
+                }
+              }
+            }
+          ],
+          "description": "Optional boundaries drawn as land under the columns (needed when placing by region). The name of a geography registered with registerGeography (Super Plot ships none), or an inline GeoJSON FeatureCollection / TopoJSON Topology (key: feature id, else properties.id, else properties.name)."
+        },
+        "lat": {
+          "type": "string",
+          "description": "Latitude column, degrees (-90..90). With lng, places each column. (name of a column in data)"
+        },
+        "lng": {
+          "type": "string",
+          "description": "Longitude column, degrees (-180..180). (name of a column in data)"
+        },
+        "region": {
+          "type": "string",
+          "description": "Instead of lat/lng: a region column; each column sits at its region's centre (needs geo). (name of a column in data)"
+        },
+        "value": {
+          "type": "string",
+          "description": "Numeric column giving each column's height (negative values are skipped). (name of a column in data)"
+        },
+        "series": {
+          "type": "string",
+          "description": "Column that colours columns by group. (name of a column in data)"
+        },
+        "label": {
+          "type": "string",
+          "description": "Column used as each column's name in the tooltip. (name of a column in data)"
+        },
+        "view": {
+          "enum": [
+            "flat",
+            "globe"
+          ],
+          "default": "globe",
+          "description": "`flat`: a world projection fitted to the data (tilt it with camera.pitch). `globe`: a sphere the viewer can turn."
+        },
+        "projection": {
+          "enum": [
+            "equal-earth",
+            "mercator",
+            "equirectangular"
+          ],
+          "default": "equal-earth",
+          "description": "Flat view only. `equal-earth` keeps areas true (best for comparing regions); `mercator` keeps shapes for zoomed-in maps."
+        },
+        "camera": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "lng": {
+              "type": "number",
+              "minimum": -180,
+              "maximum": 180
+            },
+            "lat": {
+              "type": "number",
+              "minimum": -90,
+              "maximum": 90
+            },
+            "zoom": {
+              "type": "number",
+              "minimum": 0.5,
+              "maximum": 40
+            },
+            "pitch": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 70
+            },
+            "bearing": {
+              "type": "number",
+              "minimum": -360,
+              "maximum": 360
+            }
+          },
+          "description": "Starting view: {lng, lat} centre in degrees, zoom (1 fits the data), pitch (0-70 degrees of tilt, flat view) and bearing (degrees). The viewer can drag and zoom from there."
+        },
+        "disputed": {
+          "enum": [
+            "same",
+            "dashed",
+            "muted"
+          ],
+          "default": "same",
+          "description": "How to draw regions your geography marks as disputed: `same` as any other (no judgement), `dashed` outline, or `muted` fill with a dashed outline. Super Plot never decides what is disputed."
+        },
+        "graticule": {
+          "type": "boolean",
+          "description": "Draw meridians and parallels every 30 degrees. Default: on for the globe and for flat maps without geo, off otherwise."
+        }
+      }
+    },
+    {
+      "title": "Flow map",
+      "description": "Draws an arc from origin to destination per row, width by a number, on a globe or a flat map. Showing movement between places: trade, migration, flights, shipments. Keep it to the biggest flows (a few hundred at most) or the map turns to string. Origins and destinations are lat/lng columns, or regions with a geography.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "data"
+      ],
+      "properties": {
+        "type": {
+          "const": "flow-map"
+        },
+        "version": {
+          "const": 1,
+          "description": "Spec format version. Only 1 exists; may be omitted."
+        },
+        "data": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 50000,
+          "items": {
+            "type": "object"
+          },
+          "description": "Tabular rows: an array of flat objects, one per observation. Numbers must be numbers (or plain numeric strings)."
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 120,
+          "description": "Chart title. State the takeaway or the subject, not \"Chart\"."
+        },
+        "subtitle": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "One line of context under the title: unit, period, filter."
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 1000,
+          "description": "Long description for screen readers and agents. Generated from the data when omitted."
+        },
+        "source": {
+          "type": "string",
+          "maxLength": 160,
+          "description": "Source line shown small under the chart."
+        },
+        "legend": {
+          "enum": [
+            "auto",
+            "top",
+            "bottom",
+            "right",
+            "none"
+          ],
+          "default": "auto",
+          "description": "Legend placement. `auto` hides it for a single series and picks a side from the available width."
+        },
+        "tooltip": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show a hover tooltip (web binding only)."
+        },
+        "format": {
+          "type": "string",
+          "pattern": "^(auto|compact|integer|percent|fixed:\\d{1,2}|currency:[A-Za-z]{3})$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+        },
+        "colors": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "description": "Series (or slice/category) name to CSS colour, e.g. {\"Revenue\":\"#2962FF\"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours."
+        },
+        "geo": {
+          "oneOf": [
+            {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"
+            },
+            {
+              "type": "object",
+              "required": [
+                "type"
+              ],
+              "properties": {
+                "type": {
+                  "enum": [
+                    "FeatureCollection",
+                    "Topology"
+                  ]
+                }
+              }
+            }
+          ],
+          "description": "Optional boundaries drawn as land (needed when from/to name regions). The name of a geography registered with registerGeography (Super Plot ships none), or an inline GeoJSON FeatureCollection / TopoJSON Topology (key: feature id, else properties.id, else properties.name)."
+        },
+        "from": {
+          "type": "string",
+          "description": "Origin region column (needs geo), or the origin's name when fromLat/fromLng are given. (name of a column in data)"
+        },
+        "to": {
+          "type": "string",
+          "description": "Destination region column (needs geo), or the destination's name. (name of a column in data)"
+        },
+        "fromLat": {
+          "type": "string",
+          "description": "Origin latitude column, degrees. (name of a column in data)"
+        },
+        "fromLng": {
+          "type": "string",
+          "description": "Origin longitude column, degrees. (name of a column in data)"
+        },
+        "toLat": {
+          "type": "string",
+          "description": "Destination latitude column, degrees. (name of a column in data)"
+        },
+        "toLng": {
+          "type": "string",
+          "description": "Destination longitude column, degrees. (name of a column in data)"
+        },
+        "value": {
+          "type": "string",
+          "description": "Numeric column giving each arc's width. (name of a column in data)"
+        },
+        "series": {
+          "type": "string",
+          "description": "Column that colours arcs by group. (name of a column in data)"
+        },
+        "view": {
+          "enum": [
+            "flat",
+            "globe"
+          ],
+          "default": "globe",
+          "description": "`flat`: a world projection fitted to the data (tilt it with camera.pitch). `globe`: a sphere the viewer can turn."
+        },
+        "projection": {
+          "enum": [
+            "equal-earth",
+            "mercator",
+            "equirectangular"
+          ],
+          "default": "equal-earth",
+          "description": "Flat view only. `equal-earth` keeps areas true (best for comparing regions); `mercator` keeps shapes for zoomed-in maps."
+        },
+        "camera": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "lng": {
+              "type": "number",
+              "minimum": -180,
+              "maximum": 180
+            },
+            "lat": {
+              "type": "number",
+              "minimum": -90,
+              "maximum": 90
+            },
+            "zoom": {
+              "type": "number",
+              "minimum": 0.5,
+              "maximum": 40
+            },
+            "pitch": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 70
+            },
+            "bearing": {
+              "type": "number",
+              "minimum": -360,
+              "maximum": 360
+            }
+          },
+          "description": "Starting view: {lng, lat} centre in degrees, zoom (1 fits the data), pitch (0-70 degrees of tilt, flat view) and bearing (degrees). The viewer can drag and zoom from there."
+        },
+        "disputed": {
+          "enum": [
+            "same",
+            "dashed",
+            "muted"
+          ],
+          "default": "same",
+          "description": "How to draw regions your geography marks as disputed: `same` as any other (no judgement), `dashed` outline, or `muted` fill with a dashed outline. Super Plot never decides what is disputed."
+        },
+        "graticule": {
+          "type": "boolean",
+          "description": "Draw meridians and parallels every 30 degrees. Default: on for the globe and for flat maps without geo, off otherwise."
+        }
+      }
     }
   ]
 }

@@ -1,4 +1,4 @@
-import type { Issue } from '@supersolutions/super-plot-core'
+import type { Camera, Issue } from '@supersolutions/super-plot-core'
 import { SuperPlot, type SelectEvent, type SuperPlotOptions } from './plot.js'
 
 /**
@@ -6,14 +6,15 @@ import { SuperPlot, type SelectEvent, type SuperPlotOptions } from './plot.js'
  *
  *   <super-plot theme="dark" spec='{"type":"bar", ...}'></super-plot>
  *
- * Properties: `spec` (object or JSON string), `theme`, `locale`. Events (bubbling CustomEvents):
- * `plot-select` (detail: SelectEvent) and `plot-issues` (detail: Issue[]).
+ * Properties: `spec` (object or JSON string), `theme`, `locale`, `renderer` (auto | svg | canvas | webgl).
+ * Events (bubbling CustomEvents): `plot-select` (detail: SelectEvent), `plot-issues` (detail: Issue[]) and,
+ * for maps, `plot-camera` (detail: Camera) when the viewer moved the map.
  */
 export function defineSuperPlot(name = 'super-plot'): CustomElementConstructor {
   const existing = customElements.get(name)
   if (existing) return existing
   class SuperPlotElement extends HTMLElement {
-    static observedAttributes = ['spec', 'theme', 'locale']
+    static observedAttributes = ['spec', 'theme', 'locale', 'renderer']
     private plot: SuperPlot | null = null
     private _spec: unknown = undefined
     private pending: Partial<SuperPlotOptions> = {}
@@ -37,8 +38,9 @@ export function defineSuperPlot(name = 'super-plot'): CustomElementConstructor {
     attributeChangedCallback(attr: string, _old: string | null, value: string | null): void {
       if (attr === 'spec') this.spec = value ?? undefined
       else {
-        this.pending = { ...this.pending, [attr]: value ?? undefined }
-        this.plot?.setOptions({ [attr]: value ?? undefined })
+        const patch = attr === 'renderer' ? rendererOf(value) : { [attr]: value ?? undefined }
+        this.pending = { ...this.pending, ...patch }
+        this.plot?.setOptions(attr === 'renderer' && !value ? { renderer: 'auto' } : patch)
       }
     }
 
@@ -52,9 +54,11 @@ export function defineSuperPlot(name = 'super-plot'): CustomElementConstructor {
         this.plot = new SuperPlot(this, this._spec, {
           theme: this.getAttribute('theme') ?? undefined,
           locale: this.getAttribute('locale') ?? undefined,
+          ...rendererOf(this.getAttribute('renderer')),
           ...this.pending,
           onSelect: (e: SelectEvent) => this.dispatchEvent(new CustomEvent('plot-select', { detail: e, bubbles: true })),
-          onIssues: (issues: Issue[]) => this.dispatchEvent(new CustomEvent('plot-issues', { detail: issues, bubbles: true }))
+          onIssues: (issues: Issue[]) => this.dispatchEvent(new CustomEvent('plot-issues', { detail: issues, bubbles: true })),
+          onCameraChange: (camera: Camera) => this.dispatchEvent(new CustomEvent('plot-camera', { detail: camera, bubbles: true }))
         })
       }
     }
@@ -62,6 +66,9 @@ export function defineSuperPlot(name = 'super-plot'): CustomElementConstructor {
   customElements.define(name, SuperPlotElement)
   return SuperPlotElement
 }
+
+const RENDERERS = ['auto', 'svg', 'canvas', 'webgl'] as const
+const rendererOf = (v: string | null): Partial<SuperPlotOptions> => (RENDERERS.includes(v as (typeof RENDERERS)[number]) ? { renderer: v as (typeof RENDERERS)[number] } : {})
 
 function safeParse(s: string): unknown {
   try {

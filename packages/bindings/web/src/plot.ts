@@ -1,8 +1,9 @@
 import {
-  compilePlot, renderSvg, resolveTheme, estimateWidth, defaultHeight, dataMarkCount,
-  type Issue, type Mark, type Measure, type RenderOptions, type Scene, type Tip
+  compilePlot, renderSvg, resolveTheme, estimateWidth, defaultHeight, dataMarkCount, makeView, dragCamera, zoomCamera, clampCamera,
+  type Camera, type Issue, type Mark, type Measure, type RenderOptions, type Scene, type Tip, type ViewParams
 } from '@supersolutions/super-plot-core'
 import { CanvasLayer } from './canvas.js'
+import type * as Gl from './gl/index.js'
 import { ensureStyles } from './styles.js'
 
 export interface SelectEvent {
@@ -27,14 +28,39 @@ export interface SuperPlotOptions extends Omit<RenderOptions, 'hidden' | 'measur
   hidden?: string[]
   /**
    * `svg` keeps every mark a DOM element (best for accessibility and styling), `canvas` draws pixels (fast for
-   * tens of thousands of marks). `auto` (default) uses canvas above `canvasAbove` data marks.
+   * tens of thousands of marks), `webgl` draws dots and maps on the GPU (falls back to canvas when the browser
+   * cannot). `auto` (default) uses canvas above `canvasAbove` data marks, and WebGL on a hardware GPU above
+   * `webglAbove` data marks or for a 3D map (globe, tilt, columns, arcs, raised regions).
    */
-  renderer?: 'auto' | 'svg' | 'canvas'
+  renderer?: 'auto' | 'svg' | 'canvas' | 'webgl'
   /** Data mark count above which `auto` switches to canvas. Default 4000. */
   canvasAbove?: number
+  /** Data mark count above which `auto` switches to WebGL (hardware GPUs only). Default 20000. */
+  webglAbove?: number
+  /** Maps: let the viewer drag (pan, or turn the globe), Shift-drag (tilt and rotate), Ctrl/⌘-scroll or pinch (zoom) and use the keyboard. Default true. */
+  interactive?: boolean
+  /** Maps: the viewer moved the camera (once per gesture, when it ends). */
+  onCameraChange?: (camera: Camera) => void
 }
 
 let uid = 0
+// The WebGL layer is a separate chunk, loaded the first time a plot needs it.
+let glModule: typeof Gl | null = null
+let warnedGl = false
+let glLoading: Promise<typeof Gl> | null = null
+const loadGl = (): Promise<typeof Gl> => (glLoading ??= import('./gl/index.js').then(m => (glModule = m)))
+
+/** What identifies "the same map" across setSpec: chart type and geography (a name, or inline). */
+const mapKeyOf = (spec: unknown): string => {
+  const s = spec as { type?: unknown; geo?: unknown } | null
+  return `${String(s?.type)}|${typeof s?.geo === 'string' ? s.geo : s?.geo ? 'inline' : ''}`
+}
+
+/** A map the GPU draws better than SVG: anything with depth. */
+const isDeepMap = (s: Scene): boolean => {
+  const g = s.geo
+  return !!g && (g.view.kind === 'globe' || g.view.camera.pitch > 0 || g.columns.length > 0 || g.arcs.length > 0 || g.regions.some(r => r.height > 0))
+}
 
 /**
  * Mounts a plot into an element. It owns one `<div>` inside the host, resizes with it, shows a
@@ -61,6 +87,18 @@ export class SuperPlot {
   private highlighted: string | null = null
   private spec: unknown
   private layer: CanvasLayer | null = null
+  /** WebGL failed or the context was lost: stay on canvas for this plot. */
+  private glOff = false
+  /** The viewer's camera, once they moved it (or `setCamera`). */
+  private cam: Camera | null = null
+  /** The camera moved on the GPU since the last compile. */
+  private glMoved = false
+  private pointers = new Map<number, { x: number; y: number }>()
+  private drag: { moved: boolean; turn: boolean } | null = null
+  private justDragged = false
+  private gestureTimer = 0
+  private controls: HTMLDivElement | null = null
+  private glWaiting = false
 
   constructor(readonly host: HTMLElement, spec: unknown, private options: SuperPlotOptions = {}) {
     const doc = host.ownerDocument
@@ -80,6 +118,11 @@ export class SuperPlot {
     this.root.addEventListener('focusout', this.onLeave)
     this.root.addEventListener('click', this.onClick)
     this.root.addEventListener('keydown', this.onKey)
+    this.root.addEventListener('pointerdown', this.onDown)
+    this.root.addEventListener('pointermove', this.onDragMove)
+    this.root.addEventListener('pointerup', this.onUp)
+    this.root.addEventListener('pointercancel', this.onUp)
+    this.root.addEventListener('wheel', this.onWheel, { passive: false })
     if (typeof ResizeObserver !== 'undefined' && options.width === undefined) {
       this.ro = new ResizeObserver(() => this.schedule(false))
       this.ro.observe(host)
@@ -93,25 +136,59 @@ export class SuperPlot {
 
   /** Replace the spec. Plays the entrance animation again. */
   setSpec(spec: unknown): void {
+    // A different map (type or geography) starts from its own view; new data on the same map keeps the viewer's.
+    if (mapKeyOf(spec) !== mapKeyOf(this.spec)) this.cam = null
     this.spec = spec
     this.render(true)
   }
 
   /** Change render options (theme, locale, size, ...). */
   setOptions(patch: Partial<SuperPlotOptions>): void {
+    const prevCamera = this.options.camera
     this.options = { ...this.options, ...patch }
     if (patch.hidden) this.hidden = new Set(patch.hidden)
+    // Only a camera that really changed resets the viewer's (an inline object re-sent by a framework does not).
+    if (patch.camera && JSON.stringify(patch.camera) !== JSON.stringify(prevCamera)) this.cam = null
     this.render(false)
   }
 
-  getScene(): Scene | null { return this.scene }
+  getScene(): Scene | null {
+    this.syncCamera()
+    return this.scene
+  }
   /** What is drawing the chart right now. */
-  getRenderer(): 'svg' | 'canvas' { return this.layer ? 'canvas' : 'svg' }
+  getRenderer(): 'svg' | 'canvas' | 'webgl' { return this.layer ? this.layer.renderer : 'svg' }
+
+  /** Maps: the camera on screen, or null when the chart is not a map. */
+  getCamera(): Camera | null { return this.cam ?? this.scene?.geo?.view.camera ?? null }
+
+  /** Maps: move the camera (merged into the current one). Does not fire `onCameraChange` (that is for the viewer). */
+  setCamera(camera: Partial<Camera>): void {
+    const now = this.getCamera()
+    if (!now) return
+    this.applyCamera(clampCamera({ ...now, ...camera }))
+    this.endGesture(false)
+  }
+
+  /** Maps: back to the spec's camera (or the fitted view). Does not fire `onCameraChange`. */
+  resetCamera(): void {
+    this.reset(false)
+  }
+
+  private reset(notify: boolean): void {
+    clearTimeout(this.gestureTimer)
+    this.gestureTimer = 0
+    this.cam = null
+    this.render(false)
+    const c = this.getCamera()
+    if (notify && c) this.options.onCameraChange?.(c)
+  }
   getIssues(): Issue[] { return this.issues }
   getHidden(): string[] { return [...this.hidden] }
 
   /** Standalone SVG of what is on screen: colours resolved, no scripts, no hover hooks. */
   toSvg(): string {
+    this.syncCamera()
     if (!this.scene) throw new Error('Nothing to export: the spec is invalid.')
     const theme = resolveTheme(this.options.theme, this.prefersDark())
     return renderSvg(this.scene, { resolveVars: true, font: theme.font })
@@ -119,6 +196,7 @@ export class SuperPlot {
 
   /** PNG of what is on screen. `scale` is the pixel ratio (default: the display's). */
   async toPng(scale = this.host.ownerDocument.defaultView?.devicePixelRatio ?? 2): Promise<Blob> {
+    this.syncCamera()
     const scene = this.scene
     if (!scene) throw new Error('Nothing to export: the spec is invalid.')
     if (this.layer) return this.layer.toBlob(scale)
@@ -150,6 +228,7 @@ export class SuperPlot {
     this.disposed = true
     cancelAnimationFrame(this.raf)
     clearTimeout(this.enterTimer)
+    clearTimeout(this.gestureTimer)
     this.ro?.disconnect()
     this.mq?.removeEventListener?.('change', this.onScheme)
     this.layer?.dispose()
@@ -204,6 +283,7 @@ export class SuperPlot {
   }
 
   private render(enter: boolean): void {
+    if (this.disposed) return
     const o = this.options
     const hostW = Math.floor(this.host.getBoundingClientRect().width || this.host.clientWidth)
     const width = o.width ?? (hostW > 0 ? hostW : 640)
@@ -215,11 +295,15 @@ export class SuperPlot {
       this.root.style.height = `${height}px`
       if (o.width !== undefined) this.root.style.width = `${o.width}px`
     } else this.root.style.height = ''
-    const result = compilePlot(this.spec, { ...o, width, height, hidden: this.hidden, measure: this.measure, prefersDark: this.prefersDark() })
+    const camera = this.cam ?? o.camera
+    const result = compilePlot(this.spec, { ...o, width, height, hidden: this.hidden, measure: this.measure, prefersDark: this.prefersDark(), ...(camera ? { camera } : {}) })
+    this.glMoved = false
     this.hideTip()
     this.overlay = null
     this.highlighted = null
     if (!result.ok) {
+      this.layer?.dispose()
+      this.layer = null
       this.scene = null
       this.issues = result.issues
       this.root.replaceChildren()
@@ -237,21 +321,31 @@ export class SuperPlot {
     this.issues = result.issues
     const theme = resolveTheme(o.theme, this.prefersDark())
     const font = `var(--sp-font, ${theme.font})`
-    const wantCanvas = o.renderer === 'canvas' || (o.renderer !== 'svg' && dataMarkCount(result.scene) > (o.canvasAbove ?? 4000))
+    const marks = dataMarkCount(result.scene)
+    // A map keeps its context once it has one (tilting back to flat must not drop and re-create it).
+    const autoGl = (o.renderer ?? 'auto') === 'auto' && (marks > (o.webglAbove ?? 20000) || isDeepMap(result.scene) || (!!result.scene.geo && !!this.layer?.hasGl))
+    const wantGl = !this.glOff && (o.renderer === 'webgl' || (autoGl && this.hardwareGl()))
+    const wantCanvas = o.renderer === 'canvas' || o.renderer === 'webgl' || wantGl || (o.renderer !== 'svg' && marks > (o.canvasAbove ?? 4000))
+    this.setupMap(result.scene, theme)
     if (wantCanvas) {
       this.layer ??= CanvasLayer.create(this.host.ownerDocument, {
         tipEnabled: () => this.tipEnabled(),
         showTip: (t, x, y) => this.showTip(t, x, y),
         placeTip: (x, y) => this.placeTip(x, y),
         hideTip: () => this.hideTip(),
-        activate: m => this.activateMark(m)
+        activate: m => this.activateMark(m),
+        dragging: () => this.dragging()
       })
       if (this.layer) {
+        // One context per plot for its lifetime: creating one costs far more than a redraw.
+        if (!wantGl) this.layer.setGl(null)
+        else if (!this.layer.hasGl) this.layer.setGl(this.makeGl())
         const cs = this.host.ownerDocument.defaultView?.getComputedStyle(this.root)
         this.layer.draw(result.scene, font, name => cs?.getPropertyValue(name))
         // Keep the canvas element in place when it is already there: moving it would drop keyboard focus.
         if (this.layer.el.parentNode !== this.root || this.tip.parentNode !== this.root) this.root.replaceChildren(this.layer.el, this.tip)
-        this.root.setAttribute('data-renderer', 'canvas')
+        if (this.controls) this.root.appendChild(this.controls)
+        this.root.setAttribute('data-renderer', this.layer.renderer)
         if (changed || enter) o.onIssues?.(result.issues)
         return
       }
@@ -263,12 +357,64 @@ export class SuperPlot {
     const tpl = this.host.ownerDocument.createElement('template')
     tpl.innerHTML = svg
     this.root.replaceChildren(tpl.content, this.tip)
-    if (enter && o.animate !== false) {
+    if (this.controls) this.root.appendChild(this.controls)
+    if (enter && !this.drag && o.animate !== false) {
       this.root.classList.add('sp-enter')
       clearTimeout(this.enterTimer)
       this.enterTimer = window.setTimeout(() => this.root.classList.remove('sp-enter'), 1000)
     }
     if (changed || enter) o.onIssues?.(result.issues)
+  }
+
+  /** A WebGL layer for this plot, or null (not loaded yet, unavailable, or a software GPU under `auto`). */
+  /**
+   * `auto` uses WebGL only on a hardware GPU. Until the WebGL chunk is loaded that is unknown: draw without it,
+   * load it, and decide again once it is here.
+   */
+  private hardwareGl(): boolean {
+    if (!glModule) {
+      this.whenGlLoads(() => !glModule!.probeWebGL(this.host.ownerDocument).software)
+      return false
+    }
+    const probe = glModule.probeWebGL(this.host.ownerDocument)
+    return probe.ok && !probe.software
+  }
+
+  /** Render again once the WebGL chunk is here (one pending request per plot, however many renders asked). */
+  private whenGlLoads(worth: () => boolean): void {
+    if (this.glWaiting) return
+    this.glWaiting = true
+    loadGl().then(() => {
+      this.glWaiting = false
+      if (!this.disposed && !this.glOff && worth()) this.render(false)
+    }, () => {
+      this.glWaiting = false
+      this.glOff = true
+    })
+  }
+
+  private makeGl(): Gl.GlView | null {
+    const doc = this.host.ownerDocument
+    if (!glModule) {
+      this.whenGlLoads(() => true)
+      return null
+    }
+    const v = glModule.GlView.create(doc, () => this.onGlLost())
+    if (!v) {
+      this.glOff = true
+      // Asked for explicitly: say once why the plot is on canvas instead.
+      if (this.options.renderer === 'webgl' && !warnedGl) {
+        warnedGl = true
+        console.warn(`Super Plot: WebGL is not available (${glModule.GlView.lastError}); drawing on canvas.`)
+      }
+    }
+    return v
+  }
+
+  private onGlLost(): void {
+    this.glOff = true
+    this.layer?.setGl(null)
+    this.schedule(false)
   }
 
   private specType(): string {
@@ -290,7 +436,7 @@ export class SuperPlot {
   }
 
   private onOver = (e: PointerEvent): void => {
-    if (this.layer) return // the canvas view handles its own pointer events
+    if (this.layer || this.dragging()) return // the canvas view handles its own pointer events
     const m = this.markOf(e.target)
     const mark = m && this.scene?.marks[m.i]
     if (!m || !mark) return this.clearHighlight()
@@ -300,7 +446,7 @@ export class SuperPlot {
   }
 
   private onMove = (e: PointerEvent): void => {
-    if (this.layer) return
+    if (this.layer || this.dragging()) return
     const m = this.markOf(e.target)
     const mark = m && this.scene?.marks[m.i]
     if (mark?.tip && this.tipEnabled()) this.placeTip(e.clientX, e.clientY)
@@ -324,11 +470,13 @@ export class SuperPlot {
   }
 
   private onClick = (e: MouseEvent): void => {
+    if (this.dragging()) return
     this.activate(this.markOf(e.target))
   }
 
   private onKey = (e: KeyboardEvent): void => {
     if (e.key === 'Escape') return this.onLeave()
+    if (this.mapKey(e)) return
     if (e.key !== 'Enter' && e.key !== ' ') return
     const m = this.markOf(e.target)
     if (m) {
@@ -449,6 +597,202 @@ export class SuperPlot {
 
   private hideTip(): void {
     this.tip.removeAttribute('data-show')
+  }
+
+  // ---- map camera --------------------------------------------------------------------------
+
+  private interactiveMap(): boolean {
+    return !!this.scene?.geo && this.options.interactive !== false
+  }
+
+  private dragging(): boolean { return this.drag?.moved === true || this.justDragged }
+
+  /** Zoom buttons, keyboard focus and touch handling for an interactive map; removed for anything else. */
+  private setupMap(scene: Scene, theme: ReturnType<typeof resolveTheme>): void {
+    const on = !!scene.geo && this.options.interactive !== false
+    if (!on) {
+      this.controls?.remove()
+      this.controls = null
+      this.root.removeAttribute('data-map')
+      for (const a of ['role', 'aria-roledescription', 'aria-label', 'aria-keyshortcuts']) this.root.removeAttribute(a)
+      if (this.root.getAttribute('tabindex') === '0' && this.root.dataset.spMapTab) {
+        this.root.removeAttribute('tabindex')
+        delete this.root.dataset.spMapTab
+      }
+      return
+    }
+    this.root.setAttribute('data-map', '')
+    if (!this.root.hasAttribute('tabindex')) {
+      this.root.tabIndex = 0
+      this.root.dataset.spMapTab = '1'
+    }
+    this.root.setAttribute('aria-keyshortcuts', 'ArrowLeft ArrowRight ArrowUp ArrowDown Shift+ArrowLeft Shift+ArrowRight Shift+ArrowUp Shift+ArrowDown + - 0')
+    this.root.setAttribute('role', 'group')
+    this.root.setAttribute('aria-roledescription', 'interactive map')
+    this.root.setAttribute('aria-label', `${scene.title}. Drag or use the arrow keys to move, Shift with them to turn and tilt, + and - to zoom, 0 to reset.`)
+    if (!this.controls) {
+      const doc = this.host.ownerDocument
+      const box = doc.createElement('div')
+      box.className = 'sp-ctl'
+      const add = (label: string, text: string, act: () => void): void => {
+        const b = doc.createElement('button')
+        b.type = 'button'
+        b.textContent = text
+        b.setAttribute('aria-label', label)
+        b.title = label
+        b.addEventListener('click', e => { e.stopPropagation(); act() })
+        box.appendChild(b)
+      }
+      add('Zoom in', '+', () => this.zoomBy(1.5))
+      add('Zoom out', '\u2212', () => this.zoomBy(1 / 1.5))
+      add('Reset view', '\u27F2', () => this.reset(true))
+      this.controls = box
+    }
+    for (const b of this.controls.querySelectorAll<HTMLButtonElement>('button')) {
+      b.style.background = `var(--sp-surface, ${theme.colors.surface})`
+      b.style.color = `var(--sp-text, ${theme.colors.text})`
+      b.style.borderColor = `var(--sp-border, ${theme.colors.border})`
+    }
+  }
+
+  /** The view as it is on screen now (it may be ahead of the compiled scene during a gesture). */
+  private liveView(): ViewParams | null {
+    const geo = this.scene?.geo
+    if (!geo) return null
+    return this.cam ? makeView({ ...geo.input, camera: this.cam }) : geo.view
+  }
+
+  private applyCamera(c: Camera): void {
+    this.cam = c
+    if (this.layer?.moveCamera(c)) this.glMoved = true
+    else this.schedule(false)
+  }
+
+  private zoomBy(factor: number): void {
+    const v = this.liveView()
+    if (!v) return
+    this.applyCamera(zoomCamera(v, factor))
+    this.gestureSoon()
+  }
+
+  /** A gesture ended: bring the compiled scene (tooltips, outlines, exports) up to date and tell the host. */
+  private endGesture(notify = true): void {
+    clearTimeout(this.gestureTimer)
+    this.gestureTimer = 0
+    if (this.disposed) return
+    if (this.glMoved) this.render(false)
+    if (notify && this.cam) this.options.onCameraChange?.(this.cam)
+  }
+
+  private gestureSoon(): void {
+    clearTimeout(this.gestureTimer)
+    this.gestureTimer = window.setTimeout(() => this.endGesture(), 250)
+  }
+
+  private syncCamera(): void {
+    // An export or a scene read mid-gesture: catch the scene up, but the gesture (and its event) goes on.
+    if (this.glMoved) this.render(false)
+  }
+
+  /** Screen pixels to scene pixels. */
+  private sceneScale(): number {
+    const w = this.root.getBoundingClientRect().width
+    return this.scene && w > 0 ? this.scene.width / w : 1
+  }
+
+  private onDown = (e: PointerEvent): void => {
+    if (!this.interactiveMap()) return
+    if (e.pointerType === 'mouse' && e.button !== 0) return
+    if ((e.target as Element | null)?.closest?.('.sp-ctl, .sp-cv-lk, [data-lk]')) return
+    // No pointer capture yet: a click that never becomes a drag must still reach the mark under it.
+    this.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY })
+    if (this.pointers.size === 1) this.drag = { moved: false, turn: e.shiftKey }
+  }
+
+  private onDragMove = (e: PointerEvent): void => {
+    const prev = this.pointers.get(e.pointerId)
+    if (!prev || !this.drag) return
+    const now = { x: e.clientX, y: e.clientY }
+    if (this.pointers.size >= 2) {
+      // Pinch: the change in distance between the first two fingers.
+      const [a, b] = [...this.pointers.entries()]
+      const other = a[0] === e.pointerId ? b[1] : a[1]
+      const before = Math.hypot(prev.x - other.x, prev.y - other.y)
+      const after = Math.hypot(now.x - other.x, now.y - other.y)
+      this.pointers.set(e.pointerId, now)
+      if (before > 4 && after > 4) {
+        this.drag.moved = true
+        const v = this.liveView()
+        if (v) this.applyCamera(zoomCamera(v, after / before))
+      }
+      return
+    }
+    const k = this.sceneScale()
+    const dx = (now.x - prev.x) * k, dy = (now.y - prev.y) * k
+    if (!this.drag.moved && Math.hypot(now.x - prev.x, now.y - prev.y) < 3) return
+    this.pointers.set(e.pointerId, now)
+    if (!this.drag.moved) {
+      this.drag.moved = true
+      try { this.root.setPointerCapture?.(e.pointerId) } catch { /* not capturable (synthetic event) */ }
+      this.root.setAttribute('data-drag', '')
+      this.hideTip()
+      this.clearHighlight()
+    }
+    const v = this.liveView()
+    if (v) this.applyCamera(dragCamera(v, dx, dy, this.drag.turn || e.shiftKey))
+  }
+
+  private onUp = (e: PointerEvent): void => {
+    if (!this.pointers.delete(e.pointerId)) return
+    if (this.pointers.size) return
+    const moved = this.drag?.moved
+    this.drag = null
+    this.root.removeAttribute('data-drag')
+    if (moved) {
+      // The click that follows a drag must not select what is under the pointer.
+      this.justDragged = true
+      setTimeout(() => { this.justDragged = false }, 0)
+      this.endGesture()
+    }
+  }
+
+  private onWheel = (e: WheelEvent): void => {
+    // Plain scrolling scrolls the page; zoom needs Ctrl/⌘ (a trackpad pinch sends Ctrl too).
+    if (!this.interactiveMap() || !(e.ctrlKey || e.metaKey)) return
+    e.preventDefault()
+    const v = this.liveView()
+    if (!v) return
+    const unit = e.deltaMode === 1 ? 0.05 : e.deltaMode === 2 ? 1 : 0.0025
+    this.applyCamera(zoomCamera(v, Math.exp(-e.deltaY * unit)))
+    this.gestureSoon()
+  }
+
+  /** Arrow keys pan (Shift: turn and tilt), + and - zoom, 0 resets. True when the key was used. */
+  private mapKey(e: KeyboardEvent): boolean {
+    if (!this.interactiveMap() || e.altKey || e.ctrlKey || e.metaKey) return false
+    const t = e.target as Element | null
+    if (t && t !== this.root && t.closest?.('button, input, select, textarea, [data-lk]')) return false
+    const v = this.liveView()
+    if (!v) return false
+    const step = 60
+    let c: Camera | null = null
+    switch (e.key) {
+      case 'ArrowLeft': c = e.shiftKey ? clampCamera({ ...v.camera, bearing: v.camera.bearing - 15 }) : dragCamera(v, step, 0); break
+      case 'ArrowRight': c = e.shiftKey ? clampCamera({ ...v.camera, bearing: v.camera.bearing + 15 }) : dragCamera(v, -step, 0); break
+      case 'ArrowUp': c = e.shiftKey ? clampCamera({ ...v.camera, pitch: v.camera.pitch + 5 }) : dragCamera(v, 0, step); break
+      case 'ArrowDown': c = e.shiftKey ? clampCamera({ ...v.camera, pitch: v.camera.pitch - 5 }) : dragCamera(v, 0, -step); break
+      case '+': case '=': c = zoomCamera(v, 1.25); break
+      case '-': case '_': c = zoomCamera(v, 1 / 1.25); break
+      case '0': e.preventDefault(); this.reset(true); return true
+      default: return false
+    }
+    e.preventDefault()
+    // In SVG the redraw replaces the focused region: keep keyboard focus on the map itself.
+    const doc = this.host.ownerDocument
+    if (doc.activeElement !== this.root && this.root.contains(doc.activeElement)) this.root.focus({ preventScroll: true })
+    this.applyCamera(c)
+    this.gestureSoon()
+    return true
   }
 
   private onScheme = (): void => {

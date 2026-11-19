@@ -20,6 +20,13 @@ export const CSS = `
 .sp-tip .sp-tl{display:flex;align-items:center;gap:6px}
 .sp-tip i{display:inline-block;width:8px;height:8px;border-radius:2px;flex:none}
 .sp-tip .sp-tv{font-variant-numeric:tabular-nums;font-weight:600;margin-left:12px}
+.sp-root[data-map]{touch-action:none;cursor:grab}
+.sp-root[data-map][data-drag]{cursor:grabbing}
+.sp-root[data-map]:focus{outline:none}
+.sp-root[data-map]:focus-visible{outline:2px solid var(--sp-info,#2962FF);outline-offset:2px}
+.sp-ctl{position:absolute;right:8px;top:8px;z-index:5;display:flex;flex-direction:column;gap:4px;line-height:1}
+.sp-ctl button{width:28px;height:28px;padding:0;margin:0;border:1px solid;border-radius:6px;font:16px/1 system-ui,sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.sp-ctl button:focus-visible{outline:2px solid var(--sp-info,#2962FF);outline-offset:1px}
 .sp-error{line-height:1.5;font:12px ui-monospace,SFMono-Regular,Menlo,monospace;padding:12px;border:1px solid #F23645;border-radius:6px;color:#F23645;white-space:pre-wrap}
 @keyframes sp-y{from{transform:scaleY(0)}to{transform:none}}
 @keyframes sp-x{from{transform:scaleX(0)}to{transform:none}}

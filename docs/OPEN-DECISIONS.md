@@ -6,6 +6,8 @@
 - **Palette.** The default stays the TradingView set. A colour-vision-safe preset is added next to it (`accessible`, `accessible-dark`), so nobody has to choose.
 - **Shared theme package: not now.** "Alias" means each library keeps its own tokens (`--sp-*`, `--sc-*`) and Super Plot reads Super Chart's as a fallback (`createTheme('light', { alias: { text: ['--sc-text'] } })`), so a page that themes Super Chart already themes Super Plot. A shared `super-theme` package would replace the aliases with one source of tokens; build it when a third library needs the same tokens.
 - **Canvas renderer, radar, treemap, sankey, browser tests, Go and Python ports**: built (see DESIGN and `ports/`).
+- **WebGL and 3D maps** (owner, 2026-11-19: "一步到位 ... 做到 P3"): built inside the existing packages (no new package names), existing specs and APIs unchanged. **No default boundaries ship**: users import their own; presets are templates only; disputed areas are drawn like any other region unless the spec says `dashed` or `muted` (see MAPS.md).
+- **One new runtime dependency** in `super-plot-web`: `earcut` (ISC, about 3 KB, polygon triangulation for WebGL maps), loaded only with the WebGL chunk.
 
 ## Recommended, waiting for the owner
 
@@ -20,4 +22,6 @@
 5. **More chart types.** Funnel and gauge overlap with Super Chat cards; add only if a use case asks.
 6. **Vue and Svelte bindings.** The web component already covers them; add native ones only if DX asks for it.
 7. **Tree-shakable chart registration** (import only the charts you use).
-8. **Docs home.** A page and an ADR for Super Plot in `super-dev-docs` (not in this session's scope).
+8. **Raise the 50,000-row cap?** WebGL can draw several hundred thousand dots, but the cap is part of the validation contract (ports, conformance). Keep or raise per chart type.
+9. **Basemap tiles or labels** (place names, roads) are out of scope for a statistical map; add only on demand, and never from a proprietary provider by default.
+10. **Docs home.** A page and an ADR for Super Plot in `super-dev-docs` (not in this session's scope).

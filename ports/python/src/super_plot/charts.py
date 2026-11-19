@@ -7,10 +7,11 @@ from __future__ import annotations
 
 from typing import Any, Callable
 
-from ._js import clip, is_number, key_string, number_string, or_empty, to_fixed, to_number
+from ._js import clip, is_number, js_string, key_string, number_string, or_empty, to_fixed, to_number
 from .data import detect_x_kind, distinct, matrix, observations
+from .geo import Geography, js_trim, normalize_region
 from .isotime import to_time
-from .numeric import bin_counts, bin_edges, box_stats, correlation, extent, mean, quantile, total
+from .numeric import bin_counts, bin_edges, box_stats, closest, correlation, extent, mean, quantile, total
 from .text import format_date, format_percent, value_formatter
 
 Spec = dict[str, Any]
@@ -457,6 +458,227 @@ def _describe_sankey(spec: Spec) -> str:
     return t
 
 
+# ------------------------------------------------------------------------------------------- maps
+# Mirrors `packages/core/src/charts/maps.ts`. The descriptions read the data's own spelling of a region, so they
+# need no geography; only the checks do.
+
+
+def _blank(v: Any) -> bool:
+    """`v === null || v === undefined || v === ''`."""
+    return v is None or (isinstance(v, str) and v == "")
+
+
+def _check_regions(spec: Spec, rows: list[dict], issues: Issues, geo: Geography | None, fields: list[str]) -> None:
+    """Warn about data values that name no region; error when none match at all."""
+    if geo is None:
+        return
+    names = [r["name"] for r in geo.regions]
+    for name in fields:
+        col = spec.get(name)
+        if not col:
+            continue
+        seen: dict[str, str] = {}
+        for r in rows:
+            v = r.get(col)
+            if _blank(v):
+                continue
+            seen.setdefault(normalize_region(v), js_trim(js_string(v)))
+        unmatched = [raw for k, raw in seen.items() if k not in geo.lookup]
+        if not unmatched:
+            continue
+        where = f'geography "{spec["geo"]}"' if isinstance(spec.get("geo"), str) else "the inline geography"
+        if len(unmatched) == len(seen):
+            _issue(issues, "error", "no_regions_matched", name, f'None of the {len(seen)} values in "{col}" match a region of {where}.',
+                   f"Regions are matched by key, name or alias (case ignored). Some keys: {_fmt_list([r['key'] for r in geo.regions[:8]], 8)}.")
+            continue
+        near = [(u, m) for u, m in ((u, closest(u, names)) for u in unmatched[:5]) if m]
+        hint = (f"Did you mean {', '.join(f'{chr(34)}{m}{chr(34)} for {chr(34)}{clip(u, 40)}{chr(34)}' for u, m in near)}? Or add aliases when registering the geography."
+                if near else "Add aliases when registering the geography, or fix the names in the data.")
+        _issue(issues, "warning", "unmatched_regions", name,
+               f'{len(unmatched)} of {len(seen)} values in "{col}" match no region of {where} and are left out: {_fmt_list([clip(u, 40) for u in unmatched], 8)}.', hint)
+
+
+def _check_places(spec: Spec, issues: Issues, lat: str, lng: str, region: str | None) -> bool:
+    if spec.get(lat) and not spec.get(lng):
+        _issue(issues, "error", "missing_required", lng, f'"{lat}" is set, so "{lng}" is needed too.')
+        return False
+    if spec.get(lng) and not spec.get(lat):
+        _issue(issues, "error", "missing_required", lat, f'"{lng}" is set, so "{lat}" is needed too.')
+        return False
+    if spec.get(lat) and spec.get(lng):
+        return True
+    if region and spec.get(region):
+        if "geo" not in spec:
+            _issue(issues, "error", "missing_required", "geo", f'"{region}" places rows at regions, which needs a geography.', "Set geo to a registered geography, or give lat and lng columns instead.")
+            return False
+        return True
+    _issue(issues, "error", "missing_required", lat, f'Give "{lat}" and "{lng}" columns{f", or {chr(34)}{region}{chr(34)} with a geography" if region else ""}.', "Longitude and latitude in degrees (WGS 84).")
+    return False
+
+
+def _has_error(issues: Issues) -> bool:
+    return any(i["severity"] == "error" for i in issues)
+
+
+def _on_map(spec: Spec, r: dict, lat: str, lng: str, region: str) -> bool:
+    """A row has a usable place: valid latitude and longitude, or (without them) a region value."""
+    if spec.get(lat) and spec.get(lng):
+        la, lo = to_number(r.get(spec[lat])), to_number(r.get(spec[lng]))
+        return la is not None and lo is not None and abs(la) <= 90 and abs(lo) <= 180
+    return bool(spec.get(region)) and not _blank(r.get(spec[region]))
+
+
+def _raw_values(spec: Spec, rows: list[dict]) -> list[dict]:
+    """Region values grouped by the data's own spelling (`rawValues`)."""
+    sums: dict[str, dict] = {}
+    for r in rows:
+        v = to_number(r.get(spec["value"]))
+        raw = r.get(spec["region"])
+        if v is None or _blank(raw):
+            continue
+        key = js_trim(js_string(raw))
+        if key in sums:
+            sums[key]["value"] += v
+        else:
+            sums[key] = {"label": key, "value": v}
+    return list(sums.values())
+
+
+def _check_choropleth(spec: Spec, rows: list[dict], issues: Issues, geo: Geography | None) -> None:
+    _check_regions(spec, rows, issues, geo, ["region"])
+    if not _has_error(issues) and not _raw_values(spec, rows):
+        _issue(issues, "error", "no_values", "value", "No row has both a region and a numeric value.")
+
+
+def _describe_choropleth(spec: Spec) -> str:
+    vals = _raw_values(spec, spec["data"])
+    f = _formatter(spec)
+    on = f' of "{clip(spec["geo"], 64)}"' if isinstance(spec.get("geo"), str) else ""
+    if not vals:
+        return f"{_lead(spec, 'Choropleth map')} No values."
+    hi = _first_max(vals, lambda x: x["value"])
+    lo = _first_min(vals, lambda x: x["value"])
+    return (f"{_lead(spec, 'Choropleth map')} {len(vals)} regions{on} coloured by {spec['value']}{' and raised by it' if spec.get('extrude') else ''}."
+            f" Highest: {clip(hi['label'], 40)} ({f(hi['value'])}). Lowest: {clip(lo['label'], 40)} ({f(lo['value'])}).")
+
+
+def _place_name(spec: Spec, r: dict) -> str:
+    if spec.get("label"):
+        return or_empty(r.get(spec["label"]))
+    return js_trim(or_empty(r.get(spec["region"]))) if spec.get("region") else ""
+
+
+def _raw_places(spec: Spec, rows: list[dict]) -> list[dict]:
+    """Places for the description and the checks: no geography needed (`rawPlaces`)."""
+    out = []
+    for r in rows:
+        if not _on_map(spec, r, "lat", "lng", "region"):
+            continue
+        size = to_number(r.get(spec["size"])) if spec.get("size") else None
+        if spec.get("size") and (size is None or size < 0):
+            continue
+        out.append({"name": _place_name(spec, r), "size": size, "s": or_empty(r.get(spec["series"])) if spec.get("series") else ""})
+    return out
+
+
+def _check_bubble_map(spec: Spec, rows: list[dict], issues: Issues, geo: Geography | None) -> None:
+    if not _check_places(spec, issues, "lat", "lng", "region"):
+        return
+    if not spec.get("lat"):
+        _check_regions(spec, rows, issues, geo, ["region"])
+    if not _has_error(issues) and not _raw_places(spec, rows):
+        _issue(issues, "error", "no_points", "data", "No row has a usable place (and size, when set).")
+
+
+def _describe_bubble_map(spec: Spec) -> str:
+    ps = _raw_places(spec, spec["data"])
+    f = _formatter(spec)
+    groups = distinct(p["s"] for p in ps) if spec.get("series") else []
+    t = (f"{_lead(spec, 'Bubble map')} {len(ps)} places{' sized by ' + str(spec['size']) if spec.get('size') else ''}"
+         f"{f', in {len(groups)} groups ({_fmt_list(groups)})' if len(groups) > 1 else ''}.")
+    sized = [p for p in ps if p["size"] is not None]
+    if sized:
+        big = _first_max(sized, lambda p: p["size"])
+        t += f" Largest: {clip(big['name'] or 'unnamed', 40)} ({f(big['size'])})."
+    return t
+
+
+def _check_column_map(spec: Spec, rows: list[dict], issues: Issues, geo: Geography | None) -> None:
+    if not _check_places(spec, issues, "lat", "lng", "region"):
+        return
+    if not spec.get("lat"):
+        _check_regions(spec, rows, issues, geo, ["region"])
+    neg = 0
+    for r in rows:
+        v = to_number(r.get(spec["value"]))
+        if v is not None and v < 0:
+            neg += 1
+    if neg:
+        _issue(issues, "warning", "negative_skipped", "value", f"{neg} negative values are skipped: a column cannot be lower than the ground.", 'Use a choropleth with scale "diverging" for values above and below zero.')
+
+
+def _describe_column_map(spec: Spec) -> str:
+    f = _formatter(spec)
+    cols = []
+    for r in spec["data"]:
+        v = to_number(r.get(spec["value"]))
+        if v is None or v < 0 or not _on_map(spec, r, "lat", "lng", "region"):
+            continue
+        cols.append({"name": _place_name(spec, r), "v": v, "s": or_empty(r.get(spec["series"])) if spec.get("series") else ""})
+    if not cols:
+        return f"{_lead(spec, '3D column map')} No values."
+    top = _first_max(cols, lambda x: x["v"])
+    tot = total([x["v"] for x in cols])
+    groups = distinct(x["s"] for x in cols) if spec.get("series") else []
+    return (f"{_lead(spec, '3D column map')} {len(cols)} columns of {spec['value']} on a {'tilted map' if spec.get('view') == 'flat' else 'globe'}"
+            f"{f', in {len(groups)} groups ({_fmt_list(groups)})' if len(groups) > 1 else ''}, totalling {f(tot)}."
+            f" Tallest: {clip(top['name'] or 'unnamed', 40)} ({f(top['v'])}).")
+
+
+_FLOW_LL = ["fromLat", "fromLng", "toLat", "toLng"]
+
+
+def _raw_flows(spec: Spec, rows: list[dict]) -> list[dict]:
+    out = []
+    for r in rows:
+        if not _on_map(spec, r, "fromLat", "fromLng", "from") or not _on_map(spec, r, "toLat", "toLng", "to"):
+            continue
+        v = to_number(r.get(spec["value"])) if spec.get("value") else None
+        if spec.get("value") and (v is None or v < 0):
+            continue
+        out.append({"from": js_trim(or_empty(r.get(spec["from"]))) if spec.get("from") else "", "to": js_trim(or_empty(r.get(spec["to"]))) if spec.get("to") else "",
+                    "v": v, "s": or_empty(r.get(spec["series"])) if spec.get("series") else ""})
+    return out
+
+
+def _check_flow_map(spec: Spec, rows: list[dict], issues: Issues, geo: Geography | None) -> None:
+    given = [k for k in _FLOW_LL if spec.get(k)]
+    if given and len(given) < 4:
+        _issue(issues, "error", "missing_required", next(k for k in _FLOW_LL if not spec.get(k)), "Give all four of fromLat, fromLng, toLat and toLng, or none of them.")
+        return
+    if not given:
+        if not spec.get("from") or not spec.get("to"):
+            _issue(issues, "error", "missing_required", "to" if spec.get("from") else "from", "Give from and to region columns (with geo), or fromLat/fromLng/toLat/toLng columns.")
+            return
+        if "geo" not in spec:
+            _issue(issues, "error", "missing_required", "geo", "from and to name regions, which needs a geography.", "Set geo to a registered geography, or give fromLat/fromLng/toLat/toLng columns.")
+            return
+        _check_regions(spec, rows, issues, geo, ["from", "to"])
+    if not _has_error(issues) and not _raw_flows(spec, rows):
+        _issue(issues, "error", "no_points", "data", "No row has a usable origin and destination (and value, when set).")
+
+
+def _describe_flow_map(spec: Spec) -> str:
+    fs = _raw_flows(spec, spec["data"])
+    f = _formatter(spec)
+    t = f"{_lead(spec, 'Flow map')} {len(fs)} flows{' weighted by ' + str(spec['value']) if spec.get('value') else ''}."
+    weighted = [x for x in fs if x["v"] is not None]
+    if weighted:
+        big = _first_max(weighted, lambda x: x["v"])
+        t += f" Total {f(total([x['v'] for x in weighted]))}. Largest: {clip(big['from'] or 'origin', 30)} to {clip(big['to'] or 'destination', 30)} ({f(big['v'])})."
+    return t
+
+
 # ----------------------------------------------------------------------------------------- tables
 
 CHECKS: dict[str, Callable[[Spec, list[dict], Issues], None]] = {
@@ -467,6 +689,14 @@ CHECKS: dict[str, Callable[[Spec, list[dict], Issues], None]] = {
     "radar": _check_radar,
     "treemap": _check_treemap,
     "sankey": _check_sankey,
+}
+
+# Map charts: the check also gets the geography that `geo` resolved to (None when the spec has no `geo`).
+MAP_CHECKS: dict[str, Callable[[Spec, list[dict], Issues, "Geography | None"], None]] = {
+    "choropleth": _check_choropleth,
+    "bubble-map": _check_bubble_map,
+    "column-map": _check_column_map,
+    "flow-map": _check_flow_map,
 }
 
 DESCRIBE: dict[str, Callable[[Spec], str]] = {
@@ -482,5 +712,9 @@ DESCRIBE: dict[str, Callable[[Spec], str]] = {
     "radar": _describe_radar,
     "treemap": _describe_treemap,
     "sankey": _describe_sankey,
+    "choropleth": _describe_choropleth,
+    "bubble-map": _describe_bubble_map,
+    "column-map": _describe_column_map,
+    "flow-map": _describe_flow_map,
 }
 

@@ -14,7 +14,8 @@ from typing import Any
 
 from ._js import clip as _clip  # noqa: F401  (re-exported for symmetry with the reference)
 from ._js import is_finite_number, is_number, to_number, ulen, uslice
-from .charts import CHECKS, DESCRIBE
+from .charts import CHECKS, DESCRIBE, MAP_CHECKS
+from .geo import CAMERA_RANGE, Geography, resolve_geo
 from .numeric import closest
 from .text import is_value_format
 
@@ -83,7 +84,9 @@ def _show(v: Any) -> str:
     return s if len(s) <= 60 else s[:57] + "…"
 
 
-def _validate_field(name: str, d: dict[str, Any], value: Any, issues: list, columns: dict[str, None], rows: list[dict]) -> Any:
+def _validate_field(name: str, d: dict[str, Any], value: Any, issues: list, columns: dict[str, None], rows: list[dict], found: dict[str, Geography] | None = None) -> Any:
+    """The normalised value of one field, or None to drop it. A geography that `geo` resolves to is left in `found`."""
+
     def bad(code: str, message: str, hint: str | None = None) -> None:
         _add(issues, "error", code, name, message, hint)
 
@@ -145,6 +148,17 @@ def _validate_field(name: str, d: dict[str, Any], value: Any, issues: list, colu
         return out
     if kind == "annotations":
         return _annotations(name, value, issues)
+    if kind == "geo":
+        if not isinstance(value, (str, dict)):
+            return bad("bad_type", "geo must be the name of a registered geography or an inline GeoJSON/TopoJSON object.", "Register boundaries with register_geography(name, data) and set geo to that name.")
+        geo = resolve_geo(value, issues, name)
+        if geo is None:
+            return None
+        if found is not None:
+            found[name] = geo
+        return value
+    if kind == "camera":
+        return _camera(name, value, issues)
     # column / columns
     names = (value if isinstance(value, list) else [value]) if kind == "columns" else [value]
     if kind == "column" and not isinstance(value, str):
@@ -158,20 +172,33 @@ def _validate_field(name: str, d: dict[str, Any], value: Any, issues: list, colu
             ok = False
             near = closest(c, list(columns))
             _add(issues, "error", "no_such_column", path, f'Column "{c}" does not exist in data.', f"{f'Did you mean {chr(34)}{near}{chr(34)}? ' if near else ''}Available columns: {', '.join(list(columns)[:20])}.")
-        elif d.get("role") == "number":
-            non_num = seen = 0
+        elif d.get("role") in ("number", "lat", "lng"):
+            role = d["role"]
+            lim = 90 if role == "lat" else 180 if role == "lng" else float("inf")
+            non_num = seen = outside = 0
             for r in rows:
                 v = r.get(c)
-                if v is None or v == "":
+                if v is None or (isinstance(v, str) and v == ""):
                     continue
                 seen += 1
-                if to_number(v) is None:
+                num = to_number(v)
+                if num is None:
                     non_num += 1
+                elif abs(num) > lim:
+                    outside += 1
             if seen > 0 and non_num == seen:
                 ok = False
                 _add(issues, "error", "not_numeric", path, f'Column "{c}" has no numeric values.', "Convert the values to numbers, or pick another column.")
-            elif non_num > 0:
-                _add(issues, "warning", "some_not_numeric", path, f'{non_num} of {seen} values in "{c}" are not numeric and will be skipped.')
+            else:
+                if non_num > 0:
+                    _add(issues, "warning", "some_not_numeric", path, f'{non_num} of {seen} values in "{c}" are not numeric and will be skipped.')
+                if outside > 0:
+                    what = "latitude (-90..90)" if role == "lat" else "longitude (-180..180)"
+                    if outside == seen - non_num:
+                        ok = False
+                        _add(issues, "error", "out_of_range", path, f'No value in "{c}" is a valid {what}.', "Use degrees in WGS 84. Projected coordinates (metres) are not supported.")
+                    else:
+                        _add(issues, "warning", "some_out_of_range", path, f'{outside} of {seen} values in "{c}" are not a valid {what} and will be skipped.')
     if not ok:
         return None
     if kind == "columns":
@@ -206,6 +233,28 @@ def _annotations(name: str, value: Any, issues: list) -> Any:
         else:
             out.append({**a, **({"label": uslice(a["label"], 80)} if isinstance(a.get("label"), str) else {})})
     return out
+
+
+def _camera(name: str, value: Any, issues: list) -> Any:
+    if not isinstance(value, dict):
+        return _add(issues, "error", "bad_type", name, 'camera must be an object such as {"lng":121,"lat":24,"zoom":2}.')
+    out: dict[str, Any] = {}
+    ok = True
+    for k, v in value.items():
+        limits = CAMERA_RANGE.get(k)
+        if limits is None:
+            near = closest(k, list(CAMERA_RANGE))
+            _add(issues, "error", "unknown_field", f"{name}.{k}", f'Unknown camera field "{k}".', f'Did you mean "{near}"?' if near else f"Allowed: {', '.join(CAMERA_RANGE)}.")
+            ok = False
+        elif not is_finite_number(v):
+            _add(issues, "error", "bad_type", f"{name}.{k}", f"camera.{k} must be a number, got {_show(v)}.")
+            ok = False
+        elif v < limits[0] or v > limits[1]:
+            _add(issues, "error", "out_of_range", f"{name}.{k}", f"camera.{k} must be within {limits[0]}..{limits[1]}, got {v}.")
+            ok = False
+        else:
+            out[k] = v
+    return out if ok else None
 
 
 def _default(d: dict[str, Any]) -> Any:
@@ -257,6 +306,7 @@ def validate_plot(spec: Any) -> Validation:
     valid_rows: list[dict] = rows if data_ok else []
 
     out: dict[str, Any] = {"type": chart}
+    found: dict[str, Geography] = {}
     for key, value in obj.items():
         if key in ("type", "data"):
             continue
@@ -267,7 +317,7 @@ def validate_plot(spec: Any) -> Validation:
             continue
         if d["kind"] in ("column", "columns") and not data_ok:
             continue
-        v = _validate_field(key, d, value, issues, columns, valid_rows)
+        v = _validate_field(key, d, value, issues, columns, valid_rows, found)
         if v is not None:
             out[key] = v
     for key, d in defs.items():
@@ -279,8 +329,11 @@ def validate_plot(spec: Any) -> Validation:
             out[key] = _default(d)
     if data_ok:
         out["data"] = rows
-    if not any(i["severity"] == "error" for i in issues) and chart in CHECKS:
-        CHECKS[chart](out, valid_rows, issues)
+    if not any(i["severity"] == "error" for i in issues):
+        if chart in CHECKS:
+            CHECKS[chart](out, valid_rows, issues)
+        elif chart in MAP_CHECKS:
+            MAP_CHECKS[chart](out, valid_rows, issues, found.get("geo"))
 
     ok = not any(i["severity"] == "error" for i in issues)
     return Validation(ok, issues, out if ok else None)

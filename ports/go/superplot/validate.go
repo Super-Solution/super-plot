@@ -57,6 +57,7 @@ func (e *SpecError) Error() string {
 
 var (
 	annotationKeys = []string{"axis", "value", "to", "label", "tone"}
+	cameraKeys     = []string{"lng", "lat", "zoom", "pitch", "bearing"}
 	tones          = []string{"neutral", "positive", "negative", "warning", "info"}
 	hexRe          = regexp.MustCompile(`(?i)^#(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$`)
 	funcRe         = regexp.MustCompile(`(?i)^(?:rgb|rgba|hsl|hsla)\(\s*[0-9.%\s,/-]+\)$`)
@@ -142,8 +143,15 @@ func didYouMean(near string, ok bool) string {
 	return ""
 }
 
+// geoState carries what the geo field needs and leaves behind: the spec as JSON text (a decoded object has lost
+// its key order), and the geography the field resolved to.
+type geoState struct {
+	doc []byte
+	geo *geography
+}
+
 // validateField returns the normalised value of one field, or nil to drop it.
-func validateField(name string, d fieldDef, value any, issues *[]Issue, columns []string, rows []row) any {
+func validateField(name string, d fieldDef, value any, issues *[]Issue, columns []string, rows []row, gs *geoState) any {
 	bad := func(code, message string, hint ...string) any {
 		add(issues, "error", code, name, message, hint...)
 		return nil
@@ -252,6 +260,19 @@ func validateField(name string, d fieldDef, value any, issues *[]Issue, columns 
 		return out
 	case "annotations":
 		return validateAnnotations(name, value, issues)
+	case "geo":
+		_, isName := value.(string)
+		if _, isObject := value.(map[string]any); !isName && !isObject {
+			return bad("bad_type", "geo must be the name of a registered geography or an inline GeoJSON/TopoJSON object.", "Register boundaries with RegisterGeography(name, data) and set geo to that name.")
+		}
+		geo := resolveGeo(value, issues, name, func() []string { return keyOrder(gs.doc, name, "objects") })
+		if geo == nil {
+			return nil
+		}
+		gs.geo = geo
+		return value
+	case "camera":
+		return validateCamera(name, value, issues)
 	}
 	// column / columns
 	var names []any
@@ -292,8 +313,15 @@ func validateField(name string, d fieldDef, value any, issues *[]Issue, columns 
 				avail = avail[:20]
 			}
 			add(issues, "error", "no_such_column", path, fmt.Sprintf("Column %q does not exist in data.", c), fmt.Sprintf("%sAvailable columns: %s.", didYouMean(near, found), strings.Join(avail, ", ")))
-		} else if d.Role == "number" {
-			nonNum, seen := 0, 0
+		} else if d.Role == "number" || d.Role == "lat" || d.Role == "lng" {
+			lim := math.Inf(1)
+			switch d.Role {
+			case "lat":
+				lim = 90
+			case "lng":
+				lim = 180
+			}
+			nonNum, seen, outside := 0, 0, 0
 			for _, r := range rows {
 				v := r[c]
 				if v == nil {
@@ -303,15 +331,31 @@ func validateField(name string, d fieldDef, value any, issues *[]Issue, columns 
 					continue
 				}
 				seen++
-				if _, isNum := toNumber(v); !isNum {
+				if num, isNum := toNumber(v); !isNum {
 					nonNum++
+				} else if math.Abs(num) > lim {
+					outside++
 				}
 			}
 			if seen > 0 && nonNum == seen {
 				ok = false
 				add(issues, "error", "not_numeric", path, fmt.Sprintf("Column %q has no numeric values.", c), "Convert the values to numbers, or pick another column.")
-			} else if nonNum > 0 {
-				add(issues, "warning", "some_not_numeric", path, fmt.Sprintf("%d of %d values in %q are not numeric and will be skipped.", nonNum, seen, c))
+			} else {
+				if nonNum > 0 {
+					add(issues, "warning", "some_not_numeric", path, fmt.Sprintf("%d of %d values in %q are not numeric and will be skipped.", nonNum, seen, c))
+				}
+				if outside > 0 {
+					what := "longitude (-180..180)"
+					if d.Role == "lat" {
+						what = "latitude (-90..90)"
+					}
+					if outside == seen-nonNum {
+						ok = false
+						add(issues, "error", "out_of_range", path, fmt.Sprintf("No value in %q is a valid %s.", c, what), "Use degrees in WGS 84. Projected coordinates (metres) are not supported.")
+					} else {
+						add(issues, "warning", "some_out_of_range", path, fmt.Sprintf("%d of %d values in %q are not a valid %s and will be skipped.", outside, seen, c, what))
+					}
+				}
 			}
 		}
 	}
@@ -382,26 +426,54 @@ func validateAnnotations(name string, value any, issues *[]Issue) any {
 
 func isString(v any) bool { _, ok := v.(string); return ok }
 
-// normalize turns whatever the caller passed (a JSON string, bytes, a map, a struct) into plain JSON values.
-func normalize(input any) (any, *Issue) {
-	var b []byte
-	switch x := input.(type) {
-	case string:
-		b = []byte(x)
-	case []byte:
-		b = x
-	default:
-		enc, err := json.Marshal(input)
-		if err != nil {
-			return nil, &Issue{Severity: "error", Code: "bad_type", Path: "", Message: "Spec must be an object."}
+func validateCamera(name string, value any, issues *[]Issue) any {
+	m, ok := value.(map[string]any)
+	if !ok {
+		add(issues, "error", "bad_type", name, `camera must be an object such as {"lng":121,"lat":24,"zoom":2}.`)
+		return nil
+	}
+	out := map[string]any{}
+	good := true
+	for _, k := range sortedKeys(m) {
+		p := name + "." + k
+		limits, known := data.Camera[k]
+		f, isNum := m[k].(float64)
+		switch {
+		case !known:
+			hint := "Allowed: " + strings.Join(cameraKeys, ", ") + "."
+			if near, found := closest(k, cameraKeys); found {
+				hint = fmt.Sprintf("Did you mean %q?", near)
+			}
+			add(issues, "error", "unknown_field", p, fmt.Sprintf("Unknown camera field %q.", k), hint)
+			good = false
+		case !isNum || !isFinite(f):
+			add(issues, "error", "bad_type", p, fmt.Sprintf("camera.%s must be a number, got %s.", k, show(m[k])))
+			good = false
+		case f < limits[0] || f > limits[1]:
+			add(issues, "error", "out_of_range", p, fmt.Sprintf("camera.%s must be within %v..%v, got %v.", k, limits[0], limits[1], f))
+			good = false
+		default:
+			out[k] = f
 		}
-		b = enc
+	}
+	if !good {
+		return nil
+	}
+	return out
+}
+
+// normalize turns whatever the caller passed (a JSON string, bytes, a map, a struct) into plain JSON values,
+// and also returns the JSON text they were read from.
+func normalize(input any) (any, []byte, *Issue) {
+	b, err := toJSON(input)
+	if err != nil {
+		return nil, nil, &Issue{Severity: "error", Code: "bad_type", Path: "", Message: "Spec must be an object."}
 	}
 	var out any
 	if err := json.Unmarshal(b, &out); err != nil {
-		return nil, &Issue{Severity: "error", Code: "invalid_json", Path: "", Message: fmt.Sprintf("Spec is not valid JSON: %v.", err)}
+		return nil, nil, &Issue{Severity: "error", Code: "invalid_json", Path: "", Message: fmt.Sprintf("Spec is not valid JSON: %v.", err)}
 	}
-	return out, nil
+	return out, b, nil
 }
 
 // ValidatePlot checks a spec (a JSON string, bytes, a map or a struct) without drawing it.
@@ -411,7 +483,7 @@ func ValidatePlot(input any) Validation {
 		add(&issues, "error", code, path, message, hint...)
 		return Validation{Issues: issues}
 	}
-	raw, bad := normalize(input)
+	raw, doc, bad := normalize(input)
 	if bad != nil {
 		return Validation{Issues: []Issue{*bad}}
 	}
@@ -482,6 +554,7 @@ func ValidatePlot(input any) Validation {
 		}
 	}
 	out := map[string]any{"type": chart}
+	gs := &geoState{doc: doc}
 	for _, key := range sortedKeys(obj) {
 		if key == "type" || key == "data" {
 			continue
@@ -499,7 +572,7 @@ func ValidatePlot(input any) Validation {
 		if (d.Kind == "column" || d.Kind == "columns") && !dataOK {
 			continue
 		}
-		if v := validateField(key, d, obj[key], &issues, columns, rows); v != nil {
+		if v := validateField(key, d, obj[key], &issues, columns, rows, gs); v != nil {
 			out[key] = v
 		}
 	}
@@ -528,6 +601,8 @@ func ValidatePlot(input any) Validation {
 	if !hasError() {
 		if check, ok := checks[chart]; ok {
 			check(out, rows, &issues)
+		} else if check, ok := mapChecks[chart]; ok {
+			check(out, rows, &issues, gs.geo)
 		}
 	}
 	if hasError() {

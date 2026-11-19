@@ -9,6 +9,7 @@ from pathlib import Path
 from super_plot import (
     bin_counts, bin_edges, box_stats, chart_types, describe_plot, format_percent, format_value, linear_ticks,
     nice_domain, quantile, require_valid, validate_plot, PlotSpecError,
+    GeographyError, get_geography, match_region, register_geography, unregister_geography,
 )
 
 DATA = json.loads((Path(__file__).resolve().parents[3] / "conformance" / "plot.v1.json").read_text(encoding="utf-8"))
@@ -32,6 +33,17 @@ def same(a, b, path="") -> None:
 
 def keyed(issues):
     return sorted((i["severity"], i["code"], i["path"]) for i in issues)
+
+
+def setUpModule():
+    # The validation and description cases name these geographies.
+    for g in DATA["geographies"]:
+        register_geography(g["name"], g["data"], g["options"])
+
+
+def tearDownModule():
+    for g in DATA["geographies"]:
+        unregister_geography(g["name"])
 
 
 class Conformance(unittest.TestCase):
@@ -101,6 +113,33 @@ class Conformance(unittest.TestCase):
             else:
                 self.assertEqual(describe_plot(c["spec"]), c["describe"], c["name"])
                 self.assertEqual(sorted(i["code"] for i in validate_plot(c["spec"]).issues), sorted(c["issueCodes"]), c["name"])
+
+    def test_geography_cases(self):
+        for c in DATA["geographyCases"]:
+            options = c["preset"] if "preset" in c else c["options"]
+            try:
+                issues = register_geography(c["as"], c["data"], options)
+            except GeographyError as e:
+                self.assertFalse(c["ok"], c["name"])
+                self.assertEqual(keyed(e.issues), keyed(c["issues"]), c["name"])
+                self.assertIsNone(get_geography(c["as"]), c["name"])
+                continue
+            geo = get_geography(c["as"])
+            self.assertTrue(unregister_geography(c["as"]), c["name"])
+            self.assertTrue(c["ok"], c["name"])
+            self.assertEqual(keyed(issues), keyed(c["issues"]), c["name"])
+            self.assertEqual([{k: r[k] for k in ("key", "name", "disputed")} for r in geo.regions], c["regions"], c["name"])
+            self.assertEqual([[p, match_region(geo, p)] for p, _ in c["matches"]], c["matches"], c["name"])
+
+    def test_geography_presets_and_functions(self):
+        with self.assertRaises(GeographyError) as cm:
+            register_geography("x", {}, "no-such-preset")
+        self.assertEqual(keyed(cm.exception.issues), [("error", "bad_enum", "options")])
+        fc = DATA["geographies"][0]["data"]
+        register_geography("conf-fn", fc, {"key": lambda p, i: f"{i}-{p['name']}".lower(), "name": lambda p, i: None})
+        self.assertEqual([r["key"] for r in get_geography("conf-fn").regions], ["n-north", "s-south", "e-east isle"])
+        self.assertTrue(unregister_geography("conf-fn"))
+        self.assertFalse(unregister_geography("conf-fn"))
 
     def test_require_valid_reports_every_issue(self):
         with self.assertRaises(PlotSpecError) as cm:

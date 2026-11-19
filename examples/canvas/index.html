@@ -24,10 +24,10 @@ p { color: var(--muted); margin: 6px 0 0; }
 <body>
 <main>
   <h1>Many points</h1>
-  <p>Above 4,000 marks the browser binding draws on a canvas by itself. Same spec, same tooltips, same legend. Move the mouse over the dots.</p>
+  <p>Above 4,000 marks the browser binding draws on a canvas by itself, and above 20,000 on the GPU (WebGL) when the device has one. Same spec, same tooltips, same legend. Move the mouse over the dots.</p>
   <div class="bar">
     <div class="seg" id="n" role="group" aria-label="Number of points"></div>
-    <div class="seg" id="r" role="group" aria-label="Renderer"><button data-v="auto">Auto</button><button data-v="svg">SVG</button><button data-v="canvas">Canvas</button></div>
+    <div class="seg" id="r" role="group" aria-label="Renderer"><button data-v="auto">Auto</button><button data-v="svg">SVG</button><button data-v="canvas">Canvas</button><button data-v="webgl">WebGL</button></div>
     <span class="stat" id="stat" aria-live="polite"></span>
   </div>
   <div class="card"><div id="plot"></div></div>

@@ -61,5 +61,9 @@ export const gallery: { id: string; note: string; spec: Record<string, unknown> 
     id: 'treemap-plain', note: 'No groups: shade by size',
     spec: { type: 'treemap', title: 'Largest cities', subtitle: 'Population, millions', label: 'city', value: 'pop', format: 'fixed:1', data: [['Tokyo', 37.4], ['Delhi', 31], ['Shanghai', 27.1], ['São Paulo', 22], ['Mexico City', 21.8], ['Cairo', 21.3], ['Mumbai', 20.4], ['Beijing', 20.4], ['Dhaka', 19.6], ['Osaka', 19.2], ['New York', 18.8], ['Karachi', 16.1], ['Taipei', 7.1]].map(([city, pop]) => ({ city, pop })) }
   },
-  { id: 'sankey', note: 'Flows between stages, loops refused', spec: by('sankey') }
+  { id: 'sankey', note: 'Flows between stages, loops refused', spec: by('sankey') },
+  { id: 'choropleth', note: 'Regions coloured by value (invented islands: Super Plot ships no boundaries)', spec: by('choropleth') },
+  { id: 'bubble-map', note: 'Places sized by value, on imported land', spec: by('bubble-map') },
+  { id: 'column-map', note: '3D columns on a globe: drag to turn', spec: by('column-map') },
+  { id: 'flow-map', note: 'Arcs from origin to destination', spec: by('flow-map') }
 ]

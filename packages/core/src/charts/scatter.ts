@@ -45,7 +45,12 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
 
   const sizes = show.map(p => p.size).filter((v): v is number => v !== null)
   const sz = extent(sizes)
-  const radius = (p: P): number => (p.size === null || !sz ? 5 : sz[0] === sz[1] ? 9 : 4 + 14 * Math.sqrt((p.size - sz[0]) / (sz[1] - sz[0])))
+  // Density-adaptive dots: past a few thousand points, smaller dots without the surface ring overlap less
+  // (the cloud stays readable) and cost far less to draw.
+  const n = show.length
+  const dense = n > 2000
+  const baseR = n > 20000 ? 2 : n > 8000 ? 2.5 : dense ? 3.5 : 5
+  const radius = (p: P): number => (p.size === null || !sz ? baseR : sz[0] === sz[1] ? 9 : 4 + 14 * Math.sqrt((p.size - sz[0]) / (sz[1] - sz[0])))
   const fmt = c.format
   const intraday = kind === 'time' && hasTimeOfDay(show.map(p => p.x))
   const xnf = new Intl.NumberFormat(c.locale, { maximumFractionDigits: 4 })
@@ -67,7 +72,7 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
       ...(s.size && p.size !== null ? [{ label: String(s.size), value: fmt(p.size), color: undefined as unknown as string }] : [])
     ]
     const tip = { title: clip(p.name ?? (keys.length > 1 ? series[si].label : ''), 60) || undefined, rows }
-    dots.push({ type: 'circle', role: 'data', series: p.s, cx, cy, r, fill: color, opacity: p.size !== null || show.length > 200 ? 0.62 : 0.85, stroke: c.c('background'), strokeWidth: 1.5, tip, ...(withAria ? { aria: `${p.name ?? ''} ${s.x} ${xfmt(p.x)}, ${s.y} ${fmt(p.y)}`.trim() } : {}), anim: 'fade', datum: { x: p.x, y: p.y, series: p.s } })
+    dots.push({ type: 'circle', role: 'data', series: p.s, cx, cy, r, fill: color, opacity: dense && p.size === null ? (n > 20000 ? 0.5 : 0.6) : p.size !== null || show.length > 200 ? 0.62 : 0.85, ...(dense && p.size === null ? {} : { stroke: c.c('background'), strokeWidth: 1.5 }), tip, ...(withAria ? { aria: `${p.name ?? ''} ${s.x} ${xfmt(p.x)}, ${s.y} ${fmt(p.y)}`.trim() } : {}), anim: 'fade', datum: { x: p.x, y: p.y, series: p.s } })
     if (hitOk && r < 8) hits.push({ type: 'circle', role: 'hit', series: p.s, cx, cy, r: 10, fill: 'transparent', tip })
   }
   const trend: Mark[] = []

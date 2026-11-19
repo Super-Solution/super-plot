@@ -1,5 +1,5 @@
 import type { Issue } from './schema.js'
-import type { Mark, Rect, SeriesInfo, TextMark } from './scene.js'
+import type { Mark, Rect, SceneGeo, SeriesInfo, TextMark } from './scene.js'
 import type { RenderEnv } from './theme.js'
 import { cssVar, seriesVar } from './theme.js'
 import { fit, clip } from './util/text.js'
@@ -19,6 +19,10 @@ export interface FrameOptions {
 /** What a chart gets while compiling: its spec, the environment, and the shared frame and helpers. */
 export class ChartCtx<S extends Record<string, any> = Record<string, any>> {
   readonly marks: Mark[] = []
+  /** Clip paths marks refer to by id (maps). */
+  readonly clips: Record<string, string> = {}
+  /** Maps: the geography payload for 3D renderers. */
+  geo: SceneGeo | undefined
   readonly issues: Issue[]
   /** Series keys hidden by the viewer (legend toggles). */
   readonly hidden: Set<string>

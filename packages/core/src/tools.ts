@@ -4,6 +4,7 @@ import { compilePlot } from './compile.js'
 import { renderSvg } from './svg.js'
 import { validatePlot } from './validate.js'
 import { resolveTheme } from './theme.js'
+import { listGeographies } from './geo/geography.js'
 
 /**
  * Framework-neutral tool descriptors an agent runtime can register as-is (MCP, super-chat's tool
@@ -51,6 +52,13 @@ export const plotTools: PlotTool[] = [
     authority: 'read',
     inputSchema: { type: 'object', properties: { spec, locale: { type: 'string' } }, required: ['spec'], additionalProperties: false },
     run: a => describePlot(a.spec, { locale: typeof a.locale === 'string' ? a.locale : undefined })
+  },
+  {
+    name: 'plot_geographies',
+    description: 'List the map boundaries the host registered (Super Plot ships none): each name with its region count and sample region keys and names. Use a name as `geo` in a map spec and region keys or names in the region column.',
+    authority: 'read',
+    inputSchema: { type: 'object', properties: {}, additionalProperties: false },
+    run: () => listGeographies()
   },
   {
     name: 'plot_render_svg',

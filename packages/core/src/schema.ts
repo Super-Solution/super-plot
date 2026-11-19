@@ -1,6 +1,8 @@
 import { closest, toNumber } from './util/num.js'
 import { isSafeColor } from './util/color.js'
 import { isValueFormat } from './util/format.js'
+import { resolveGeo } from './geo/geography.js'
+import { CAMERA_LIMITS } from './geo/view.js'
 
 export type Row = Record<string, unknown>
 
@@ -9,7 +11,7 @@ export type Row = Record<string, unknown>
  *   validation (with actionable errors), JSON Schema, the reference docs, and the agent catalog.
  */
 export type FieldDef = { desc: string; required?: boolean } & (
-  | { kind: 'column'; role: 'any' | 'number' | 'x' }
+  | { kind: 'column'; role: 'any' | 'number' | 'x' | 'lat' | 'lng' }
   | { kind: 'columns'; role: 'number' }
   | { kind: 'enum'; values: readonly string[]; default?: string }
   | { kind: 'number'; min?: number; max?: number; integer?: boolean; default?: number }
@@ -22,6 +24,8 @@ export type FieldDef = { desc: string; required?: boolean } & (
   | { kind: 'bins'; default?: 'auto' | number }
   | { kind: 'data' }
   | { kind: 'version' }
+  | { kind: 'geo' }
+  | { kind: 'camera' }
 )
 
 export type FieldMap = Record<string, FieldDef>
@@ -61,6 +65,8 @@ export const CARTESIAN_FIELDS: FieldMap = {
 }
 
 const ANNOTATION_KEYS = ['axis', 'value', 'to', 'label', 'tone']
+export const CAMERA_KEYS = ['lng', 'lat', 'zoom', 'pitch', 'bearing'] as const
+const CAMERA_RANGE: Record<(typeof CAMERA_KEYS)[number], readonly [number, number]> = { lng: [-180, 180], lat: [-90, 90], zoom: CAMERA_LIMITS.zoom, pitch: CAMERA_LIMITS.pitch, bearing: CAMERA_LIMITS.bearing }
 const TONES = ['neutral', 'positive', 'negative', 'warning', 'info']
 
 export interface ValidateCtx {
@@ -155,6 +161,31 @@ export function validateField(name: string, def: FieldDef, value: unknown, ctx: 
       })
       return out
     }
+    case 'geo': {
+      if (typeof value !== 'string' && (!value || typeof value !== 'object' || Array.isArray(value))) return bad('bad_type', 'geo must be the name of a registered geography or an inline GeoJSON/TopoJSON object.', 'Register boundaries with registerGeography(name, data) and set geo to that name.')
+      return resolveGeo(value, ctx.issues, name) ? value : undefined
+    }
+    case 'camera': {
+      if (!value || typeof value !== 'object' || Array.isArray(value)) return bad('bad_type', 'camera must be an object such as {"lng":121,"lat":24,"zoom":2}.')
+      const out: Record<string, number> = {}
+      let ok = true
+      for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+        // Own keys only: `constructor` or `toString` must not pass as camera fields.
+        const range = Object.hasOwn(CAMERA_RANGE, k) ? CAMERA_RANGE[k as (typeof CAMERA_KEYS)[number]] : undefined
+        if (!range) {
+          const near = closest(k, CAMERA_KEYS)
+          add(ctx, 'error', 'unknown_field', `${name}.${k}`, `Unknown camera field "${k}".`, near ? `Did you mean "${near}"?` : `Allowed: ${CAMERA_KEYS.join(', ')}.`)
+          ok = false
+        } else if (typeof v !== 'number' || !Number.isFinite(v)) {
+          add(ctx, 'error', 'bad_type', `${name}.${k}`, `camera.${k} must be a number, got ${fmt(v)}.`)
+          ok = false
+        } else if (v < range[0] || v > range[1]) {
+          add(ctx, 'error', 'out_of_range', `${name}.${k}`, `camera.${k} must be within ${range[0]}..${range[1]}, got ${v}.`)
+          ok = false
+        } else out[k] = v
+      }
+      return ok ? out : undefined
+    }
     case 'column':
     case 'columns': {
       const names = def.kind === 'columns' ? (Array.isArray(value) ? value : [value]) : [value]
@@ -168,19 +199,32 @@ export function validateField(name: string, def: FieldDef, value: unknown, ctx: 
           ok = false
           const near = closest(c, [...ctx.columns])
           add(ctx, 'error', 'no_such_column', path, `Column "${c}" does not exist in data.`, `${near ? `Did you mean "${near}"? ` : ''}Available columns: ${[...ctx.columns].slice(0, 20).join(', ')}.`)
-        } else if (def.role === 'number') {
+        } else if (def.role === 'number' || def.role === 'lat' || def.role === 'lng') {
           let nonNum = 0
           let seen = 0
+          let outside = 0
+          const lim = def.role === 'lat' ? 90 : def.role === 'lng' ? 180 : Infinity
           for (const r of ctx.rows) {
             const v = r[c]
             if (v === null || v === undefined || v === '') continue
             seen++
-            if (toNumber(v) === null) nonNum++
+            const num = toNumber(v)
+            if (num === null) nonNum++
+            else if (Math.abs(num) > lim) outside++
           }
           if (seen > 0 && nonNum === seen) {
             ok = false
             add(ctx, 'error', 'not_numeric', path, `Column "${c}" has no numeric values.`, 'Convert the values to numbers, or pick another column.')
-          } else if (nonNum > 0) add(ctx, 'warning', 'some_not_numeric', path, `${nonNum} of ${seen} values in "${c}" are not numeric and will be skipped.`)
+          } else {
+            if (nonNum > 0) add(ctx, 'warning', 'some_not_numeric', path, `${nonNum} of ${seen} values in "${c}" are not numeric and will be skipped.`)
+            if (outside > 0) {
+              const what = def.role === 'lat' ? 'latitudes (-90..90)' : 'longitudes (-180..180)'
+              if (outside === seen - nonNum) {
+                ok = false
+                add(ctx, 'error', 'out_of_range', path, `No value in "${c}" is a valid ${what.replace('s (', ' (')}.`, 'Use degrees in WGS 84. Projected coordinates (metres) are not supported.')
+              } else add(ctx, 'warning', 'some_out_of_range', path, `${outside} of ${seen} values in "${c}" are not valid ${what} and will be skipped.`)
+            }
+          }
         }
       })
       if (!ok) return undefined
@@ -211,6 +255,8 @@ export function fieldSchema(def: FieldDef): Record<string, unknown> {
           properties: { axis: { enum: ['x', 'y'] }, value: { type: ['number', 'string'] }, to: { type: ['number', 'string'] }, label: { type: 'string', maxLength: 80 }, tone: { enum: TONES } }
         }
       }
+    case 'geo': return { oneOf: [{ type: 'string', pattern: '^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$' }, { type: 'object', required: ['type'], properties: { type: { enum: ['FeatureCollection', 'Topology'] } } }], description: d }
+    case 'camera': return { type: 'object', additionalProperties: false, properties: Object.fromEntries(CAMERA_KEYS.map(k => [k, { type: 'number', minimum: CAMERA_RANGE[k][0], maximum: CAMERA_RANGE[k][1] }])), description: d }
     case 'column': return { type: 'string', description: `${d} (name of a column in data)` }
     case 'columns': return { oneOf: [{ type: 'string' }, { type: 'array', minItems: 1, items: { type: 'string' } }], description: `${d} (column name, or several for wide-form data)` }
   }
@@ -230,6 +276,8 @@ export function fieldType(def: FieldDef): string {
     case 'format': return 'format string'
     case 'data': return 'array of rows'
     case 'version': return '`1`'
+    case 'geo': return 'geography name or GeoJSON/TopoJSON object'
+    case 'camera': return '{lng, lat, zoom, pitch, bearing}'
     default: return def.kind
   }
 }

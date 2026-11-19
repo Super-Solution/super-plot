@@ -15,7 +15,8 @@ export interface Canvas2D {
   lineTo(x: number, y: number): void
   arcTo(x1: number, y1: number, x2: number, y2: number, r: number): void
   arc(x: number, y: number, r: number, a0: number, a1: number): void
-  fill(path?: unknown): void
+  fill(path?: unknown, rule?: string): void
+  clip(path?: unknown, rule?: string): void
   stroke(path?: unknown): void
   fillRect(x: number, y: number, w: number, h: number): void
   fillText(text: string, x: number, y: number): void
@@ -44,6 +45,10 @@ export interface DrawOptions {
   Path2D?: Path2DCtor
   /** Reuse parsed paths between draws (the web binding keeps one per scene). */
   paths?: Map<number, unknown>
+  /** Draw only the marks this accepts (a 3D renderer takes the rest). */
+  filter?: (mark: Mark, index: number) => boolean
+  /** Skip the background fill (a layer drawn over another). */
+  transparent?: boolean
 }
 
 /** Plain colour from `var(--a, var(--b, #fff))`: the first variable `lookup` knows, else the innermost fallback. */
@@ -98,12 +103,28 @@ export function drawScene(ctx: Canvas2D, scene: Scene, o: DrawOptions = {}): voi
   const font = rv(o.font ?? 'system-ui, sans-serif')
   ctx.save()
   ctx.globalAlpha = 1
-  ctx.fillStyle = rv(scene.background)
-  ctx.fillRect(0, 0, scene.width, scene.height)
+  if (!o.transparent) {
+    ctx.fillStyle = rv(scene.background)
+    ctx.fillRect(0, 0, scene.width, scene.height)
+  }
   const marks = scene.marks
+  const filter = o.filter
+  let clipped: string | undefined
+  const clipCache = new Map<string, unknown>()
   for (let i = 0; i < marks.length; i++) {
     const m = marks[i]
-    if (m.role === 'hit') continue
+    if (m.role === 'hit' || (filter && !filter(m, i))) continue
+    const want = m.clip !== undefined && scene.clips?.[m.clip] !== undefined && o.Path2D ? m.clip : undefined
+    if (want !== clipped) {
+      if (clipped !== undefined) ctx.restore()
+      clipped = want
+      if (want !== undefined) {
+        ctx.save()
+        let cp = clipCache.get(want)
+        if (!cp) { cp = new o.Path2D!(scene.clips![want]); clipCache.set(want, cp) }
+        ctx.clip(cp)
+      }
+    }
     ctx.globalAlpha = m.opacity ?? 1
     switch (m.type) {
       case 'rect': {
@@ -118,7 +139,7 @@ export function drawScene(ctx: Canvas2D, scene: Scene, o: DrawOptions = {}): voi
       case 'circle': {
         // Runs of identically styled dots (a scatter plot) become one path: tens of thousands of dots stay fast.
         let j = i
-        while (j + 1 < marks.length && marks[j + 1].type === 'circle' && sameStyle(m, marks[j + 1] as typeof m)) j++
+        while (j + 1 < marks.length && marks[j + 1].type === 'circle' && sameStyle(m, marks[j + 1] as typeof m) && marks[j + 1].clip === m.clip && (!filter || filter(marks[j + 1], j + 1))) j++
         const fill = paintOf(m.fill, rv)
         const stroke = paintOf(m.stroke, rv)
         ctx.beginPath()
@@ -149,7 +170,7 @@ export function drawScene(ctx: Canvas2D, scene: Scene, o: DrawOptions = {}): voi
         if (!p) { p = new o.Path2D(m.d); o.paths?.set(i, p) }
         const fill = paintOf(m.fill, rv)
         const stroke = paintOf(m.stroke, rv)
-        if (fill) { ctx.fillStyle = fill; ctx.fill(p) }
+        if (fill) { ctx.fillStyle = fill; if (m.rule) ctx.fill(p, m.rule); else ctx.fill(p) }
         if (stroke) {
           ctx.strokeStyle = stroke
           ctx.lineWidth = m.strokeWidth ?? 1
@@ -177,6 +198,7 @@ export function drawScene(ctx: Canvas2D, scene: Scene, o: DrawOptions = {}): voi
       }
     }
   }
+  if (clipped !== undefined) ctx.restore()
   ctx.restore()
 }
 

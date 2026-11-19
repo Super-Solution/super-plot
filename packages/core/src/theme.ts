@@ -65,7 +65,13 @@ const LIGHT_COLORS: Record<string, string> = {
   info: '#2962FF',
   other: '#A3A6AF',
   'seq-low': '#E3ECFF',
-  'seq-high': '#2962FF'
+  'seq-high': '#2962FF',
+  'div-low': '#2962FF',
+  'div-mid': '#E6E8EE',
+  'div-high': '#FF9800',
+  land: '#E6E8EE',
+  ocean: '#F4F7FC',
+  nodata: '#D9DCE3'
 }
 
 const DARK_COLORS: Record<string, string> = {
@@ -82,7 +88,13 @@ const DARK_COLORS: Record<string, string> = {
   info: '#2962FF',
   other: '#6B7080',
   'seq-low': '#1C2744',
-  'seq-high': '#4C8DFF'
+  'seq-high': '#4C8DFF',
+  'div-low': '#4C8DFF',
+  'div-mid': '#3A3F4C',
+  'div-high': '#FFA726',
+  land: '#2A2E39',
+  ocean: '#161B26',
+  nodata: '#3A3F4C'
 }
 
 export const light: Theme = freeze({ name: 'light', mode: 'light', colors: LIGHT_COLORS, ...BASE })
@@ -120,7 +132,7 @@ export function createTheme(base: string | Theme, input: ThemeInput = {}): Theme
  * `accessible-dark`. Up/down tokens use blue and vermillion instead of green and red.
  */
 const ACCESSIBLE = ['#0072B2', '#E69F00', '#009E73', '#D55E00', '#CC79A7', '#56B4E9', '#7B6BC6', '#A0522D']
-const ACCESSIBLE_TOKENS = { positive: '#0072B2', negative: '#D55E00', info: '#0072B2', warning: '#E69F00', 'seq-high': '#0072B2' }
+const ACCESSIBLE_TOKENS = { positive: '#0072B2', negative: '#D55E00', info: '#0072B2', warning: '#E69F00', 'seq-high': '#0072B2', 'div-low': '#0072B2', 'div-high': '#D55E00' }
 registerTheme(createTheme('light', { name: 'accessible', palette: ACCESSIBLE, colors: ACCESSIBLE_TOKENS }))
 registerTheme(createTheme('dark', { name: 'accessible-dark', palette: ACCESSIBLE, colors: { ...ACCESSIBLE_TOKENS, 'seq-high': '#56B4E9' } }))
 
@@ -167,4 +179,6 @@ export interface RenderEnv {
   theme: Theme
   locale: string
   measure: Measure
+  /** Maps: the viewer's camera, over the spec's. */
+  camera?: Partial<import('./geo/view.js').Camera>
 }

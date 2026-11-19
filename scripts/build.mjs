@@ -12,10 +12,13 @@ for (const p of packages) {
     outdir: join(p.dir, 'dist'),
     bundle: true,
     format: 'esm',
+    // Code loaded on demand (the WebGL layer) becomes its own chunk.
+    splitting: p.split === true,
+    chunkNames: 'chunks/[name]-[hash]',
     target: 'es2022',
     platform: 'neutral',
     // Sibling packages and React are dependencies, never bundled in.
-    external: ['@supersolutions/*', 'react', 'react/jsx-runtime'],
+    external: ['@supersolutions/*', 'react', 'react/jsx-runtime', 'earcut'],
     jsx: 'automatic',
     sourcemap: true,
     logLevel: 'warning'
