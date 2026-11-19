@@ -83,6 +83,9 @@ In the browser the viewer can move the camera (`interactive: true`, the default 
 `setCamera`/`resetCamera`, so two maps can follow each other without a loop. New data on the same map keeps the
 viewer's view; a different chart type or geography starts from its own. `<super-plot>` fires `plot-camera`.
 
+The 3D charts (`scatter3d`, `surface`) share these controls and the camera's `zoom`, `pitch` and `bearing` (no
+`lng`/`lat`): see INTEGRATION.md, "3D scatter and surface".
+
 On a touch screen an interactive map takes one-finger drags (the page scrolls when the finger starts outside it).
 For a map in a long scrolling article, consider `interactive: false`.
 

@@ -47,10 +47,12 @@ export function renderSvg(scene: Scene, options: SvgOptions = {}): string {
   const defsBody = clipIds.map(k => `<clipPath id="${escapeXml(clipRef.get(k)!)}"><path d="${escapeXml(scene.clips![k])}"/></clipPath>`).join('') + patterns.join('')
   const defs = defsBody ? `<defs>${defsBody}</defs>` : ''
   const body: string[] = []
+  // A 3D chart steps through its data in x order (scene.view3d.order), not in drawing order: the binding moves focus.
+  const managed = !!scene.view3d
   scene.marks.forEach((m, i) => {
     if (m.role === 'hit' && !interactive) return
     const clip = m.clip !== undefined && clipRef.has(m.clip) ? ` clip-path="url(#${escapeXml(clipRef.get(m.clip)!)})"` : ''
-    body.push(renderMark(m, i, interactive, rv, clip))
+    body.push(renderMark(m, i, interactive, rv, clip, managed))
     if (m.pattern !== undefined && (m.type === 'rect' || m.type === 'path')) {
       // The texture is a second shape on top: no events, no focus, and it grows with the mark's entrance.
       const over = { ...m, fill: `url(#${id}-p${m.pattern})`, stroke: undefined, strokeWidth: undefined, opacity: (m.opacity ?? 1) * PATTERN_OPACITY } as Mark
@@ -72,9 +74,9 @@ function paint(attr: string, v: string | undefined, rv: (s: string) => string): 
 /** A breadcrumb item (drill-down): a button in interactive SVG. */
 const crumb = (m: Mark): boolean => m.drill !== undefined && m.role === 'label' && m.type === 'rect' && m.tip === undefined
 
-function renderMark(m: Mark, i: number, interactive: boolean, rv: (s: string) => string, clip: string): string {
+function renderMark(m: Mark, i: number, interactive: boolean, rv: (s: string) => string, clip: string, managed = false): string {
   const hooks = clip + (interactive
-    ? ` class="sp-m sp-${m.role}${m.anim ? ` sp-a-${m.anim}` : ''}" data-i="${i}"${m.series !== undefined ? ` data-s="${escapeXml(m.series)}"` : ''}${m.legendKey !== undefined ? ` data-lk="${escapeXml(m.legendKey)}"` : ''}${m.tip && m.role !== 'hit' && m.legendKey === undefined ? ' tabindex="0"' : ''}${m.legendKey !== undefined ? ` role="button" tabindex="0" aria-label="${escapeXml(m.aria ?? m.legendKey)}"` : crumb(m) ? ` role="button" tabindex="0" aria-label="${escapeXml(m.aria ?? m.drill!.join(' > '))}"` : m.aria ? ` role="img" aria-label="${escapeXml(m.aria)}"` : ''}`
+    ? ` class="sp-m sp-${m.role}${m.anim ? ` sp-a-${m.anim}` : ''}" data-i="${i}"${m.series !== undefined ? ` data-s="${escapeXml(m.series)}"` : ''}${m.legendKey !== undefined ? ` data-lk="${escapeXml(m.legendKey)}"` : ''}${m.tip && m.role !== 'hit' && m.legendKey === undefined ? (managed && m.role === 'data' ? ' tabindex="-1"' : ' tabindex="0"') : ''}${m.legendKey !== undefined ? ` role="button" tabindex="0" aria-label="${escapeXml(m.aria ?? m.legendKey)}"` : crumb(m) ? ` role="button" tabindex="0" aria-label="${escapeXml(m.aria ?? m.drill!.join(' > '))}"` : m.aria ? ` role="img" aria-label="${escapeXml(m.aria)}"` : ''}`
     : '')
   const op = m.opacity !== undefined && m.opacity !== 1 ? ` opacity="${n(m.opacity)}"` : ''
   switch (m.type) {

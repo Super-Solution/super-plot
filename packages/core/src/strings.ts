@@ -170,6 +170,11 @@ export const DEFAULT_STRINGS = {
   mapZoomIn: 'Zoom in',
   mapZoomOut: 'Zoom out',
   mapReset: 'Reset view',
+  /** Interactive 3D charts (scatter3d, surface): the role description and the keyboard help (after the title). */
+  chart3dRole: 'interactive 3D chart',
+  chart3dKeys: '{title}. Drag or use the arrow keys to turn, + and - to zoom, 0 to reset, Tab to step through the data in x order.',
+  /** A 3D chart with `interactive: false`: the keyboard help (after the title). */
+  chart3dSteps: '{title}. Tab to step through the data in x order.',
   /** Caption of a data table that shows only the first rows. */
   tableFirstRows: '{caption}: first {n} of {total} rows',
   /** Sonification, read out in the live region. */

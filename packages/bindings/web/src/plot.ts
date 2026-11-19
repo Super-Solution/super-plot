@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2026 SUPER SOLUTION LABS INC
 import {
-  compilePlot, renderSvg, resolveTheme, estimateWidth, defaultHeight, dataMarkCount, clampCamera, plotTable, plotCsv, svgKey, cssVar,
+  compilePlot, renderSvg, resolveTheme, estimateWidth, defaultHeight, dataMarkCount, clampCamera, clampCamera3d, camera3dOf, plotTable, plotCsv, svgKey, cssVar,
   resolveStrings, fillString, type UiStringKey, type UiStrings,
-  type AxisInfo, type Camera, type Issue, type Mark, type Measure, type PlotPlugin, type RenderOptions, type Scene, type Theme, type Tip
+  type AxisInfo, type Camera, type Camera3d, type Issue, type Mark, type Measure, type PlotPlugin, type RenderOptions, type Scene, type Theme, type Tip
 } from '@supersolutions/super-plot-core/base'
 import { CanvasLayer, markCenter, nearestMark } from './canvas.js'
 import { NAV_HEIGHT, navigable } from './navigable.js'
@@ -97,10 +97,16 @@ export interface SuperPlotOptions extends Omit<RenderOptions, 'hidden' | 'measur
   canvasAbove?: number
   /** Data mark count above which `auto` switches to WebGL (hardware GPUs only). Default 20000. */
   webglAbove?: number
-  /** Maps: let the viewer drag (pan, or turn the globe), Shift-drag (tilt and rotate), Ctrl/⌘-scroll or pinch (zoom) and use the keyboard. Default true. */
+  /**
+   * Maps and 3D charts: let the viewer drag (pan, or turn the globe; turn and tilt a 3D box), Shift-drag (tilt and
+   * rotate a map), Ctrl/⌘-scroll or pinch (zoom) and use the keyboard. Default true.
+   */
   interactive?: boolean
-  /** Maps: the viewer moved the camera (once per gesture, when it ends). */
-  onCameraChange?: (camera: Camera) => void
+  /**
+   * Maps and 3D charts: the viewer moved the camera (once per gesture, when it ends). A 3D chart's camera has only
+   * `zoom`, `pitch` and `bearing` (a `Camera3d`).
+   */
+  onCameraChange?(camera: Camera | Camera3d): void
   /** The pointer or keyboard moved onto a mark with data (null: off it). */
   onHover?: (e: SelectEvent | null) => void
   /** The chart was drawn (first draw, resize, new data, theme). */
@@ -256,7 +262,7 @@ export class SuperPlot {
   /** WebGL failed or the context was lost: stay on canvas for this plot. */
   private glOff = false
   /** The viewer's camera, once they moved it (or `setCamera`). */
-  private cam: Camera | null = null
+  private cam: Camera | Camera3d | null = null
   /** The camera moved on the GPU since the last compile. */
   private glMoved = false
   private gestureTimer = 0
@@ -452,14 +458,19 @@ export class SuperPlot {
   /** What is drawing the chart right now. */
   getRenderer(): 'svg' | 'canvas' | 'webgl' { return this.layer ? this.layer.renderer : 'svg' }
 
-  /** Maps: the camera on screen, or null when the chart is not a map. */
-  getCamera(): Camera | null { return this.cam ?? this.scene?.geo?.view.camera ?? null }
+  /**
+   * Maps and 3D charts: the camera on screen, or null for other charts. A 3D chart's has only `zoom`, `pitch` and
+   * `bearing`: read it as `getCamera<Camera3d>()`.
+   */
+  getCamera<C extends Camera | Camera3d = Camera>(): C | null {
+    return (this.cam ?? this.scene?.geo?.view.camera ?? this.scene?.view3d?.view.camera ?? null) as C | null
+  }
 
-  /** Maps: move the camera (merged into the current one). Does not fire `onCameraChange` (that is for the viewer). */
-  setCamera(camera: Partial<Camera>): void {
-    const now = this.getCamera()
+  /** Maps and 3D charts: move the camera (merged into the current one). Does not fire `onCameraChange` (that is for the viewer). */
+  setCamera(camera: Partial<Camera> | Partial<Camera3d>): void {
+    const now = this.getCamera<Camera | Camera3d>()
     if (!now) return
-    this.applyCamera(clampCamera({ ...now, ...camera }))
+    this.applyCamera(this.scene?.view3d ? clampCamera3d({ ...camera3dOf(now), ...camera3dOf(camera) }) : clampCamera({ ...(now as Camera), ...camera }))
     this.endGesture(false)
   }
 
@@ -1646,18 +1657,18 @@ export class SuperPlot {
   // ---- map camera --------------------------------------------------------------------------
 
   private interactiveMap(): boolean {
-    return !!this.scene?.geo && this.options.interactive !== false
+    return !!(this.scene?.geo || this.scene?.view3d) && this.options.interactive !== false
   }
 
   private dragging(): boolean { return this.map?.dragging() === true || this.axis.dragging() }
 
   /** Zoom buttons, keyboard focus and touch handling for an interactive map; removed for anything else. */
   private setupMap(scene: Scene, theme: Theme): void {
-    const on = !!scene.geo && this.options.interactive !== false
+    const on = !!(scene.geo || scene.view3d) && this.options.interactive !== false
     const mod = mapChunk.mod
     if (!mod) {
-      // Nothing to take down: no map was drawn without this code.
-      if (on) this.need(mapChunk, 'map controls', () => {
+      // Nothing to take down: no map was drawn without this code. A 3D chart needs it for Tab even when still.
+      if (on || scene.view3d) this.need(mapChunk, 'map controls', () => {
         if (!this.scene) return
         this.setupMap(this.scene, this.themeNow())
         const c = this.map?.controls
@@ -1671,6 +1682,7 @@ export class SuperPlot {
       scene: () => this.scene,
       camera: () => this.cam,
       apply: c => this.applyCamera(c),
+      focusMark: i => this.focusMark3d(i),
       gestureSoon: () => this.gestureSoon(),
       endGesture: () => this.endGesture(),
       reset: () => this.reset(true),
@@ -1681,7 +1693,22 @@ export class SuperPlot {
     this.map.setup(scene, theme, on)
   }
 
-  private applyCamera(c: Camera): void {
+  /** 3D charts: the keyboard's data mark (Tab), focused on SVG, outlined and read out on canvas; -1 clears. */
+  private focusMark3d(i: number): void {
+    const m = i >= 0 ? this.scene?.marks[i] : undefined
+    if (!m) {
+      this.layer?.showMark(-1)
+      this.hovered(null)
+      return
+    }
+    if (this.layer) {
+      this.layer.showMark(i)
+      this.hovered(m)
+      if (m.aria) this.announce(m.aria)
+    } else this.root.querySelector<HTMLElement>(`[data-i="${i}"]`)?.focus({ preventScroll: true })
+  }
+
+  private applyCamera(c: Camera | Camera3d): void {
     this.cam = c
     if (this.layer?.moveCamera(c)) this.glMoved = true
     else this.schedule(false)
@@ -1724,7 +1751,13 @@ export class SuperPlot {
 
   /** Arrow keys pan (Shift: turn and tilt), + and - zoom, 0 resets. True when the key was used. */
   private mapKey(e: KeyboardEvent): boolean {
-    return this.interactiveMap() && this.map?.key(e) === true
+    // 3D: a turn not drawn yet would replace the point Tab is about to focus; draw it first.
+    if (e.key === 'Tab' && this.scene?.view3d && this.raf) {
+      cancelAnimationFrame(this.raf)
+      this.raf = 0
+      this.render(false)
+    }
+    return (this.interactiveMap() || !!this.scene?.view3d) && this.map?.key(e, this.interactiveMap()) === true
   }
 
   private onScheme = (): void => {

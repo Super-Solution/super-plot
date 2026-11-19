@@ -50,7 +50,10 @@ export interface RenderOptions {
   hidden?: Iterable<string>
   /** Text measurer; the web binding passes a canvas-backed one. */
   measure?: Measure
-  /** Maps: overrides the spec's camera (the web binding passes the viewer's drag and zoom). */
+  /**
+   * Maps and 3D charts: overrides the spec's camera (the web binding passes the viewer's drag and zoom). A 3D
+   * chart reads only `zoom`, `pitch` and `bearing`.
+   */
   camera?: Partial<Camera>
   /** Zoom: axis ranges that override `xDomain` / `yDomain` (numbers; epoch ms on a time axis). */
   view?: { x?: [number, number]; y?: [number, number] }
@@ -65,7 +68,7 @@ export type CompileResult =
 export const MAX_FACETS = 12
 
 export function defaultHeight(type: string, width: number): number {
-  const ratio = type === 'pie' || type === 'donut' ? 0.62 : type === 'radar' ? 0.85 : type === 'sunburst' || type === 'column-map' || type === 'flow-map' ? 0.75 : type === 'calendar' ? 0.34 : 0.6
+  const ratio = type === 'pie' || type === 'donut' ? 0.62 : type === 'radar' ? 0.85 : type === 'sunburst' || type === 'column-map' || type === 'flow-map' || type === 'scatter3d' || type === 'surface' ? 0.75 : type === 'calendar' ? 0.34 : 0.6
   return Math.round(clamp(width * ratio, 220, 520))
 }
 
@@ -96,6 +99,7 @@ export function compilePlot(input: unknown, options: RenderOptions = {}): Compil
   let series: SeriesInfo[]
   let clips: Record<string, string> = {}
   let geo: Scene['geo']
+  let view3d: Scene['view3d']
   let axes: SceneAxes | undefined
   let panels: Scene['panels']
   if (spec.facet) {
@@ -107,6 +111,7 @@ export function compilePlot(input: unknown, options: RenderOptions = {}): Compil
     marks = ctx.marks
     clips = ctx.clips
     geo = ctx.geo
+    view3d = ctx.view3d
     if (ctx.axes) axes = { ...ctx.axes, ...interaction(spec, def, ctx.axes, issues) }
   }
   if (spec.patterns === true) applyPatterns(marks, series)
@@ -126,6 +131,7 @@ export function compilePlot(input: unknown, options: RenderOptions = {}): Compil
     type: spec.type,
     ...(Object.keys(clips).length ? { clips } : {}),
     ...(geo ? { geo } : {}),
+    ...(view3d ? { view3d } : {}),
     ...(axes ? { axes } : {}),
     ...(panels ? { panels } : {})
   }

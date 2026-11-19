@@ -69,3 +69,7 @@ export type { Camera, ViewParams, ViewInput, Projection, GeoViewKind, Projected 
 export { arcPoints } from './geo/draw.js'
 export type { SceneGeo, GeoRegionItem, GeoPointItem, GeoColumnItem, GeoArcItem } from './scene.js'
 export { isMapType } from './charts/maps.js'
+export { makeView3d, project3d, dragCamera3d, zoomCamera3d, clampCamera3d, camera3dOf, CAMERA3D_LIMITS, DEFAULT_CAMERA3D, EYE_DISTANCE } from './view3d.js'
+export type { Camera3d, View3d, View3dInput, Projection3d, Projected3d } from './view3d.js'
+export type { SceneView3d } from './scene.js'
+export { is3dType, MAX_SURFACE_SIDE, DROP_LINES_AUTO } from './charts/plot3d.js'

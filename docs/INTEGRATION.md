@@ -295,6 +295,44 @@ Both read worse than the plain alternative and are here because dashboards and t
   Validation: `range_reversed` (an end before its start is **swapped** and drawn, as `interval_reversed` does for intervals), `missing_range` (rows without both ends are skipped), `no_ranges` and `not_time_or_number` (errors), `overlapping_ranges` (two bars in one lane cover each other), `too_many_lanes` (only the first `LIMITS.maxCategories`, 500, are drawn) and `timeline_cramped` at draw time. Line, band and point annotations work (`{axis: 'x', value: <date>}` is a "today" line). `zoom: 'x'` and `brush: 'x'` use the shared scene axes (`xDomain` cuts bars at the edge); the brushed x range carries no filter column, since a bar spans two columns and "overlaps the range" is not one filter step. `facet` gives one timeline per value.
 - **Stream graph** (`stack: 'center'` on area): each x starts at minus half its total, so the stack is centred on a middle line. The vertical position then has no zero, so the value axis shows **no ticks or gridlines** (labels there would read as amounts that do not exist); the tooltip lists every value and the total, and the description says the axis has no zero. Negative values count as 0, as in every stack; hidden series leave the centring. `yDomain` still fixes the range (in units from the middle). The other `stack` values are unchanged.
 
+## 3D scatter and surface
+
+```ts
+{ type: 'scatter3d', x: 'width', y: 'depth', z: 'height', series: 'kind', label: 'id', data }   // a point per row in a box
+{ type: 'surface', x: 'temp', y: 'pressure', z: 'yield', format: 'fixed:1', data }             // one row per grid point
+```
+
+Both draw a box whose axes are scaled to the data, with ticks and titles on the edges that face the viewer, a floor
+grid and two back walls. `scatter3d` takes `size` (area, as in a bubble chart) and `dropLines` (a line to the floor
+per point; on by default, off with a `drop_lines_dense` warning above 2,000 points unless set to `true`). `surface`
+wants one row per point of a regular grid (at most 200 x 200: `grid_too_large`, with a hint to bin or use
+`scatter3d`); missing points are holes (`missing_cells`), a repeated point keeps its first value
+(`duplicate_cells`), and the colour is the sequential scale and legend of a heatmap (`domain`, `mesh: false` to
+hide the grid lines).
+
+**Safe by default, and why it still is a 3D chart.** Depth hides points, and a position on screen mixes all three
+values, so every 3D spec gets an `info` issue `perspective_3d` (path `projection`) naming a 2D chart that compares
+exactly. Issues can now have severity `'info'`: valid, nothing to fix, but worth saying. The projection is
+`orthographic` by default (sizes do not change with depth); `projection: 'perspective'` draws nearer things larger
+and says so in the same issue. Tooltips, `aria`, the description and the data table give exact x, y and z. The box
+never turns by itself.
+
+**Camera.** `camera: { zoom, pitch, bearing }` has the map camera's names and meanings: `pitch` 0 looks straight
+down, 90 from the side (default 60); `bearing` turns clockwise (default 35, kept in [0, 360)); `zoom` 0.5 to 8. A
+map's `lng`/`lat` is refused in a spec and dropped from the `camera` option. `getCamera<Camera3d>()`,
+`setCamera({ pitch: 20 })` (merged and clamped, no event), `resetCamera()` and `onCameraChange` (once per
+gesture) work as on maps, so its parameter is now `Camera | Camera3d` (narrow with `'lng' in c`). In the browser:
+drag turns (horizontal) and tilts (vertical), the arrow keys turn by 15 and tilt by 10 degrees, + and - zoom, 0
+resets, and the corner buttons zoom and reset. Tab steps through the points (or grid points) in order of x,
+then y, showing each tooltip; Shift+Tab goes back, and past the last point focus moves on to the legend. On canvas
+the chart keeps focus and the point is outlined and read out. With `interactive: false` the box stays still and
+Tab still steps through the data. UI strings: `chart3dRole`, `chart3dKeys`, `chart3dSteps`.
+
+**Renderers.** Core compiles the box to ordinary 2D marks in painter's order (far first), so SVG, canvas, PNG and
+server rendering all work. `renderer: 'webgl'` draws a 3D scatter's points with the GPU dot layer (in the same
+order, no depth buffer); the surface's tiles, the box and the drop lines stay on canvas, and every turn recompiles
+the scene. `facet` is not available on these charts.
+
 ## Dates, time zones and UI strings
 
 Three render options (not spec fields, like `locale`). The web binding takes them as options (`new SuperPlot(el, spec, { timeZone, strings })`, `setOptions`). React's `<SuperPlot>` takes them as props and redraws when any one of them changes (`strings` is compared by value, so an inline object does not redraw on every render). `<super-plot>` has the attributes `locale`, `time-zone` (an IANA name) and `strings` (JSON), and the properties `locale`, `timeZone` and `strings` (an object; what Vue, Svelte and Angular bind); an attribute wins over the property, and the property over the same key in `options`.

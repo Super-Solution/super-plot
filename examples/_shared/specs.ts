@@ -173,6 +173,8 @@ export const gallery: { id: string; note: string; spec: Record<string, unknown> 
       data: [['login', 'Account', 182], ['password', 'Account', 141], ['invoice', 'Billing', 133], ['refund', 'Billing', 121], ['crash', 'App', 97], ['sync', 'App', 88], ['2FA', 'Account', 74], ['card', 'Billing', 66], ['slow', 'App', 61], ['export', 'App', 47], ['VAT', 'Billing', 39], ['email', 'Account', 35], ['offline', 'App', 28], ['plan', 'Billing', 22], ['dark mode', 'App', 17], ['profile', 'Account', 14], ['receipt', 'Billing', 11], ['widget', 'App', 9]].map(([tag, area, tickets]) => ({ tag, area, tickets }))
     }
   },
+  { id: 'scatter3d', note: 'Points in a box: drag or use the arrow keys to turn; orthographic, so sizes do not change with depth', spec: by('scatter3d') },
+  { id: 'surface', note: 'A height field on a regular grid, coloured by height; Tab steps through the grid', spec: by('surface') },
   { id: 'choropleth', note: 'Regions coloured by value (invented islands: Super Plot ships no boundaries)', spec: by('choropleth') },
   { id: 'bubble-map', note: 'Places sized by value, on imported land', spec: by('bubble-map') },
   { id: 'column-map', note: '3D columns on a globe: drag to turn', spec: by('column-map') },

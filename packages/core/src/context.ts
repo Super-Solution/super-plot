@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2026 SUPER SOLUTION LABS INC
 import type { Issue } from './schema.js'
-import type { AxisInfo, Mark, Rect, SceneGeo, SeriesInfo, TextMark } from './scene.js'
+import type { AxisInfo, Mark, Rect, SceneGeo, SceneView3d, SeriesInfo, TextMark } from './scene.js'
 import type { RenderEnv } from './theme.js'
 import { cssVar, resolveVars, seriesVar } from './theme.js'
 import { fit, clip } from './util/text.js'
@@ -26,6 +26,8 @@ export class ChartCtx<S extends Record<string, any> = Record<string, any>> {
   readonly clips: Record<string, string> = {}
   /** Maps: the geography payload for 3D renderers. */
   geo: SceneGeo | undefined
+  /** 3D charts: the camera and keyboard order. */
+  view3d: SceneView3d | undefined
   /** Set by `layoutCartesian`: the plot rectangle and scales (zoom, brush, facets). */
   axes: { plot: Rect; x: AxisInfo; y: AxisInfo; y2?: AxisInfo } | undefined
   /** Data columns behind the x and y axes, when a chart's axes are not simply `spec.x` / `spec.y`. */

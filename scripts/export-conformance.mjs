@@ -11,7 +11,7 @@ import { join, dirname } from 'node:path'
 const root = new URL('..', import.meta.url).pathname
 const core = await import(pathToFileURL(join(root, 'packages/core/dist/index.js')).href)
 const { linearTicks, niceDomain, quantile, boxStats, binEdges, binCounts, waffleCells, kde, silverman, densityPeaks, validatePlot, describePlot, chartCatalog, getChart, chartTypes, COMMON_FIELDS, CARTESIAN_FIELDS, LIMITS } = core
-const { registerGeography, unregisterGeography, getGeography, matchRegion, GeographyError, GEO_LIMITS, CAMERA_LIMITS } = core
+const { registerGeography, unregisterGeography, getGeography, matchRegion, GeographyError, GEO_LIMITS, CAMERA_LIMITS, CAMERA3D_LIMITS } = core
 
 const r = v => (typeof v === 'number' ? Math.round(v * 1e9) / 1e9 : v)
 const rows = o => JSON.parse(JSON.stringify(o, (_, v) => (typeof v === 'number' ? r(v) : v)))
@@ -93,6 +93,8 @@ const broken = [
 
 const rowsOf = (n, f) => Array.from({ length: n }, (_, i) => f(i))
 const B = [{ a: 'x', b: 1 }, { a: 'y', b: 2 }]
+const P3 = [{ x: 3, y: 1, z: 2, g: 'a' }, { x: 1, y: 5, z: 4, g: 'b' }, { x: 2, y: 2, z: 9, g: 'a' }, { x: 1, y: 2, z: 1, g: 'b' }]
+const GRID = (nx, ny) => rowsOf(nx * ny, i => ({ x: i % nx, y: Math.floor(i / nx), z: (i % nx) * 2 - Math.floor(i / nx) }))
 
 // ---- maps ------------------------------------------------------------------------------------------------
 // Invented boundaries (squares in the open sea), so no case makes a political claim.
@@ -532,6 +534,22 @@ const VALIDATION = [
   ['wordcloud: more than 150 words', { type: 'wordcloud', text: 'a', value: 'b', data: rowsOf(160, i => ({ a: `w${i}`, b: 160 - i })) }],
   ['wordcloud: value not numeric', { type: 'wordcloud', text: 'b', value: 'a', data: B }],
   ['wordcloud: facet is refused', { type: 'wordcloud', text: 'a', value: 'b', facet: 'a', data: B }],
+  ['scatter3d: ok', { type: 'scatter3d', x: 'x', y: 'y', z: 'z', series: 'g', data: P3 }],
+  ['scatter3d: perspective with a camera', { type: 'scatter3d', x: 'x', y: 'y', z: 'z', projection: 'perspective', camera: { pitch: 30, bearing: -30, zoom: 2 }, data: P3 }],
+  ['scatter3d: bearing past a full turn, zoom too far', { type: 'scatter3d', x: 'x', y: 'y', z: 'z', camera: { bearing: 400, zoom: 20 }, data: P3 }],
+  ['scatter3d: a map camera field', { type: 'scatter3d', x: 'x', y: 'y', z: 'z', camera: { lng: 10, pitch: 20 }, data: P3 }],
+  ['scatter3d: pitch out of range', { type: 'scatter3d', x: 'x', y: 'y', z: 'z', camera: { pitch: 120 }, data: P3 }],
+  ['scatter3d: unknown projection', { type: 'scatter3d', x: 'x', y: 'y', z: 'z', projection: 'fisheye', data: P3 }],
+  ['scatter3d: z missing', { type: 'scatter3d', x: 'x', y: 'y', data: P3 }],
+  ['scatter3d: no complete point', { type: 'scatter3d', x: 'x', y: 'y', z: 'z', data: [{ x: 1, y: 'a', z: 2 }, { x: null, y: 1, z: 1 }] }],
+  ['scatter3d: incomplete rows, negative size', { type: 'scatter3d', x: 'x', y: 'y', z: 'z', size: 's', data: [...P3.map(p => ({ ...p, s: 2 })), { x: 1, y: 2, z: 3, s: -1 }, { x: 1, y: null, z: 3, s: 1 }] }],
+  ['scatter3d: facet is not a field', { type: 'scatter3d', x: 'x', y: 'y', z: 'z', facet: 'g', data: P3 }],
+  ['surface: ok', { type: 'surface', x: 'x', y: 'y', z: 'z', data: GRID(4, 3) }],
+  ['surface: missing cells', { type: 'surface', x: 'x', y: 'y', z: 'z', data: GRID(4, 3).filter((_, i) => i % 5 !== 2) }],
+  ['surface: duplicate cells', { type: 'surface', x: 'x', y: 'y', z: 'z', data: [...GRID(3, 3), { x: 0, y: 0, z: 9 }] }],
+  ['surface: grid too small', { type: 'surface', x: 'x', y: 'y', z: 'z', data: GRID(1, 4) }],
+  ['surface: grid too large', { type: 'surface', x: 'x', y: 'y', z: 'z', data: GRID(201, 2) }],
+  ['surface: no points', { type: 'surface', x: 'x', y: 'y', z: 'z', data: [{ x: 'a', y: 1, z: 2 }] }],
   ...FEATURE_VALIDATION,
   ...MAP_VALIDATION
 ].map(([name, spec]) => {
@@ -644,6 +662,10 @@ const describeCases = [
   D('waffle: 400 cells, data order', { type: 'waffle', label: 'k', value: 'v', cells: 400, sort: 'none', data: [{ k: 'a', v: 1 }, { k: 'b', v: 2 }, { k: 'a', v: 1 }, { k: 'c', v: -4 }] }),
   D('beeswarm: one swarm', { type: 'beeswarm', x: 'v', title: 'Latency', data: [5, 1, 9, 3, 3, 7].map(v => ({ v })) }),
   D('beeswarm: lanes', { type: 'beeswarm', x: 'v', y: 'g', format: 'fixed:1', data: [['a', 1], ['b', 2.5], ['a', 4], ['b', 'x'], ['c', 8]].map(([g, v]) => ({ g, v })) }),
+  D('scatter3d: groups', { type: 'scatter3d', x: 'x', y: 'y', z: 'z', series: 'g', title: 'Parts', data: P3 }),
+  D('scatter3d: sized, labelled axes', { type: 'scatter3d', x: 'x', y: 'y', z: 'z', size: 's', xLabel: 'Width', yLabel: 'Depth', zLabel: 'Height', format: 'fixed:1', data: P3.map((p, i) => ({ ...p, s: i + 1 })) }),
+  D('surface: full grid', { type: 'surface', x: 'x', y: 'y', z: 'z', title: 'Yield', data: GRID(4, 3) }),
+  D('surface: holes', { type: 'surface', x: 'x', y: 'y', z: 'z', data: GRID(3, 2).filter((_, i) => i !== 4) }),
   D('flow-map: by regions', { type: 'flow-map', geo: G3, from: 'a', to: 'b', value: 'n', series: 'a', data: [...FL, { a: ' N ', b: 'S', n: 5 }] }),
   D('line: a right axis, with its own format', { type: 'line', x: 'd', y: ['v', 'w'], yRight: 't', formatRight: 'percent', yLabel: 'Orders', yRightLabel: 'Conversion', data: dates(4, i => ({ v: 10 + i, w: 20 - i, t: 0.1 + i / 50 })) }),
   D('area: a right axis', { type: 'area', x: 'd', y: 'v', yRight: 't', data: dates(3, i => ({ v: i * 3, t: 100 - i })) }),
@@ -872,6 +894,8 @@ const fields = {
   // Maps: the size limits of a geography, and the allowed range of each camera field.
   geoLimits: GEO_LIMITS,
   camera: { lng: [-180, 180], lat: [-90, 90], ...CAMERA_LIMITS },
+  // 3D charts: the allowed range of each 3D camera field (the bearing is kept in [0, 360)).
+  camera3d: CAMERA3D_LIMITS,
   currencies,
   charts: chartTypes().map(type => {
     const def = getChart(type)

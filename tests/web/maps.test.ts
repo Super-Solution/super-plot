@@ -77,7 +77,7 @@ describe('maps in the browser binding', () => {
   it('keyboard and buttons move the camera; one camera event per gesture; reset goes back', () => {
     vi.useFakeTimers()
     const seen: Camera[] = []
-    const p = new SuperPlot(host, ex('choropleth'), { width: 640, height: 420, onCameraChange: c => seen.push(c) })
+    const p = new SuperPlot(host, ex('choropleth'), { width: 640, height: 420, onCameraChange: (c: Camera) => seen.push(c) })
     const start = p.getCamera()!
     const root = host.querySelector<HTMLElement>('.sp-root')!
     key(root, 'ArrowLeft')
@@ -102,7 +102,7 @@ describe('maps in the browser binding', () => {
 
   it('setCamera and resetCamera do not fire onCameraChange (only the viewer does); the reset button does', () => {
     const seen: Camera[] = []
-    const p = new SuperPlot(host, ex('choropleth'), { width: 640, height: 420, onCameraChange: c => seen.push(c) })
+    const p = new SuperPlot(host, ex('choropleth'), { width: 640, height: 420, onCameraChange: (c: Camera) => seen.push(c) })
     p.setCamera({ zoom: 2 })
     p.resetCamera()
     expect(seen).toHaveLength(0)
