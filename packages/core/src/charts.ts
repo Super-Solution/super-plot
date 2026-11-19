@@ -9,10 +9,14 @@ import { heatmap } from './charts/heatmap.js'
 import { radar } from './charts/radar.js'
 import { treemap } from './charts/treemap.js'
 import { sankey } from './charts/sankey.js'
+import { waterfall } from './charts/waterfall.js'
+import { funnel } from './charts/funnel.js'
+import { bullet } from './charts/bullet.js'
+import { bump } from './charts/bump.js'
 import { bubbleMap, choropleth, columnMap, flowMap } from './charts/maps.js'
 import type { ChartDef } from './registry.js'
 
-export { bar, line, areaChart as area, scatter, pie, donut, histogram, box, heatmap, radar, treemap, sankey, choropleth, bubbleMap, columnMap, flowMap }
+export { bar, line, areaChart as area, scatter, pie, donut, histogram, box, heatmap, radar, treemap, sankey, waterfall, funnel, bullet, bump, choropleth, bubbleMap, columnMap, flowMap }
 
 /** All of them, in catalogue order. */
-export const allCharts: readonly ChartDef[] = [bar, line, areaChart, scatter, pie, donut, histogram, box, heatmap, radar, treemap, sankey, choropleth, bubbleMap, columnMap, flowMap]
+export const allCharts: readonly ChartDef[] = [bar, line, areaChart, scatter, pie, donut, histogram, box, heatmap, waterfall, bullet, bump, radar, treemap, sankey, funnel, choropleth, bubbleMap, columnMap, flowMap]

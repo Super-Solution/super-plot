@@ -55,6 +55,23 @@ export const gallery: { id: string; note: string; spec: Record<string, unknown> 
   },
   { id: 'box', note: 'Spread per group with outliers', spec: by('box') },
   { id: 'heatmap', note: 'Two categorical dimensions', spec: by('heatmap') },
+  { id: 'waterfall', note: 'Running total: changes float, totals stand on zero', spec: by('waterfall') },
+  {
+    id: 'waterfall-horizontal', note: 'Horizontal, opening balance as a total row, start-to-end connectors',
+    spec: {
+      type: 'waterfall', title: 'Cash bridge', subtitle: 'USD k, October 2026', orientation: 'horizontal', labels: true, x: 'item', y: 'amount', total: 'closing', format: 'integer',
+      data: [['Opening cash', 820, true], ['Customer receipts', 1240, false], ['Payroll', -610, false], ['Suppliers', -385, false], ['Loan drawdown', 250, false], ['Capex', -190, false], ['Closing cash', null, true]].map(([item, amount, closing]) => ({ item, amount, closing }))
+    }
+  },
+  { id: 'bullet', note: 'KPIs against target and ranges, each on its own scale', spec: by('bullet') },
+  {
+    id: 'bullet-shared', note: 'One shared scale: same unit for every row',
+    spec: {
+      type: 'bullet', title: 'Regional sales against quota', subtitle: 'USD k, Q3', x: 'region', value: 'sales', target: 'quota', ranges: ['below', 'near', 'above'], format: 'integer',
+      data: [['North', 412, 450, 300, 420, 520], ['South', 388, 360, 260, 340, 440], ['East', 295, 400, 280, 380, 480], ['West', 503, 470, 330, 450, 560]].map(([region, sales, quota, below, near, above]) => ({ region, sales, quota, below, near, above }))
+    }
+  },
+  { id: 'bump', note: 'Ranks over time, labelled at the line ends', spec: by('bump') },
   { id: 'radar', note: 'A few items across shared measures', spec: by('radar') },
   { id: 'treemap', note: 'Area is the value; groups get a colour', spec: by('treemap') },
   {
@@ -62,6 +79,7 @@ export const gallery: { id: string; note: string; spec: Record<string, unknown> 
     spec: { type: 'treemap', title: 'Largest cities', subtitle: 'Population, millions', label: 'city', value: 'pop', format: 'fixed:1', data: [['Tokyo', 37.4], ['Delhi', 31], ['Shanghai', 27.1], ['São Paulo', 22], ['Mexico City', 21.8], ['Cairo', 21.3], ['Mumbai', 20.4], ['Beijing', 20.4], ['Dhaka', 19.6], ['Osaka', 19.2], ['New York', 18.8], ['Karachi', 16.1], ['Taipei', 7.1]].map(([city, pop]) => ({ city, pop })) }
   },
   { id: 'sankey', note: 'Flows between stages, loops refused', spec: by('sankey') },
+  { id: 'funnel', note: 'Centred bars, share of the first stage; rising values are warned', spec: by('funnel') },
   { id: 'choropleth', note: 'Regions coloured by value (invented islands: Super Plot ships no boundaries)', spec: by('choropleth') },
   { id: 'bubble-map', note: 'Places sized by value, on imported land', spec: by('bubble-map') },
   { id: 'column-map', note: '3D columns on a globe: drag to turn', spec: by('column-map') },

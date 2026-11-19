@@ -21,7 +21,7 @@
 2. **A native renderer in Go or Python?** The ports validate, describe and compute; they do not draw. Drawing in a second language means porting the layout of all twelve charts (about 3,500 lines of TypeScript, plus text measurement, which differs per language) and keeping pixels close, not identical. Worth it only if a backend must produce SVG or PNG without Node. The scene is already a flat JSON structure, so the cheaper alternative is to run the TypeScript renderer where Node is available.
 3. **Rust.** The Rust core is closed per strategy; a Rust port would be a separate decision and would check against the same conformance data.
 4. **Chat plugin package** like Super Chart's (follows the card decision).
-5. **More chart types.** Funnel and gauge overlap with Super Chat cards; add only if a use case asks.
+5. **More chart types.** Waterfall, funnel, bullet and bump were added in round 5 (the owner asked to absorb the competitors' strengths, which settles the funnel). Gauge is still left out on purpose: one value with a target reads better as a stat tile, or as a bullet when the ranges matter (`docs/notes/wp1.md`). Revisit only if a use case needs the dial itself.
 6. **Vue and Svelte bindings.** The web component already covers them; add native ones only if DX asks for it.
 7. **Declared linking between charts** (Vega-Lite style: two specs share a named selection). Today linking is one `onBrush` line in the host; a declared form would need a page-level registry. Build it if hosts keep writing the same line.
 8. **Raise the 50,000-row cap?** WebGL can draw several hundred thousand dots, but the cap is part of the validation contract (ports, conformance). Keep or raise per chart type.

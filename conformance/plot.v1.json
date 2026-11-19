@@ -2101,6 +2101,324 @@
       "describe": "Heatmap \"Support tickets by weekday and hour\". 25 cells, 5 columns by 5 rows, coloured by tickets. Highest: 13:00 / Tue (55). Lowest: 17:00 / Mon (13)."
     },
     {
+      "type": "waterfall",
+      "spec": {
+        "type": "waterfall",
+        "title": "From revenue to net income",
+        "subtitle": "USD millions, FY2026",
+        "x": "item",
+        "y": "amount",
+        "total": [
+          "Gross profit",
+          "Net income"
+        ],
+        "labels": true,
+        "yLabel": "USD m",
+        "data": [
+          {
+            "item": "Revenue",
+            "amount": 420
+          },
+          {
+            "item": "Cost of sales",
+            "amount": -168
+          },
+          {
+            "item": "Gross profit"
+          },
+          {
+            "item": "R&D",
+            "amount": -61
+          },
+          {
+            "item": "Sales & marketing",
+            "amount": -74
+          },
+          {
+            "item": "Other income",
+            "amount": 12
+          },
+          {
+            "item": "Tax",
+            "amount": -28
+          },
+          {
+            "item": "Net income"
+          }
+        ]
+      },
+      "valid": true,
+      "issueCodes": [],
+      "normalized": {
+        "type": "waterfall",
+        "title": "From revenue to net income",
+        "subtitle": "USD millions, FY2026",
+        "x": "item",
+        "y": "amount",
+        "total": [
+          "Gross profit",
+          "Net income"
+        ],
+        "labels": true,
+        "yLabel": "USD m",
+        "legend": "auto",
+        "tooltip": true,
+        "connectors": true,
+        "orientation": "vertical"
+      },
+      "describe": "Waterfall chart \"From revenue to net income\". 6 changes and 2 totals, from 0 to 101 (net +101). Largest increase: Revenue (+420). Largest decrease: Cost of sales (-168). Totals: Gross profit 252, Net income 101."
+    },
+    {
+      "type": "bullet",
+      "spec": {
+        "type": "bullet",
+        "title": "Q3 against plan",
+        "subtitle": "Each measure on its own scale",
+        "x": "kpi",
+        "value": "actual",
+        "target": "target",
+        "ranges": [
+          "poor",
+          "fair",
+          "good"
+        ],
+        "scale": "each",
+        "data": [
+          {
+            "kpi": "Revenue (USD k)",
+            "actual": 270,
+            "target": 250,
+            "poor": 150,
+            "fair": 225,
+            "good": 300
+          },
+          {
+            "kpi": "Profit (%)",
+            "actual": 22.5,
+            "target": 26,
+            "poor": 20,
+            "fair": 25,
+            "good": 30
+          },
+          {
+            "kpi": "New customers",
+            "actual": 1640,
+            "target": 2000,
+            "poor": 1400,
+            "fair": 2000,
+            "good": 2500
+          },
+          {
+            "kpi": "Satisfaction (1-5)",
+            "actual": 4.4,
+            "target": 4.5,
+            "poor": 3.5,
+            "fair": 4.25,
+            "good": 5
+          }
+        ]
+      },
+      "valid": true,
+      "issueCodes": [],
+      "normalized": {
+        "type": "bullet",
+        "title": "Q3 against plan",
+        "subtitle": "Each measure on its own scale",
+        "x": "kpi",
+        "value": "actual",
+        "target": "target",
+        "ranges": [
+          "poor",
+          "fair",
+          "good"
+        ],
+        "scale": "each",
+        "legend": "auto",
+        "tooltip": true,
+        "orientation": "horizontal"
+      },
+      "describe": "Bullet chart \"Q3 against plan\". 4 measures (Revenue (USD k), Profit (%), New customers, Satisfaction (1-5)) against targets, with ranges poor, fair, good, each on its own scale. Revenue (USD k): 270 against 250 (108% of target), in good. Profit (%): 22.5 against 26 (86.5% of target), in fair. New customers: 1,640 against 2,000 (82% of target), in fair. Satisfaction (1-5): 4.4 against 4.5 (97.8% of target), in good."
+    },
+    {
+      "type": "bump",
+      "spec": {
+        "type": "bump",
+        "title": "Most used languages",
+        "subtitle": "Rank by share of new repositories",
+        "x": "year",
+        "y": "share",
+        "series": "language",
+        "data": [
+          {
+            "year": 2022,
+            "language": "Python",
+            "share": 17
+          },
+          {
+            "year": 2023,
+            "language": "Python",
+            "share": 19
+          },
+          {
+            "year": 2024,
+            "language": "Python",
+            "share": 21
+          },
+          {
+            "year": 2025,
+            "language": "Python",
+            "share": 23
+          },
+          {
+            "year": 2026,
+            "language": "Python",
+            "share": 25
+          },
+          {
+            "year": 2022,
+            "language": "JavaScript",
+            "share": 21
+          },
+          {
+            "year": 2023,
+            "language": "JavaScript",
+            "share": 20
+          },
+          {
+            "year": 2024,
+            "language": "JavaScript",
+            "share": 19
+          },
+          {
+            "year": 2025,
+            "language": "JavaScript",
+            "share": 18
+          },
+          {
+            "year": 2026,
+            "language": "JavaScript",
+            "share": 17
+          },
+          {
+            "year": 2022,
+            "language": "TypeScript",
+            "share": 9
+          },
+          {
+            "year": 2023,
+            "language": "TypeScript",
+            "share": 12
+          },
+          {
+            "year": 2024,
+            "language": "TypeScript",
+            "share": 15
+          },
+          {
+            "year": 2025,
+            "language": "TypeScript",
+            "share": 17
+          },
+          {
+            "year": 2026,
+            "language": "TypeScript",
+            "share": 19
+          },
+          {
+            "year": 2022,
+            "language": "Java",
+            "share": 14
+          },
+          {
+            "year": 2023,
+            "language": "Java",
+            "share": 13
+          },
+          {
+            "year": 2024,
+            "language": "Java",
+            "share": 11
+          },
+          {
+            "year": 2025,
+            "language": "Java",
+            "share": 10
+          },
+          {
+            "year": 2026,
+            "language": "Java",
+            "share": 9
+          },
+          {
+            "year": 2022,
+            "language": "Go",
+            "share": 6
+          },
+          {
+            "year": 2023,
+            "language": "Go",
+            "share": 7
+          },
+          {
+            "year": 2024,
+            "language": "Go",
+            "share": 8
+          },
+          {
+            "year": 2025,
+            "language": "Go",
+            "share": 9
+          },
+          {
+            "year": 2026,
+            "language": "Go",
+            "share": 10
+          },
+          {
+            "year": 2022,
+            "language": "Rust",
+            "share": 3
+          },
+          {
+            "year": 2023,
+            "language": "Rust",
+            "share": 4
+          },
+          {
+            "year": 2024,
+            "language": "Rust",
+            "share": 6
+          },
+          {
+            "year": 2025,
+            "language": "Rust",
+            "share": 8
+          },
+          {
+            "year": 2026,
+            "language": "Rust",
+            "share": 11
+          }
+        ]
+      },
+      "valid": true,
+      "issueCodes": [],
+      "normalized": {
+        "type": "bump",
+        "title": "Most used languages",
+        "subtitle": "Rank by share of new repositories",
+        "x": "year",
+        "y": "share",
+        "series": "language",
+        "legend": "auto",
+        "tooltip": true,
+        "rankBy": "desc",
+        "curve": "smooth",
+        "labels": true
+      },
+      "describe": "Bump chart \"Most used languages\". Ranks of 6 series (Python, JavaScript, TypeScript, Java, Go and 1 more) over 5 steps from 2022 to 2026, ranked by share, highest first. At 2026: 1. Python, 2. TypeScript, 3. JavaScript, 4. Rust, 5. Go. Biggest climb: TypeScript, from 4 to 2. Biggest fall: Java, from 3 to 6."
+    },
+    {
       "type": "radar",
       "spec": {
         "type": "radar",
@@ -2320,6 +2638,54 @@
         "tooltip": true
       },
       "describe": "Sankey diagram \"Where the visitors go\". 8 nodes, 11 flows; 12.1K enters from Search, Social, Direct and ends in Left, Signed up. Largest flow: Search to Home (5.2K)."
+    },
+    {
+      "type": "funnel",
+      "spec": {
+        "type": "funnel",
+        "title": "Checkout funnel",
+        "subtitle": "Sessions, November 2026",
+        "stage": "step",
+        "value": "sessions",
+        "format": "integer",
+        "data": [
+          {
+            "step": "Visited product",
+            "sessions": 48200
+          },
+          {
+            "step": "Added to cart",
+            "sessions": 12650
+          },
+          {
+            "step": "Started checkout",
+            "sessions": 7410
+          },
+          {
+            "step": "Entered payment",
+            "sessions": 5120
+          },
+          {
+            "step": "Purchased",
+            "sessions": 4380
+          }
+        ]
+      },
+      "valid": true,
+      "issueCodes": [],
+      "normalized": {
+        "type": "funnel",
+        "title": "Checkout funnel",
+        "subtitle": "Sessions, November 2026",
+        "stage": "step",
+        "value": "sessions",
+        "format": "integer",
+        "legend": "auto",
+        "tooltip": true,
+        "labels": true,
+        "connectors": true
+      },
+      "describe": "Funnel chart \"Checkout funnel\". 5 stages (Visited product, Added to cart, Started checkout, Entered payment, Purchased), from 48,200 at Visited product to 4,380 at Purchased: 9.1% of the first stage reach the last. Largest drop: Visited product to Added to cart, 26.2% continue."
     },
     {
       "type": "choropleth",
@@ -18135,6 +18501,1111 @@
         }
       ],
       "normalized": null
+    },
+    {
+      "name": "waterfall: total column and list",
+      "spec": {
+        "type": "waterfall",
+        "x": "a",
+        "y": "b",
+        "total": "t",
+        "data": [
+          {
+            "a": "x",
+            "b": 1,
+            "t": "Yes"
+          },
+          {
+            "a": "y",
+            "b": 2,
+            "t": 0
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "waterfall",
+        "x": "a",
+        "y": "b",
+        "total": "t",
+        "legend": "auto",
+        "tooltip": true,
+        "labels": false,
+        "connectors": true,
+        "orientation": "vertical"
+      }
+    },
+    {
+      "name": "waterfall: total list with a typo and a number",
+      "spec": {
+        "type": "waterfall",
+        "x": "a",
+        "y": "b",
+        "total": [
+          "y",
+          "xx",
+          3
+        ],
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "b": 2
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "no_such_step",
+          "path": "total[1]"
+        },
+        {
+          "severity": "warning",
+          "code": "no_such_step",
+          "path": "total[2]"
+        },
+        {
+          "severity": "warning",
+          "code": "total_mismatch",
+          "path": "total"
+        }
+      ],
+      "normalized": {
+        "type": "waterfall",
+        "x": "a",
+        "y": "b",
+        "total": [
+          "y",
+          "xx",
+          "3"
+        ],
+        "legend": "auto",
+        "tooltip": true,
+        "labels": false,
+        "connectors": true,
+        "orientation": "vertical"
+      }
+    },
+    {
+      "name": "waterfall: total list is empty",
+      "spec": {
+        "type": "waterfall",
+        "x": "a",
+        "y": "b",
+        "total": [],
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "b": 2
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "bad_type",
+          "path": "total"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "waterfall: total list has an object",
+      "spec": {
+        "type": "waterfall",
+        "x": "a",
+        "y": "b",
+        "total": [
+          "x",
+          {}
+        ],
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "b": 2
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "bad_type",
+          "path": "total[1]"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "waterfall: total column missing",
+      "spec": {
+        "type": "waterfall",
+        "x": "a",
+        "y": "b",
+        "total": "tt",
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "b": 2
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "no_such_column",
+          "path": "total"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "waterfall: total column never says yes",
+      "spec": {
+        "type": "waterfall",
+        "x": "a",
+        "y": "b",
+        "total": "a",
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "b": 2
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "no_totals",
+          "path": "total"
+        }
+      ],
+      "normalized": {
+        "type": "waterfall",
+        "x": "a",
+        "y": "b",
+        "total": "a",
+        "legend": "auto",
+        "tooltip": true,
+        "labels": false,
+        "connectors": true,
+        "orientation": "vertical"
+      }
+    },
+    {
+      "name": "waterfall: reported total differs",
+      "spec": {
+        "type": "waterfall",
+        "x": "a",
+        "y": "b",
+        "total": [
+          "z"
+        ],
+        "start": 5,
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "b": 2
+          },
+          {
+            "a": "z",
+            "b": 10
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "total_mismatch",
+          "path": "total"
+        }
+      ],
+      "normalized": {
+        "type": "waterfall",
+        "x": "a",
+        "y": "b",
+        "total": [
+          "z"
+        ],
+        "start": 5,
+        "legend": "auto",
+        "tooltip": true,
+        "labels": false,
+        "connectors": true,
+        "orientation": "vertical"
+      }
+    },
+    {
+      "name": "waterfall: repeated steps",
+      "spec": {
+        "type": "waterfall",
+        "x": "a",
+        "y": "b",
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "b": 2
+          },
+          {
+            "a": "x",
+            "b": 4
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "duplicate_steps",
+          "path": "x"
+        }
+      ],
+      "normalized": {
+        "type": "waterfall",
+        "x": "a",
+        "y": "b",
+        "legend": "auto",
+        "tooltip": true,
+        "labels": false,
+        "connectors": true,
+        "orientation": "vertical"
+      }
+    },
+    {
+      "name": "waterfall: nothing to draw",
+      "spec": {
+        "type": "waterfall",
+        "x": "a",
+        "y": "b",
+        "data": [
+          {
+            "a": "x",
+            "b": null,
+            "c": 1
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "empty_data",
+          "path": "y"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "funnel: ok",
+      "spec": {
+        "type": "funnel",
+        "stage": "a",
+        "value": "b",
+        "data": [
+          {
+            "a": "x",
+            "b": 9
+          },
+          {
+            "a": "y",
+            "b": 4
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "funnel",
+        "stage": "a",
+        "value": "b",
+        "legend": "auto",
+        "tooltip": true,
+        "labels": true,
+        "connectors": true
+      }
+    },
+    {
+      "name": "funnel: rises, negative, repeated",
+      "spec": {
+        "type": "funnel",
+        "stage": "a",
+        "value": "b",
+        "data": [
+          {
+            "a": "x",
+            "b": 2
+          },
+          {
+            "a": "y",
+            "b": 5
+          },
+          {
+            "a": "z",
+            "b": -1
+          },
+          {
+            "a": "x",
+            "b": 1
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "negative_values",
+          "path": "value"
+        },
+        {
+          "severity": "warning",
+          "code": "duplicate_stages",
+          "path": "stage"
+        },
+        {
+          "severity": "warning",
+          "code": "funnel_increases",
+          "path": "value"
+        }
+      ],
+      "normalized": {
+        "type": "funnel",
+        "stage": "a",
+        "value": "b",
+        "legend": "auto",
+        "tooltip": true,
+        "labels": true,
+        "connectors": true
+      }
+    },
+    {
+      "name": "funnel: too many stages",
+      "spec": {
+        "type": "funnel",
+        "stage": "a",
+        "value": "b",
+        "data": [
+          {
+            "a": "s0",
+            "b": 100
+          },
+          {
+            "a": "s1",
+            "b": 99
+          },
+          {
+            "a": "s2",
+            "b": 98
+          },
+          {
+            "a": "s3",
+            "b": 97
+          },
+          {
+            "a": "s4",
+            "b": 96
+          },
+          {
+            "a": "s5",
+            "b": 95
+          },
+          {
+            "a": "s6",
+            "b": 94
+          },
+          {
+            "a": "s7",
+            "b": 93
+          },
+          {
+            "a": "s8",
+            "b": 92
+          },
+          {
+            "a": "s9",
+            "b": 91
+          },
+          {
+            "a": "s10",
+            "b": 90
+          },
+          {
+            "a": "s11",
+            "b": 89
+          },
+          {
+            "a": "s12",
+            "b": 88
+          },
+          {
+            "a": "s13",
+            "b": 87
+          },
+          {
+            "a": "s14",
+            "b": 86
+          },
+          {
+            "a": "s15",
+            "b": 85
+          },
+          {
+            "a": "s16",
+            "b": 84
+          },
+          {
+            "a": "s17",
+            "b": 83
+          },
+          {
+            "a": "s18",
+            "b": 82
+          },
+          {
+            "a": "s19",
+            "b": 81
+          },
+          {
+            "a": "s20",
+            "b": 80
+          },
+          {
+            "a": "s21",
+            "b": 79
+          },
+          {
+            "a": "s22",
+            "b": 78
+          },
+          {
+            "a": "s23",
+            "b": 77
+          },
+          {
+            "a": "s24",
+            "b": 76
+          },
+          {
+            "a": "s25",
+            "b": 75
+          },
+          {
+            "a": "s26",
+            "b": 74
+          },
+          {
+            "a": "s27",
+            "b": 73
+          },
+          {
+            "a": "s28",
+            "b": 72
+          },
+          {
+            "a": "s29",
+            "b": 71
+          },
+          {
+            "a": "s30",
+            "b": 70
+          },
+          {
+            "a": "s31",
+            "b": 69
+          },
+          {
+            "a": "s32",
+            "b": 68
+          },
+          {
+            "a": "s33",
+            "b": 67
+          },
+          {
+            "a": "s34",
+            "b": 66
+          },
+          {
+            "a": "s35",
+            "b": 65
+          },
+          {
+            "a": "s36",
+            "b": 64
+          },
+          {
+            "a": "s37",
+            "b": 63
+          },
+          {
+            "a": "s38",
+            "b": 62
+          },
+          {
+            "a": "s39",
+            "b": 61
+          },
+          {
+            "a": "s40",
+            "b": 60
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "too_many_stages",
+          "path": "stage"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "funnel: zoom is not a funnel field",
+      "spec": {
+        "type": "funnel",
+        "stage": "a",
+        "value": "b",
+        "zoom": "x",
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "b": 2
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "unknown_field",
+          "path": "zoom"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "bullet: ok",
+      "spec": {
+        "type": "bullet",
+        "x": "a",
+        "value": "b",
+        "target": "c",
+        "ranges": [
+          "p",
+          "q"
+        ],
+        "data": [
+          {
+            "a": "x",
+            "b": 1,
+            "c": 2,
+            "p": 1,
+            "q": 3
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "bullet",
+        "x": "a",
+        "value": "b",
+        "target": "c",
+        "ranges": [
+          "p",
+          "q"
+        ],
+        "legend": "auto",
+        "tooltip": true,
+        "orientation": "horizontal",
+        "scale": "shared"
+      }
+    },
+    {
+      "name": "bullet: plain bar, repeated and unordered",
+      "spec": {
+        "type": "bullet",
+        "x": "a",
+        "value": "b",
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "b": 2
+          },
+          {
+            "a": "x",
+            "b": 3
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "prefer_bar",
+          "path": "type"
+        },
+        {
+          "severity": "warning",
+          "code": "duplicate_measures",
+          "path": "x"
+        }
+      ],
+      "normalized": {
+        "type": "bullet",
+        "x": "a",
+        "value": "b",
+        "legend": "auto",
+        "tooltip": true,
+        "orientation": "horizontal",
+        "scale": "shared"
+      }
+    },
+    {
+      "name": "bullet: unordered ranges",
+      "spec": {
+        "type": "bullet",
+        "x": "a",
+        "value": "b",
+        "ranges": [
+          "p",
+          "q"
+        ],
+        "data": [
+          {
+            "a": "x",
+            "b": 1,
+            "p": 3,
+            "q": 1
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "ranges_not_increasing",
+          "path": "ranges"
+        }
+      ],
+      "normalized": {
+        "type": "bullet",
+        "x": "a",
+        "value": "b",
+        "ranges": [
+          "p",
+          "q"
+        ],
+        "legend": "auto",
+        "tooltip": true,
+        "orientation": "horizontal",
+        "scale": "shared"
+      }
+    },
+    {
+      "name": "bullet: scale enum",
+      "spec": {
+        "type": "bullet",
+        "x": "a",
+        "value": "b",
+        "target": "b",
+        "scale": "own",
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "b": 2
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "bad_enum",
+          "path": "scale"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "bump: ok from values",
+      "spec": {
+        "type": "bump",
+        "x": "x",
+        "y": "v",
+        "series": "s",
+        "rankBy": "asc",
+        "data": [
+          {
+            "x": 1,
+            "s": "p",
+            "v": 1
+          },
+          {
+            "x": 1,
+            "s": "q",
+            "v": 2
+          },
+          {
+            "x": 2,
+            "s": "p",
+            "v": 3
+          },
+          {
+            "x": 2,
+            "s": "q",
+            "v": 1
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "bump",
+        "x": "x",
+        "y": "v",
+        "series": "s",
+        "rankBy": "asc",
+        "legend": "auto",
+        "tooltip": true,
+        "curve": "smooth",
+        "labels": true
+      }
+    },
+    {
+      "name": "bump: neither rank nor y",
+      "spec": {
+        "type": "bump",
+        "x": "x",
+        "series": "s",
+        "data": [
+          {
+            "x": 1,
+            "s": "p"
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "missing_required",
+          "path": "y"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "bump: rank without series",
+      "spec": {
+        "type": "bump",
+        "x": "x",
+        "rank": "r",
+        "data": [
+          {
+            "x": 1,
+            "r": 1
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "missing_required",
+          "path": "series"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "bump: rank and y, bad ranks, repeats, rankBy unused",
+      "spec": {
+        "type": "bump",
+        "x": "x",
+        "rank": "r",
+        "y": "r",
+        "series": "s",
+        "rankBy": "asc",
+        "patterns": true,
+        "data": [
+          {
+            "x": 1,
+            "s": "p",
+            "r": 1
+          },
+          {
+            "x": 1,
+            "s": "p",
+            "r": 2
+          },
+          {
+            "x": 1,
+            "s": "q",
+            "r": 0
+          },
+          {
+            "x": 2,
+            "s": "q",
+            "r": 1
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "y_ignored",
+          "path": "y"
+        },
+        {
+          "severity": "warning",
+          "code": "rank_by_ignored",
+          "path": "rankBy"
+        },
+        {
+          "severity": "warning",
+          "code": "patterns_unsupported",
+          "path": "patterns"
+        },
+        {
+          "severity": "warning",
+          "code": "bad_rank",
+          "path": "rank"
+        },
+        {
+          "severity": "warning",
+          "code": "duplicate_points",
+          "path": "rank"
+        }
+      ],
+      "normalized": {
+        "type": "bump",
+        "x": "x",
+        "rank": "r",
+        "y": "r",
+        "series": "s",
+        "rankBy": "asc",
+        "patterns": true,
+        "legend": "auto",
+        "tooltip": true,
+        "curve": "smooth",
+        "labels": true
+      }
+    },
+    {
+      "name": "bump: one series, one step",
+      "spec": {
+        "type": "bump",
+        "x": "x",
+        "y": "v",
+        "data": [
+          {
+            "x": 1,
+            "v": 1
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "single_series",
+          "path": "series"
+        },
+        {
+          "severity": "warning",
+          "code": "single_step",
+          "path": "x"
+        }
+      ],
+      "normalized": {
+        "type": "bump",
+        "x": "x",
+        "y": "v",
+        "legend": "auto",
+        "tooltip": true,
+        "rankBy": "desc",
+        "curve": "smooth",
+        "labels": true
+      }
+    },
+    {
+      "name": "bump: too many series",
+      "spec": {
+        "type": "bump",
+        "x": "x",
+        "y": "v",
+        "series": "s",
+        "data": [
+          {
+            "x": 1,
+            "s": "s0",
+            "v": 0
+          },
+          {
+            "x": 2,
+            "s": "s0",
+            "v": 1
+          },
+          {
+            "x": 1,
+            "s": "s1",
+            "v": 2
+          },
+          {
+            "x": 2,
+            "s": "s1",
+            "v": 3
+          },
+          {
+            "x": 1,
+            "s": "s2",
+            "v": 4
+          },
+          {
+            "x": 2,
+            "s": "s2",
+            "v": 5
+          },
+          {
+            "x": 1,
+            "s": "s3",
+            "v": 6
+          },
+          {
+            "x": 2,
+            "s": "s3",
+            "v": 7
+          },
+          {
+            "x": 1,
+            "s": "s4",
+            "v": 8
+          },
+          {
+            "x": 2,
+            "s": "s4",
+            "v": 9
+          },
+          {
+            "x": 1,
+            "s": "s5",
+            "v": 10
+          },
+          {
+            "x": 2,
+            "s": "s5",
+            "v": 11
+          },
+          {
+            "x": 1,
+            "s": "s6",
+            "v": 12
+          },
+          {
+            "x": 2,
+            "s": "s6",
+            "v": 13
+          },
+          {
+            "x": 1,
+            "s": "s7",
+            "v": 14
+          },
+          {
+            "x": 2,
+            "s": "s7",
+            "v": 15
+          },
+          {
+            "x": 1,
+            "s": "s8",
+            "v": 16
+          },
+          {
+            "x": 2,
+            "s": "s8",
+            "v": 17
+          },
+          {
+            "x": 1,
+            "s": "s9",
+            "v": 18
+          },
+          {
+            "x": 2,
+            "s": "s9",
+            "v": 19
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "too_many_series",
+          "path": "series"
+        }
+      ],
+      "normalized": {
+        "type": "bump",
+        "x": "x",
+        "y": "v",
+        "series": "s",
+        "legend": "auto",
+        "tooltip": true,
+        "rankBy": "desc",
+        "curve": "smooth",
+        "labels": true
+      }
     },
     {
       "name": "patterns: on",
@@ -47257,6 +48728,267 @@
         ]
       },
       "describe": "Sankey diagram. 4 nodes, 3 flows; 6 enters from x, y and ends in z. Largest flow: m to z (6).",
+      "issueCodes": []
+    },
+    {
+      "name": "waterfall: opening total, changes, computed and reported totals",
+      "spec": {
+        "type": "waterfall",
+        "x": "k",
+        "y": "v",
+        "total": "t",
+        "format": "currency:USD",
+        "data": [
+          {
+            "k": "Open",
+            "v": 100,
+            "t": true
+          },
+          {
+            "k": "In",
+            "v": 30.5
+          },
+          {
+            "k": "Out",
+            "v": -50
+          },
+          {
+            "k": "Sub",
+            "t": "subtotal"
+          },
+          {
+            "k": "Fee",
+            "v": -2
+          },
+          {
+            "k": "Close",
+            "v": 80,
+            "t": "TOTAL"
+          }
+        ]
+      },
+      "describe": "Waterfall chart. 3 changes and 3 totals, from $100.00 to $80.00 (net -$20.00). Largest increase: In (+$30.50). Largest decrease: Out (-$50.00). Totals: Open $100.00, Sub $80.50, Close $80.00.",
+      "issueCodes": [
+        "total_mismatch"
+      ]
+    },
+    {
+      "name": "waterfall: start, no totals, only rises",
+      "spec": {
+        "type": "waterfall",
+        "x": "k",
+        "y": "v",
+        "start": -10,
+        "data": [
+          {
+            "k": "a",
+            "v": 4
+          },
+          {
+            "k": "b",
+            "v": 6
+          },
+          {
+            "k": "a",
+            "v": 1
+          }
+        ]
+      },
+      "describe": "Waterfall chart. 2 changes, from -10 to 1 (net +11). Largest increase: b (+6).",
+      "issueCodes": [
+        "duplicate_steps"
+      ]
+    },
+    {
+      "name": "funnel: zero first stage, a rise",
+      "spec": {
+        "type": "funnel",
+        "stage": "s",
+        "value": "n",
+        "data": [
+          {
+            "s": "a",
+            "n": 0
+          },
+          {
+            "s": "b",
+            "n": 5
+          },
+          {
+            "s": "c",
+            "n": 2
+          }
+        ]
+      },
+      "describe": "Funnel chart. 3 stages (a, b, c), from 0 at a to 2 at c; the first stage is 0, so there are no shares of it. Largest drop: b to c, 40% continue. The value rises between some stages.",
+      "issueCodes": [
+        "funnel_increases"
+      ]
+    },
+    {
+      "name": "funnel: one stage",
+      "spec": {
+        "type": "funnel",
+        "stage": "s",
+        "value": "n",
+        "format": "compact",
+        "data": [
+          {
+            "s": "only",
+            "n": 12500
+          }
+        ]
+      },
+      "describe": "Funnel chart. 1 stage: only, 12.5K.",
+      "issueCodes": []
+    },
+    {
+      "name": "bullet: no target, above every range, missing value",
+      "spec": {
+        "type": "bullet",
+        "x": "k",
+        "value": "v",
+        "ranges": [
+          "lo",
+          "hi"
+        ],
+        "data": [
+          {
+            "k": "a",
+            "v": 9,
+            "lo": 3,
+            "hi": 6
+          },
+          {
+            "k": "b",
+            "lo": 1,
+            "hi": 2
+          },
+          {
+            "k": "c",
+            "v": 2,
+            "lo": 3,
+            "hi": 6
+          }
+        ]
+      },
+      "describe": "Bullet chart. 3 measures (a, b, c), with ranges lo, hi. a: 9, above every range. b: no value. c: 2, in lo.",
+      "issueCodes": []
+    },
+    {
+      "name": "bullet: seven measures on their own scales (list is cut)",
+      "spec": {
+        "type": "bullet",
+        "x": "k",
+        "value": "v",
+        "target": "t",
+        "scale": "each",
+        "data": [
+          {
+            "k": "m0",
+            "v": 0,
+            "t": 25
+          },
+          {
+            "k": "m1",
+            "v": 10,
+            "t": 25
+          },
+          {
+            "k": "m2",
+            "v": 20,
+            "t": 25
+          },
+          {
+            "k": "m3",
+            "v": 30,
+            "t": 0
+          },
+          {
+            "k": "m4",
+            "v": 40,
+            "t": 25
+          },
+          {
+            "k": "m5",
+            "v": 50,
+            "t": 25
+          },
+          {
+            "k": "m6",
+            "v": 60,
+            "t": 25
+          }
+        ]
+      },
+      "describe": "Bullet chart. 7 measures (m0, m1, m2, m3, m4 and 2 more) against targets, each on its own scale. m0: 0 against 25 (0% of target). m1: 10 against 25 (40% of target). m2: 20 against 25 (80% of target). m3: 30 against 0. m4: 40 against 25 (160% of target). m5: 50 against 25 (200% of target). And 1 more.",
+      "issueCodes": []
+    },
+    {
+      "name": "bump: rank column, gaps and dates",
+      "spec": {
+        "type": "bump",
+        "x": "d",
+        "rank": "r",
+        "series": "s",
+        "data": [
+          {
+            "d": "2026-03-01",
+            "s": "p",
+            "r": 2
+          },
+          {
+            "d": "2026-01-01",
+            "s": "p",
+            "r": 1
+          },
+          {
+            "d": "2026-01-01",
+            "s": "q",
+            "r": 2
+          },
+          {
+            "d": "2026-03-01",
+            "s": "q",
+            "r": 1
+          },
+          {
+            "d": "2026-02-01",
+            "s": "q",
+            "r": 1
+          }
+        ]
+      },
+      "describe": "Bump chart. Ranks of 2 series (p, q) over 3 steps from 2026-01-01 to 2026-03-01. At 2026-03-01: 1. q, 2. p. Biggest climb: q, from 2 to 1. Biggest fall: p, from 1 to 2.",
+      "issueCodes": []
+    },
+    {
+      "name": "bump: wide form, ascending, ties keep series order",
+      "spec": {
+        "type": "bump",
+        "x": "x",
+        "y": [
+          "a",
+          "b",
+          "c"
+        ],
+        "rankBy": "asc",
+        "data": [
+          {
+            "x": "r1",
+            "a": 3,
+            "b": 3,
+            "c": 1
+          },
+          {
+            "x": "r2",
+            "a": 1,
+            "b": 2,
+            "c": 3
+          }
+        ]
+      },
+      "describe": "Bump chart. Ranks of 3 series (a, b, c) over 2 steps from r1 to r2, ranked by value, lowest first. At r2: 1. a, 2. b, 3. c. Biggest climb: a, from 2 to 1. Biggest fall: c, from 1 to 3.",
       "issueCodes": []
     },
     {

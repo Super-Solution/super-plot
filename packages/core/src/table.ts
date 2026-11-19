@@ -24,8 +24,9 @@ export function plotTable(spec: unknown, options: { maxRows?: number } = {}): Pl
   const keys: string[] = []
   const add = (k: unknown): void => { if (typeof k === 'string' && k && !keys.includes(k)) keys.push(k) }
   if (def) for (const [name, f] of Object.entries(fieldsOf(def))) {
-    if (f.kind !== 'column' && f.kind !== 'columns') continue
+    if (f.kind !== 'column' && f.kind !== 'columns' && f.kind !== 'flag') continue
     const v = s[name]
+    if (f.kind === 'flag' && typeof v !== 'string') continue
     if (Array.isArray(v)) v.forEach(add)
     else add(v)
   }

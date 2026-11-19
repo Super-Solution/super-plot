@@ -47,6 +47,22 @@ new SuperPlot(el, spec, { plugins: [{
 
 `patterns: true` in the spec adds a texture per series (bars, areas, slices, cells, legend swatches). `dataTable: true` puts a table of the data the chart shows (after `transform`) next to it for screen readers; `'visible'` shows it to everyone. `plotTable(spec)` in core returns the same table as data. On canvas the chart is one focusable element: the arrow keys step through marks, Home and End jump, Enter selects, and each step is announced.
 
+## Waterfall, funnel, bullet and bump
+
+Four more chart types, each one spec like the others (`/charts` exports `waterfall`, `funnel`, `bullet`, `bump` for per-chart imports):
+
+```ts
+{ type: 'waterfall', x: 'item', y: 'amount', total: ['Gross profit', 'Net income'], labels: true, data }   // or total: 'isTotal' (a yes/no column)
+{ type: 'funnel', stage: 'step', value: 'sessions', data }
+{ type: 'bullet', x: 'kpi', value: 'actual', target: 'target', ranges: ['poor', 'fair', 'good'], scale: 'each', data }
+{ type: 'bump', x: 'year', y: 'share', series: 'language', data }                                          // or rank: 'position'
+```
+
+- **Waterfall**: steps in data order; a change floats from the running total, a total row stands on 0 and shows the running total (or its own value, an opening or reported balance: `total_mismatch` warns when that differs from the sum before it). Increase, decrease and total are three legend entries on the `positive`, `negative` and `text-muted` tokens (override with `colors: { increase, decrease, total }`), so colour is never the only carrier; `patterns: true` textures them too. The tooltip and `datum` carry the change and the running total. `orientation: 'horizontal'`, `start`, `connectors: false`.
+- **Funnel**: centred bars whose width is the value, labelled with the value and the share of the first stage; the tooltip and `datum` add the share of the stage before. A stage larger than the one before draws but warns (`funnel_increases`). `facet` gives one funnel per segment, each against its own first stage. Not cartesian: `zoom`/`brush` are unknown fields, as on a pie.
+- **Bullet**: one row per measure: qualitative ranges as bands of one neutral tone (darkest first), the value as a bar, the target as a tick; hovering anywhere on a row shows every number. `scale: 'each'` gives each measure its own range and ticks (mixed units); `shared` (default) puts all on one axis and supports `orientation: 'vertical'`, annotations, brush and facets.
+- **Bump**: the rank of each series per x, rank 1 on top, from a `rank` column or by ranking `y` per x (`rankBy: 'desc' | 'asc'`, ties keep the series order). Lines are labelled at their ends (`labels: false` to rely on the legend); a hidden series does not re-rank the others. At most `LIMITS.maxSeries` (8) lines: the best by average rank, with `too_many_series`.
+
 ## Agents and MCP
 
 ```ts

@@ -27,6 +27,7 @@ export type FieldDef = { desc: string; required?: boolean } & (
   | { kind: 'geo' }
   | { kind: 'camera' }
   | { kind: 'transform' }
+  | { kind: 'flag' }
 )
 
 export type FieldMap = Record<string, FieldDef>
@@ -206,6 +207,21 @@ export function validateField(name: string, def: FieldDef, value: unknown, ctx: 
       }
       return ok ? out : undefined
     }
+    case 'flag': {
+      if (typeof value === 'string') {
+        if (ctx.columns.has(value)) return value
+        const near = closest(value, [...ctx.columns])
+        return bad('no_such_column', `Column "${value}" does not exist in data.`, `${near ? `Did you mean "${near}"? ` : ''}Give a column of yes/no values, or a list of the marked values, e.g. ["Total"].`)
+      }
+      if (!Array.isArray(value) || value.length === 0) return bad('bad_type', `${name} must be a column name or a non-empty list of values, got ${fmt(value)}.`)
+      if (value.length > LIMITS.maxCategories) return bad('too_many', `${name} lists ${value.length} values; at most ${LIMITS.maxCategories}.`)
+      const bad2 = value.findIndex(v => !(typeof v === 'string' || (typeof v === 'number' && Number.isFinite(v))))
+      if (bad2 >= 0) {
+        add(ctx, 'error', 'bad_type', `${name}[${bad2}]`, `${name}[${bad2}] must be a string or a number, got ${fmt(value[bad2])}.`)
+        return undefined
+      }
+      return value.map(v => String(v))
+    }
     case 'column':
     case 'columns': {
       const names = def.kind === 'columns' ? (Array.isArray(value) ? value : [value]) : [value]
@@ -278,6 +294,7 @@ export function fieldSchema(def: FieldDef): Record<string, unknown> {
       }
     case 'geo': return { oneOf: [{ type: 'string', pattern: '^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$' }, { type: 'object', required: ['type'], properties: { type: { enum: ['FeatureCollection', 'Topology'] } } }], description: d }
     case 'camera': return { type: 'object', additionalProperties: false, properties: Object.fromEntries(CAMERA_KEYS.map(k => [k, { type: 'number', minimum: CAMERA_RANGE[k][0], maximum: CAMERA_RANGE[k][1] }])), description: d }
+    case 'flag': return { oneOf: [{ type: 'string' }, { type: 'array', minItems: 1, maxItems: LIMITS.maxCategories, items: { type: ['string', 'number'] } }], description: `${d} (column name, or a list of values)` }
     case 'column': return { type: 'string', description: `${d} (name of a column in data)` }
     case 'columns': return { oneOf: [{ type: 'string' }, { type: 'array', minItems: 1, items: { type: 'string' } }], description: `${d} (column name, or several for wide-form data)` }
   }
@@ -289,6 +306,7 @@ export function fieldType(def: FieldDef): string {
     case 'enum': return def.values.map(v => `\`${v}\``).join(' \\| ')
     case 'column': return 'column name'
     case 'columns': return 'column name or list of column names'
+    case 'flag': return 'column name or list of values'
     case 'number': return def.integer ? 'integer' : 'number'
     case 'bins': return '`auto` \\| integer'
     case 'domain': return '[min\\|null, max\\|null]'
@@ -302,6 +320,24 @@ export function fieldType(def: FieldDef): string {
     case 'camera': return '{lng, lat, zoom, pitch, bearing}'
     default: return def.kind
   }
+}
+
+const YES = new Set(['true', 'yes', '1', 'total', 'subtotal'])
+
+/** A yes/no cell of a `flag` column: true, 1, or "true", "yes", "1", "total", "subtotal" (any case, trimmed). Anything else is no. */
+export const isYes = (v: unknown): boolean => v === true || v === 1 || (typeof v === 'string' && YES.has(v.trim().toLowerCase()))
+
+/**
+ * Is this row marked by a `flag` field? A column name reads the row's yes/no cell; a list matches the row's
+ * value in `keyColumn` (as a string).
+ */
+export function flagged(flag: unknown, row: Row, keyColumn: string | undefined): boolean {
+  if (typeof flag === 'string') return isYes(row[flag])
+  if (Array.isArray(flag) && keyColumn !== undefined) {
+    const v = row[keyColumn]
+    return v !== null && v !== undefined && flag.includes(String(v))
+  }
+  return false
 }
 
 export function fieldDefault(def: FieldDef): unknown {
