@@ -6,6 +6,8 @@ half away from zero; both are reproduced. Only the English locale is supported: 
 """
 from __future__ import annotations
 
+import math
+
 import json
 import re
 import unicodedata
@@ -60,8 +62,8 @@ def _plain(d: Decimal, min_frac: int, max_frac: int, grouping: bool = True) -> s
 
 
 def _signed(v: float, body: str) -> str:
-    # Intl keeps the sign of a negative number that rounds to zero ("-0").
-    return ("-" if v < 0 else "") + body
+    # Intl keeps the sign of a negative number that rounds to zero ("-0"), and of minus zero itself.
+    return ("-" if v < 0 or (v == 0 and math.copysign(1.0, v) < 0) else "") + body
 
 
 def _compact(v: float) -> str:
@@ -148,6 +150,55 @@ def format_date(ms: float) -> str:
     """`Aug 31, 2026` (UTC)."""
     y, m, d = _civil(int(ms // 86_400_000))
     return f"{_MONTHS[m - 1]} {d}, {y if y > 0 else 1 - y}"  # Intl prints the year of the era: year 0 is "1" (BC)
+
+
+def format_datetime(ms: float) -> str:
+    """`Aug 31, 2026, 09:30` (UTC, 24-hour clock)."""
+    minute = int(ms // 60_000) % 1440
+    return f"{format_date(ms)}, {minute // 60:02d}:{minute % 60:02d}"
+
+
+def _round(x: float) -> float:
+    """`Math.round`."""
+    f = math.floor(x)
+    return f + 1 if x - f >= 0.5 else f
+
+
+_DURATION_UNITS = [(86_400_000, "d"), (3_600_000, "h"), (60_000, "min"), (1000, "s")]
+
+
+def format_duration(ms: float) -> str:
+    """An elapsed time in ms as at most two units, largest first: "3 d 4 h", "2 h 15 min", "45 s", "0.25 s".
+    Mirrors `formatDuration` in util/time.ts (a day is 24 hours)."""
+    sign = "-" if ms < 0 else ""
+    a = abs(ms)
+
+    def nf(n: float, digits: int = 0) -> str:
+        return _plain(_shortest(n), 0, digits)
+
+    if _round(a / 1000) < 60:
+        return f"{sign}{nf(a / 1000, 2 if a < 10_000 else 0)} s"
+
+    def rounded(v: float) -> tuple[int, float]:
+        i = next((k for k, (u, _) in enumerate(_DURATION_UNITS) if v >= u), -1)
+        u2 = _DURATION_UNITS[min(i + 1, 3)][0]
+        return i, _round(v / u2) * u2
+
+    first, rest = rounded(a)
+    again = rounded(rest)
+    if again[0] < first:
+        first, rest = again
+    out: list[str] = []
+    for u, w in _DURATION_UNITS[first:]:
+        if len(out) == 2:
+            break
+        n = math.floor(rest / u)
+        rest -= n * u
+        if n or not out:
+            out.append(f"{nf(n)} {w}")
+        elif len(out) == 1:
+            break
+    return sign + " ".join(out)
 
 
 __all__ = ["format_value", "format_percent", "format_date", "value_formatter", "is_value_format", "is_finite_number"]

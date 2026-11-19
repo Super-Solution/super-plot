@@ -43,6 +43,7 @@ var checks = map[string]func(spec, []row, *[]Issue){
 	"funnel":    checkFunnel,
 	"waffle":    checkWaffle,
 	"beeswarm":  checkBeeswarm,
+	"timeline":  checkTimeline,
 	"radar":     checkRadar,
 	"treemap":   checkTreemap,
 	"sankey":    checkSankey,
@@ -65,6 +66,8 @@ var describers = map[string]func(spec) string{
 			return describeSeries(s, "Stacked area chart (100%)")
 		case "stack":
 			return describeSeries(s, "Stacked area chart")
+		case "center":
+			return describeSeries(s, "Stream graph") + " The layers are stacked around a centre line, so the vertical axis has no zero; the thickness of each layer is its value."
 		}
 		return describeSeries(s, "Area chart")
 	},
@@ -83,6 +86,7 @@ var describers = map[string]func(spec) string{
 	"funnel":     describeFunnel,
 	"waffle":     describeWaffle,
 	"beeswarm":   describeBeeswarm,
+	"timeline":   describeTimeline,
 	"heatmap":    describeHeatmap,
 	"radar":      describeRadar,
 	"treemap":    describeTreemap,
@@ -504,7 +508,8 @@ func describeSeries(s spec, name string) string {
 
 // hasBand: shaded intervals behind lines, only with one y column and not on stacked areas.
 func hasBand(s spec) bool {
-	return str(s, "yLower") != "" && str(s, "yUpper") != "" && len(columnList(s["y"])) <= 1 && !stacked(s)
+	st := str(s, "stack")
+	return str(s, "yLower") != "" && str(s, "yUpper") != "" && len(columnList(s["y"])) <= 1 && (st == "" || st == "none")
 }
 
 func joinAnd(items []string) (string, string) {
@@ -544,7 +549,7 @@ func checkSeries(s spec, rows []row, issues *[]Issue, area bool) {
 	if intervalCheck(s, rows, issues, "y") {
 		if multi {
 			issue(issues, "warning", "interval_needs_one_y", "yLower", "yLower and yUpper describe one column; with several `y` columns no band is drawn.", "Fold the columns into long form (a `fold` step) and use `series`.")
-		} else if stacked(s) {
+		} else if stacked(s) || str(s, "stack") == "center" {
 			issue(issues, "warning", "interval_ignored_stacked", "yLower", "An interval cannot be shown on a stacked area; no band is drawn.", `Set stack to "none", or use a line chart.`)
 		}
 	}

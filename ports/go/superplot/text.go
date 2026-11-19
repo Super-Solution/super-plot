@@ -155,8 +155,8 @@ func plain(d decimal, minFrac, maxFrac int, grouping bool) string {
 }
 
 func signed(v float64, body string) string {
-	// Intl keeps the sign of a negative number that rounds to zero ("-0").
-	if v < 0 {
+	// Intl keeps the sign of a negative number that rounds to zero ("-0"), and of minus zero itself.
+	if v < 0 || (v == 0 && math.Signbit(v)) {
 		return "-" + body
 	}
 	return body
@@ -305,4 +305,65 @@ func formatDate(ms float64) string {
 		y = 1 - y // Intl prints the year of the era: year 0 is "1" (BC)
 	}
 	return fmt.Sprintf("%s %d, %d", months[m-1], d, y)
+}
+
+// formatDateTime is "Aug 31, 2026, 09:30" (UTC, 24-hour clock) for epoch milliseconds.
+func formatDateTime(ms float64) string {
+	minute := int64(math.Floor(ms/60_000)) % 1440
+	if minute < 0 {
+		minute += 1440
+	}
+	return fmt.Sprintf("%s, %02d:%02d", formatDate(ms), minute/60, minute%60)
+}
+
+var durationUnits = []struct {
+	ms   float64
+	name string
+}{{86_400_000, "d"}, {3_600_000, "h"}, {60_000, "min"}, {1000, "s"}}
+
+// FormatDuration is an elapsed time in ms as at most two units, largest first: "3 d 4 h", "2 h 15 min", "45 s",
+// "0.25 s" (a day is 24 hours). Mirrors formatDuration in util/time.ts.
+func FormatDuration(ms float64) string {
+	sign := ""
+	if ms < 0 {
+		sign = "-"
+	}
+	a := math.Abs(ms)
+	nf := func(n float64, digits int) string { return plain(shortest(n), 0, digits, true) }
+	if jsRound(a/1000) < 60 {
+		digits := 0
+		if a < 10_000 {
+			digits = 2
+		}
+		return sign + nf(a/1000, digits) + " s"
+	}
+	rounded := func(v float64) (int, float64) {
+		i := -1
+		for k, u := range durationUnits {
+			if v >= u.ms {
+				i = k
+				break
+			}
+		}
+		u2 := durationUnits[min(i+1, 3)].ms
+		return i, float64(jsRound(v/u2) * u2)
+	}
+	first, rest := rounded(a)
+	if again, r := rounded(rest); again < first {
+		first, rest = again, r
+	}
+	var out []string
+	for _, u := range durationUnits[first:] {
+		if len(out) == 2 {
+			break
+		}
+		n := math.Floor(rest / u.ms)
+		rest -= float64(n * u.ms)
+		if n != 0 || len(out) == 0 {
+			out = append(out, nf(n, 0)+" "+u.name)
+		} else if len(out) == 1 {
+			break
+		}
+	}
+	return sign + strings.Join(out, " ")
 }

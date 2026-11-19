@@ -5,7 +5,11 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "python" / "src"))
-from super_plot import bin_counts, bin_edges, box_stats, describe_plot, format_value, linear_ticks, nice_domain, time_bucket, validate_plot  # noqa: E402
+from super_plot import (  # noqa: E402
+    bin_counts, bin_edges, box_stats, density_peaks, describe_plot, format_value, kde, linear_ticks, loess, log_ticks, nice_domain,
+    nice_log_domain, silverman, time_bucket, transform_bin_edges, validate_plot, waffle_cells,
+)
+from super_plot.text import format_duration  # noqa: E402
 
 d = json.load(open(sys.argv[1], encoding="utf-8"))
 bad = 0
@@ -36,6 +40,26 @@ for vs, b, e, c, bx in d["bins"]:
 for t, unit, want in d["buckets"]:
     if time_bucket(t, unit) != want:
         report("BUCKET", repr(t), unit, time_bucket(t, unit), want)
+# Round 5 statistics. Equal means equal: the ports compute these with the reference's own elementary functions.
+for a, b, n, t, nd in d["logs"]:
+    if log_ticks(a, b, n) != t or list(nice_log_domain(a, b)) != nd:
+        report("LOG", a, b, n, log_ticks(a, b, n), t, nice_log_domain(a, b), nd)
+for vs, bw, sil, used, grid, dens, peaks in d["densities"]:
+    k = kde(vs, bw)
+    if silverman(vs) != sil or k["bandwidth"] != used or k["grid"] != grid or k["density"] != dens or density_peaks(k) != peaks:
+        report("DENSITY", len(vs), bw, silverman(vs), sil, density_peaks(k), peaks)
+for xs, ys, bw, grid, want in d["fits"]:
+    if loess(xs, ys, bw, grid) != want:
+        report("LOESS", len(xs), bw, grid)
+for vs, maxbins, step, want in d["binSteps"]:
+    if transform_bin_edges(vs, maxbins, step) != want:
+        report("BINSTEP", len(vs), maxbins, step, transform_bin_edges(vs, maxbins, step), want)
+for vs, cells, want in d["waffles"]:
+    if waffle_cells(vs, cells) != want:
+        report("WAFFLE", vs, cells, waffle_cells(vs, cells), want)
+for ms, want in d["durations"]:
+    if format_duration(ms) != want:
+        report("DURATION", repr(ms), format_duration(ms), want)
 for i, c in enumerate(d["specs"]):
     v = validate_plot(c["spec"])
     got = sorted((x["severity"], x["code"], x["path"]) for x in v.issues)
@@ -54,5 +78,5 @@ for i, c in enumerate(d["specs"]):
             problems.append(f"describe {describe_plot(c['spec'])!r} != {c['describe']!r}")
     if problems:
         report("SPEC", i, c["spec"]["type"], problems)
-print(f"python: {len(d['out']) + len(d['ticks']) + len(d['bins']) + len(d['buckets'])} numeric cases, {len(d['specs'])} specs, {bad} mismatches")
+print(f"python: {sum(len(d[k]) for k in d if k != 'specs')} numeric cases, {len(d['specs'])} specs, {bad} mismatches")
 sys.exit(1 if bad else 0)

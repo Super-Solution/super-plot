@@ -12,7 +12,7 @@ from .data import detect_x_kind, distinct, matrix, observations
 from .geo import Geography, js_trim, normalize_region
 from .isotime import _civil_from_days, to_time
 from .numeric import bin_counts, bin_edges, box_stats, closest, correlation, density_peaks, extent, kde, mean, quantile, r2, total, waffle_cells, waffle_grid
-from .text import format_date, format_percent, value_formatter
+from .text import format_date, format_datetime, format_duration, format_percent, value_formatter
 
 Spec = dict[str, Any]
 Issues = list[dict[str, Any]]
@@ -20,6 +20,7 @@ MAX_AXES = 16
 MAX_NODES = 40
 MAX_LINKS = 300
 MAX_SERIES = 8  # LIMITS.maxSeries
+MAX_CATEGORIES = 500  # LIMITS.maxCategories
 MAX_STAGES = 40
 MAX_CALENDAR_YEARS = 5
 MAX_CHILDREN = 30
@@ -263,7 +264,7 @@ def _check_series(spec: Spec, rows: list[dict], issues: Issues, area: bool) -> N
     if _interval_check(spec, rows, issues, "y"):
         if multi:
             _issue(issues, "warning", "interval_needs_one_y", "yLower", "yLower and yUpper describe one column; with several `y` columns no band is drawn.", "Fold the columns into long form (a `fold` step) and use `series`.")
-        elif spec.get("stack") in ("stack", "normalize"):
+        elif spec.get("stack") in ("stack", "normalize", "center"):
             _issue(issues, "warning", "interval_ignored_stacked", "yLower", "An interval cannot be shown on a stacked area; no band is drawn.", 'Set stack to "none", or use a line chart.')
     if area:
         _refuse_log(spec, issues, "yScale")
@@ -1579,6 +1580,100 @@ def _describe_beeswarm(spec: Spec) -> str:
     return t
 
 
+# -------------------------------------------------------------------------------------- timeline
+
+
+def _timeline_items(spec: Spec, rows: list[dict]) -> dict:
+    """The ranges of a timeline: one item per row with a start and an end in the same units. Mirrors `timelineItems`."""
+    start, end = spec["start"], spec["end"]
+    kind = detect_x_kind(spec.get("xType"), [v for r in rows for v in (r.get(start), r.get(end))])
+    items: list[dict] = []
+    skipped = reversed_ = 0
+    if kind != "category":
+        read = to_time if kind == "time" else to_number
+        for r in rows:
+            a, b = read(r.get(start)), read(r.get(end))
+            if a is None or b is None:
+                skipped += 1
+                continue
+            if b < a:
+                reversed_ += 1
+            items.append({"lane": key_string(r.get(spec["y"])), "start": min(a, b), "end": max(a, b),
+                          "series": key_string(r.get(spec["series"])) if spec.get("series") else str(spec["y"]),
+                          "label": clip(key_string(r.get(spec["label"])), 60) if spec.get("label") else None})
+    lanes = distinct(i["lane"] for i in items)
+    by_lane: dict[str, list[dict]] = {}
+    for it in items:
+        by_lane.setdefault(it["lane"], []).append(it)
+    overlapping = []
+    for lane, group in by_lane.items():
+        reach = float("-inf")
+        for it in sorted(group, key=lambda i: (i["start"], i["end"])):
+            if it["start"] < reach:
+                overlapping.append(lane)
+                break
+            reach = max(reach, it["end"])
+    return {"items": items, "kind": kind, "lanes": lanes, "skipped": skipped, "reversed": reversed_, "overlapping": overlapping}
+
+
+def _check_timeline(spec: Spec, rows: list[dict], issues: Issues) -> None:
+    d = _timeline_items(spec, rows)
+    if d["kind"] == "category":
+        return _issue(issues, "error", "not_time_or_number", "start", f'"{spec["start"]}" and "{spec["end"]}" are not both dates or both numbers.', "Use ISO dates, timestamps, or plain numbers in both columns; set xType to say which.")
+    if not d["items"]:
+        return _issue(issues, "error", "no_ranges", "end", "No row has both a start and an end.", f'Fill "{spec["start"]}" and "{spec["end"]}" in the same units.')
+    if d["skipped"]:
+        _issue(issues, "warning", "missing_range", "end", f"{d['skipped']} row(s) have no usable start or end and are skipped.", "Give both ends; for a point in time (a milestone) use the same value twice.")
+    if d["reversed"]:
+        _issue(issues, "warning", "range_reversed", "end", f"In {d['reversed']} row(s) the end is before the start; they were swapped.", "Check the column order: `start` is the earlier one.")
+    if len(d["lanes"]) > MAX_CATEGORIES:
+        _issue(issues, "warning", "too_many_lanes", "y", f"{len(d['lanes'])} lanes; only the first {MAX_CATEGORIES} are drawn.", "Filter with `transform`, group lanes, or split the chart with `facet`.")
+    if d["overlapping"]:
+        quoted = [f'"{clip(l, 30)}"' for l in d["overlapping"]]
+        _issue(issues, "warning", "overlapping_ranges", "y", f"Bars overlap in {len(d['overlapping'])} {_plural(len(d['overlapping']), 'lane', 'lanes')} ({_fmt_list(quoted, 3)}); a later bar covers part of an earlier one.", "Give overlapping items their own lane, e.g. one lane per task instead of per resource.")
+
+
+def _describe_timeline(spec: Spec) -> str:
+    """Dates read in UTC: the reference's `timeZone` is a render option, not part of the spec."""
+    d = _timeline_items(spec, spec["data"])
+    items, lanes = d["items"], d["lanes"]
+    if not items:
+        return f"{_lead(spec, 'Timeline')} No ranges."
+    time = d["kind"] == "time"
+    f = _formatter(spec)
+    intraday = time and any(v % _DAY != 0 for i in items for v in (i["start"], i["end"]))
+
+    def when(v: float) -> str:
+        return (format_datetime(v) if intraday else format_date(v)) if time else f(v)
+
+    def long(it: dict) -> str:
+        return format_duration(it["end"] - it["start"]) if time else f(it["end"] - it["start"])
+
+    def name(it: dict) -> str:
+        return clip(it["label"] if it["label"] is not None else it["lane"], 40)
+
+    first = _first_min(items, lambda i: i["start"])
+    last = _first_max(items, lambda i: i["end"])
+    longest = _first_max(items, lambda i: i["end"] - i["start"])
+    keys = distinct(i["series"] for i in items) if spec.get("series") else []
+    coloured = f", coloured by {spec['series']} ({_fmt_list([clip(k, 30) for k in keys])})" if keys else ""
+    t = (f"{_lead(spec, 'Timeline')} {len(items)} {_plural(len(items), 'range', 'ranges')} in {len(lanes)} {_plural(len(lanes), 'lane', 'lanes')}"
+         f" ({_fmt_list([clip(l, 30) for l in lanes])}){coloured}, from {when(first['start'])} to {when(last['end'])}.")
+    t += f" First: {name(first)} at {when(first['start'])}. Last to end: {name(last)} at {when(last['end'])}. Longest: {name(longest)} ({long(longest)})."
+    if d["overlapping"]:
+        t += f" Ranges overlap in {len(d['overlapping'])} {_plural(len(d['overlapping']), 'lane', 'lanes')}."
+    if len(lanes) > MAX_CATEGORIES:
+        t += f" Only the first {MAX_CATEGORIES} lanes are drawn."
+    return t
+
+
+def _describe_area(spec: Spec) -> str:
+    stack = spec.get("stack")
+    name = "Stacked area chart (100%)" if stack == "normalize" else "Stacked area chart" if stack == "stack" else "Stream graph" if stack == "center" else "Area chart"
+    note = " The layers are stacked around a centre line, so the vertical axis has no zero; the thickness of each layer is its value." if stack == "center" else ""
+    return _describe_series(spec, name) + note
+
+
 # ----------------------------------------------------------------------------------------- tables
 
 CHECKS: dict[str, Callable[[Spec, list[dict], Issues], None]] = {
@@ -1598,6 +1693,7 @@ CHECKS: dict[str, Callable[[Spec, list[dict], Issues], None]] = {
     "funnel": _check_funnel,
     "waffle": _check_waffle,
     "beeswarm": _check_beeswarm,
+    "timeline": _check_timeline,
     "radar": _check_radar,
     "treemap": _check_treemap,
     "sankey": _check_sankey,
@@ -1614,7 +1710,8 @@ MAP_CHECKS: dict[str, Callable[[Spec, list[dict], Issues, "Geography | None"], N
 DESCRIBE: dict[str, Callable[[Spec], str]] = {
     "bar": _describe_bar,
     "line": lambda s: _describe_series(s, "Line chart"),
-    "area": lambda s: _describe_series(s, "Stacked area chart (100%)" if s.get("stack") == "normalize" else "Stacked area chart" if s.get("stack") == "stack" else "Area chart"),
+    "area": _describe_area,
+    "timeline": _describe_timeline,
     "scatter": _describe_scatter,
     "pie": lambda s: _describe_pie(s, "Pie chart"),
     "donut": lambda s: _describe_pie(s, "Donut chart"),

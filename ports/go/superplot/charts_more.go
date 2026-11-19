@@ -1241,3 +1241,162 @@ func describeBeeswarm(s spec) string {
 	}
 	return t
 }
+
+// --- timeline --------------------------------------------------------------------------------------------
+
+type timelineItem struct {
+	lane, series, label string
+	hasLabel            bool
+	start, end          float64
+}
+
+type timeline struct {
+	items              []timelineItem
+	kind               string
+	lanes, overlapping []string
+	skipped, reversed  int
+}
+
+// timelineItems are the ranges of a timeline: one item per row with a start and an end in the same units.
+// Mirrors timelineItems.
+func timelineItems(s spec, rows []row) timeline {
+	start, end := str(s, "start"), str(s, "end")
+	both := make([]any, 0, 2*len(rows))
+	for _, r := range rows {
+		both = append(both, r[start], r[end])
+	}
+	d := timeline{kind: detectXKind(str(s, "xType"), both)}
+	if d.kind != "category" {
+		read := toNumber
+		if d.kind == "time" {
+			read = toTime
+		}
+		for _, r := range rows {
+			a, aOK := read(r[start])
+			b, bOK := read(r[end])
+			if !aOK || !bOK {
+				d.skipped++
+				continue
+			}
+			if b < a {
+				d.reversed++
+				a, b = b, a
+			}
+			it := timelineItem{lane: keyString(r[str(s, "y")]), series: str(s, "y"), start: a, end: b}
+			if c := str(s, "series"); c != "" {
+				it.series = keyString(r[c])
+			}
+			if c := str(s, "label"); c != "" {
+				it.label, it.hasLabel = clip(keyString(r[c]), 60), true
+			}
+			d.items = append(d.items, it)
+		}
+	}
+	byLane := newOmap[[]timelineItem]()
+	for _, it := range d.items {
+		list, _ := byLane.get(it.lane)
+		byLane.set(it.lane, append(list, it))
+	}
+	d.lanes = byLane.keys
+	for _, lane := range byLane.keys {
+		list := append([]timelineItem(nil), byLane.m[lane]...)
+		sort.SliceStable(list, func(i, j int) bool {
+			if list[i].start != list[j].start {
+				return list[i].start < list[j].start
+			}
+			return list[i].end < list[j].end
+		})
+		reach := math.Inf(-1)
+		for _, it := range list {
+			if it.start < reach {
+				d.overlapping = append(d.overlapping, lane)
+				break
+			}
+			reach = math.Max(reach, it.end)
+		}
+	}
+	return d
+}
+
+func checkTimeline(s spec, rows []row, issues *[]Issue) {
+	d := timelineItems(s, rows)
+	if d.kind == "category" {
+		issue(issues, "error", "not_time_or_number", "start", fmt.Sprintf("%q and %q are not both dates or both numbers.", str(s, "start"), str(s, "end")), "Use ISO dates, timestamps, or plain numbers in both columns; set xType to say which.")
+		return
+	}
+	if len(d.items) == 0 {
+		issue(issues, "error", "no_ranges", "end", "No row has both a start and an end.", fmt.Sprintf("Fill %q and %q in the same units.", str(s, "start"), str(s, "end")))
+		return
+	}
+	if d.skipped > 0 {
+		issue(issues, "warning", "missing_range", "end", fmt.Sprintf("%d row(s) have no usable start or end and are skipped.", d.skipped), "Give both ends; for a point in time (a milestone) use the same value twice.")
+	}
+	if d.reversed > 0 {
+		issue(issues, "warning", "range_reversed", "end", fmt.Sprintf("In %d row(s) the end is before the start; they were swapped.", d.reversed), "Check the column order: `start` is the earlier one.")
+	}
+	if limit := data.Limits["maxCategories"]; len(d.lanes) > limit {
+		issue(issues, "warning", "too_many_lanes", "y", fmt.Sprintf("%d lanes; only the first %d are drawn.", len(d.lanes), limit), "Filter with `transform`, group lanes, or split the chart with `facet`.")
+	}
+	if n := len(d.overlapping); n > 0 {
+		quoted := make([]string, n)
+		for i, l := range d.overlapping {
+			quoted[i] = fmt.Sprintf("\"%s\"", clip(l, 30))
+		}
+		issue(issues, "warning", "overlapping_ranges", "y", fmt.Sprintf("Bars overlap in %d %s (%s); a later bar covers part of an earlier one.", n, plural(n, "lane", "lanes"), fmtList(quoted, 3)), "Give overlapping items their own lane, e.g. one lane per task instead of per resource.")
+	}
+}
+
+// describeTimeline reads dates in UTC: the reference's timeZone is a render option, not part of the spec.
+func describeTimeline(s spec) string {
+	d := timelineItems(s, rowsOf(s))
+	if len(d.items) == 0 {
+		return lead(s, "Timeline") + " No ranges."
+	}
+	time := d.kind == "time"
+	f := formatter(s)
+	intraday := false
+	for _, it := range d.items {
+		intraday = intraday || (time && (math.Mod(it.start, dayMs) != 0 || math.Mod(it.end, dayMs) != 0))
+	}
+	when := func(v float64) string {
+		switch {
+		case !time:
+			return f(v)
+		case intraday:
+			return formatDateTime(v)
+		}
+		return formatDate(v)
+	}
+	long := func(it timelineItem) string {
+		if time {
+			return FormatDuration(it.end - it.start)
+		}
+		return f(it.end - it.start)
+	}
+	name := func(it timelineItem) string {
+		if it.hasLabel {
+			return clip(it.label, 40)
+		}
+		return clip(it.lane, 40)
+	}
+	first := firstMin(d.items, func(it timelineItem) float64 { return it.start })
+	last := firstMax(d.items, func(it timelineItem) float64 { return it.end })
+	longest := firstMax(d.items, func(it timelineItem) float64 { return it.end - it.start })
+	coloured := ""
+	if c := str(s, "series"); c != "" {
+		names := make([]string, len(d.items))
+		for i, it := range d.items {
+			names[i] = it.series
+		}
+		coloured = fmt.Sprintf(", coloured by %s (%s)", c, fmtList(clipAll(distinct(names), 30), 5))
+	}
+	t := fmt.Sprintf("%s %d %s in %d %s (%s)%s, from %s to %s.", lead(s, "Timeline"), len(d.items), plural(len(d.items), "range", "ranges"), len(d.lanes), plural(len(d.lanes), "lane", "lanes"), fmtList(clipAll(d.lanes, 30), 5), coloured, when(first.start), when(last.end))
+	t += fmt.Sprintf(" First: %s at %s. Last to end: %s at %s. Longest: %s (%s).", name(first), when(first.start), name(last), when(last.end), name(longest), long(longest))
+	if n := len(d.overlapping); n > 0 {
+		t += fmt.Sprintf(" Ranges overlap in %d %s.", n, plural(n, "lane", "lanes"))
+	}
+	if limit := data.Limits["maxCategories"]; len(d.lanes) > limit {
+		t += fmt.Sprintf(" Only the first %d lanes are drawn.", limit)
+	}
+	return t
+}

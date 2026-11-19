@@ -27,11 +27,17 @@ func floats(v any) []float64 {
 
 func main() {
 	var d struct {
-		Out     [][]any `json:"out"`
-		Ticks   [][]any `json:"ticks"`
-		Bins    [][]any `json:"bins"`
-		Buckets [][]any `json:"buckets"`
-		Specs   []struct {
+		Out       [][]any `json:"out"`
+		Ticks     [][]any `json:"ticks"`
+		Bins      [][]any `json:"bins"`
+		Buckets   [][]any `json:"buckets"`
+		Logs      [][]any `json:"logs"`
+		Densities [][]any `json:"densities"`
+		Fits      [][]any `json:"fits"`
+		BinSteps  [][]any `json:"binSteps"`
+		Waffles   [][]any `json:"waffles"`
+		Durations [][]any `json:"durations"`
+		Specs     []struct {
 			Spec       json.RawMessage `json:"spec"` // as written: a decoded map forgets the order of a Topology's objects
 			OK         bool            `json:"ok"`
 			Issues     [][]string      `json:"issues"`
@@ -96,6 +102,54 @@ func main() {
 			report("BUCKET", c[0], c[1], got, c[2])
 		}
 	}
+	// Round 5 statistics. Equal means equal: the ports compute these with the reference's own elementary functions.
+	for _, c := range d.Logs {
+		a, bb, n := c[0].(float64), c[1].(float64), c[2].(float64)
+		lo, hi := sp.NiceLogDomain(a, bb)
+		if wd := floats(c[4]); !reflect.DeepEqual(sp.LogTicks(a, bb, n), floats(c[3])) || lo != wd[0] || hi != wd[1] {
+			report("LOG", a, bb, n, sp.LogTicks(a, bb, n), c[3], lo, hi, wd)
+		}
+	}
+	for _, c := range d.Densities {
+		vs := floats(c[0])
+		bw, _ := c[1].(float64)
+		k, _ := sp.KDE(vs, bw, 0)
+		if sp.Silverman(vs) != c[2].(float64) || k.Bandwidth != c[3].(float64) || !reflect.DeepEqual(k.Grid, floats(c[4])) || !reflect.DeepEqual(k.Density, floats(c[5])) || !reflect.DeepEqual(k.Peaks(), floats(c[6])) {
+			report("DENSITY", len(vs), bw, sp.Silverman(vs), c[2], k.Peaks(), c[6])
+		}
+	}
+	for _, c := range d.Fits {
+		got := sp.Loess(floats(c[0]), floats(c[1]), c[2].(float64), int(c[3].(float64)))
+		want := c[4].([]any)
+		same := len(got) == len(want)
+		for i := 0; same && i < len(got); i++ {
+			w := floats(want[i])
+			same = got[i][0] == w[0] && got[i][1] == w[1]
+		}
+		if !same {
+			report("LOESS", len(floats(c[0])), c[2], c[3])
+		}
+	}
+	for _, c := range d.BinSteps {
+		step, _ := c[2].(float64)
+		if got := sp.TransformBinEdges(floats(c[0]), int(c[1].(float64)), step); !reflect.DeepEqual(got, floats(c[3])) {
+			report("BINSTEP", c[1], c[2], got, c[3])
+		}
+	}
+	for _, c := range d.Waffles {
+		got := sp.WaffleCells(floats(c[0]), int(c[1].(float64)))
+		for i, w := range floats(c[2]) {
+			if float64(got[i]) != w {
+				report("WAFFLE", c[0], c[1], got, c[2])
+				break
+			}
+		}
+	}
+	for _, c := range d.Durations {
+		if got := sp.FormatDuration(c[0].(float64)); got != c[1].(string) {
+			report("DURATION", c[0], got, c[1])
+		}
+	}
 	for i, c := range d.Specs {
 		v := sp.ValidatePlot([]byte(c.Spec))
 		var got, want []string
@@ -136,7 +190,7 @@ func main() {
 			}
 		}
 	}
-	fmt.Printf("go: %d numeric cases, %d specs, %d mismatches\n", len(d.Out)+len(d.Ticks)+len(d.Bins)+len(d.Buckets), len(d.Specs), bad)
+	fmt.Printf("go: %d numeric cases, %d specs, %d mismatches\n", len(d.Out)+len(d.Ticks)+len(d.Bins)+len(d.Buckets)+len(d.Logs)+len(d.Densities)+len(d.Fits)+len(d.BinSteps)+len(d.Waffles)+len(d.Durations), len(d.Specs), bad)
 	if bad > 0 {
 		os.Exit(1)
 	}

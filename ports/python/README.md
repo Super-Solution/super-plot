@@ -20,7 +20,7 @@ describe_plot(fixed)                   # 'Bar chart. 1 category. Highest: APAC (
 validate_plot(fixed).spec              # normalised: defaults filled in, values cleaned
 ```
 
-A spec's `transform` (steps `filter`, `timeUnit`, `aggregate`, `sort`, `top`) is checked and run, as the reference runs it: send raw rows and say "monthly total" in the spec.
+A spec's `transform` (steps `filter`, `timeUnit`, `aggregate`, `sort`, `top`, `bin`, `window`, `fold`) is checked and run, as the reference runs it: send raw rows and say "monthly total" in the spec.
 
 ```python
 monthly = {
@@ -41,13 +41,19 @@ describe_plot(monthly)                 # 'Bar chart. 2 categories. Highest: 2026
 | `require_valid(spec)` | the normalised spec, or `PlotSpecError` (carries `.issues`) |
 | `describe_plot(spec)` | plain-language reading, identical to the TypeScript text |
 | `register_geography(name, data, options)` | make region boundaries (GeoJSON or TopoJSON) available to map charts as `geo: "<name>"`; returns the warnings, raises `GeographyError`. Also `unregister_geography`, `get_geography`, `list_geographies`, `match_region`, `GEO_PRESETS` |
-| `apply_transform(steps, rows, issues)` | run transform steps over rows on their own: the new rows, or `None` with the reason appended to `issues`. Also `time_bucket(ms, unit)`, `TRANSFORM_OPS`, `TIME_UNITS`, `AGGREGATE_OPS`, `TRANSFORM_LIMIT` |
+| `apply_transform(steps, rows, issues)` | run transform steps over rows on their own: the new rows, or `None` with the reason appended to `issues`. Also `time_bucket(ms, unit)`, `transform_bin_edges(values, maxbins, step)`, `TRANSFORM_OPS`, `TIME_UNITS`, `AGGREGATE_OPS`, `WINDOW_OPS`, `TRANSFORM_LIMIT` |
 | `chart_types()`, `fields_of(type)` | what charts exist and which fields each takes |
 | `linear_ticks`, `nice_domain`, `quantile`, `box_stats`, `bin_edges`, `bin_counts` | the shared numbers |
-| `format_value(v, "compact")`, `format_percent(0.25)` | value formats (English) |
+| `log_ticks`, `nice_log_domain` | ticks and round ends of a log axis |
+| `kde(values, bandwidth=None)`, `silverman(values)`, `density_peaks(d)` | Gaussian kernel density, as the violin draws and describes it: `{"bandwidth", "grid", "density"}` |
+| `loess(xs, ys, bandwidth, grid)` | the scatter's LOESS trend line |
+| `waffle_cells(values, cells)` | cells per category of a waffle (largest remainder) |
+| `format_value(v, "compact")`, `format_percent(0.25)`, `format_duration(ms)` | value formats and durations (English) |
 | `is_safe_color(value)` | the colour allow-list used for `colors` |
 
 An issue is `{"severity", "code", "path", "message", "hint"?}`. `severity`, `code` and `path` are the stable contract; wording may change.
+
+All 27 chart types are covered. Descriptions read dates in UTC (the reference's `timeZone` is a render option the ports do not take). The statistics agree with the reference to the last bit: `_fdlibm.py` computes `exp`, `log10`, `cbrt` and powers the way the reference's JavaScript engine does, which is not always what `math` returns.
 
 ## Develop
 
@@ -56,6 +62,6 @@ cd ports/python
 PYTHONPATH=src python3 -m unittest discover -s tests    # replays conformance/plot.v1.json
 ```
 
-From the repository root, `npm run test:ports` runs this and the Go port, and `npm run fuzz:ports` compares ~69,000 random cases per seed. See [`../README.md`](../README.md) for how the ports stay identical to the reference.
+From the repository root, `npm run test:ports` runs this and the Go port, and `npm run fuzz:ports` compares ~75,000 random cases per seed. See [`../README.md`](../README.md) for how the ports stay identical to the reference.
 
 `src/super_plot/fields.v1.json` is generated; do not edit it (run `npm run conformance`).
