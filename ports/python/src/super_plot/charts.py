@@ -1468,7 +1468,7 @@ def _describe_bump(spec: Spec) -> str:
     first = xs[0] if xs else ""
     last = xs[-1] if xs else None
     n = number_string
-    t = f"{_lead(spec, 'Bump chart')} Ranks of {len(keys)} series ({_fmt_list([clip(k, 30) for k in keys])}) over {len(xs)} steps from {clip(first, 30)} to {clip(last, 30)}"
+    t = f"{_lead(spec, 'Bump chart')} Ranks of {len(keys)} series ({_fmt_list([clip(k, 30) for k in keys])}) over {len(xs)} steps from {clip(first, 30)} to {clip(last or '', 30)}"
     t += "." if spec.get("rank") else f", ranked by {'value' if isinstance(spec['y'], list) else clip(spec['y'], 40)}, {'lowest' if spec.get('rankBy') == 'asc' else 'highest'} first."
     end = sorted((k for k in keys if last in ranks[k]), key=lambda k: ranks[k][last]) if last is not None else []
     if end:

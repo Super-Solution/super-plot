@@ -18,20 +18,33 @@ import (
 //	{"aggregate": {"groupBy": ["month", "region"], "fields": {"revenue": "sum"}, "count": "orders"}}
 //	{"sort":      {"field": "revenue", "order": "descending"}}
 //	{"top":       {"n": 10, "by": "revenue"}}
+//	{"bin":       {"field": "price", "maxbins": 10, "as": ["from", "to"]}}        round edges, as the histogram
+//	{"window":    {"op": "sum", "field": "revenue", "as": "running", "groupBy": ["region"], "sortBy": "date"}}
+//	{"fold":      {"fields": ["Q1", "Q2", "Q3"], "as": ["quarter", "revenue"]}}  wide to long
+//
+// There is deliberately no expression step ("calculate").
 //
 // The first invalid step stops the run (later steps cannot be checked without its output).
 
 // TransformLimit is the most steps a transform may have.
 const TransformLimit = 10
 
+const (
+	binLimit  = 200
+	foldLimit = 50
+)
+
 var (
 	// TransformOps are the step kinds, TimeUnits the buckets of timeUnit, AggregateOps the operations of aggregate.
-	TransformOps = []string{"filter", "timeUnit", "aggregate", "sort", "top"}
+	// WindowOps are the operations of window.
+	TransformOps = []string{"filter", "timeUnit", "aggregate", "sort", "top", "bin", "window", "fold"}
+	WindowOps    = []string{"sum", "mean", "count", "rank", "pctChange", "lag", "lead", "movingMean"}
 	TimeUnits    = []string{"year", "quarter", "month", "week", "day", "hour"}
 	AggregateOps = []string{"sum", "mean", "median", "min", "max", "count", "distinct"}
 
 	filterKeys    = []string{"field", "equal", "oneOf", "range", "gt", "gte", "lt", "lte", "valid"}
-	transformKeys = map[string][]string{"filter": filterKeys, "timeUnit": {"field", "unit", "as"}, "aggregate": {"groupBy", "fields", "count"}, "sort": {"field", "order"}, "top": {"n", "by"}}
+	transformKeys = map[string][]string{"filter": filterKeys, "timeUnit": {"field", "unit", "as"}, "aggregate": {"groupBy", "fields", "count"}, "sort": {"field", "order"}, "top": {"n", "by"},
+		"bin": {"field", "as", "step", "maxbins"}, "window": {"op", "field", "as", "groupBy", "sortBy", "order", "frame"}, "fold": {"fields", "as"}}
 )
 
 // ordinal is a row value or bound as a number: numbers first, then ISO dates (epoch ms). Mirrors ordinal.
@@ -377,6 +390,198 @@ func applyTransform(value any, raw json.RawMessage, rows []row, issues *[]Issue,
 			if len(cur) > int(n) {
 				cur = cur[:int(n)]
 			}
+		case "bin":
+			field, good := column("field")
+			if !good {
+				return nil, false
+			}
+			names := []any{field + "_start", field + "_end"}
+			if v, given := b["as"]; given {
+				names, _ = v.([]any)
+				if !isPair(v) {
+					return fail(bp+".as", "bad_type", bp+".as must be two different column names of 1 to 64 characters: [start, end].", `E.g. ["from", "to"].`)
+				}
+			}
+			maxbins := 10
+			if v, given := b["maxbins"]; given {
+				n, isNum := v.(float64)
+				if !isNum || !isWhole(v) || n < 1 || n > binLimit {
+					return fail(bp+".maxbins", "bad_value", fmt.Sprintf("%s.maxbins must be an integer from 1 to %d, got %s.", bp, binLimit, show(v)))
+				}
+				maxbins = int(n)
+			}
+			step := 0.0
+			if v, given := b["step"]; given {
+				n, isNum := v.(float64)
+				if !isNum || !isFinite(n) || !(n > 0) {
+					return fail(bp+".step", "bad_value", fmt.Sprintf("%s.step must be a positive number (the bin width), got %s.", bp, show(v)))
+				}
+				step = n
+			}
+			nums := make([]float64, len(cur))
+			isNum := make([]bool, len(cur))
+			var vals []float64
+			present := 0
+			for j, r := range cur {
+				nums[j], isNum[j] = toNumber(r[field])
+				if isNum[j] {
+					vals = append(vals, nums[j])
+				}
+				if v := r[field]; v != nil && !isEmptyString(v) {
+					present++
+				}
+			}
+			if len(vals) == 0 {
+				return fail(bp+".field", "not_numeric", fmt.Sprintf("Column %q has no numeric values to bin.", field), "Bin a numeric column, or convert the values to numbers first.")
+			}
+			if lo, hi, _ := extent(vals); step > 0 && (hi-lo)/step > binLimit {
+				return fail(bp+".step", "too_many_bins", fmt.Sprintf("%s.step %s cuts the values into more than %d bins.", bp, show(b["step"]), binLimit), "Use a wider step, or leave it out and set maxbins.")
+			}
+			if len(vals) < present {
+				add(issues, "warning", "some_not_numeric", bp+".field", fmt.Sprintf("%d of %d values in %q are not numeric; their bin is null.", present-len(vals), present, field))
+			}
+			edges := TransformBinEdges(vals, maxbins, step)
+			s0, s1 := names[0].(string), names[1].(string)
+			next := make([]row, len(cur))
+			for j, r := range cur {
+				c := copyRow(r, 2)
+				c[s0], c[s1] = nil, nil
+				if isNum[j] {
+					if k := binIndex(nums[j], edges); k >= 0 {
+						c[s0], c[s1] = edges[k], edges[k+1]
+					}
+				}
+				next[j] = c
+			}
+			cur = next
+			columns = distinct(append(append([]string(nil), columns...), s0, s1))
+		case "window":
+			wop, isStr := b["op"].(string)
+			if !isStr || !contains(WindowOps, wop) {
+				code := "bad_enum"
+				if _, given := b["op"]; !given {
+					code = "missing_required"
+				}
+				return fail(bp+".op", code, fmt.Sprintf("%s.op must be one of %s; got %s.", bp, strings.Join(WindowOps, ", "), show(b["op"])), suggest(b["op"], WindowOps)...)
+			}
+			field, good := column("field")
+			if !good {
+				return nil, false
+			}
+			as, given := b["as"]
+			if !given {
+				return fail(bp+".as", "missing_required", bp+` needs "as" (a name for the new column).`)
+			}
+			if !isName(as) {
+				return fail(bp+".as", "bad_type", bp+".as must be a column name of 1 to 64 characters.")
+			}
+			var groupBy []string
+			if v := b["groupBy"]; v != nil {
+				list, isList := v.([]any)
+				good := isList && len(list) <= 4
+				for _, e := range list {
+					s, isStr := e.(string)
+					good = good && isStr
+					groupBy = append(groupBy, s)
+				}
+				if !good {
+					return fail(bp+".groupBy", "bad_type", bp+".groupBy must be an array of at most 4 column names.")
+				}
+			}
+			for gi, g := range groupBy {
+				if !contains(columns, g) {
+					return noColumn(fmt.Sprintf("%s.groupBy[%d]", bp, gi), g)
+				}
+			}
+			sortBy, sorted := "", false
+			if _, given := b["sortBy"]; given {
+				if sortBy, good = column("sortBy"); !good {
+					return nil, false
+				}
+				sorted = true
+			}
+			order, hasOrder := b["order"]
+			if hasOrder && order != "asc" && order != "desc" {
+				return fail(bp+".order", "bad_enum", bp+`.order must be "asc" or "desc".`)
+			}
+			frame := 3
+			if v, given := b["frame"]; given {
+				n, isNum := v.(float64)
+				if !isNum || !isWhole(v) || n < 1 || n > 1000 {
+					return fail(bp+".frame", "bad_value", fmt.Sprintf("%s.frame must be an integer from 1 to 1000 (rows in the moving window), got %s.", bp, show(v)))
+				}
+				frame = int(n)
+				if wop != "movingMean" {
+					add(issues, "warning", "frame_ignored", bp+".frame", fmt.Sprintf("%s.frame only applies to movingMean; it is ignored for %s.", bp, wop))
+				}
+			}
+			if hasOrder && !sorted && wop != "rank" {
+				add(issues, "warning", "order_ignored", bp+".order", bp+".order needs sortBy; without it the rows keep their order.")
+			}
+			if !sorted && wop == "rank" {
+				sortBy, sorted = field, true
+			}
+			target := as.(string)
+			cur = windowRows(cur, wop, field, target, groupBy, sortBy, sorted, order == "desc", frame)
+			columns = distinct(append(append([]string(nil), columns...), target))
+		case "fold":
+			fv, given := b["fields"]
+			if !given {
+				return fail(bp+".fields", "missing_required", bp+` needs "fields" (the columns to fold into rows).`)
+			}
+			list, isList := fv.([]any)
+			good := isList && len(list) > 0 && len(list) <= foldLimit
+			var fields []string
+			for _, e := range list {
+				s, isStr := e.(string)
+				good = good && isStr
+				fields = append(fields, s)
+			}
+			if !good {
+				return fail(bp+".fields", "bad_type", fmt.Sprintf("%s.fields must be an array of 1 to %d column names.", bp, foldLimit))
+			}
+			drop := map[string]bool{}
+			for fi, f := range fields {
+				if !contains(columns, f) {
+					return noColumn(fmt.Sprintf("%s.fields[%d]", bp, fi), f)
+				}
+				if drop[f] {
+					return fail(fmt.Sprintf("%s.fields[%d]", bp, fi), "duplicate", fmt.Sprintf("Column %q is listed twice.", f))
+				}
+				drop[f] = true
+			}
+			names := []any{"key", "value"}
+			if v, given := b["as"]; given {
+				names, _ = v.([]any)
+				if !isPair(v) {
+					return fail(bp+".as", "bad_type", bp+".as must be two different column names of 1 to 64 characters: [key, value].", `E.g. ["quarter", "revenue"].`)
+				}
+			}
+			if len(cur)*len(fields) > data.Limits["maxRows"] {
+				return fail(bp, "too_many_rows", fmt.Sprintf("Folding %d columns of %d rows makes %d rows; the limit is %d.", len(fields), len(cur), len(cur)*len(fields), data.Limits["maxRows"]), "Filter or aggregate first, or fold fewer columns.")
+			}
+			k, v := names[0].(string), names[1].(string)
+			folded := make([]row, 0, len(cur)*len(fields))
+			for _, r := range cur {
+				for _, f := range fields {
+					c := make(row, len(r)+2)
+					for key, val := range r {
+						if !drop[key] {
+							c[key] = val
+						}
+					}
+					c[k], c[v] = f, r[f]
+					folded = append(folded, c)
+				}
+			}
+			cur = folded
+			var kept []string
+			for _, c := range columns {
+				if !drop[c] {
+					kept = append(kept, c)
+				}
+			}
+			columns = distinct(append(kept, k, v))
 		}
 	}
 	return cur, true
@@ -529,18 +734,29 @@ func reduceRows(rows []row, col, op string) any {
 // sortRows is a stable sort: numbers and dates by value, everything else as text; missing values last.
 // Mirrors sortRows.
 func sortRows(rows []row, field string, desc bool) []row {
+	values := make([]any, len(rows))
+	for i, r := range rows {
+		values[i] = r[field]
+	}
+	out := make([]row, len(rows))
+	for i, at := range sortOrder(values, desc) {
+		out[i] = rows[at]
+	}
+	return out
+}
+
+// sortOrder is the order (indices) that sorts values by the sort step's rule. Mirrors sortOrder.
+func sortOrder(values []any, desc bool) []int {
 	type keyed struct {
-		r      row
 		i      int
 		n      float64
 		hasN   bool
 		s      string
 		absent bool
 	}
-	ks := make([]keyed, len(rows))
-	for i, r := range rows {
-		v := r[field]
-		k := keyed{r: r, i: i, absent: v == nil}
+	ks := make([]keyed, len(values))
+	for i, v := range values {
+		k := keyed{i: i, absent: v == nil}
 		k.n, k.hasN = ordinal(v)
 		if !k.absent {
 			k.s = jsString(v)
@@ -578,9 +794,137 @@ func sortRows(rows []row, field string, desc bool) []row {
 		}
 		return c < 0
 	})
-	out := make([]row, len(ks))
+	out := make([]int, len(ks))
 	for i, k := range ks {
-		out[i] = k.r
+		out[i] = k.i
 	}
 	return out
+}
+
+func copyRow(r row, extra int) row {
+	c := make(row, len(r)+extra)
+	for k, v := range r {
+		c[k] = v
+	}
+	return c
+}
+
+// isPair is two different column names.
+func isPair(v any) bool {
+	l, ok := v.([]any)
+	return ok && len(l) == 2 && isName(l[0]) && isName(l[1]) && l[0] != l[1]
+}
+
+func isWhole(v any) bool {
+	n, ok := v.(float64)
+	return ok && isFinite(n) && n == math.Trunc(n)
+}
+
+// windowRows is one window step: the op walks each group in sortBy order; rows keep their order. Mirrors windowRows.
+func windowRows(rows []row, op, field, target string, groupBy []string, sortBy string, sorted, desc bool, frame int) []row {
+	groups := newOmap[[]int]()
+	for i, r := range rows {
+		var key strings.Builder
+		key.WriteByte('[')
+		for gi, g := range groupBy {
+			if gi > 0 {
+				key.WriteByte(',')
+			}
+			jsonKey(&key, r[g])
+		}
+		members, _ := groups.get(key.String())
+		groups.set(key.String(), append(members, i))
+	}
+	result := make([]any, len(rows))
+	for _, idx := range groups.values() {
+		order := idx
+		if sorted {
+			values := make([]any, len(idx))
+			for k, i := range idx {
+				values[k] = rows[i][sortBy]
+			}
+			order = make([]int, len(idx))
+			for k, at := range sortOrder(values, desc) {
+				order[k] = idx[at]
+			}
+		}
+		nums := make([]float64, len(order))
+		isNum := make([]bool, len(order))
+		for k, i := range order {
+			nums[k], isNum[k] = toNumber(rows[i][field])
+		}
+		total := 0.0
+		seen, present := 0, 0
+		for k, ri := range order {
+			switch op {
+			case "sum":
+				if isNum[k] {
+					total += nums[k]
+				}
+				result[ri] = total
+			case "mean":
+				if isNum[k] {
+					total += nums[k]
+					seen++
+				}
+				if seen > 0 {
+					result[ri] = total / float64(seen)
+				}
+			case "count":
+				if v := rows[ri][field]; v != nil && !isEmptyString(v) {
+					present++
+				}
+				result[ri] = float64(present)
+			case "rank":
+				if rows[ri][sortBy] == nil {
+					break
+				}
+				if k > 0 && rankTie(rows[order[k-1]], rows[ri], sortBy) {
+					result[ri] = result[order[k-1]]
+				} else {
+					result[ri] = float64(k + 1)
+				}
+			case "pctChange":
+				if k > 0 && isNum[k] && isNum[k-1] && nums[k-1] != 0 {
+					result[ri] = (nums[k] - nums[k-1]) / math.Abs(nums[k-1])
+				}
+			case "lag":
+				if k > 0 {
+					result[ri] = rows[order[k-1]][field]
+				}
+			case "lead":
+				if k < len(order)-1 {
+					result[ri] = rows[order[k+1]][field]
+				}
+			default: // movingMean
+				s, c := 0.0, 0
+				for j := max(0, k-frame+1); j <= k; j++ {
+					if isNum[j] {
+						s += nums[j]
+						c++
+					}
+				}
+				if c > 0 {
+					result[ri] = s / float64(c)
+				}
+			}
+		}
+	}
+	out := make([]row, len(rows))
+	for i, r := range rows {
+		c := copyRow(r, 1)
+		c[target] = result[i]
+		out[i] = c
+	}
+	return out
+}
+
+// rankTie is sameKey(key(prev), key(row)), where a missing cell is undefined (its text is "undefined").
+func rankTie(prev, cur row, key string) bool {
+	na, aOK := ordinal(prev[key])
+	nb, bOK := ordinal(cur[key])
+	if aOK || bOK {
+		return aOK && bOK && na == nb
+	}
+	return cellText(prev, key) == cellText(cur, key)
 }

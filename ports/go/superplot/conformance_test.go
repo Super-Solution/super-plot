@@ -68,6 +68,51 @@ type conformance struct {
 		Normalized map[string]any `json:"normalized"`
 		Describe   *string        `json:"describe"`
 	} `json:"chartExamples"`
+	Density []struct {
+		In struct {
+			Values    []float64 `json:"values"`
+			Bandwidth float64   `json:"bandwidth"`
+		} `json:"in"`
+		Out struct {
+			Silverman float64   `json:"silverman"`
+			Bandwidth float64   `json:"bandwidth"`
+			Grid      []float64 `json:"grid"`
+			Density   []float64 `json:"density"`
+			Peaks     []float64 `json:"peaks"`
+		} `json:"out"`
+	} `json:"density"`
+	LogTicks []struct {
+		In  [3]float64 `json:"in"`
+		Out []float64  `json:"out"`
+	} `json:"logTicks"`
+	LogNiceDomain []struct {
+		In  [2]float64 `json:"in"`
+		Out [2]float64 `json:"out"`
+	} `json:"logNiceDomain"`
+	Loess []struct {
+		In struct {
+			Xs        []float64 `json:"xs"`
+			Ys        []float64 `json:"ys"`
+			Bandwidth float64   `json:"bandwidth"`
+			Grid      int       `json:"grid"`
+		} `json:"in"`
+		Out [][2]float64 `json:"out"`
+	} `json:"loess"`
+	BinStep []struct {
+		In struct {
+			Values  []float64 `json:"values"`
+			Maxbins int       `json:"maxbins"`
+			Step    float64   `json:"step"`
+		} `json:"in"`
+		Out []float64 `json:"out"`
+	} `json:"binStep"`
+	WaffleCells []struct {
+		In struct {
+			Values []float64 `json:"values"`
+			Cells  int       `json:"cells"`
+		} `json:"in"`
+		Out []int `json:"out"`
+	} `json:"waffleCells"`
 	Geographies    []geoFixture `json:"geographies"`
 	GeographyCases []struct {
 		geoFixture
@@ -551,5 +596,75 @@ func TestAcceptsJSONTextAndStructs(t *testing.T) {
 	}
 	if v := ValidatePlot("{nope"); v.OK || v.Issues[0].Code != "invalid_json" {
 		t.Fatal(v.Issues)
+	}
+}
+
+func TestDensity(t *testing.T) {
+	c := load(t)
+	if len(c.Density) == 0 {
+		t.Fatal("no density cases")
+	}
+	for i, k := range c.Density {
+		name := fmt.Sprintf("density[%d]", i)
+		d, ok := KDE(k.In.Values, k.In.Bandwidth, 0)
+		if !ok {
+			t.Fatalf("%s: no density", name)
+		}
+		nums(t, name+" silverman", []float64{Silverman(k.In.Values), d.Bandwidth}, []float64{k.Out.Silverman, k.Out.Bandwidth})
+		nums(t, name+" grid", d.Grid, k.Out.Grid)
+		nums(t, name+" density", d.Density, k.Out.Density)
+		nums(t, name+" peaks", d.Peaks(), k.Out.Peaks)
+	}
+}
+
+func TestLogScale(t *testing.T) {
+	c := load(t)
+	if len(c.LogTicks) == 0 || len(c.LogNiceDomain) == 0 {
+		t.Fatal("no log cases")
+	}
+	for _, k := range c.LogTicks {
+		nums(t, fmt.Sprint("logTicks ", k.In), LogTicks(k.In[0], k.In[1], k.In[2]), k.Out)
+	}
+	for _, k := range c.LogNiceDomain {
+		lo, hi := NiceLogDomain(k.In[0], k.In[1])
+		nums(t, fmt.Sprint("logNiceDomain ", k.In), []float64{lo, hi}, k.Out[:])
+	}
+}
+
+func TestLoess(t *testing.T) {
+	c := load(t)
+	if len(c.Loess) == 0 {
+		t.Fatal("no loess cases")
+	}
+	for i, k := range c.Loess {
+		got := Loess(k.In.Xs, k.In.Ys, k.In.Bandwidth, k.In.Grid)
+		if len(got) != len(k.Out) {
+			t.Fatalf("loess[%d]: got %d points, want %d", i, len(got), len(k.Out))
+		}
+		for j := range got {
+			nums(t, fmt.Sprintf("loess[%d][%d]", i, j), got[j][:], k.Out[j][:])
+		}
+	}
+}
+
+func TestTransformBinEdges(t *testing.T) {
+	c := load(t)
+	if len(c.BinStep) == 0 {
+		t.Fatal("no binStep cases")
+	}
+	for i, k := range c.BinStep {
+		nums(t, fmt.Sprintf("binStep[%d]", i), TransformBinEdges(k.In.Values, k.In.Maxbins, k.In.Step), k.Out)
+	}
+}
+
+func TestWaffleCells(t *testing.T) {
+	c := load(t)
+	if len(c.WaffleCells) == 0 {
+		t.Fatal("no waffleCells cases")
+	}
+	for i, k := range c.WaffleCells {
+		if got := WaffleCells(k.In.Values, k.In.Cells); fmt.Sprint(got) != fmt.Sprint(k.Out) {
+			t.Fatalf("waffleCells[%d]: got %v want %v", i, got, k.Out)
+		}
 	}
 }

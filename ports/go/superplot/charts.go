@@ -15,18 +15,37 @@ const (
 	maxAxes  = 16
 	maxNodes = 40
 	maxLinks = 300
+
+	maxStages        = 40
+	maxCalendarYears = 5
+	maxChildren      = 30
+	maxLines         = 2000
 )
+
+var weekdays = []string{"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"}
 
 type spec = map[string]any
 
 var checks = map[string]func(spec, []row, *[]Issue){
-	"bar":     checkBar,
-	"line":    func(s spec, _ []row, i *[]Issue) { seriesIgnored(s, i) },
-	"area":    func(s spec, _ []row, i *[]Issue) { seriesIgnored(s, i) },
-	"scatter": checkScatter,
-	"radar":   checkRadar,
-	"treemap": checkTreemap,
-	"sankey":  checkSankey,
+	"bar":       checkBar,
+	"line":      func(s spec, r []row, i *[]Issue) { checkSeries(s, r, i, false) },
+	"area":      func(s spec, r []row, i *[]Issue) { checkSeries(s, r, i, true) },
+	"scatter":   checkScatter,
+	"histogram": func(s spec, _ []row, i *[]Issue) { refuseLog(s, i, "yScale") },
+	"box":       checkPoints,
+	"violin":    checkViolin,
+	"calendar":  checkCalendar,
+	"waterfall": checkWaterfall,
+	"bullet":    checkBullet,
+	"bump":      checkBump,
+	"sunburst":  checkSunburst,
+	"parallel":  checkParallel,
+	"funnel":    checkFunnel,
+	"waffle":    checkWaffle,
+	"beeswarm":  checkBeeswarm,
+	"radar":     checkRadar,
+	"treemap":   checkTreemap,
+	"sankey":    checkSankey,
 }
 
 // mapChecks are the checks of the map charts: they also get the geography that geo resolved to (nil without geo).
@@ -54,6 +73,16 @@ var describers = map[string]func(spec) string{
 	"donut":      func(s spec) string { return describePie(s, "Donut chart") },
 	"histogram":  describeHistogram,
 	"box":        describeBox,
+	"violin":     describeViolin,
+	"calendar":   describeCalendar,
+	"waterfall":  describeWaterfall,
+	"bullet":     describeBullet,
+	"bump":       describeBump,
+	"sunburst":   describeSunburst,
+	"parallel":   describeParallel,
+	"funnel":     describeFunnel,
+	"waffle":     describeWaffle,
+	"beeswarm":   describeBeeswarm,
 	"heatmap":    describeHeatmap,
 	"radar":      describeRadar,
 	"treemap":    describeTreemap,
@@ -149,6 +178,108 @@ func values(rows []row, col string) []any {
 	return out
 }
 
+// pointNotes are the labelled point annotations, as one sentence for the description. Mirrors pointNotes.
+func pointNotes(s spec) string {
+	list, _ := s["annotations"].([]any)
+	var items []string
+	n := 0
+	for _, item := range list {
+		a, _ := item.(map[string]any)
+		label, isStr := a["label"].(string)
+		if _, line := a["axis"]; line || !isStr {
+			continue
+		}
+		n++
+		if n <= 5 {
+			items = append(items, fmt.Sprintf("\"%s\" at %s, %s", clip(label, 40), clip(jsString(a["x"]), 30), clip(jsString(a["y"]), 30)))
+		}
+	}
+	if n == 0 {
+		return ""
+	}
+	more := ""
+	if n > 5 {
+		more = fmt.Sprintf(" and %d more", n-5)
+	}
+	return fmt.Sprintf(" Marked: %s%s.", strings.Join(items, "; "), more)
+}
+
+// --- log scales, intervals (packages/core/src/charts/extras.ts) -------------------------------------------
+
+func refuseLog(s spec, issues *[]Issue, field string) {
+	if str(s, field) == "log" {
+		issue(issues, "error", "log_scale_refused", field, field+` "log" is refused here.`, "Use a line or a scatter for values spanning several orders of magnitude.")
+	}
+}
+
+// logNonPositive reports values at or below zero in the columns behind a log axis: one issue with the count.
+func logNonPositive(rows []row, cols []string, path string, issues *[]Issue) {
+	bad, seen := 0, 0
+	for _, r := range rows {
+		for _, c := range cols {
+			n, ok := toNumber(r[c])
+			if !ok {
+				continue
+			}
+			seen++
+			if n <= 0 {
+				bad++
+			}
+		}
+	}
+	switch {
+	case bad == 0:
+	case bad == seen:
+		issue(issues, "error", "log_nonpositive", path, "Every value is zero or negative; a log axis cannot show any of them.", "Use the linear scale, or plot a positive quantity.")
+	default:
+		issue(issues, "warning", "log_nonpositive", path, fmt.Sprintf("%d of %d values are zero or negative; a log axis cannot place them, so they are left out.", bad, seen), "Filter them with `transform`, or use the linear scale.")
+	}
+}
+
+func logDomain(s spec, issues *[]Issue, scaleField, domainField string) {
+	d, _ := s[domainField].([]any)
+	if str(s, scaleField) != "log" || len(d) != 2 {
+		return
+	}
+	lo, loOK := d[0].(float64)
+	hi, hiOK := d[1].(float64)
+	if (loOK && lo <= 0) || (hiOK && hi <= 0) {
+		issue(issues, "error", "log_bad_domain", domainField, domainField+" must be above zero on a log axis.", "Use a positive lower bound such as 1 or 0.1, or null for automatic.")
+	}
+}
+
+// intervalCheck reports xLower without xUpper (or the other way round) and intervals whose ends are swapped; it
+// is true when the spec has both ends.
+func intervalCheck(s spec, rows []row, issues *[]Issue, axis string) bool {
+	_, hasLo := s[axis+"Lower"]
+	_, hasHi := s[axis+"Upper"]
+	if !hasLo && !hasHi {
+		return false
+	}
+	if !hasLo || !hasHi {
+		missing := axis + "Upper"
+		if !hasLo {
+			missing = axis + "Lower"
+		}
+		issue(issues, "error", "interval_incomplete", missing, fmt.Sprintf("An interval needs both %sLower and %sUpper; %s is missing.", axis, axis, missing), "Give "+missing+" too.")
+		return false
+	}
+	swapped := 0
+	for _, r := range rows {
+		a, aOK := toNumber(r[str(s, axis+"Lower")])
+		b, bOK := toNumber(r[str(s, axis+"Upper")])
+		if aOK && bOK && a > b {
+			swapped++
+		}
+	}
+	if swapped > 0 {
+		issue(issues, "warning", "interval_reversed", axis+"Lower", fmt.Sprintf("In %d %s %sLower is above %sUpper; the interval is drawn between the two anyway.", swapped, plural(swapped, "row", "rows"), axis, axis))
+	}
+	return true
+}
+
+func stacked(s spec) bool { st := str(s, "stack"); return st == "stack" || st == "normalize" }
+
 // --- bar -------------------------------------------------------------------------------------------------
 
 type barModel struct {
@@ -217,6 +348,13 @@ func checkBar(s spec, rows []row, issues *[]Issue) {
 		}
 		issue(issues, "warning", "line_ignored", "line", fmt.Sprintf("`line` is ignored on %s bars.", on))
 	}
+	refuseLog(s, issues, "yScale")
+	if str(s, "mark") == "lollipop" && stacked(s) {
+		issue(issues, "warning", "lollipop_stacked", "mark", "Lollipops cannot stack; stacked bars are drawn instead.", `Set stack to "none" for side-by-side lollipops.`)
+	}
+	if intervalCheck(s, rows, issues, "y") && stacked(s) {
+		issue(issues, "warning", "interval_ignored_stacked", "yLower", "Whiskers cannot be shown on stacked bars; they are left out.", `Set stack to "none" for grouped bars with whiskers.`)
+	}
 	if detectXKind("auto", values(rows, str(s, "x"))) == "time" && len(rows) > 60 {
 		issue(issues, "warning", "prefer_line", "type", "Many bars over time: a line or area chart reads better.")
 	}
@@ -237,7 +375,11 @@ func describeBar(s spec) string {
 		}
 		totals[i] = tot{c, v}
 	}
-	t := fmt.Sprintf("%s %d %s", lead(s, "Bar chart"), len(mod.cats), plural(len(mod.cats), "category", "categories"))
+	kind := "Bar chart"
+	if str(s, "mark") == "lollipop" && !stacked(s) {
+		kind = "Lollipop chart"
+	}
+	t := fmt.Sprintf("%s %d %s", lead(s, kind), len(mod.cats), plural(len(mod.cats), "category", "categories"))
 	if len(mod.keys) > 1 {
 		extra := ""
 		switch str(s, "stack") {
@@ -271,6 +413,9 @@ func describeBar(s spec) string {
 	}
 	if len(ls) > 0 {
 		t += fmt.Sprintf(" With %s for %s on the same axis.", plural(len(ls), "a line", "lines"), fmtList(ls, 5))
+	}
+	if str(s, "yLower") != "" && str(s, "yUpper") != "" && !stacked(s) {
+		t += fmt.Sprintf(" Whiskers show %s to %s.", clip(str(s, "yLower"), 40), clip(str(s, "yUpper"), 40))
 	}
 	return t
 }
@@ -329,7 +474,13 @@ func describeSeries(s spec, name string) string {
 			if ob.s != k || !ob.hasY {
 				continue
 			}
+			if str(s, "yScale") == "log" && !(ob.y > 0) {
+				continue
+			}
 			if x, ok := xk(ob.x); ok {
+				if n, isNum := x.(float64); str(s, "xScale") == "log" && kind == "linear" && isNum && !(n > 0) {
+					continue
+				}
 				pts = append(pts, pt{x, ob.y})
 			}
 		}
@@ -348,7 +499,74 @@ func describeSeries(s spec, name string) string {
 		}
 		t += fmt.Sprintf(" %s: from %s at %s to %s at %s%s; peak %s at %s, low %s at %s.", clip(k, 40), f(first.y), label(first.x), f(last.y), label(last.x), change, f(hi.y), label(hi.x), f(lo.y), label(lo.x))
 	}
+	return t + seriesNotes(s)
+}
+
+// hasBand: shaded intervals behind lines, only with one y column and not on stacked areas.
+func hasBand(s spec) bool {
+	return str(s, "yLower") != "" && str(s, "yUpper") != "" && len(columnList(s["y"])) <= 1 && !stacked(s)
+}
+
+func joinAnd(items []string) (string, string) {
+	if len(items) > 1 {
+		return strings.Join(items, " and "), "are"
+	}
+	return strings.Join(items, " and "), "is"
+}
+
+// seriesNotes is one sentence on log axes and bands, for the description. Mirrors seriesNotes.
+func seriesNotes(s spec) string {
+	t := ""
+	var axes []string
+	for _, a := range []string{"y", "x"} {
+		if str(s, a+"Scale") == "log" && str(s, "type") == "line" {
+			axes = append(axes, a)
+		}
+	}
+	if len(axes) > 0 {
+		list, verb := joinAnd(axes)
+		t += fmt.Sprintf(" The %s axis %s logarithmic.", list, verb)
+	}
+	if hasBand(s) {
+		t += fmt.Sprintf(" A shaded band shows %s to %s.", clip(str(s, "yLower"), 40), clip(str(s, "yUpper"), 40))
+	}
 	return t
+}
+
+// checkSeries mirrors seriesCheck (line and area).
+func checkSeries(s spec, rows []row, issues *[]Issue, area bool) {
+	ys := columnList(s["y"])
+	_, isList := s["y"].([]any)
+	multi := isList && len(ys) > 1
+	if multi && str(s, "series") != "" {
+		issue(issues, "warning", "series_ignored", "series", "`series` is ignored when `y` lists several columns.")
+	}
+	if intervalCheck(s, rows, issues, "y") {
+		if multi {
+			issue(issues, "warning", "interval_needs_one_y", "yLower", "yLower and yUpper describe one column; with several `y` columns no band is drawn.", "Fold the columns into long form (a `fold` step) and use `series`.")
+		} else if stacked(s) {
+			issue(issues, "warning", "interval_ignored_stacked", "yLower", "An interval cannot be shown on a stacked area; no band is drawn.", `Set stack to "none", or use a line chart.`)
+		}
+	}
+	if area {
+		refuseLog(s, issues, "yScale")
+		return
+	}
+	if str(s, "yScale") == "log" {
+		logNonPositive(rows, ys, "y", issues)
+		logDomain(s, issues, "yScale", "yDomain")
+		if str(s, "gaps") == "zero" {
+			issue(issues, "warning", "gaps_zero_log", "gaps", "A log axis has no zero, so missing values break the line instead.")
+		}
+	}
+	if str(s, "xScale") == "log" {
+		if detectXKind(str(s, "xType"), values(rows, str(s, "x"))) != "linear" {
+			refuseLog(s, issues, "xScale")
+		} else {
+			logNonPositive(rows, []string{str(s, "x")}, "x", issues)
+			logDomain(s, issues, "xScale", "xDomain")
+		}
+	}
 }
 
 // --- scatter ---------------------------------------------------------------------------------------------
@@ -358,23 +576,27 @@ type spt struct {
 	s    string
 }
 
-func scatterPoints(s spec, rows []row) []spt {
-	xc, yc := str(s, "x"), str(s, "y")
-	kind := "linear"
-	switch str(s, "xType") {
-	case "time":
-		kind = "time"
-	case "linear":
-	default:
-		for _, r := range rows {
-			if v, ok := r[xc].(string); ok {
-				if _, isNum := toNumber(v); !isNum {
-					kind = "time"
-					break
-				}
+func scatterKind(s spec, rows []row) string {
+	switch t := str(s, "xType"); t {
+	case "time", "linear":
+		return t
+	}
+	xc := str(s, "x")
+	for _, r := range rows {
+		if v, ok := r[xc].(string); ok {
+			if _, isNum := toNumber(v); !isNum {
+				return "time"
 			}
 		}
 	}
+	return "linear"
+}
+
+func scatterPoints(s spec, rows []row) []spt {
+	xc, yc := str(s, "x"), str(s, "y")
+	kind := scatterKind(s, rows)
+	logX := str(s, "xScale") == "log" && kind == "linear"
+	logY := str(s, "yScale") == "log"
 	var pts []spt
 	for _, r := range rows {
 		var x float64
@@ -385,7 +607,7 @@ func scatterPoints(s spec, rows []row) []spt {
 			x, xok = toNumber(r[xc])
 		}
 		y, yok := toNumber(r[yc])
-		if !xok || !yok {
+		if !xok || !yok || (logX && !(x > 0)) || (logY && !(y > 0)) {
 			continue
 		}
 		sk := yc
@@ -398,6 +620,25 @@ func scatterPoints(s spec, rows []row) []spt {
 }
 
 func checkScatter(s spec, rows []row, issues *[]Issue) {
+	kind := scatterKind(s, rows)
+	if str(s, "xScale") == "log" && kind == "time" {
+		refuseLog(s, issues, "xScale")
+	}
+	for _, a := range []string{"x", "y"} {
+		if str(s, a+"Scale") != "log" || (a == "x" && kind == "time") {
+			continue
+		}
+		logNonPositive(rows, []string{str(s, a)}, a, issues)
+		logDomain(s, issues, a+"Scale", a+"Domain")
+	}
+	intervalCheck(s, rows, issues, "y")
+	intervalCheck(s, rows, issues, "x")
+	if has(s, "trendBandwidth") && str(s, "trend") != "loess" {
+		issue(issues, "warning", "trend_bandwidth_ignored", "trendBandwidth", "trendBandwidth only applies to `trend: \"loess\"`; it is ignored.")
+	}
+	if anyError(*issues) {
+		return
+	}
 	if len(scatterPoints(s, rows)) == 0 {
 		issue(issues, "error", "no_points", "data", "No row has both a numeric x and y.")
 	}
@@ -432,6 +673,29 @@ func describeScatter(s spec) string {
 	}
 	if lo, hi, ok := extent(ys); ok {
 		t += fmt.Sprintf(" %s ranges from %s to %s.", str(s, "y"), f(lo), f(hi))
+	}
+	var logs, bars []string
+	if str(s, "xScale") == "log" && scatterKind(s, rowsOf(s)) == "linear" {
+		logs = append(logs, "x")
+	}
+	if str(s, "yScale") == "log" {
+		logs = append(logs, "y")
+	}
+	if len(logs) > 0 {
+		list, verb := joinAnd(logs)
+		t += fmt.Sprintf(" The %s axis %s logarithmic.", list, verb)
+	}
+	if str(s, "yLower") != "" && str(s, "yUpper") != "" {
+		bars = append(bars, "vertical")
+	}
+	if str(s, "xLower") != "" && str(s, "xUpper") != "" {
+		bars = append(bars, "horizontal")
+	}
+	if len(bars) > 0 {
+		t += fmt.Sprintf(" Points carry %s error bars.", strings.Join(bars, " and "))
+	}
+	if str(s, "trend") == "loess" {
+		t += " A LOESS curve shows the local trend."
 	}
 	return t
 }
@@ -574,9 +838,10 @@ func describeHistogram(s spec) string {
 	return t
 }
 
-func describeBox(s spec) string {
+// boxGroups are the values per group, in order of first appearance (box and violin). Mirrors groups in box.ts.
+func boxGroups(s spec, rows []row) *omap[[]float64] {
 	g := newOmap[[]float64]()
-	for _, r := range rowsOf(s) {
+	for _, r := range rows {
 		v, ok := toNumber(r[str(s, "y")])
 		if !ok {
 			continue
@@ -588,6 +853,24 @@ func describeBox(s spec) string {
 		cur, _ := g.get(k)
 		g.set(k, append(cur, v))
 	}
+	return g
+}
+
+// checkPoints are the cross-field checks shared by box and violin. Mirrors checkPoints.
+func checkPoints(s spec, rows []row, issues *[]Issue) {
+	if outliers, isBool := s["outliers"].(bool); has(s, "points") && isBool && !outliers && str(s, "points") != "none" {
+		issue(issues, "warning", "outliers_ignored", "outliers", "`outliers: false` is ignored because `points` is set.", `Use points: "none" to hide every dot, and drop `+"`outliers`.")
+	}
+	if n := len(rowsOf(s)); str(s, "points") == "all" && n > 5000 {
+		issue(issues, "warning", "many_marks", "points", fmt.Sprintf(`points: "all" draws %d dots.`, n), `Use points: "outliers", or sample with `+"`transform`.")
+	}
+	if on, _ := s["patterns"].(bool); on {
+		issue(issues, "warning", "patterns_unsupported", "patterns", fmt.Sprintf("A %s chart has no series to tell apart, so patterns is ignored.", str(s, "type")))
+	}
+}
+
+func describeBox(s spec) string {
+	g := boxGroups(s, rowsOf(s))
 	f := formatter(s)
 	groups := ""
 	if str(s, "x") != "" {

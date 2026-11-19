@@ -57,6 +57,7 @@ func (e *SpecError) Error() string {
 
 var (
 	annotationKeys = []string{"axis", "value", "to", "label", "tone"}
+	pointKeys      = []string{"x", "y", "label", "tone"}
 	cameraKeys     = []string{"lng", "lat", "zoom", "pitch", "bearing"}
 	tones          = []string{"neutral", "positive", "negative", "warning", "info"}
 	hexRe          = regexp.MustCompile(`(?i)^#(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$`)
@@ -284,6 +285,32 @@ func validateField(name string, d fieldDef, value any, issues *[]Issue, columns 
 		return value
 	case "camera":
 		return validateCamera(name, value, issues)
+	case "flag":
+		// A column of yes/no values, or a list of the marked values.
+		if s, isStr := value.(string); isStr {
+			if contains(columns, s) {
+				return s
+			}
+			near, found := closest(s, columns)
+			return bad("no_such_column", fmt.Sprintf("Column %q does not exist in data.", s), didYouMean(near, found)+`Give a column of yes/no values, or a list of the marked values, e.g. ["Total"].`)
+		}
+		list, isList := value.([]any)
+		if !isList || len(list) == 0 {
+			return bad("bad_type", fmt.Sprintf("%s must be a column name or a non-empty list of values, got %s.", name, show(value)))
+		}
+		if len(list) > data.Limits["maxCategories"] {
+			return bad("too_many", fmt.Sprintf("%s lists %d values; at most %d.", name, len(list), data.Limits["maxCategories"]))
+		}
+		marked := make([]any, len(list))
+		for i, v := range list {
+			f, isNum := v.(float64)
+			if _, isStr := v.(string); !isStr && !(isNum && isFinite(f)) {
+				add(issues, "error", "bad_type", fmt.Sprintf("%s[%d]", name, i), fmt.Sprintf("%s[%d] must be a string or a number, got %s.", name, i, show(v)))
+				return nil
+			}
+			marked[i] = jsString(v)
+		}
+		return marked
 	}
 	// column / columns
 	var names []any
@@ -308,6 +335,12 @@ func validateField(name string, d fieldDef, value any, issues *[]Issue, columns 
 	}
 	if (d.Kind == "columns" && !allStrings) || len(names) == 0 {
 		return bad("bad_type", fmt.Sprintf("%s must be a column name or a non-empty array of column names.", name))
+	}
+	if d.Kind == "columns" && d.Min != nil && float64(len(names)) < *d.Min {
+		return bad("too_few_columns", fmt.Sprintf("%s needs at least %v columns, got %d.", name, *d.Min, len(names)), fmt.Sprintf("List %v or more column names.", *d.Min))
+	}
+	if d.Kind == "columns" && d.Max != nil && float64(len(names)) > *d.Max {
+		return bad("too_many_columns", fmt.Sprintf("%s takes at most %v columns, got %d.", name, *d.Max, len(names)), "Keep the most important ones, or split the chart.")
 	}
 	ok := true
 	for i, n := range names {
@@ -400,28 +433,34 @@ func validateAnnotations(name string, value any, issues *[]Issue) any {
 			add(issues, "error", "bad_type", p, p+" must be an object.")
 			continue
 		}
+		// Two forms: a reference line or band ({axis, value, to?}) and a labelled point ({x, y, label}).
+		_, hasAxis := a["axis"]
+		_, hasX := a["x"]
+		_, hasY := a["y"]
+		point := !hasAxis && (hasX || hasY)
+		keys, what := annotationKeys, "annotation"
+		if point {
+			keys, what = pointKeys, "point annotation"
+		}
 		for _, k := range sortedKeys(a) {
-			if !contains(annotationKeys, k) {
-				add(issues, "error", "unknown_field", p+"."+k, fmt.Sprintf("Unknown annotation field %q.", k), "Allowed: "+strings.Join(annotationKeys, ", ")+".")
+			if !contains(keys, k) {
+				add(issues, "error", "unknown_field", p+"."+k, fmt.Sprintf("Unknown %s field %q.", what, k), "Allowed: "+strings.Join(keys, ", ")+".")
 			}
 		}
-		isStrOrNum := func(v any) bool { _, s := v.(string); return s || isNumber(v) }
-		axis, _ := a["axis"].(string)
-		_, hasTo := a["to"]
-		_, hasTone := a["tone"]
-		_, hasLabel := a["label"]
-		switch {
-		case axis != "x" && axis != "y":
-			add(issues, "error", "bad_enum", p+".axis", p+`.axis must be "x" or "y".`)
-		case !isStrOrNum(a["value"]):
-			add(issues, "error", "bad_type", p+".value", p+".value must be a number or a string.")
-		case hasTo && a["to"] != nil && !isStrOrNum(a["to"]):
-			add(issues, "error", "bad_type", p+".to", p+".to must be a number or a string.")
-		case hasTone && a["tone"] != nil && !contains(tones, fmt.Sprint(a["tone"])):
-			add(issues, "error", "bad_enum", p+".tone", p+".tone must be one of "+strings.Join(tones, ", ")+".")
-		case hasLabel && a["label"] != nil && !isString(a["label"]):
-			add(issues, "error", "bad_type", p+".label", p+".label must be a string.")
-		default:
+		toneAndLabel := func() bool {
+			if v, given := a["tone"]; given {
+				if t, isStr := v.(string); !isStr || !contains(tones, t) {
+					add(issues, "error", "bad_enum", p+".tone", p+".tone must be one of "+strings.Join(tones, ", ")+".")
+					return false
+				}
+			}
+			if v, given := a["label"]; given && !isString(v) {
+				add(issues, "error", "bad_type", p+".label", p+".label must be a string.")
+				return false
+			}
+			return true
+		}
+		keep := func() {
 			c := map[string]any{}
 			for k, v := range a {
 				c[k] = v
@@ -430,6 +469,46 @@ func validateAnnotations(name string, value any, issues *[]Issue) any {
 				c["label"] = uslice(s, 80)
 			}
 			out = append(out, c)
+		}
+		if point {
+			wrong := false
+			for _, k := range []string{"x", "y"} {
+				v, given := a[k]
+				f, isNum := v.(float64)
+				if !given {
+					add(issues, "error", "missing_required", p+"."+k, fmt.Sprintf("%s is a point annotation and needs %q.", p, k), "Give both x and y in the units of their axis: a category name, a number or an ISO date.")
+				} else if !isString(v) && !(isNum && isFinite(f)) {
+					add(issues, "error", "bad_type", p+"."+k, fmt.Sprintf("%s.%s must be a number, an ISO date or a category name, got %s.", p, k, show(v)))
+				} else {
+					continue
+				}
+				wrong = true
+				break
+			}
+			if wrong || !toneAndLabel() {
+				continue
+			}
+			if label, _ := a["label"].(string); jsTrim(label) == "" {
+				add(issues, "error", "missing_required", p+".label", p+` is a point annotation and needs a short "label".`, `E.g. {"x":"2026-03-01","y":120,"label":"Launch"}.`)
+				continue
+			}
+			keep()
+			continue
+		}
+		isStrOrNum := func(v any) bool { _, s := v.(string); return s || isNumber(v) }
+		axis, _ := a["axis"].(string)
+		_, hasTo := a["to"]
+		switch {
+		case axis != "x" && axis != "y":
+			add(issues, "error", "bad_enum", p+".axis", p+`.axis must be "x" or "y".`, "For a labelled point, leave out axis and give x, y and label.")
+		case !isStrOrNum(a["value"]):
+			add(issues, "error", "bad_type", p+".value", p+".value must be a number or a string.")
+		case hasTo && !isStrOrNum(a["to"]):
+			add(issues, "error", "bad_type", p+".to", p+".to must be a number or a string.")
+		default:
+			if toneAndLabel() {
+				keep()
+			}
 		}
 	}
 	return out
@@ -595,7 +674,7 @@ func ValidatePlot(input any) Validation {
 			add(&issues, "error", "unknown_field", key, fmt.Sprintf("Unknown field %q for a %s chart.", key, chart), hint)
 			continue
 		}
-		if (d.Kind == "column" || d.Kind == "columns") && !dataOK {
+		if _, flagColumn := obj[key].(string); (d.Kind == "column" || d.Kind == "columns" || (d.Kind == "flag" && flagColumn)) && !dataOK {
 			continue
 		}
 		if v := validateField(key, d, obj[key], &issues, columns, rows, gs); v != nil {
@@ -656,5 +735,5 @@ func DescribePlot(input any) (string, error) {
 	if d, ok := spec["description"].(string); ok && d != "" {
 		return d, nil
 	}
-	return describers[spec["type"].(string)](spec), nil
+	return describers[spec["type"].(string)](spec) + pointNotes(spec), nil
 }

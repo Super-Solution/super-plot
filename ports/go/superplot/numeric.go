@@ -19,7 +19,7 @@ func TickStep(start, stop, count float64) float64 {
 	if !(step0 > 0) || !isFinite(step0) {
 		return 1
 	}
-	step1 := pow10(int(math.Floor(math.Log10(step0))))
+	step1 := pow10(int(math.Floor(jsLog10(step0))))
 	err := step0 / step1
 	switch {
 	case err >= e10:
@@ -33,7 +33,7 @@ func TickStep(start, stop, count float64) float64 {
 }
 
 func decimalsOf(step float64) int {
-	return int(math.Max(0, -math.Floor(math.Log10(step)+1e-9)))
+	return int(math.Max(0, -math.Floor(jsLog10(step)+1e-9)))
 }
 
 func parseFixed(x float64, digits int) float64 {
@@ -246,7 +246,7 @@ func BinEdges(values []float64, bins int, binWidth float64) []float64 {
 			iqr := Quantile(s, 0.75) - Quantile(s, 0.25)
 			fd := 0.0
 			if iqr > 0 {
-				fd = (2 * iqr) / math.Cbrt(float64(len(s)))
+				fd = (2 * iqr) / jsCbrt(float64(len(s)))
 			}
 			if fd > 0 {
 				n = math.Ceil((hi - lo) / fd)
@@ -259,7 +259,7 @@ func BinEdges(values []float64, bins int, binWidth float64) []float64 {
 		}
 		step = TickStep(lo, hi, n)
 	}
-	dec := int(math.Max(0, -math.Floor(math.Log10(step)+1e-9))) + 1
+	dec := int(math.Max(0, -math.Floor(jsLog10(step)+1e-9))) + 1
 	base := math.Floor(lo/step+1e-9) * step
 	out := []float64{}
 	for i := 0; base+float64(i)*step < hi+step*1e-9 && len(out) < 400; i++ {
@@ -290,4 +290,362 @@ func BinCounts(values, edges []float64) []int {
 		counts[min(lo, len(counts)-1)]++
 	}
 	return counts
+}
+
+// binIndex is the index of the bin holding v ([edge_i, edge_i+1), the last bin closed), or -1 outside the edges.
+func binIndex(v float64, edges []float64) int {
+	if !(v >= edges[0]) || !(v <= edges[len(edges)-1]) {
+		return -1
+	}
+	lo, hi := 0, len(edges)-1
+	for hi-lo > 1 {
+		mid := (lo + hi) >> 1
+		if v >= edges[mid] {
+			lo = mid
+		} else {
+			hi = mid
+		}
+	}
+	return min(lo, len(edges)-2)
+}
+
+// nextNiceStep is the next round step after step: 1, 2, 5, 10, 20, 50, ... times a power of ten.
+func nextNiceStep(step float64) float64 {
+	p := pow10(int(math.Floor(jsLog10(step) + 1e-9)))
+	m := step / p
+	switch {
+	case m < 1.5:
+		return float64(2 * p)
+	case m < 3.5:
+		return float64(5 * p)
+	}
+	return float64(10 * p)
+}
+
+// TransformBinEdges returns the edges the `bin` transform step uses: step when it is above zero, otherwise the
+// histogram's round step for maxbins, made coarser (1, 2, 5 times a power of ten) until there are at most maxbins bins.
+func TransformBinEdges(values []float64, maxbins int, step float64) []float64 {
+	if step > 0 {
+		return BinEdges(values, maxbins, step)
+	}
+	edges := BinEdges(values, maxbins, 0)
+	for guard := 0; len(edges)-1 > maxbins && guard < 60; guard++ {
+		edges = BinEdges(values, maxbins, nextNiceStep(edges[1]-edges[0]))
+	}
+	return edges
+}
+
+// jsRound is Math.round: to the nearest integer, halves towards plus infinity.
+func jsRound(x float64) float64 {
+	f := math.Floor(x)
+	if x-f >= 0.5 {
+		return f + 1
+	}
+	return f
+}
+
+// r2 rounds to two decimals; 0 for a non-finite value.
+func r2(v float64) float64 {
+	if !isFinite(v) {
+		return 0
+	}
+	return jsRound(float64(v*100)) / 100
+}
+
+// NiceLogDomain widens [lo, hi] (both above zero) to powers of ten; a single value gets one decade each side.
+func NiceLogDomain(lo, hi float64) (float64, float64) {
+	if !(lo > 0) || !(hi > 0) {
+		return 1, 10
+	}
+	a, b := math.Min(lo, hi), math.Max(lo, hi)
+	k0 := int(math.Floor(jsLog10(a) + 1e-12))
+	k1 := int(math.Ceil(jsLog10(b) - 1e-12))
+	if k0 == k1 {
+		k0--
+		k1++
+	}
+	return pow10(k0), pow10(k1)
+}
+
+// LogTicks returns ticks for a log axis on [a, b] (both above zero): powers of ten, with 2 and 5 times each when
+// the range is short.
+func LogTicks(a, b, count float64) []float64 {
+	lo, hi := math.Min(a, b), math.Max(a, b)
+	out := []float64{}
+	if !(lo > 0) || !isFinite(hi) {
+		return out
+	}
+	k0 := int(math.Ceil(jsLog10(lo) - 1e-9))
+	k1 := int(math.Floor(jsLog10(hi) + 1e-9))
+	decades := jsLog10(hi / lo)
+	if decades <= math.Max(1, count/3) {
+		for k := int(math.Floor(jsLog10(lo))); k <= int(math.Ceil(jsLog10(hi))); k++ {
+			for _, m := range []string{"1", "2", "5"} {
+				v, _ := strconv.ParseFloat(m+"e"+strconv.Itoa(k), 64)
+				if v >= float64(lo*(1-1e-9)) && v <= float64(hi*(1+1e-9)) {
+					out = append(out, v)
+				}
+			}
+		}
+	} else {
+		stride := int(math.Max(1, math.Ceil(float64(k1-k0+1)/math.Max(1, count))))
+		for k := k0; k <= k1; k++ {
+			if (k-k0)%stride == 0 {
+				out = append(out, pow10(k))
+			}
+		}
+	}
+	if len(out) < 2 {
+		out = []float64{}
+		for _, v := range LinearTicks(lo, hi, math.Max(2, count)) {
+			if v > 0 {
+				out = append(out, v)
+			}
+		}
+	}
+	return out
+}
+
+const (
+	densityPoints    = 64
+	maxDensityPoints = 512
+)
+
+func densityGrid(span, h float64) int {
+	if !(h > 0) {
+		return densityPoints
+	}
+	return int(math.Min(maxDensityPoints, math.Max(densityPoints, math.Ceil(float64(2*span)/h)+1)))
+}
+
+// Silverman is Silverman's rule of thumb for a Gaussian kernel: 0.9 * min(sd, IQR / 1.34) * n^(-1/5).
+func Silverman(values []float64) float64 {
+	n := len(values)
+	if n < 2 {
+		return 0
+	}
+	v := append([]float64(nil), values...)
+	sort.Float64s(v)
+	m := 0.0
+	for _, x := range v {
+		m += x
+	}
+	m /= float64(n)
+	ss := 0.0
+	for _, x := range v {
+		ss += float64((x - m) * (x - m))
+	}
+	sd := math.Sqrt(ss / float64(n-1))
+	iqr := (Quantile(v, 0.75) - Quantile(v, 0.25)) / 1.34
+	a := math.Min(sd, iqr)
+	if !(a > 0) {
+		a = math.Max(sd, iqr)
+	}
+	return float64(float64(0.9*a) * jsPow(float64(n), -0.2))
+}
+
+// Density is a Gaussian kernel density estimate on an even grid from the smallest to the largest value.
+type Density struct {
+	Bandwidth float64
+	Grid      []float64
+	Density   []float64
+}
+
+// KDE estimates the density of values. bandwidth <= 0 means Silverman's rule; points <= 0 means the default grid
+// (64 to 512 values, by the range over the bandwidth). When all values are equal the grid is that one value with
+// density 1; ok is false for no values.
+func KDE(values []float64, bandwidth float64, points int) (Density, bool) {
+	n := len(values)
+	if n == 0 {
+		return Density{}, false
+	}
+	lo, hi := math.Inf(1), math.Inf(-1)
+	for _, x := range values {
+		if x < lo {
+			lo = x
+		}
+		if x > hi {
+			hi = x
+		}
+	}
+	h := bandwidth
+	if !(h > 0) {
+		h = Silverman(values)
+	}
+	if hi == lo || !(h > 0) {
+		if !(h > 0) {
+			h = 0
+		}
+		return Density{Bandwidth: h, Grid: []float64{lo}, Density: []float64{1}}, true
+	}
+	k := points
+	if k <= 0 {
+		k = densityGrid(hi-lo, h)
+	}
+	k = max(2, k)
+	norm := 1 / float64(float64(float64(n)*h)*math.Sqrt(2*math.Pi))
+	d := Density{Bandwidth: h, Grid: make([]float64, 0, k), Density: make([]float64, 0, k)}
+	for i := 0; i < k; i++ {
+		t := lo + float64((hi-lo)*float64(i))/float64(k-1)
+		s := 0.0
+		for _, x := range values {
+			u := (t - x) / h
+			s += jsExp(float64(float64(-0.5*u) * u))
+		}
+		d.Grid = append(d.Grid, t)
+		d.Density = append(d.Density, float64(s*norm))
+	}
+	return d, true
+}
+
+// Peaks are the grid values where the density has a local maximum of at least a quarter of its highest value.
+func (d Density) Peaks() []float64 {
+	if len(d.Grid) == 1 {
+		return []float64{d.Grid[0]}
+	}
+	y := d.Density
+	top, at := math.Inf(-1), 0
+	for i, v := range y {
+		if v > top {
+			top, at = v, i
+		}
+	}
+	out := []float64{}
+	for i := range y {
+		left, right := math.Inf(-1), math.Inf(-1)
+		if i > 0 {
+			left = y[i-1]
+		}
+		if i < len(y)-1 {
+			right = y[i+1]
+		}
+		if y[i] > left && y[i] >= right && y[i] >= float64(top*0.25) {
+			out = append(out, d.Grid[i])
+		}
+	}
+	if len(out) == 0 {
+		return []float64{d.Grid[at]}
+	}
+	return out
+}
+
+const loessGrid = 50
+
+// Loess is a locally weighted linear regression (degree 1, tricube weights, no robustness iterations) evaluated
+// on an even grid of grid x values. It returns [x, fitted y] pairs, none for fewer than 3 points.
+func Loess(xs, ys []float64, bandwidth float64, grid int) [][2]float64 {
+	type pt struct{ x, y float64 }
+	pts := []pt{}
+	for i := 0; i < len(xs) && i < len(ys); i++ {
+		if isFinite(xs[i]) && isFinite(ys[i]) {
+			pts = append(pts, pt{xs[i], ys[i]})
+		}
+	}
+	out := [][2]float64{}
+	if len(pts) < 3 {
+		return out
+	}
+	sort.SliceStable(pts, func(i, j int) bool { return pts[i].x < pts[j].x })
+	n := len(pts)
+	q := min(n, max(2, int(math.Floor(float64(bandwidth*float64(n))))))
+	lo, hi := pts[0].x, pts[n-1].x
+	count := 1
+	if lo != hi {
+		count = max(2, grid)
+	}
+	l := 0
+	w := make([]float64, 0, q)
+	for k := 0; k < count; k++ {
+		g := hi
+		if k != count-1 {
+			g = lo + float64((hi-lo)*float64(k))/float64(count-1)
+		}
+		for l+q < n && g-pts[l].x > pts[l+q].x-g {
+			l++
+		}
+		r := l + q - 1
+		d := math.Max(g-pts[l].x, pts[r].x-g)
+		var sw, swx, swy float64
+		w = w[:0]
+		for i := l; i <= r; i++ {
+			wi := 1.0
+			if d > 0 {
+				u := math.Abs(pts[i].x-g) / d
+				if u >= 1 {
+					wi = 0
+				} else {
+					wi = jsPow(1-float64(float64(u*u)*u), 3)
+				}
+			}
+			w = append(w, wi)
+			sw += wi
+			swx += float64(wi * pts[i].x)
+			swy += float64(wi * pts[i].y)
+		}
+		if !(sw > 0) {
+			s := 0.0
+			for i := l; i <= r; i++ {
+				s += pts[i].y
+			}
+			out = append(out, [2]float64{g, s / float64(r-l+1)})
+			continue
+		}
+		mx, my := swx/sw, swy/sw
+		var sxx, sxy float64
+		for i := l; i <= r; i++ {
+			dx := pts[i].x - mx
+			sxx += float64(float64(w[i-l]*dx) * dx)
+			sxy += float64(float64(w[i-l]*dx) * (pts[i].y - my))
+		}
+		spread := pts[r].x - pts[l].x
+		if spread == 0 || sxx <= float64(float64(float64(1e-12*sw)*spread)*spread) {
+			out = append(out, [2]float64{g, my})
+		} else {
+			out = append(out, [2]float64{g, my + float64((sxy/sxx)*(g-mx))})
+		}
+	}
+	return out
+}
+
+// WaffleCells shares cells among the positive values by largest remainder; ties go to the earlier value.
+func WaffleCells(values []float64, cells int) []int {
+	tot := 0.0
+	for _, v := range values {
+		if v > 0 {
+			tot += v
+		}
+	}
+	out := make([]int, len(values))
+	if !(tot > 0) {
+		return out
+	}
+	exact := make([]float64, len(values))
+	rest := make([]float64, len(values))
+	order := make([]int, len(values))
+	left := cells
+	for i, v := range values {
+		if v > 0 {
+			exact[i] = float64((v / tot) * float64(cells))
+		}
+		f := math.Floor(exact[i])
+		out[i] = int(f)
+		rest[i] = exact[i] - f
+		order[i] = i
+		left -= out[i]
+	}
+	sort.SliceStable(order, func(a, b int) bool { return rest[order[a]] > rest[order[b]] })
+	for _, i := range order {
+		if left <= 0 {
+			break
+		}
+		out[i]++
+		left--
+	}
+	return out
+}
+
+// waffleGrid is the columns and rows of a waffle: 10 wide up to 100 cells, then 10 tall.
+func waffleGrid(cells float64) (float64, float64) {
+	cols := math.Max(10, cells/10)
+	return cols, cells / cols
 }
