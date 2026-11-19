@@ -1,0 +1,20 @@
+{
+  "name": "@supersolutions/super-plot-core",
+  "version": "0.1.0",
+  "description": "Renderer-free statistical charts: spec validation, layout to a scene, SVG output, themes and agent tools. No DOM.",
+  "private": true,
+  "license": "UNLICENSED",
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "sideEffects": ["./dist/index.js"],
+  "files": ["dist", "README.md"],
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" },
+    "./tools": { "types": "./dist/tools.d.ts", "import": "./dist/tools.js" },
+    "./adapters": { "types": "./dist/adapters.d.ts", "import": "./dist/adapters.js" }
+  },
+  "typesVersions": { "*": { "tools": ["./dist/tools.d.ts"], "adapters": ["./dist/adapters.d.ts"] } },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "author": "SUPER SOLUTION LABS INC"
+}

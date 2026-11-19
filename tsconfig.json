@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@supersolutions/super-plot-core": ["packages/core/src/index.ts"],
+      "@supersolutions/super-plot-core/tools": ["packages/core/src/tools.ts"],
+      "@supersolutions/super-plot-core/adapters": ["packages/core/src/adapters.ts"],
+      "@supersolutions/super-plot-web": ["packages/bindings/web/src/index.ts"],
+      "@supersolutions/super-plot-web/element": ["packages/bindings/web/src/element.ts"],
+      "@supersolutions/super-plot-react": ["packages/bindings/react/src/index.tsx"]
+    }
+  },
+  "include": ["packages/*/src", "packages/bindings/*/src", "tests", "examples/**/*.ts", "examples/**/*.tsx"]
+}

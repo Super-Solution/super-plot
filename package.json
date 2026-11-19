@@ -1,0 +1,46 @@
+{
+  "name": "super-plot-workspace",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Super Plot monorepo: statistical charts for people and agents (core, web, react).",
+  "type": "module",
+  "license": "UNLICENSED",
+  "author": "SUPER SOLUTION LABS INC",
+  "workspaces": [
+    "packages/core",
+    "packages/bindings/*"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs && node scripts/check-package.mjs",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "check:package": "node scripts/check-package.mjs",
+    "conformance": "node scripts/export-conformance.mjs",
+    "docs:spec": "node scripts/export-spec.mjs",
+    "examples": "node scripts/examples.mjs",
+    "showcase": "node scripts/showcase.mjs",
+    "gate": "npm run typecheck && npm test && npm run build && node scripts/export-conformance.mjs --check && node scripts/export-spec.mjs --check && npm run test:ports && npm run test:e2e",
+    "test:e2e": "vitest run --config vitest.e2e.config.ts",
+    "test:ports": "node scripts/ports.mjs",
+    "fuzz:ports": "node scripts/ports.mjs --fuzz"
+  },
+  "devDependencies": {
+    "@types/jsdom": "^30.0.0",
+    "@types/pngjs": "^6.0.5",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "ajv": "^8.20.0",
+    "esbuild": "^0.25.0",
+    "jsdom": "^26.0.0",
+    "pixelmatch": "^7.2.0",
+    "playwright": "^1.63.0",
+    "pngjs": "^7.0.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.7"
+  }
+}

@@ -1,0 +1,1802 @@
+{
+  "$id": "https://supersolution.io/schemas/super-plot/plot-spec-v1.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Super Plot spec v1",
+  "description": "A declarative chart: a chart type, tabular rows and the columns to encode. Limits: 50000 rows.",
+  "oneOf": [
+    {
+      "title": "Bar chart",
+      "description": "Compares a number across categories with one bar per category (grouped, stacked or 100% stacked). Comparing sizes across a handful to a few dozen categories, or parts of a whole per category (stacked). Use a line for ordered time; use a histogram to show how one measure is distributed; avoid for more than ~40 categories.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "data",
+        "x",
+        "y"
+      ],
+      "properties": {
+        "type": {
+          "const": "bar"
+        },
+        "version": {
+          "const": 1,
+          "description": "Spec format version. Only 1 exists; may be omitted."
+        },
+        "data": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 50000,
+          "items": {
+            "type": "object"
+          },
+          "description": "Tabular rows: an array of flat objects, one per observation. Numbers must be numbers (or plain numeric strings)."
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 120,
+          "description": "Chart title. State the takeaway or the subject, not \"Chart\"."
+        },
+        "subtitle": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "One line of context under the title: unit, period, filter."
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 1000,
+          "description": "Long description for screen readers and agents. Generated from the data when omitted."
+        },
+        "source": {
+          "type": "string",
+          "maxLength": 160,
+          "description": "Source line shown small under the chart."
+        },
+        "legend": {
+          "enum": [
+            "auto",
+            "top",
+            "bottom",
+            "right",
+            "none"
+          ],
+          "default": "auto",
+          "description": "Legend placement. `auto` hides it for a single series and picks a side from the available width."
+        },
+        "tooltip": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show a hover tooltip (web binding only)."
+        },
+        "format": {
+          "type": "string",
+          "pattern": "^(auto|compact|integer|percent|fixed:\\d{1,2}|currency:[A-Za-z]{3})$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+        },
+        "colors": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "description": "Series (or slice/category) name to CSS colour, e.g. {\"Revenue\":\"#2962FF\"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours."
+        },
+        "xLabel": {
+          "type": "string",
+          "maxLength": 80,
+          "description": "Title of the horizontal axis."
+        },
+        "yLabel": {
+          "type": "string",
+          "maxLength": 80,
+          "description": "Title of the vertical axis (include the unit)."
+        },
+        "annotations": {
+          "type": "array",
+          "maxItems": 50,
+          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "axis",
+              "value"
+            ],
+            "properties": {
+              "axis": {
+                "enum": [
+                  "x",
+                  "y"
+                ]
+              },
+              "value": {
+                "type": [
+                  "number",
+                  "string"
+                ]
+              },
+              "to": {
+                "type": [
+                  "number",
+                  "string"
+                ]
+              },
+              "label": {
+                "type": "string",
+                "maxLength": 80
+              },
+              "tone": {
+                "enum": [
+                  "neutral",
+                  "positive",
+                  "negative",
+                  "warning",
+                  "info"
+                ]
+              }
+            }
+          }
+        },
+        "x": {
+          "type": "string",
+          "description": "Column holding the category of each bar. (name of a column in data)"
+        },
+        "y": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string"
+              }
+            }
+          ],
+          "description": "Numeric column for bar length. Several columns give one series per column (wide-form data). (column name, or several for wide-form data)"
+        },
+        "series": {
+          "type": "string",
+          "description": "Column that splits each category into series (long-form data). Not needed when `y` lists several columns. (name of a column in data)"
+        },
+        "stack": {
+          "enum": [
+            "none",
+            "stack",
+            "normalize"
+          ],
+          "default": "none",
+          "description": "`none` groups series side by side, `stack` stacks them, `normalize` stacks to 100%."
+        },
+        "orientation": {
+          "enum": [
+            "vertical",
+            "horizontal"
+          ],
+          "default": "vertical",
+          "description": "Use `horizontal` for long category names or many categories."
+        },
+        "sort": {
+          "enum": [
+            "none",
+            "asc",
+            "desc"
+          ],
+          "default": "none",
+          "description": "Order categories by their total. `none` keeps the data order (use it for ordered categories such as months)."
+        },
+        "labels": {
+          "type": "boolean",
+          "default": false,
+          "description": "Print values on the bars. Keep off for dense charts; the tooltip carries the numbers."
+        },
+        "yDomain": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "description": "Fix the value axis range, e.g. [0, 100]. Bars should start at 0; only change it knowingly."
+        }
+      }
+    },
+    {
+      "title": "Line chart",
+      "description": "Shows how one or more numbers change along an ordered x axis, usually time. Trends over time or any ordered numeric x, up to ~8 series. Use area for cumulative or part-to-whole over time, bar for comparing separate categories, scatter when both axes are measurements. For prices (OHLC, indicators, drawings) use Super Chart.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "data",
+        "x",
+        "y"
+      ],
+      "properties": {
+        "type": {
+          "const": "line"
+        },
+        "version": {
+          "const": 1,
+          "description": "Spec format version. Only 1 exists; may be omitted."
+        },
+        "data": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 50000,
+          "items": {
+            "type": "object"
+          },
+          "description": "Tabular rows: an array of flat objects, one per observation. Numbers must be numbers (or plain numeric strings)."
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 120,
+          "description": "Chart title. State the takeaway or the subject, not \"Chart\"."
+        },
+        "subtitle": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "One line of context under the title: unit, period, filter."
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 1000,
+          "description": "Long description for screen readers and agents. Generated from the data when omitted."
+        },
+        "source": {
+          "type": "string",
+          "maxLength": 160,
+          "description": "Source line shown small under the chart."
+        },
+        "legend": {
+          "enum": [
+            "auto",
+            "top",
+            "bottom",
+            "right",
+            "none"
+          ],
+          "default": "auto",
+          "description": "Legend placement. `auto` hides it for a single series and picks a side from the available width."
+        },
+        "tooltip": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show a hover tooltip (web binding only)."
+        },
+        "format": {
+          "type": "string",
+          "pattern": "^(auto|compact|integer|percent|fixed:\\d{1,2}|currency:[A-Za-z]{3})$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+        },
+        "colors": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "description": "Series (or slice/category) name to CSS colour, e.g. {\"Revenue\":\"#2962FF\"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours."
+        },
+        "xLabel": {
+          "type": "string",
+          "maxLength": 80,
+          "description": "Title of the horizontal axis."
+        },
+        "yLabel": {
+          "type": "string",
+          "maxLength": 80,
+          "description": "Title of the vertical axis (include the unit)."
+        },
+        "annotations": {
+          "type": "array",
+          "maxItems": 50,
+          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "axis",
+              "value"
+            ],
+            "properties": {
+              "axis": {
+                "enum": [
+                  "x",
+                  "y"
+                ]
+              },
+              "value": {
+                "type": [
+                  "number",
+                  "string"
+                ]
+              },
+              "to": {
+                "type": [
+                  "number",
+                  "string"
+                ]
+              },
+              "label": {
+                "type": "string",
+                "maxLength": 80
+              },
+              "tone": {
+                "enum": [
+                  "neutral",
+                  "positive",
+                  "negative",
+                  "warning",
+                  "info"
+                ]
+              }
+            }
+          }
+        },
+        "x": {
+          "type": "string",
+          "description": "Column for the horizontal position: numbers, dates (ISO 8601 strings or timestamps) or category names. The kind is detected; override with `xType`. (name of a column in data)"
+        },
+        "y": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string"
+              }
+            }
+          ],
+          "description": "Numeric column to plot. Several columns give one line per column (wide-form data). (column name, or several for wide-form data)"
+        },
+        "series": {
+          "type": "string",
+          "description": "Column that splits the data into one line per value (long-form data). (name of a column in data)"
+        },
+        "xType": {
+          "enum": [
+            "auto",
+            "category",
+            "linear",
+            "time"
+          ],
+          "default": "auto",
+          "description": "How to read `x`. `auto` detects numbers, ISO dates and categories."
+        },
+        "yDomain": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "description": "Fix the vertical range, e.g. [0, 100]. Lines may start anywhere; areas always include 0."
+        },
+        "curve": {
+          "enum": [
+            "linear",
+            "smooth",
+            "step"
+          ],
+          "default": "linear",
+          "description": "`smooth` is monotone (never overshoots the data); `step` holds each value until the next point."
+        },
+        "points": {
+          "type": "boolean",
+          "description": "Force markers on (`true`) or off (`false`). Default: markers when there are few points, otherwise only the last point."
+        }
+      }
+    },
+    {
+      "title": "Area chart",
+      "description": "A line chart with the area under it filled; stacked areas show how parts add up over time. Volume or cumulative quantity over time, and composition over time (`stack: \"stack\"` or `\"normalize\"`). Avoid overlapping unstacked areas for more than 2 series; use lines instead.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "data",
+        "x",
+        "y"
+      ],
+      "properties": {
+        "type": {
+          "const": "area"
+        },
+        "version": {
+          "const": 1,
+          "description": "Spec format version. Only 1 exists; may be omitted."
+        },
+        "data": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 50000,
+          "items": {
+            "type": "object"
+          },
+          "description": "Tabular rows: an array of flat objects, one per observation. Numbers must be numbers (or plain numeric strings)."
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 120,
+          "description": "Chart title. State the takeaway or the subject, not \"Chart\"."
+        },
+        "subtitle": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "One line of context under the title: unit, period, filter."
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 1000,
+          "description": "Long description for screen readers and agents. Generated from the data when omitted."
+        },
+        "source": {
+          "type": "string",
+          "maxLength": 160,
+          "description": "Source line shown small under the chart."
+        },
+        "legend": {
+          "enum": [
+            "auto",
+            "top",
+            "bottom",
+            "right",
+            "none"
+          ],
+          "default": "auto",
+          "description": "Legend placement. `auto` hides it for a single series and picks a side from the available width."
+        },
+        "tooltip": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show a hover tooltip (web binding only)."
+        },
+        "format": {
+          "type": "string",
+          "pattern": "^(auto|compact|integer|percent|fixed:\\d{1,2}|currency:[A-Za-z]{3})$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+        },
+        "colors": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "description": "Series (or slice/category) name to CSS colour, e.g. {\"Revenue\":\"#2962FF\"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours."
+        },
+        "xLabel": {
+          "type": "string",
+          "maxLength": 80,
+          "description": "Title of the horizontal axis."
+        },
+        "yLabel": {
+          "type": "string",
+          "maxLength": 80,
+          "description": "Title of the vertical axis (include the unit)."
+        },
+        "annotations": {
+          "type": "array",
+          "maxItems": 50,
+          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "axis",
+              "value"
+            ],
+            "properties": {
+              "axis": {
+                "enum": [
+                  "x",
+                  "y"
+                ]
+              },
+              "value": {
+                "type": [
+                  "number",
+                  "string"
+                ]
+              },
+              "to": {
+                "type": [
+                  "number",
+                  "string"
+                ]
+              },
+              "label": {
+                "type": "string",
+                "maxLength": 80
+              },
+              "tone": {
+                "enum": [
+                  "neutral",
+                  "positive",
+                  "negative",
+                  "warning",
+                  "info"
+                ]
+              }
+            }
+          }
+        },
+        "x": {
+          "type": "string",
+          "description": "Column for the horizontal position: numbers, dates (ISO 8601 strings or timestamps) or category names. The kind is detected; override with `xType`. (name of a column in data)"
+        },
+        "y": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string"
+              }
+            }
+          ],
+          "description": "Numeric column to plot. Several columns give one line per column (wide-form data). (column name, or several for wide-form data)"
+        },
+        "series": {
+          "type": "string",
+          "description": "Column that splits the data into one line per value (long-form data). (name of a column in data)"
+        },
+        "xType": {
+          "enum": [
+            "auto",
+            "category",
+            "linear",
+            "time"
+          ],
+          "default": "auto",
+          "description": "How to read `x`. `auto` detects numbers, ISO dates and categories."
+        },
+        "yDomain": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "description": "Fix the vertical range, e.g. [0, 100]. Lines may start anywhere; areas always include 0."
+        },
+        "curve": {
+          "enum": [
+            "linear",
+            "smooth",
+            "step"
+          ],
+          "default": "linear",
+          "description": "`smooth` is monotone (never overshoots the data); `step` holds each value until the next point."
+        },
+        "stack": {
+          "enum": [
+            "none",
+            "stack",
+            "normalize"
+          ],
+          "default": "none",
+          "description": "`stack` adds series on top of each other; `normalize` shows each series as a share of 100%."
+        }
+      }
+    },
+    {
+      "title": "Scatter plot",
+      "description": "Plots each row as a point by two numbers to show relationships, clusters and outliers; optional bubble size and trend line. Asking whether two measures move together, or finding outliers. Add `size` for a third measure (bubble), `series` for groups, `trend: \"linear\"` for the fit. Not for ordered time series (use line) or part-to-whole.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "data",
+        "x",
+        "y"
+      ],
+      "properties": {
+        "type": {
+          "const": "scatter"
+        },
+        "version": {
+          "const": 1,
+          "description": "Spec format version. Only 1 exists; may be omitted."
+        },
+        "data": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 50000,
+          "items": {
+            "type": "object"
+          },
+          "description": "Tabular rows: an array of flat objects, one per observation. Numbers must be numbers (or plain numeric strings)."
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 120,
+          "description": "Chart title. State the takeaway or the subject, not \"Chart\"."
+        },
+        "subtitle": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "One line of context under the title: unit, period, filter."
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 1000,
+          "description": "Long description for screen readers and agents. Generated from the data when omitted."
+        },
+        "source": {
+          "type": "string",
+          "maxLength": 160,
+          "description": "Source line shown small under the chart."
+        },
+        "legend": {
+          "enum": [
+            "auto",
+            "top",
+            "bottom",
+            "right",
+            "none"
+          ],
+          "default": "auto",
+          "description": "Legend placement. `auto` hides it for a single series and picks a side from the available width."
+        },
+        "tooltip": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show a hover tooltip (web binding only)."
+        },
+        "format": {
+          "type": "string",
+          "pattern": "^(auto|compact|integer|percent|fixed:\\d{1,2}|currency:[A-Za-z]{3})$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+        },
+        "colors": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "description": "Series (or slice/category) name to CSS colour, e.g. {\"Revenue\":\"#2962FF\"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours."
+        },
+        "xLabel": {
+          "type": "string",
+          "maxLength": 80,
+          "description": "Title of the horizontal axis."
+        },
+        "yLabel": {
+          "type": "string",
+          "maxLength": 80,
+          "description": "Title of the vertical axis (include the unit)."
+        },
+        "annotations": {
+          "type": "array",
+          "maxItems": 50,
+          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "axis",
+              "value"
+            ],
+            "properties": {
+              "axis": {
+                "enum": [
+                  "x",
+                  "y"
+                ]
+              },
+              "value": {
+                "type": [
+                  "number",
+                  "string"
+                ]
+              },
+              "to": {
+                "type": [
+                  "number",
+                  "string"
+                ]
+              },
+              "label": {
+                "type": "string",
+                "maxLength": 80
+              },
+              "tone": {
+                "enum": [
+                  "neutral",
+                  "positive",
+                  "negative",
+                  "warning",
+                  "info"
+                ]
+              }
+            }
+          }
+        },
+        "x": {
+          "type": "string",
+          "description": "Numeric (or date) column for the horizontal position. (name of a column in data)"
+        },
+        "y": {
+          "type": "string",
+          "description": "Numeric column for the vertical position. (name of a column in data)"
+        },
+        "series": {
+          "type": "string",
+          "description": "Column that colours points by group. (name of a column in data)"
+        },
+        "size": {
+          "type": "string",
+          "description": "Numeric column mapped to bubble area. (name of a column in data)"
+        },
+        "label": {
+          "type": "string",
+          "description": "Column used as each point's name in the tooltip. (name of a column in data)"
+        },
+        "trend": {
+          "enum": [
+            "none",
+            "linear"
+          ],
+          "default": "none",
+          "description": "Draw a least-squares line per series."
+        },
+        "xType": {
+          "enum": [
+            "auto",
+            "linear",
+            "time"
+          ],
+          "default": "auto",
+          "description": "How to read `x`."
+        },
+        "xDomain": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "description": "Fix the horizontal range."
+        },
+        "yDomain": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "description": "Fix the vertical range."
+        }
+      }
+    },
+    {
+      "title": "Pie chart",
+      "description": "Shows each category's share of a whole as angles of a circle. Few (2-6) parts of one whole where the point is \"who has the biggest share\". Prefer a bar chart to compare sizes precisely or to show more than ~7 parts. Not for time or for values that do not add up to a whole.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "data",
+        "label",
+        "value"
+      ],
+      "properties": {
+        "type": {
+          "const": "pie"
+        },
+        "version": {
+          "const": 1,
+          "description": "Spec format version. Only 1 exists; may be omitted."
+        },
+        "data": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 50000,
+          "items": {
+            "type": "object"
+          },
+          "description": "Tabular rows: an array of flat objects, one per observation. Numbers must be numbers (or plain numeric strings)."
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 120,
+          "description": "Chart title. State the takeaway or the subject, not \"Chart\"."
+        },
+        "subtitle": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "One line of context under the title: unit, period, filter."
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 1000,
+          "description": "Long description for screen readers and agents. Generated from the data when omitted."
+        },
+        "source": {
+          "type": "string",
+          "maxLength": 160,
+          "description": "Source line shown small under the chart."
+        },
+        "legend": {
+          "enum": [
+            "auto",
+            "top",
+            "bottom",
+            "right",
+            "none"
+          ],
+          "default": "auto",
+          "description": "Legend placement. `auto` hides it for a single series and picks a side from the available width."
+        },
+        "tooltip": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show a hover tooltip (web binding only)."
+        },
+        "format": {
+          "type": "string",
+          "pattern": "^(auto|compact|integer|percent|fixed:\\d{1,2}|currency:[A-Za-z]{3})$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+        },
+        "colors": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "description": "Series (or slice/category) name to CSS colour, e.g. {\"Revenue\":\"#2962FF\"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours."
+        },
+        "label": {
+          "type": "string",
+          "description": "Column naming each slice. (name of a column in data)"
+        },
+        "value": {
+          "type": "string",
+          "description": "Numeric column giving each slice's size. Rows with the same label are summed; negatives are skipped. (name of a column in data)"
+        },
+        "sort": {
+          "enum": [
+            "none",
+            "asc",
+            "desc"
+          ],
+          "default": "desc",
+          "description": "Slice order. `desc` puts the biggest slice first; `none` keeps the data order."
+        },
+        "maxSlices": {
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 12,
+          "default": 8,
+          "description": "Show at most this many slices; the smallest merge into \"Other\". Keeps colours distinguishable."
+        },
+        "labels": {
+          "type": "boolean",
+          "default": true,
+          "description": "Print each slice's percentage on it when it fits."
+        },
+        "centerLabel": {
+          "type": "string",
+          "maxLength": 24,
+          "description": "Donut only: text in the hole (default: the total)."
+        },
+        "innerRadius": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 0.9,
+          "description": "Hole radius as a share of the outer radius. 0 for a pie. `donut` defaults to 0.62."
+        }
+      }
+    },
+    {
+      "title": "Donut chart",
+      "description": "A pie chart with a hole; the hole shows the total. Same as a pie chart, when you also want to show the total in the middle.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "data",
+        "label",
+        "value"
+      ],
+      "properties": {
+        "type": {
+          "const": "donut"
+        },
+        "version": {
+          "const": 1,
+          "description": "Spec format version. Only 1 exists; may be omitted."
+        },
+        "data": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 50000,
+          "items": {
+            "type": "object"
+          },
+          "description": "Tabular rows: an array of flat objects, one per observation. Numbers must be numbers (or plain numeric strings)."
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 120,
+          "description": "Chart title. State the takeaway or the subject, not \"Chart\"."
+        },
+        "subtitle": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "One line of context under the title: unit, period, filter."
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 1000,
+          "description": "Long description for screen readers and agents. Generated from the data when omitted."
+        },
+        "source": {
+          "type": "string",
+          "maxLength": 160,
+          "description": "Source line shown small under the chart."
+        },
+        "legend": {
+          "enum": [
+            "auto",
+            "top",
+            "bottom",
+            "right",
+            "none"
+          ],
+          "default": "auto",
+          "description": "Legend placement. `auto` hides it for a single series and picks a side from the available width."
+        },
+        "tooltip": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show a hover tooltip (web binding only)."
+        },
+        "format": {
+          "type": "string",
+          "pattern": "^(auto|compact|integer|percent|fixed:\\d{1,2}|currency:[A-Za-z]{3})$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+        },
+        "colors": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "description": "Series (or slice/category) name to CSS colour, e.g. {\"Revenue\":\"#2962FF\"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours."
+        },
+        "label": {
+          "type": "string",
+          "description": "Column naming each slice. (name of a column in data)"
+        },
+        "value": {
+          "type": "string",
+          "description": "Numeric column giving each slice's size. Rows with the same label are summed; negatives are skipped. (name of a column in data)"
+        },
+        "sort": {
+          "enum": [
+            "none",
+            "asc",
+            "desc"
+          ],
+          "default": "desc",
+          "description": "Slice order. `desc` puts the biggest slice first; `none` keeps the data order."
+        },
+        "maxSlices": {
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 12,
+          "default": 8,
+          "description": "Show at most this many slices; the smallest merge into \"Other\". Keeps colours distinguishable."
+        },
+        "labels": {
+          "type": "boolean",
+          "default": true,
+          "description": "Print each slice's percentage on it when it fits."
+        },
+        "centerLabel": {
+          "type": "string",
+          "maxLength": 24,
+          "description": "Donut only: text in the hole (default: the total)."
+        },
+        "innerRadius": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 0.9,
+          "description": "Hole radius as a share of the outer radius. 0 for a pie. `donut` defaults to 0.62."
+        }
+      }
+    },
+    {
+      "title": "Histogram",
+      "description": "Shows how one measure is distributed by counting values into equal-width bins. Understanding the shape, centre and spread of a single numeric column (response times, prices, ages). Compare groups with `series` (up to 3 overlap legibly) or use a box plot to compare many. Not for comparing categories.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "data",
+        "value"
+      ],
+      "properties": {
+        "type": {
+          "const": "histogram"
+        },
+        "version": {
+          "const": 1,
+          "description": "Spec format version. Only 1 exists; may be omitted."
+        },
+        "data": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 50000,
+          "items": {
+            "type": "object"
+          },
+          "description": "Tabular rows: an array of flat objects, one per observation. Numbers must be numbers (or plain numeric strings)."
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 120,
+          "description": "Chart title. State the takeaway or the subject, not \"Chart\"."
+        },
+        "subtitle": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "One line of context under the title: unit, period, filter."
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 1000,
+          "description": "Long description for screen readers and agents. Generated from the data when omitted."
+        },
+        "source": {
+          "type": "string",
+          "maxLength": 160,
+          "description": "Source line shown small under the chart."
+        },
+        "legend": {
+          "enum": [
+            "auto",
+            "top",
+            "bottom",
+            "right",
+            "none"
+          ],
+          "default": "auto",
+          "description": "Legend placement. `auto` hides it for a single series and picks a side from the available width."
+        },
+        "tooltip": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show a hover tooltip (web binding only)."
+        },
+        "format": {
+          "type": "string",
+          "pattern": "^(auto|compact|integer|percent|fixed:\\d{1,2}|currency:[A-Za-z]{3})$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+        },
+        "colors": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "description": "Series (or slice/category) name to CSS colour, e.g. {\"Revenue\":\"#2962FF\"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours."
+        },
+        "xLabel": {
+          "type": "string",
+          "maxLength": 80,
+          "description": "Title of the horizontal axis."
+        },
+        "yLabel": {
+          "type": "string",
+          "maxLength": 80,
+          "description": "Title of the vertical axis (include the unit)."
+        },
+        "annotations": {
+          "type": "array",
+          "maxItems": 50,
+          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "axis",
+              "value"
+            ],
+            "properties": {
+              "axis": {
+                "enum": [
+                  "x",
+                  "y"
+                ]
+              },
+              "value": {
+                "type": [
+                  "number",
+                  "string"
+                ]
+              },
+              "to": {
+                "type": [
+                  "number",
+                  "string"
+                ]
+              },
+              "label": {
+                "type": "string",
+                "maxLength": 80
+              },
+              "tone": {
+                "enum": [
+                  "neutral",
+                  "positive",
+                  "negative",
+                  "warning",
+                  "info"
+                ]
+              }
+            }
+          }
+        },
+        "value": {
+          "type": "string",
+          "description": "Numeric column to bin. (name of a column in data)"
+        },
+        "series": {
+          "type": "string",
+          "description": "Column that splits the values into overlaid histograms sharing one set of bins. (name of a column in data)"
+        },
+        "bins": {
+          "oneOf": [
+            {
+              "const": "auto"
+            },
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200
+            }
+          ],
+          "default": "auto",
+          "description": "`auto` (Freedman-Diaconis, 5-40 bins) or a target bin count (1-200). Edges are rounded to nice numbers."
+        },
+        "binWidth": {
+          "type": "number",
+          "minimum": 1e-9,
+          "description": "Exact bin width; overrides `bins`."
+        },
+        "mode": {
+          "enum": [
+            "count",
+            "percent",
+            "density"
+          ],
+          "default": "count",
+          "description": "What bar height means: number of values, percent of values, or probability density."
+        },
+        "showMean": {
+          "type": "boolean",
+          "default": false,
+          "description": "Draw a dashed line at the mean."
+        }
+      }
+    },
+    {
+      "title": "Box plot",
+      "description": "Summarises the distribution of a number for each group: median, quartiles, whiskers and outliers. Comparing the spread and centre of one measure across many groups, where overlaid histograms would be too busy. Needs ~10+ values per group to be meaningful.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "data",
+        "y"
+      ],
+      "properties": {
+        "type": {
+          "const": "box"
+        },
+        "version": {
+          "const": 1,
+          "description": "Spec format version. Only 1 exists; may be omitted."
+        },
+        "data": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 50000,
+          "items": {
+            "type": "object"
+          },
+          "description": "Tabular rows: an array of flat objects, one per observation. Numbers must be numbers (or plain numeric strings)."
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 120,
+          "description": "Chart title. State the takeaway or the subject, not \"Chart\"."
+        },
+        "subtitle": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "One line of context under the title: unit, period, filter."
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 1000,
+          "description": "Long description for screen readers and agents. Generated from the data when omitted."
+        },
+        "source": {
+          "type": "string",
+          "maxLength": 160,
+          "description": "Source line shown small under the chart."
+        },
+        "legend": {
+          "enum": [
+            "auto",
+            "top",
+            "bottom",
+            "right",
+            "none"
+          ],
+          "default": "auto",
+          "description": "Legend placement. `auto` hides it for a single series and picks a side from the available width."
+        },
+        "tooltip": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show a hover tooltip (web binding only)."
+        },
+        "format": {
+          "type": "string",
+          "pattern": "^(auto|compact|integer|percent|fixed:\\d{1,2}|currency:[A-Za-z]{3})$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+        },
+        "colors": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "description": "Series (or slice/category) name to CSS colour, e.g. {\"Revenue\":\"#2962FF\"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours."
+        },
+        "xLabel": {
+          "type": "string",
+          "maxLength": 80,
+          "description": "Title of the horizontal axis."
+        },
+        "yLabel": {
+          "type": "string",
+          "maxLength": 80,
+          "description": "Title of the vertical axis (include the unit)."
+        },
+        "annotations": {
+          "type": "array",
+          "maxItems": 50,
+          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "axis",
+              "value"
+            ],
+            "properties": {
+              "axis": {
+                "enum": [
+                  "x",
+                  "y"
+                ]
+              },
+              "value": {
+                "type": [
+                  "number",
+                  "string"
+                ]
+              },
+              "to": {
+                "type": [
+                  "number",
+                  "string"
+                ]
+              },
+              "label": {
+                "type": "string",
+                "maxLength": 80
+              },
+              "tone": {
+                "enum": [
+                  "neutral",
+                  "positive",
+                  "negative",
+                  "warning",
+                  "info"
+                ]
+              }
+            }
+          }
+        },
+        "x": {
+          "type": "string",
+          "description": "Column that defines the groups (one box each). Omit for a single box. (name of a column in data)"
+        },
+        "y": {
+          "type": "string",
+          "description": "Numeric column whose distribution is summarised. (name of a column in data)"
+        },
+        "outliers": {
+          "type": "boolean",
+          "default": true,
+          "description": "Draw points beyond the whiskers (1.5 x IQR)."
+        },
+        "orientation": {
+          "enum": [
+            "vertical",
+            "horizontal"
+          ],
+          "default": "vertical",
+          "description": "`horizontal` suits long group names."
+        },
+        "yDomain": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "description": "Fix the value axis range."
+        }
+      }
+    },
+    {
+      "title": "Heatmap",
+      "description": "Colours a grid of cells by a number: one axis per category, darker means larger. Spotting patterns across two categorical dimensions (weekday x hour, product x region, correlation matrix). Order the categories meaningfully in the data. Not for few cells, where a bar chart is clearer.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "data",
+        "x",
+        "y",
+        "value"
+      ],
+      "properties": {
+        "type": {
+          "const": "heatmap"
+        },
+        "version": {
+          "const": 1,
+          "description": "Spec format version. Only 1 exists; may be omitted."
+        },
+        "data": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 50000,
+          "items": {
+            "type": "object"
+          },
+          "description": "Tabular rows: an array of flat objects, one per observation. Numbers must be numbers (or plain numeric strings)."
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 120,
+          "description": "Chart title. State the takeaway or the subject, not \"Chart\"."
+        },
+        "subtitle": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "One line of context under the title: unit, period, filter."
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 1000,
+          "description": "Long description for screen readers and agents. Generated from the data when omitted."
+        },
+        "source": {
+          "type": "string",
+          "maxLength": 160,
+          "description": "Source line shown small under the chart."
+        },
+        "legend": {
+          "enum": [
+            "auto",
+            "top",
+            "bottom",
+            "right",
+            "none"
+          ],
+          "default": "auto",
+          "description": "Legend placement. `auto` hides it for a single series and picks a side from the available width."
+        },
+        "tooltip": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show a hover tooltip (web binding only)."
+        },
+        "format": {
+          "type": "string",
+          "pattern": "^(auto|compact|integer|percent|fixed:\\d{1,2}|currency:[A-Za-z]{3})$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+        },
+        "colors": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "description": "Series (or slice/category) name to CSS colour, e.g. {\"Revenue\":\"#2962FF\"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours."
+        },
+        "x": {
+          "type": "string",
+          "description": "Column for the horizontal categories. (name of a column in data)"
+        },
+        "y": {
+          "type": "string",
+          "description": "Column for the vertical categories (first value at the top). (name of a column in data)"
+        },
+        "value": {
+          "type": "string",
+          "description": "Numeric column giving each cell's colour. Rows with the same x and y are summed. (name of a column in data)"
+        },
+        "labels": {
+          "type": "boolean",
+          "default": true,
+          "description": "Print the value in each cell that is large enough."
+        },
+        "domain": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "description": "Fix the colour scale range, e.g. [0, 100], to compare several heatmaps."
+        },
+        "xLabel": {
+          "type": "string",
+          "maxLength": 80,
+          "description": "Title of the horizontal axis (default: the x column)."
+        },
+        "yLabel": {
+          "type": "string",
+          "maxLength": 80,
+          "description": "Title of the vertical axis (default: the y column)."
+        }
+      }
+    },
+    {
+      "title": "Radar chart",
+      "description": "Compares a few items across several measures on spokes around a centre; each item is a closed shape. Comparing 1-4 items across 4-10 measures that share one scale (skills, product scorecards). The shape is easy to read, exact values are not: use a bar chart when precision matters, and avoid it for measures on different scales or for many items.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "data",
+        "x",
+        "y"
+      ],
+      "properties": {
+        "type": {
+          "const": "radar"
+        },
+        "version": {
+          "const": 1,
+          "description": "Spec format version. Only 1 exists; may be omitted."
+        },
+        "data": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 50000,
+          "items": {
+            "type": "object"
+          },
+          "description": "Tabular rows: an array of flat objects, one per observation. Numbers must be numbers (or plain numeric strings)."
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 120,
+          "description": "Chart title. State the takeaway or the subject, not \"Chart\"."
+        },
+        "subtitle": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "One line of context under the title: unit, period, filter."
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 1000,
+          "description": "Long description for screen readers and agents. Generated from the data when omitted."
+        },
+        "source": {
+          "type": "string",
+          "maxLength": 160,
+          "description": "Source line shown small under the chart."
+        },
+        "legend": {
+          "enum": [
+            "auto",
+            "top",
+            "bottom",
+            "right",
+            "none"
+          ],
+          "default": "auto",
+          "description": "Legend placement. `auto` hides it for a single series and picks a side from the available width."
+        },
+        "tooltip": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show a hover tooltip (web binding only)."
+        },
+        "format": {
+          "type": "string",
+          "pattern": "^(auto|compact|integer|percent|fixed:\\d{1,2}|currency:[A-Za-z]{3})$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+        },
+        "colors": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "description": "Series (or slice/category) name to CSS colour, e.g. {\"Revenue\":\"#2962FF\"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours."
+        },
+        "x": {
+          "type": "string",
+          "description": "Column naming each spoke (the measures). 3 to 16 distinct values. (name of a column in data)"
+        },
+        "y": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string"
+              }
+            }
+          ],
+          "description": "Numeric column for the distance along the spoke. Several columns give one shape per column (wide-form data). (column name, or several for wide-form data)"
+        },
+        "series": {
+          "type": "string",
+          "description": "Column that splits the spokes into shapes (long-form data). Not needed when `y` lists several columns. (name of a column in data)"
+        },
+        "max": {
+          "type": "number",
+          "minimum": 0.000001,
+          "description": "Value at the outer ring. Default: the largest value rounded up. Set it to compare several radars."
+        },
+        "rings": {
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 8,
+          "default": 4,
+          "description": "Number of grid rings."
+        },
+        "fill": {
+          "type": "boolean",
+          "default": true,
+          "description": "Tint the inside of each shape."
+        }
+      }
+    },
+    {
+      "title": "Treemap",
+      "description": "Shows parts of a whole as nested rectangles whose area is the value; an optional group splits it into coloured blocks. Many parts (10-100) of one whole where size ranking matters more than exact values, with an optional one-level grouping (sector > company, region > product). Not for few parts (use a bar or pie) or for values that can be negative.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "data",
+        "label",
+        "value"
+      ],
+      "properties": {
+        "type": {
+          "const": "treemap"
+        },
+        "version": {
+          "const": 1,
+          "description": "Spec format version. Only 1 exists; may be omitted."
+        },
+        "data": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 50000,
+          "items": {
+            "type": "object"
+          },
+          "description": "Tabular rows: an array of flat objects, one per observation. Numbers must be numbers (or plain numeric strings)."
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 120,
+          "description": "Chart title. State the takeaway or the subject, not \"Chart\"."
+        },
+        "subtitle": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "One line of context under the title: unit, period, filter."
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 1000,
+          "description": "Long description for screen readers and agents. Generated from the data when omitted."
+        },
+        "source": {
+          "type": "string",
+          "maxLength": 160,
+          "description": "Source line shown small under the chart."
+        },
+        "legend": {
+          "enum": [
+            "auto",
+            "top",
+            "bottom",
+            "right",
+            "none"
+          ],
+          "default": "auto",
+          "description": "Legend placement. `auto` hides it for a single series and picks a side from the available width."
+        },
+        "tooltip": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show a hover tooltip (web binding only)."
+        },
+        "format": {
+          "type": "string",
+          "pattern": "^(auto|compact|integer|percent|fixed:\\d{1,2}|currency:[A-Za-z]{3})$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+        },
+        "colors": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "description": "Series (or slice/category) name to CSS colour, e.g. {\"Revenue\":\"#2962FF\"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours."
+        },
+        "label": {
+          "type": "string",
+          "description": "Column naming each tile. (name of a column in data)"
+        },
+        "value": {
+          "type": "string",
+          "description": "Numeric column giving each tile's area. Rows with the same group and label are summed; zero and negative values are skipped. (name of a column in data)"
+        },
+        "group": {
+          "type": "string",
+          "description": "Optional column that groups tiles into coloured blocks (one level). Each group becomes a legend entry. (name of a column in data)"
+        },
+        "labels": {
+          "type": "boolean",
+          "default": true,
+          "description": "Print the name and value on tiles large enough."
+        }
+      }
+    },
+    {
+      "title": "Sankey diagram",
+      "description": "Shows how a quantity flows between stages: bands between nodes, the band width is the amount. A quantity that splits and merges across stages (budget to departments, visitors to pages to outcomes, energy sources to uses). Flows must go one way (no loops). Not for a single split (use a pie or bar) or for more than about 30 nodes.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "data",
+        "from",
+        "to",
+        "value"
+      ],
+      "properties": {
+        "type": {
+          "const": "sankey"
+        },
+        "version": {
+          "const": 1,
+          "description": "Spec format version. Only 1 exists; may be omitted."
+        },
+        "data": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 50000,
+          "items": {
+            "type": "object"
+          },
+          "description": "Tabular rows: an array of flat objects, one per observation. Numbers must be numbers (or plain numeric strings)."
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 120,
+          "description": "Chart title. State the takeaway or the subject, not \"Chart\"."
+        },
+        "subtitle": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "One line of context under the title: unit, period, filter."
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 1000,
+          "description": "Long description for screen readers and agents. Generated from the data when omitted."
+        },
+        "source": {
+          "type": "string",
+          "maxLength": 160,
+          "description": "Source line shown small under the chart."
+        },
+        "legend": {
+          "enum": [
+            "auto",
+            "top",
+            "bottom",
+            "right",
+            "none"
+          ],
+          "default": "auto",
+          "description": "Legend placement. `auto` hides it for a single series and picks a side from the available width."
+        },
+        "tooltip": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show a hover tooltip (web binding only)."
+        },
+        "format": {
+          "type": "string",
+          "pattern": "^(auto|compact|integer|percent|fixed:\\d{1,2}|currency:[A-Za-z]{3})$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+        },
+        "colors": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "description": "Series (or slice/category) name to CSS colour, e.g. {\"Revenue\":\"#2962FF\"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours."
+        },
+        "from": {
+          "type": "string",
+          "description": "Column naming where each flow starts. (name of a column in data)"
+        },
+        "to": {
+          "type": "string",
+          "description": "Column naming where each flow ends. (name of a column in data)"
+        },
+        "value": {
+          "type": "string",
+          "description": "Numeric column giving the size of each flow. Rows with the same source and target are summed; zero and negative values are skipped. (name of a column in data)"
+        }
+      }
+    }
+  ]
+}

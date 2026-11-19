@@ -1,0 +1,239 @@
+import { closest, toNumber } from './util/num.js'
+import { isSafeColor } from './util/color.js'
+import { isValueFormat } from './util/format.js'
+
+export type Row = Record<string, unknown>
+
+/**
+ * One description of every field a chart accepts. It drives, from a single source:
+ *   validation (with actionable errors), JSON Schema, the reference docs, and the agent catalog.
+ */
+export type FieldDef = { desc: string; required?: boolean } & (
+  | { kind: 'column'; role: 'any' | 'number' | 'x' }
+  | { kind: 'columns'; role: 'number' }
+  | { kind: 'enum'; values: readonly string[]; default?: string }
+  | { kind: 'number'; min?: number; max?: number; integer?: boolean; default?: number }
+  | { kind: 'boolean'; default?: boolean }
+  | { kind: 'string'; max?: number }
+  | { kind: 'domain' }
+  | { kind: 'colors' }
+  | { kind: 'annotations' }
+  | { kind: 'format' }
+  | { kind: 'bins'; default?: 'auto' | number }
+  | { kind: 'data' }
+  | { kind: 'version' }
+)
+
+export type FieldMap = Record<string, FieldDef>
+
+export interface Issue {
+  severity: 'error' | 'warning'
+  /** Stable machine-readable code. */
+  code: string
+  /** JSON path into the spec, e.g. `y` or `annotations[1].axis`. */
+  path: string
+  message: string
+  /** What to do about it. */
+  hint?: string
+}
+
+export const LIMITS = { maxRows: 50_000, maxString: 200, maxSeries: 8, maxAnnotations: 50, maxCategories: 500 }
+
+/** Fields shared by every chart. */
+export const COMMON_FIELDS: FieldMap = {
+  version: { kind: 'version', desc: 'Spec format version. Only 1 exists; may be omitted.' },
+  data: { kind: 'data', required: true, desc: 'Tabular rows: an array of flat objects, one per observation. Numbers must be numbers (or plain numeric strings).' },
+  title: { kind: 'string', max: 120, desc: 'Chart title. State the takeaway or the subject, not "Chart".' },
+  subtitle: { kind: 'string', max: 200, desc: 'One line of context under the title: unit, period, filter.' },
+  description: { kind: 'string', max: 1000, desc: 'Long description for screen readers and agents. Generated from the data when omitted.' },
+  source: { kind: 'string', max: 160, desc: 'Source line shown small under the chart.' },
+  legend: { kind: 'enum', values: ['auto', 'top', 'bottom', 'right', 'none'], default: 'auto', desc: 'Legend placement. `auto` hides it for a single series and picks a side from the available width.' },
+  tooltip: { kind: 'boolean', default: true, desc: 'Show a hover tooltip (web binding only).' },
+  format: { kind: 'format', desc: 'Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE.' },
+  colors: { kind: 'colors', desc: 'Series (or slice/category) name to CSS colour, e.g. {"Revenue":"#2962FF"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours.' }
+}
+
+/** Extra fields for charts on a pair of axes. */
+export const CARTESIAN_FIELDS: FieldMap = {
+  xLabel: { kind: 'string', max: 80, desc: 'Title of the horizontal axis.' },
+  yLabel: { kind: 'string', max: 80, desc: 'Title of the vertical axis (include the unit).' },
+  annotations: { kind: 'annotations', desc: 'Reference marks: {axis:"y", value:100, label:"Target"} draws a line; add `to` for a band.' }
+}
+
+const ANNOTATION_KEYS = ['axis', 'value', 'to', 'label', 'tone']
+const TONES = ['neutral', 'positive', 'negative', 'warning', 'info']
+
+export interface ValidateCtx {
+  issues: Issue[]
+  columns: Set<string>
+  rows: Row[]
+}
+
+const add = (ctx: ValidateCtx, severity: Issue['severity'], code: string, path: string, message: string, hint?: string): void => {
+  ctx.issues.push({ severity, code, path, message, ...(hint ? { hint } : {}) })
+}
+
+const fmt = (v: unknown): string => {
+  const s = typeof v === 'string' ? JSON.stringify(v) : JSON.stringify(v) ?? String(v)
+  return s.length > 60 ? s.slice(0, 57) + '…' : s
+}
+
+/** Validate one field; returns the normalised value (or undefined to drop it). */
+export function validateField(name: string, def: FieldDef, value: unknown, ctx: ValidateCtx): unknown {
+  const bad = (code: string, message: string, hint?: string): undefined => {
+    add(ctx, 'error', code, name, message, hint)
+    return undefined
+  }
+  switch (def.kind) {
+    case 'version':
+      return value === 1 ? 1 : bad('bad_value', `version must be 1, got ${fmt(value)}.`)
+    case 'data':
+      return value
+    case 'string': {
+      if (typeof value !== 'string') return bad('bad_type', `${name} must be a string, got ${fmt(value)}.`)
+      const max = def.max ?? LIMITS.maxString
+      if (value.length > max) {
+        add(ctx, 'warning', 'string_truncated', name, `${name} is ${value.length} characters; it will be cut to ${max}.`)
+        return value.slice(0, max)
+      }
+      return value
+    }
+    case 'boolean':
+      return typeof value === 'boolean' ? value : bad('bad_type', `${name} must be true or false, got ${fmt(value)}.`)
+    case 'number': {
+      if (typeof value !== 'number' || !Number.isFinite(value)) return bad('bad_type', `${name} must be a number, got ${fmt(value)}.`)
+      if (def.integer && !Number.isInteger(value)) return bad('bad_value', `${name} must be an integer, got ${value}.`)
+      if (def.min !== undefined && value < def.min) return bad('out_of_range', `${name} must be at least ${def.min}, got ${value}.`)
+      if (def.max !== undefined && value > def.max) return bad('out_of_range', `${name} must be at most ${def.max}, got ${value}.`)
+      return value
+    }
+    case 'enum': {
+      if (typeof value === 'string' && def.values.includes(value)) return value
+      const near = typeof value === 'string' ? closest(value, def.values) : undefined
+      return bad('bad_enum', `${name} must be one of ${def.values.join(', ')}; got ${fmt(value)}.`, near ? `Did you mean "${near}"?` : undefined)
+    }
+    case 'format':
+      return isValueFormat(value) ? value : bad('bad_format', `format ${fmt(value)} is not recognised.`, 'Use auto, compact, integer, percent, fixed:N (N is 0-20) or currency:USD.')
+    case 'bins': {
+      if (value === 'auto') return value
+      if (typeof value === 'number' && Number.isInteger(value) && value >= 1 && value <= 200) return value
+      return bad('bad_value', `bins must be "auto" or an integer from 1 to 200, got ${fmt(value)}.`)
+    }
+    case 'domain': {
+      if (!Array.isArray(value) || value.length !== 2 || !value.every(v => v === null || (typeof v === 'number' && Number.isFinite(v)))) {
+        return bad('bad_value', `${name} must be [min, max] with numbers or null for "automatic", got ${fmt(value)}.`)
+      }
+      if (value[0] !== null && value[1] !== null && (value[0] as number) >= (value[1] as number)) return bad('bad_value', `${name} min must be below max.`)
+      return value
+    }
+    case 'colors': {
+      if (!value || typeof value !== 'object' || Array.isArray(value)) return bad('bad_type', `colors must be an object of name to colour.`)
+      const out: Record<string, string> = {}
+      for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+        if (isSafeColor(v)) out[k] = (v as string).trim()
+        else add(ctx, 'error', 'bad_color', `colors.${k}`, `colors.${k} is not a plain CSS colour: ${fmt(v)}.`, 'Use #RRGGBB, rgb(), hsl(), a colour name or var(--token). url() and other syntax are refused.')
+      }
+      return out
+    }
+    case 'annotations': {
+      if (!Array.isArray(value)) return bad('bad_type', 'annotations must be an array.')
+      if (value.length > LIMITS.maxAnnotations) return bad('too_many', `At most ${LIMITS.maxAnnotations} annotations.`)
+      const out: unknown[] = []
+      value.forEach((a, i) => {
+        const p = `annotations[${i}]`
+        if (!a || typeof a !== 'object' || Array.isArray(a)) return add(ctx, 'error', 'bad_type', p, `${p} must be an object.`)
+        const o = a as Record<string, unknown>
+        for (const k of Object.keys(o)) {
+          if (!ANNOTATION_KEYS.includes(k)) add(ctx, 'error', 'unknown_field', `${p}.${k}`, `Unknown annotation field "${k}".`, `Allowed: ${ANNOTATION_KEYS.join(', ')}.`)
+        }
+        if (o.axis !== 'x' && o.axis !== 'y') return add(ctx, 'error', 'bad_enum', `${p}.axis`, `${p}.axis must be "x" or "y".`)
+        if (!(typeof o.value === 'string' || typeof o.value === 'number')) return add(ctx, 'error', 'bad_type', `${p}.value`, `${p}.value must be a number or a string.`)
+        if (o.to !== undefined && !(typeof o.to === 'string' || typeof o.to === 'number')) return add(ctx, 'error', 'bad_type', `${p}.to`, `${p}.to must be a number or a string.`)
+        if (o.tone !== undefined && !TONES.includes(o.tone as string)) return add(ctx, 'error', 'bad_enum', `${p}.tone`, `${p}.tone must be one of ${TONES.join(', ')}.`)
+        if (o.label !== undefined && typeof o.label !== 'string') return add(ctx, 'error', 'bad_type', `${p}.label`, `${p}.label must be a string.`)
+        out.push({ ...o, ...(typeof o.label === 'string' ? { label: o.label.slice(0, 80) } : {}) })
+      })
+      return out
+    }
+    case 'column':
+    case 'columns': {
+      const names = def.kind === 'columns' ? (Array.isArray(value) ? value : [value]) : [value]
+      if (def.kind === 'column' && typeof value !== 'string') return bad('bad_type', `${name} must be the name of a data column (a string), got ${fmt(value)}.`)
+      if (def.kind === 'columns' && !names.every(v => typeof v === 'string') || names.length === 0) return bad('bad_type', `${name} must be a column name or a non-empty array of column names.`)
+      const list = names as string[]
+      let ok = true
+      list.forEach((c, i) => {
+        const path = Array.isArray(value) ? `${name}[${i}]` : name
+        if (!ctx.columns.has(c)) {
+          ok = false
+          const near = closest(c, [...ctx.columns])
+          add(ctx, 'error', 'no_such_column', path, `Column "${c}" does not exist in data.`, `${near ? `Did you mean "${near}"? ` : ''}Available columns: ${[...ctx.columns].slice(0, 20).join(', ')}.`)
+        } else if (def.role === 'number') {
+          let nonNum = 0
+          let seen = 0
+          for (const r of ctx.rows) {
+            const v = r[c]
+            if (v === null || v === undefined || v === '') continue
+            seen++
+            if (toNumber(v) === null) nonNum++
+          }
+          if (seen > 0 && nonNum === seen) {
+            ok = false
+            add(ctx, 'error', 'not_numeric', path, `Column "${c}" has no numeric values.`, 'Convert the values to numbers, or pick another column.')
+          } else if (nonNum > 0) add(ctx, 'warning', 'some_not_numeric', path, `${nonNum} of ${seen} values in "${c}" are not numeric and will be skipped.`)
+        }
+      })
+      if (!ok) return undefined
+      return def.kind === 'columns' ? (list.length === 1 && !Array.isArray(value) ? list[0] : list) : list[0]
+    }
+  }
+}
+
+/** Does this value, as the JSON Schema for one field. */
+export function fieldSchema(def: FieldDef): Record<string, unknown> {
+  const d = def.desc
+  switch (def.kind) {
+    case 'version': return { const: 1, description: d }
+    case 'data': return { type: 'array', minItems: 1, maxItems: LIMITS.maxRows, items: { type: 'object' }, description: d }
+    case 'string': return { type: 'string', maxLength: def.max ?? LIMITS.maxString, description: d }
+    case 'boolean': return { type: 'boolean', ...(def.default !== undefined ? { default: def.default } : {}), description: d }
+    case 'number': return { type: def.integer ? 'integer' : 'number', ...(def.min !== undefined ? { minimum: def.min } : {}), ...(def.max !== undefined ? { maximum: def.max } : {}), ...(def.default !== undefined ? { default: def.default } : {}), description: d }
+    case 'enum': return { enum: [...def.values], ...(def.default !== undefined ? { default: def.default } : {}), description: d }
+    case 'format': return { type: 'string', pattern: '^(auto|compact|integer|percent|fixed:\\d{1,2}|currency:[A-Za-z]{3})$', description: d }
+    case 'bins': return { oneOf: [{ const: 'auto' }, { type: 'integer', minimum: 1, maximum: 200 }], default: def.default ?? 'auto', description: d }
+    case 'domain': return { type: 'array', minItems: 2, maxItems: 2, items: { type: ['number', 'null'] }, description: d }
+    case 'colors': return { type: 'object', additionalProperties: { type: 'string', maxLength: 64 }, description: d }
+    case 'annotations':
+      return {
+        type: 'array', maxItems: LIMITS.maxAnnotations, description: d,
+        items: {
+          type: 'object', additionalProperties: false, required: ['axis', 'value'],
+          properties: { axis: { enum: ['x', 'y'] }, value: { type: ['number', 'string'] }, to: { type: ['number', 'string'] }, label: { type: 'string', maxLength: 80 }, tone: { enum: TONES } }
+        }
+      }
+    case 'column': return { type: 'string', description: `${d} (name of a column in data)` }
+    case 'columns': return { oneOf: [{ type: 'string' }, { type: 'array', minItems: 1, items: { type: 'string' } }], description: `${d} (column name, or several for wide-form data)` }
+  }
+}
+
+/** Human description of a field's type, for the generated reference. */
+export function fieldType(def: FieldDef): string {
+  switch (def.kind) {
+    case 'enum': return def.values.map(v => `\`${v}\``).join(' \\| ')
+    case 'column': return 'column name'
+    case 'columns': return 'column name or list of column names'
+    case 'number': return def.integer ? 'integer' : 'number'
+    case 'bins': return '`auto` \\| integer'
+    case 'domain': return '[min\\|null, max\\|null]'
+    case 'colors': return 'object'
+    case 'annotations': return 'array'
+    case 'format': return 'format string'
+    case 'data': return 'array of rows'
+    case 'version': return '`1`'
+    default: return def.kind
+  }
+}
+
+export function fieldDefault(def: FieldDef): unknown {
+  return 'default' in def ? def.default : undefined
+}

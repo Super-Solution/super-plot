@@ -1,0 +1,9 @@
+node_modules
+dist
+examples/dist
+*.tsbuildinfo
+.shots
+*.actual.png
+__pycache__/
+*.pyc
+*.egg-info/

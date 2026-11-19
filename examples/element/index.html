@@ -1,0 +1,11 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Super Plot web component</title>
+<style>body{margin:0;font:14px/1.5 system-ui,sans-serif;background:#f4f5f7;color:#131722}main{max-width:720px;margin:0 auto;padding:24px}super-plot{display:block;height:340px;background:#fff;border:1px solid #d1d4dc;border-radius:12px;padding:4px}</style></head>
+<body><main>
+  <h1>&lt;super-plot&gt;</h1>
+  <p>No bundler, no framework: one script tag and an element.</p>
+  <!-- Customize with CSS variables; nothing to re-render. -->
+  <super-plot id="p" theme="light" style="--sp-series-1:#e8445a" spec='{"type":"donut","title":"Traffic by source","label":"source","value":"sessions","format":"compact","data":[{"source":"Organic","sessions":48200},{"source":"Direct","sessions":21800},{"source":"Referral","sessions":12400},{"source":"Social","sessions":9300}]}'></super-plot>
+  <script src="./super-plot.global.js"></script>
+  <script>document.getElementById('p').addEventListener('plot-select', e => console.log('picked', e.detail.datum))</script>
+</main></body></html>
