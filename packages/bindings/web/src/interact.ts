@@ -35,11 +35,16 @@ type Brush = { x?: [number, number] | string[]; y?: [number, number] | string[] 
 const lo = (r: [number, number]): number => Math.min(r[0], r[1])
 const hi = (r: [number, number]): number => Math.max(r[0], r[1])
 
-/** Pixel to data value on a continuous axis. */
+/** Data value to the axis's linear space: log10 on a log axis, the value itself otherwise. */
+const fwd = (a: AxisInfo, v: number): number => (a.scale === 'log' ? Math.log10(v) : v)
+/** Back from the axis's linear space to data units. */
+const back = (a: AxisInfo, t: number): number => (a.scale === 'log' ? 10 ** t : t)
+
+/** Pixel to data value on a continuous axis (log axes invert in log space). */
 export function invert(a: AxisInfo, px: number): number {
-  const [d0, d1] = a.domain as [number, number]
+  const [d0, d1] = (a.domain as [number, number]).map(v => fwd(a, v))
   const [r0, r1] = a.range
-  return r1 === r0 ? d0 : d0 + ((px - r0) / (r1 - r0)) * (d1 - d0)
+  return back(a, r1 === r0 ? d0 : d0 + ((px - r0) / (r1 - r0)) * (d1 - d0))
 }
 
 /** Data value to pixel; for a category axis, the middle of its band. */
@@ -51,8 +56,8 @@ export function pixelOf(a: AxisInfo, v: number | string): number {
     const step = (r1 - r0) / Math.max(1, cats.length)
     return r0 + step * (Math.max(0, i) + 0.5)
   }
-  const [d0, d1] = a.domain as [number, number]
-  return d1 === d0 ? r0 : r0 + ((Number(v) - d0) / (d1 - d0)) * (r1 - r0)
+  const [d0, d1] = (a.domain as [number, number]).map(x => fwd(a, x))
+  return d1 === d0 ? r0 : r0 + ((fwd(a, Number(v)) - d0) / (d1 - d0)) * (r1 - r0)
 }
 
 /** The categories whose band the span between two pixels touches. */
@@ -66,18 +71,27 @@ export function bandsBetween(a: AxisInfo, p0: number, p1: number): string[] {
   })
 }
 
-/** Zoom a domain by `factor` (> 1 is closer) around data value `at`. */
-export function zoomDomain(d: [number, number], at: number, factor: number): [number, number] {
-  return [at - (at - d[0]) / factor, at + (d[1] - at) / factor]
+/**
+ * Zoom a domain by `factor` (> 1 is closer) around data value `at`. Pass the axis to zoom a log axis in log
+ * space (the domain stays positive and the point under the pointer stays put).
+ */
+export function zoomDomain(d: [number, number], at: number, factor: number, a?: AxisInfo): [number, number] {
+  if (a?.scale !== 'log') return [at - (at - d[0]) / factor, at + (d[1] - at) / factor]
+  const l = Math.log10(at)
+  return [10 ** (l - (l - Math.log10(d[0])) / factor), 10 ** (l + (Math.log10(d[1]) - l) / factor)]
 }
 
-/** Shift a domain so that what was under the pointer follows a drag of `dpx` pixels. */
+/** Shift a domain so that what was under the pointer follows a drag of `dpx` pixels (in log space on a log axis). */
 export function panDomain(a: AxisInfo, d: [number, number], dpx: number): [number, number] {
   const [r0, r1] = a.range
   if (r1 === r0) return d
-  const shift = (dpx * (d[1] - d[0])) / (r1 - r0)
-  return [d[0] - shift, d[1] - shift]
+  const [t0, t1] = d.map(v => fwd(a, v))
+  const shift = (dpx * (t1 - t0)) / (r1 - r0)
+  return [back(a, t0 - shift), back(a, t1 - shift)]
 }
+
+/** How much of the axis a domain spans, in the axis's linear space (log10 units on a log axis). */
+const span = (a: AxisInfo | undefined, d: [number, number]): number => (a?.scale === 'log' ? Math.log10(d[1]) - Math.log10(d[0]) : d[1] - d[0])
 
 const out = (a: AxisInfo, v: number): number | string => (a.kind === 'time' ? new Date(v).toISOString() : v)
 
@@ -351,17 +365,18 @@ export class AxisControl {
   /** Zoom by `factor` around a scene point; zooming out past the full range resets. */
   private zoomAt(a: SceneAxes, p: { x: number; y: number }, factor: number, base = this.current(a), axes = a): void {
     const v: View = {}
-    if (base.x) v.x = zoomDomain(base.x, invert(axes.x, p.x), factor)
-    if (base.y) v.y = zoomDomain(base.y, invert(axes.y, p.y), factor)
+    if (base.x) v.x = zoomDomain(base.x, invert(axes.x, p.x), factor, axes.x)
+    if (base.y) v.y = zoomDomain(base.y, invert(axes.y, p.y), factor, axes.y)
     this.setView(v)
   }
 
   private setView(v: View): void {
     const h = this.home
-    const wide = (d: [number, number] | undefined, full: [number, number] | undefined): boolean => !!d && !!full && full[1] > full[0] && d[1] - d[0] >= (full[1] - full[0]) * 0.999
-    const tiny = (d: [number, number] | undefined, full: [number, number] | undefined): boolean => !!d && !!full && full[1] > full[0] && d[1] - d[0] < (full[1] - full[0]) * 1e-6
-    if (tiny(v.x, h?.x) || tiny(v.y, h?.y)) return
-    if (wide(v.x, h?.x) && (!v.y || wide(v.y, h?.y))) this.view = null
+    const a = this.owner.scene()?.axes
+    const wide = (d: [number, number] | undefined, full: [number, number] | undefined, ax: AxisInfo | undefined): boolean => !!d && !!full && full[1] > full[0] && span(ax, d) >= span(ax, full) * 0.999
+    const tiny = (d: [number, number] | undefined, full: [number, number] | undefined, ax: AxisInfo | undefined): boolean => !!d && !!full && full[1] > full[0] && span(ax, d) < span(ax, full) * 1e-6
+    if (tiny(v.x, h?.x, a?.x) || tiny(v.y, h?.y, a?.y)) return
+    if (wide(v.x, h?.x, a?.x) && (!v.y || wide(v.y, h?.y, a?.y))) this.view = null
     else this.view = v
     this.owner.redraw()
   }

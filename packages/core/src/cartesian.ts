@@ -6,7 +6,7 @@ import { toTime } from './util/time.js'
 import { toNumber } from './util/num.js'
 import { timeTickList } from './scale.js'
 import { tickLabel } from './util/time.js'
-import { tickFormatter } from './util/format.js'
+import { tickFormatter, valueFormatter } from './util/format.js'
 
 export interface AxisTick { key: number | string; label: string }
 
@@ -54,7 +54,7 @@ export function layoutCartesian(c: ChartCtx, area: Rect, x: Axis, y: Axis): Rect
     const s = a.scale
     const f = typeof field === 'string' ? { field } : {}
     if (s.kind === 'band') return { kind: 'band', domain: [...(s as BandScale).domain], range: [...s.range] as [number, number], ...f }
-    return { kind: s.kind, domain: [...(s as LinearScale).domain] as [number, number], range: [...s.range] as [number, number], ...f }
+    return { kind: s.kind, domain: [...(s as LinearScale).domain] as [number, number], range: [...s.range] as [number, number], ...f, ...((s as LinearScale).log ? { scale: 'log' as const } : {}) }
   }
   c.axes = { plot: { ...plot }, x: info(x, c.axisFields?.x ?? c.spec.x), y: info(y, c.axisFields?.y ?? (typeof c.spec.y === 'string' ? c.spec.y : undefined)) }
   const yTicks = y.ticks(plot.h)
@@ -114,18 +114,15 @@ const TONE: Record<string, string> = { neutral: 'text-muted', positive: 'positiv
 
 /** Reference lines and bands from `spec.annotations`. */
 export function drawAnnotations(c: ChartCtx, plot: Rect, x: Axis, y: Axis): void {
-  const list = (c.spec.annotations ?? []) as { axis: 'x' | 'y'; value: string | number; to?: string | number; label?: string; tone?: string }[]
+  const list = (c.spec.annotations ?? []) as ({ axis: 'x' | 'y'; value: string | number; to?: string | number; label?: string; tone?: string } | PointAnnotation)[]
+  const points: [number, PointAnnotation][] = []
   for (const [i, a] of list.entries()) {
-    const ax = a.axis === 'x' ? x : y
-    const pos = (v: string | number): number | null => {
-      const s = ax.scale
-      if (s.kind === 'band') return s.has(String(v)) ? s.at(String(v)) : null
-      const n = s.kind === 'time' ? toTime(v) : toNumber(v)
-      if (n === null) return null
-      const [d0, d1] = (s as LinearScale).domain
-      if (n < Math.min(d0, d1) || n > Math.max(d0, d1)) return null
-      return s.at(n)
+    if (!('axis' in a)) {
+      points.push([i, a])
+      continue
     }
+    const ax = a.axis === 'x' ? x : y
+    const pos = (v: string | number): number | null => axisPos(ax, v)
     const p = pos(a.value)
     const q = a.to !== undefined ? pos(a.to) : null
     if (p === null || (a.to !== undefined && q === null)) {
@@ -152,6 +149,47 @@ export function drawAnnotations(c: ChartCtx, plot: Rect, x: Axis, y: Axis): void
         : c.text(p + 4, plot.y + 3, a.label, { role: 'annotation', baseline: 'hanging', fill: color, size: c.size - 1 }))
     }
   }
+  for (const [i, a] of points) drawPointAnnotation(c, plot, x, y, i, a)
+}
+
+export interface PointAnnotation { x: string | number; y: string | number; label: string; tone?: string }
+
+/** Pixel position of a value on an axis (a category, a number or an ISO date), or null when it is not shown. */
+export function axisPos(ax: Axis, v: string | number): number | null {
+  const s = ax.scale
+  if (s.kind === 'band') return s.has(String(v)) ? s.at(String(v)) : null
+  const n = s.kind === 'time' ? toTime(v) : toNumber(v)
+  if (n === null) return null
+  const [d0, d1] = (s as LinearScale).domain
+  if (n < Math.min(d0, d1) || n > Math.max(d0, d1)) return null
+  return s.at(n)
+}
+
+/**
+ * A labelled point: a small ring at (x, y), a short leader, and the label at its end. The leader goes up and to
+ * the right, and flips left or down when the label would leave the plot, so the text always stays inside it.
+ */
+function drawPointAnnotation(c: ChartCtx, plot: Rect, x: Axis, y: Axis, i: number, a: PointAnnotation): void {
+  const px = axisPos(x, a.x)
+  const py = axisPos(y, a.y)
+  if (px === null || py === null) {
+    c.warn('annotation_out_of_range', `annotations[${i}]`, `Annotation ${i} (x=${a.x}, y=${a.y}) is outside the plotted range and was skipped.`, 'Point annotations take x and y in the units of their axis: a category name, a number or an ISO date.')
+    return
+  }
+  const color = c.c(TONE[a.tone ?? 'neutral'] ?? 'text-muted')
+  const size = c.size - 1
+  const label = fit(a.label, Math.max(40, plot.w - 16), size, c.env.measure)
+  const tw = c.measure(label, size)
+  const lead = 16
+  const right = px + lead + 4 + tw <= plot.x + plot.w || px - lead - 4 - tw < plot.x
+  const up = py - lead - size >= plot.y
+  const ex = px + (right ? lead : -lead)
+  const ey = py + (up ? -lead : lead)
+  const want = ex + (right ? 4 : -4)
+  const tx = right ? Math.max(plot.x + 2, Math.min(plot.x + plot.w - 2 - tw, want)) : Math.min(plot.x + plot.w - 2, Math.max(plot.x + 2 + tw, want))
+  c.marks.push({ type: 'line', role: 'annotation', x1: px, y1: py, x2: ex, y2: ey, stroke: color, strokeWidth: 1 })
+  c.marks.push({ type: 'circle', role: 'annotation', cx: px, cy: py, r: 3.5, fill: c.c('background'), stroke: color, strokeWidth: 1.5 })
+  c.marks.push(c.text(tx, ey, label, { role: 'annotation', anchor: right ? 'start' : 'end', baseline: 'middle', fill: color, size, weight: 500 }))
 }
 
 export interface ValueAxisOptions { title?: string; vertical: boolean; format?: string; grid?: boolean }
@@ -167,7 +205,15 @@ export function valueAxis(c: ChartCtx, scale: LinearScale, o: ValueAxisOptions):
       for (;;) {
         const labels: AxisTick[] = scale.kind === 'time'
           ? timeTickList(scale.domain, count, c.locale).map(t => ({ key: t.value, label: t.label }))
-          : (() => {
+          : scale.log
+            ? (() => {
+                // Log ticks span decades: one shared precision does not fit, so each tick uses the value format
+                // (compact once the values get large, unless a format was asked for).
+                const f = o.format ?? c.spec.format
+                const fmt = valueFormatter(!f || f === 'auto' ? (scale.domain[1] >= 10000 ? 'compact' : 'auto') : f, c.locale)
+                return scale.ticks(count).map(v => ({ key: v, label: fmt(v) }))
+              })()
+            : (() => {
               const fmt = tickFormatter(o.format ?? c.spec.format, c.locale, scale.domain, count)
               return scale.ticks(count).map(v => ({ key: v, label: fmt(v) }))
             })()

@@ -20,7 +20,7 @@ spec (JSON) -> validatePlot (transform runs here) -> chart.compile(ctx) -> plugi
 - The **scene** is a serializable list of marks (rect, path, circle, line, text) with roles and tooltips, plus `axes` (the plot
   rectangle and each axis's kind, domain, pixel range and column) and `panels` for small multiples. Renderers do not know about
   charts; the web binding maps pointer pixels back to data through `axes` for zoom, pan and brush.
-- **`transform`** turns raw rows into the rows the chart reads (filter, timeUnit, aggregate, sort, top; at most 10 steps), inside
+- **`transform`** turns raw rows into the rows the chart reads (filter, timeUnit, aggregate, sort, top, bin, window, fold; at most 10 steps; no expressions), inside
   validation, so every later column check sees the output columns and an agent can send raw data plus "monthly average".
 
 ## The eight principles, and where they live

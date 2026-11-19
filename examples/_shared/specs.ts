@@ -43,6 +43,37 @@ export const gallery: { id: string; note: string; spec: Record<string, unknown> 
   },
   { id: 'area', note: 'Stacked areas over a numeric axis', spec: by('area') },
   { id: 'scatter', note: 'Groups, bubble size and per-group trend', spec: by('scatter') },
+  {
+    id: 'scatter-log', note: 'Log axes, error bars and a LOESS trend',
+    spec: (() => {
+      const r = rnd(17)
+      const data = Array.from({ length: 60 }, (_, i) => {
+        const size = Math.round(10 ** (1 + (i / 60) * 3) * (0.8 + r() * 0.4))
+        const ms = Math.round(4 * size ** 0.55 * (0.7 + r() * 0.6))
+        return { size, ms, lo: Math.round(ms * 0.8), hi: Math.round(ms * 1.25) }
+      })
+      return { type: 'scatter', title: 'Query time by table size', subtitle: 'Synthetic data generated in the page; bars show the 80% interval', x: 'size', y: 'ms', xScale: 'log', yScale: 'log', yLower: 'lo', yUpper: 'hi', trend: 'loess', xLabel: 'Rows', yLabel: 'Milliseconds', data }
+    })()
+  },
+  {
+    id: 'line-band', note: 'Confidence band, a gap left open, a labelled point',
+    spec: (() => {
+      const r = rnd(5)
+      const data = daily(60, '2026-03-01', 9, 120, 0.6, 6).map((d, i) => {
+        const e = 6 + i * 0.15 + r() * 2
+        return { date: d.date, forecast: i >= 30 && i < 34 ? null : d.value, lo: Math.round((d.value - e) * 10) / 10, hi: Math.round((d.value + e) * 10) / 10 }
+      })
+      return { type: 'line', title: 'Demand forecast', subtitle: 'Synthetic; the band is the 90% interval, no data for four days', x: 'date', y: 'forecast', yLower: 'lo', yUpper: 'hi', gaps: 'break', yLabel: 'Orders', annotations: [{ x: '2026-04-20', y: data[50].forecast as number, label: 'Promotion' }], data }
+    })()
+  },
+  {
+    id: 'lollipop', note: 'Lollipops with whiskers, sorted',
+    spec: { type: 'bar', mark: 'lollipop', orientation: 'horizontal', sort: 'desc', labels: true, title: 'Satisfaction by team', subtitle: 'Mean score with 95% interval (invented)', x: 'team', y: 'score', yLower: 'lo', yUpper: 'hi', data: [['Support', 8.1, 7.6, 8.5], ['Sales', 7.4, 6.8, 7.9], ['Product', 7.9, 7.5, 8.3], ['Finance', 6.6, 5.9, 7.2], ['Ops', 7.0, 6.5, 7.6]].map(([team, score, lo, hi]) => ({ team, score, lo, hi })) }
+  },
+  {
+    id: 'transform-window', note: 'fold and window steps: wide quarters to a running total per region',
+    spec: { type: 'line', title: 'Cumulative revenue', subtitle: 'fold, then a running sum per region', x: 'quarter', y: 'total', series: 'region', data: [{ region: 'APAC', Q1: 120, Q2: 138, Q3: 151, Q4: 160 }, { region: 'EMEA', Q1: 98, Q2: 104, Q3: 99, Q4: 120 }], transform: [{ fold: { fields: ['Q1', 'Q2', 'Q3', 'Q4'], as: ['quarter', 'revenue'] } }, { window: { op: 'sum', field: 'revenue', as: 'total', groupBy: ['region'], sortBy: 'quarter' } }] }
+  },
   { id: 'pie', note: 'Few parts of a whole', spec: by('pie') },
   { id: 'donut', note: 'Total in the hole', spec: by('donut') },
   { id: 'histogram', note: 'Distribution of one measure', spec: by('histogram') },

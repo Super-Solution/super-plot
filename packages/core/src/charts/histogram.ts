@@ -3,53 +3,13 @@ import type { ChartCtx } from '../context.js'
 import { linearScale, niceLinear } from '../scale.js'
 import { drawAnnotations, layoutCartesian, valueAxis } from '../cartesian.js'
 import { distinct } from '../data.js'
-import { clamp, mean, quantile, tickStep, toNumber, extent } from '../util/num.js'
+import { mean, quantile, toNumber } from '../util/num.js'
+import { binCounts, binEdges } from '../util/bins.js'
 import { formatPercent } from '../util/format.js'
 import { fmtList, formatter, lead } from './shared.js'
+import { refuseLog, zeroBaselineScale } from './extras.js'
 
-/** Bin edges that cover [min, max] with round numbers. Exported for the conformance data. */
-export function binEdges(values: number[], bins: number | 'auto', binWidth?: number): number[] {
-  const e = extent(values)
-  if (!e) return [0, 1]
-  const [min, max] = e
-  if (min === max) return [min - 0.5, max + 0.5]
-  let step: number
-  if (binWidth && binWidth > 0) step = binWidth
-  else {
-    let n: number
-    if (bins === 'auto') {
-      const sorted = [...values].sort((a, b) => a - b)
-      const iqr = quantile(sorted, 0.75) - quantile(sorted, 0.25)
-      const fd = iqr > 0 ? (2 * iqr) / Math.cbrt(sorted.length) : 0
-      n = fd > 0 ? Math.ceil((max - min) / fd) : Math.ceil(Math.log2(sorted.length)) + 1
-      n = clamp(n, 5, 40)
-    } else n = bins
-    step = tickStep(min, max, n)
-  }
-  const dec = Math.max(0, -Math.floor(Math.log10(step) + 1e-9)) + 1
-  const lo = Math.floor(min / step + 1e-9) * step
-  const out: number[] = []
-  for (let i = 0; lo + i * step < max + step * 1e-9 && out.length < 400; i++) out.push(Number((lo + i * step).toFixed(dec)))
-  if (out[out.length - 1] <= max) out.push(Number((out[out.length - 1] + step).toFixed(dec)))
-  return out
-}
-
-/** Count values into [edge_i, edge_i+1); the last bin also includes its upper edge. */
-export function binCounts(values: number[], edges: number[]): number[] {
-  const counts = new Array(edges.length - 1).fill(0)
-  for (const v of values) {
-    if (v < edges[0] || v > edges[edges.length - 1]) continue
-    let lo = 0
-    let hi = edges.length - 1
-    while (hi - lo > 1) {
-      const mid = (lo + hi) >> 1
-      if (v >= edges[mid]) lo = mid
-      else hi = mid
-    }
-    counts[Math.min(lo, counts.length - 1)]++
-  }
-  return counts
-}
+export { binEdges, binCounts }
 
 function groups(spec: Record<string, any>): Map<string, number[]> {
   const g = new Map<string, number[]>()
@@ -138,7 +98,11 @@ export const histogram: ChartDef = {
     bins: { kind: 'bins', default: 'auto', desc: '`auto` (Freedman-Diaconis, 5-40 bins) or a target bin count (1-200). Edges are rounded to nice numbers.' },
     binWidth: { kind: 'number', min: 1e-9, desc: 'Exact bin width; overrides `bins`.' },
     mode: { kind: 'enum', values: ['count', 'percent', 'density'], default: 'count', desc: 'What bar height means: number of values, percent of values, or probability density.' },
-    showMean: { kind: 'boolean', default: false, desc: 'Draw a dashed line at the mean.' }
+    showMean: { kind: 'boolean', default: false, desc: 'Draw a dashed line at the mean.' },
+    yScale: zeroBaselineScale('A bin\'s height (its count)')
+  },
+  check(spec, ctx) {
+    refuseLog(spec, ctx, 'yScale', 'a bin\'s bar must start at zero, and a log axis has no zero; an empty bin could not be drawn at all.', 'Keep the linear scale; to show a long tail, filter it with `transform` or bin the log of the value upstream.')
   },
   example: {
     type: 'histogram', title: 'API response time', subtitle: 'Milliseconds, 200 requests', value: 'ms', showMean: true, xLabel: 'Response time (ms)',

@@ -37,3 +37,11 @@ export const numCol = (rows: Row[], col: string): number[] => {
   }
   return out
 }
+
+/** The labelled point annotations, as one sentence for the description ("" when there are none). */
+export function pointNotes(spec: Record<string, any>): string {
+  const pts = ((spec.annotations ?? []) as Record<string, unknown>[]).filter(a => !('axis' in a) && typeof a.label === 'string')
+  if (!pts.length) return ''
+  const list = pts.slice(0, 5).map(a => `"${clip(String(a.label), 40)}" at ${clip(String(a.x), 30)}, ${clip(String(a.y), 30)}`)
+  return ` Marked: ${list.join('; ')}${pts.length > 5 ? ` and ${pts.length - 5} more` : ''}.`
+}

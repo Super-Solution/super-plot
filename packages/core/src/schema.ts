@@ -65,7 +65,7 @@ export const COMMON_FIELDS: FieldMap = {
   tooltip: { kind: 'boolean', default: true, desc: 'Show a hover tooltip (web binding only).' },
   format: { kind: 'format', desc: 'Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE.' },
   colors: { kind: 'colors', desc: 'Series (or slice/category) name to CSS colour, e.g. {"Revenue":"#2962FF"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours.' },
-  transform: { kind: 'transform', desc: 'Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output.' },
+  transform: { kind: 'transform', desc: 'Data steps run before the chart reads its columns, in order (at most 10): filter, timeUnit, aggregate, sort, top, bin (round bins: start and end columns), window (running sum, mean, count, rank, pctChange, lag, lead, movingMean, per group, in a sort order) and fold (wide columns to key/value rows). No expressions. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output.' },
   patterns: { kind: 'boolean', desc: 'Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print.' }
 }
 
@@ -73,13 +73,14 @@ export const COMMON_FIELDS: FieldMap = {
 export const CARTESIAN_FIELDS: FieldMap = {
   xLabel: { kind: 'string', max: 80, desc: 'Title of the horizontal axis.' },
   yLabel: { kind: 'string', max: 80, desc: 'Title of the vertical axis (include the unit).' },
-  annotations: { kind: 'annotations', desc: 'Reference marks: {axis:"y", value:100, label:"Target"} draws a line; add `to` for a band.' },
+  annotations: { kind: 'annotations', desc: 'Reference marks: {axis:"y", value:100, label:"Target"} draws a line; add `to` for a band. {x:"2026-03-01", y:120, label:"Launch"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date).' },
   facet: { kind: 'column', role: 'any', desc: 'Split into small multiples: one panel per value of this column (at most 12), sharing axes, colours and one legend.' },
   zoom: { kind: 'enum', values: ['none', 'x', 'xy'], desc: 'Default none. Let the viewer zoom and pan a continuous axis (web binding): Ctrl/⌘-scroll or pinch to zoom, drag to pan, double-click or 0 to reset. Scatter, line and area.' },
   brush: { kind: 'enum', values: ['none', 'x', 'xy'], desc: 'Default none. Let the viewer drag out a range to select (web binding). The selection comes back as a filter step, ready for `transform`. With `zoom` too, Shift-drag pans.' }
 }
 
 const ANNOTATION_KEYS = ['axis', 'value', 'to', 'label', 'tone']
+const POINT_ANNOTATION_KEYS = ['x', 'y', 'label', 'tone']
 export const CAMERA_KEYS = ['lng', 'lat', 'zoom', 'pitch', 'bearing'] as const
 const CAMERA_RANGE: Record<(typeof CAMERA_KEYS)[number], readonly [number, number]> = { lng: [-180, 180], lat: [-90, 90], zoom: CAMERA_LIMITS.zoom, pitch: CAMERA_LIMITS.pitch, bearing: CAMERA_LIMITS.bearing }
 const TONES = ['neutral', 'positive', 'negative', 'warning', 'info']
@@ -168,14 +169,34 @@ export function validateField(name: string, def: FieldDef, value: unknown, ctx: 
         const p = `annotations[${i}]`
         if (!a || typeof a !== 'object' || Array.isArray(a)) return add(ctx, 'error', 'bad_type', p, `${p} must be an object.`)
         const o = a as Record<string, unknown>
+        // Two forms: a reference line or band ({axis, value, to?}) and a labelled point ({x, y, label}).
+        const point = !('axis' in o) && ('x' in o || 'y' in o)
+        const keys = point ? POINT_ANNOTATION_KEYS : ANNOTATION_KEYS
         for (const k of Object.keys(o)) {
-          if (!ANNOTATION_KEYS.includes(k)) add(ctx, 'error', 'unknown_field', `${p}.${k}`, `Unknown annotation field "${k}".`, `Allowed: ${ANNOTATION_KEYS.join(', ')}.`)
+          if (!keys.includes(k)) add(ctx, 'error', 'unknown_field', `${p}.${k}`, `Unknown ${point ? 'point annotation' : 'annotation'} field "${k}".`, `Allowed: ${keys.join(', ')}.${!point && (k === 'x' || k === 'y') ? ' A point annotation has x, y and label, and no axis.' : ''}`)
         }
-        if (o.axis !== 'x' && o.axis !== 'y') return add(ctx, 'error', 'bad_enum', `${p}.axis`, `${p}.axis must be "x" or "y".`)
+        const tone = (): boolean => {
+          if (o.tone !== undefined && !TONES.includes(o.tone as string)) { add(ctx, 'error', 'bad_enum', `${p}.tone`, `${p}.tone must be one of ${TONES.join(', ')}.`); return false }
+          return true
+        }
+        const label = (): boolean => {
+          if (o.label !== undefined && typeof o.label !== 'string') { add(ctx, 'error', 'bad_type', `${p}.label`, `${p}.label must be a string.`); return false }
+          return true
+        }
+        if (point) {
+          for (const k of ['x', 'y'] as const) {
+            if (o[k] === undefined) return add(ctx, 'error', 'missing_required', `${p}.${k}`, `${p} is a point annotation and needs "${k}".`, 'Give both x and y in the units of their axis: a category name, a number or an ISO date.')
+            if (!(typeof o[k] === 'string' || (typeof o[k] === 'number' && Number.isFinite(o[k])))) return add(ctx, 'error', 'bad_type', `${p}.${k}`, `${p}.${k} must be a number, an ISO date or a category name, got ${fmt(o[k])}.`)
+          }
+          if (!tone() || !label()) return
+          if (typeof o.label !== 'string' || !o.label.trim()) return add(ctx, 'error', 'missing_required', `${p}.label`, `${p} is a point annotation and needs a short "label".`, 'E.g. {"x":"2026-03-01","y":120,"label":"Launch"}.')
+          out.push({ ...o, label: o.label.slice(0, 80) })
+          return
+        }
+        if (o.axis !== 'x' && o.axis !== 'y') return add(ctx, 'error', 'bad_enum', `${p}.axis`, `${p}.axis must be "x" or "y".`, 'For a labelled point, leave out axis and give x, y and label.')
         if (!(typeof o.value === 'string' || typeof o.value === 'number')) return add(ctx, 'error', 'bad_type', `${p}.value`, `${p}.value must be a number or a string.`)
         if (o.to !== undefined && !(typeof o.to === 'string' || typeof o.to === 'number')) return add(ctx, 'error', 'bad_type', `${p}.to`, `${p}.to must be a number or a string.`)
-        if (o.tone !== undefined && !TONES.includes(o.tone as string)) return add(ctx, 'error', 'bad_enum', `${p}.tone`, `${p}.tone must be one of ${TONES.join(', ')}.`)
-        if (o.label !== undefined && typeof o.label !== 'string') return add(ctx, 'error', 'bad_type', `${p}.label`, `${p}.label must be a string.`)
+        if (!tone() || !label()) return
         out.push({ ...o, ...(typeof o.label === 'string' ? { label: o.label.slice(0, 80) } : {}) })
       })
       return out
@@ -266,14 +287,22 @@ export function fieldSchema(def: FieldDef): Record<string, unknown> {
     case 'format': return { type: 'string', pattern: '^(auto|compact|integer|percent|fixed:\\d{1,2}|currency:[A-Za-z]{3})$', description: d }
     case 'bins': return { oneOf: [{ const: 'auto' }, { type: 'integer', minimum: 1, maximum: 200 }], default: def.default ?? 'auto', description: d }
     case 'domain': return { type: 'array', minItems: 2, maxItems: 2, items: { type: ['number', 'string', 'null'] }, description: d }
-    case 'transform': return { type: 'array', maxItems: 10, items: { type: 'object', minProperties: 1, maxProperties: 1, properties: { filter: { type: 'object', required: ['field'] }, timeUnit: { type: 'object', required: ['field', 'unit'] }, aggregate: { type: 'object' }, sort: { type: 'object', required: ['field'] }, top: { type: 'object', required: ['n', 'by'] } }, additionalProperties: false }, description: d }
+    case 'transform': return { type: 'array', maxItems: 10, items: { type: 'object', minProperties: 1, maxProperties: 1, properties: { filter: { type: 'object', required: ['field'] }, timeUnit: { type: 'object', required: ['field', 'unit'] }, aggregate: { type: 'object' }, sort: { type: 'object', required: ['field'] }, top: { type: 'object', required: ['n', 'by'] }, bin: { type: 'object', required: ['field'] }, window: { type: 'object', required: ['op', 'field', 'as'] }, fold: { type: 'object', required: ['fields'] } }, additionalProperties: false }, description: d }
     case 'colors': return { type: 'object', additionalProperties: { type: 'string', maxLength: 64 }, description: d }
     case 'annotations':
       return {
         type: 'array', maxItems: LIMITS.maxAnnotations, description: d,
         items: {
-          type: 'object', additionalProperties: false, required: ['axis', 'value'],
-          properties: { axis: { enum: ['x', 'y'] }, value: { type: ['number', 'string'] }, to: { type: ['number', 'string'] }, label: { type: 'string', maxLength: 80 }, tone: { enum: TONES } }
+          oneOf: [
+            {
+              type: 'object', additionalProperties: false, required: ['axis', 'value'],
+              properties: { axis: { enum: ['x', 'y'] }, value: { type: ['number', 'string'] }, to: { type: ['number', 'string'] }, label: { type: 'string', maxLength: 80 }, tone: { enum: TONES } }
+            },
+            {
+              type: 'object', additionalProperties: false, required: ['x', 'y', 'label'],
+              properties: { x: { type: ['number', 'string'] }, y: { type: ['number', 'string'] }, label: { type: 'string', minLength: 1, maxLength: 80 }, tone: { enum: TONES } }
+            }
+          ]
         }
       }
     case 'geo': return { oneOf: [{ type: 'string', pattern: '^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$' }, { type: 'object', required: ['type'], properties: { type: { enum: ['FeatureCollection', 'Topology'] } } }], description: d }

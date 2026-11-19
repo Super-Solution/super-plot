@@ -14,6 +14,21 @@ A plot is one JSON object: a `type`, the `data` rows, and the columns that map o
 | `maxAnnotations` | 50 |
 | `maxCategories` | 500 |
 
+## Transform steps
+
+`transform` (every chart) is a list of at most 10 steps, run in order before the chart reads its columns; each step is an object with one key. Steps are plain data: there is no expression step, on purpose.
+
+| Step | Keys | What it does | Example |
+|---|---|---|---|
+| `filter` | `field`, `equal`, `oneOf`, `range`, `gt`, `gte`, `lt`, `lte`, `valid` | Keep the rows whose `field` passes every test given: equal, oneOf, range [from inclusive, to exclusive], gt, gte, lt, lte (numbers or ISO dates), valid. | `{"filter":{"field":"region","oneOf":["APAC","EMEA"]}}` |
+| `timeUnit` | `field`, `unit`, `as` | Bucket a date column to the start of its year, quarter, month, week (Monday), day or hour (UTC), as an ISO date in `as` (default: in place). | `{"timeUnit":{"field":"date","unit":"month","as":"month"}}` |
+| `aggregate` | `groupBy`, `fields`, `count` | One row per group (`groupBy`, at most 4 columns) with `fields` reduced by sum, mean, median, min, max, count or distinct, and `count` rows. Only those columns remain. | `{"aggregate":{"groupBy":["month"],"fields":{"revenue":"sum"},"count":"orders"}}` |
+| `sort` | `field`, `order` | Stable sort by `field`: numbers and dates by value, then text, missing last; `order` ascending (default) or descending. | `{"sort":{"field":"revenue","order":"descending"}}` |
+| `top` | `n`, `by` | The `n` rows (1 to 1000) with the largest `by`. | `{"top":{"n":10,"by":"revenue"}}` |
+| `bin` | `field`, `as`, `step`, `maxbins` | Round bins of a numeric `field`, as the histogram makes them: adds start and end columns (`as`, default [field_start, field_end]; a non-number gets null). `step` sets the width; otherwise the histogram step for `maxbins` (default 10), made coarser until there are at most `maxbins` bins. | `{"bin":{"field":"price","maxbins":10,"as":["from","to"]}}` |
+| `window` | `op`, `field`, `as`, `groupBy`, `sortBy`, `order`, `frame` | Adds `as`: an op over each `groupBy` group walked in `sortBy` order (`order` asc or desc; no sortBy keeps the data order). sum, mean, count run cumulatively; rank is the standard competition rank of the sort key (1, 2, 2, 4; by `field` without sortBy); pctChange is (v - previous) / \|previous\|; lag and lead read the previous and next row; movingMean averages the last `frame` rows (default 3). Rows keep their order. | `{"window":{"op":"sum","field":"revenue","as":"running","groupBy":["region"],"sortBy":"date"}}` |
+| `fold` | `fields`, `as` | Wide to long: each row becomes one row per column in `fields`, with the column name in `as[0]` and its value in `as[1]` (default key, value); the folded columns are dropped. | `{"fold":{"fields":["Q1","Q2","Q3"],"as":["quarter","revenue"]}}` |
+
 ## `bar` — Bar chart
 
 Compares a number across categories with one bar per category (grouped, stacked or 100% stacked).
@@ -33,11 +48,11 @@ Compares a number across categories with one bar per category (grouped, stacked 
 | `tooltip` | boolean |  | `true` | Show a hover tooltip (web binding only). |
 | `format` | format string |  |  | Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE. |
 | `colors` | object |  |  | Series (or slice/category) name to CSS colour, e.g. {"Revenue":"#2962FF"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours. |
-| `transform` | array of steps |  |  | Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output. |
+| `transform` | array of steps |  |  | Data steps run before the chart reads its columns, in order (at most 10): filter, timeUnit, aggregate, sort, top, bin (round bins: start and end columns), window (running sum, mean, count, rank, pctChange, lag, lead, movingMean, per group, in a sort order) and fold (wide columns to key/value rows). No expressions. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output. |
 | `patterns` | boolean |  |  | Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print. |
 | `xLabel` | string |  |  | Title of the horizontal axis. |
 | `yLabel` | string |  |  | Title of the vertical axis (include the unit). |
-| `annotations` | array |  |  | Reference marks: {axis:"y", value:100, label:"Target"} draws a line; add `to` for a band. |
+| `annotations` | array |  |  | Reference marks: {axis:"y", value:100, label:"Target"} draws a line; add `to` for a band. {x:"2026-03-01", y:120, label:"Launch"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date). |
 | `facet` | column name |  |  | Split into small multiples: one panel per value of this column (at most 12), sharing axes, colours and one legend. |
 | `zoom` | `none` \| `x` \| `xy` |  |  | Default none. Let the viewer zoom and pan a continuous axis (web binding): Ctrl/⌘-scroll or pinch to zoom, drag to pan, double-click or 0 to reset. Scatter, line and area. |
 | `brush` | `none` \| `x` \| `xy` |  |  | Default none. Let the viewer drag out a range to select (web binding). The selection comes back as a filter step, ready for `transform`. With `zoom` too, Shift-drag pans. |
@@ -50,6 +65,10 @@ Compares a number across categories with one bar per category (grouped, stacked 
 | `labels` | boolean |  | `false` | Print values on the bars. Keep off for dense charts; the tooltip carries the numbers. |
 | `line` | column name or list of column names |  |  | Combo chart: numeric column(s) drawn as lines with points over vertical bars, on the same value axis (a target, an average). Ignored for horizontal and 100% stacked bars. |
 | `yDomain` | [min\|null, max\|null] |  |  | Fix the value axis range, e.g. [0, 100]. Bars should start at 0; only change it knowingly. |
+| `mark` | `bar` \| `lollipop` |  |  | Default bar. `lollipop` draws a thin stem from zero and a dot at the value instead of a filled bar: the same chart (sort, orientation, labels, grouped series side by side) with less ink, good for many categories. Not for stacks: falls back to bars with a warning. |
+| `yLower` | column name |  |  | Numeric column with the lower end of an interval on y (a confidence or min-max range), drawn as a whisker with caps across each bar (grouped bars only; stacked bars ignore it with a warning). Needs `yUpper` too; the tooltip shows the interval and the axis includes it. |
+| `yUpper` | column name |  |  | Numeric column with the upper end of the interval on y; see `yLower`. |
+| `yScale` | `linear` \| `log` |  |  | Only `linear`. A bar's length starts at zero, which a log axis cannot show, so `log` is refused (`log_scale_refused`). Use a line or a scatter for values spanning several orders of magnitude. |
 
 ```json
 {
@@ -111,11 +130,11 @@ Shows how one or more numbers change along an ordered x axis, usually time.
 | `tooltip` | boolean |  | `true` | Show a hover tooltip (web binding only). |
 | `format` | format string |  |  | Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE. |
 | `colors` | object |  |  | Series (or slice/category) name to CSS colour, e.g. {"Revenue":"#2962FF"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours. |
-| `transform` | array of steps |  |  | Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output. |
+| `transform` | array of steps |  |  | Data steps run before the chart reads its columns, in order (at most 10): filter, timeUnit, aggregate, sort, top, bin (round bins: start and end columns), window (running sum, mean, count, rank, pctChange, lag, lead, movingMean, per group, in a sort order) and fold (wide columns to key/value rows). No expressions. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output. |
 | `patterns` | boolean |  |  | Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print. |
 | `xLabel` | string |  |  | Title of the horizontal axis. |
 | `yLabel` | string |  |  | Title of the vertical axis (include the unit). |
-| `annotations` | array |  |  | Reference marks: {axis:"y", value:100, label:"Target"} draws a line; add `to` for a band. |
+| `annotations` | array |  |  | Reference marks: {axis:"y", value:100, label:"Target"} draws a line; add `to` for a band. {x:"2026-03-01", y:120, label:"Launch"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date). |
 | `facet` | column name |  |  | Split into small multiples: one panel per value of this column (at most 12), sharing axes, colours and one legend. |
 | `zoom` | `none` \| `x` \| `xy` |  |  | Default none. Let the viewer zoom and pan a continuous axis (web binding): Ctrl/⌘-scroll or pinch to zoom, drag to pan, double-click or 0 to reset. Scatter, line and area. |
 | `brush` | `none` \| `x` \| `xy` |  |  | Default none. Let the viewer drag out a range to select (web binding). The selection comes back as a filter step, ready for `transform`. With `zoom` too, Shift-drag pans. |
@@ -126,7 +145,12 @@ Shows how one or more numbers change along an ordered x axis, usually time.
 | `xDomain` | [min\|null, max\|null] |  |  | Fix the horizontal range of a numeric or time x axis (dates as ISO strings). Lines run to the edge and are cut there. |
 | `yDomain` | [min\|null, max\|null] |  |  | Fix the vertical range, e.g. [0, 100]. Lines may start anywhere; areas always include 0. |
 | `curve` | `linear` \| `smooth` \| `step` |  | `"linear"` | `smooth` is monotone (never overshoots the data); `step` holds each value until the next point. |
+| `gaps` | `break` \| `connect` \| `zero` |  |  | Default break. What a missing or null y does: `break` leaves a gap in the line, `connect` joins the points on either side, `zero` draws it as 0 (the tooltip says "missing"). Stacked areas always count a missing value as 0. |
+| `yLower` | column name |  |  | Numeric column with the lower end of an interval on y (a confidence or min-max range), drawn as a shaded band behind each line (one band per series; with long-form `series`, not with several `y` columns). Needs `yUpper` too; the tooltip shows the interval and the axis includes it. |
+| `yUpper` | column name |  |  | Numeric column with the upper end of the interval on y; see `yLower`. |
 | `points` | boolean |  |  | Force markers on (`true`) or off (`false`). Default: markers when there are few points, otherwise only the last point. |
+| `yScale` | `linear` \| `log` |  |  | Default linear. `log` draws the vertical axis in powers of ten (growth, orders of magnitude); values at or below zero cannot be placed and are left out with a `log_nonpositive` warning. |
+| `xScale` | `linear` \| `log` |  |  | Default linear. `log` draws the horizontal axis in powers of ten (sizes, frequencies); values at or below zero cannot be placed and are left out with a `log_nonpositive` warning. Only for a numeric x; dates and categories are refused. |
 
 ```json
 {
@@ -190,11 +214,11 @@ A line chart with the area under it filled; stacked areas show how parts add up 
 | `tooltip` | boolean |  | `true` | Show a hover tooltip (web binding only). |
 | `format` | format string |  |  | Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE. |
 | `colors` | object |  |  | Series (or slice/category) name to CSS colour, e.g. {"Revenue":"#2962FF"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours. |
-| `transform` | array of steps |  |  | Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output. |
+| `transform` | array of steps |  |  | Data steps run before the chart reads its columns, in order (at most 10): filter, timeUnit, aggregate, sort, top, bin (round bins: start and end columns), window (running sum, mean, count, rank, pctChange, lag, lead, movingMean, per group, in a sort order) and fold (wide columns to key/value rows). No expressions. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output. |
 | `patterns` | boolean |  |  | Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print. |
 | `xLabel` | string |  |  | Title of the horizontal axis. |
 | `yLabel` | string |  |  | Title of the vertical axis (include the unit). |
-| `annotations` | array |  |  | Reference marks: {axis:"y", value:100, label:"Target"} draws a line; add `to` for a band. |
+| `annotations` | array |  |  | Reference marks: {axis:"y", value:100, label:"Target"} draws a line; add `to` for a band. {x:"2026-03-01", y:120, label:"Launch"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date). |
 | `facet` | column name |  |  | Split into small multiples: one panel per value of this column (at most 12), sharing axes, colours and one legend. |
 | `zoom` | `none` \| `x` \| `xy` |  |  | Default none. Let the viewer zoom and pan a continuous axis (web binding): Ctrl/⌘-scroll or pinch to zoom, drag to pan, double-click or 0 to reset. Scatter, line and area. |
 | `brush` | `none` \| `x` \| `xy` |  |  | Default none. Let the viewer drag out a range to select (web binding). The selection comes back as a filter step, ready for `transform`. With `zoom` too, Shift-drag pans. |
@@ -205,7 +229,11 @@ A line chart with the area under it filled; stacked areas show how parts add up 
 | `xDomain` | [min\|null, max\|null] |  |  | Fix the horizontal range of a numeric or time x axis (dates as ISO strings). Lines run to the edge and are cut there. |
 | `yDomain` | [min\|null, max\|null] |  |  | Fix the vertical range, e.g. [0, 100]. Lines may start anywhere; areas always include 0. |
 | `curve` | `linear` \| `smooth` \| `step` |  | `"linear"` | `smooth` is monotone (never overshoots the data); `step` holds each value until the next point. |
+| `gaps` | `break` \| `connect` \| `zero` |  |  | Default break. What a missing or null y does: `break` leaves a gap in the line, `connect` joins the points on either side, `zero` draws it as 0 (the tooltip says "missing"). Stacked areas always count a missing value as 0. |
+| `yLower` | column name |  |  | Numeric column with the lower end of an interval on y (a confidence or min-max range), drawn as a shaded band behind each line (one band per series; with long-form `series`, not with several `y` columns). Needs `yUpper` too; the tooltip shows the interval and the axis includes it. |
+| `yUpper` | column name |  |  | Numeric column with the upper end of the interval on y; see `yLower`. |
 | `stack` | `none` \| `stack` \| `normalize` |  | `"none"` | `stack` adds series on top of each other; `normalize` shows each series as a share of 100%. |
+| `yScale` | `linear` \| `log` |  |  | Only `linear`. An area starts at zero, which a log axis cannot show, so `log` is refused (`log_scale_refused`). Use a line or a scatter for values spanning several orders of magnitude. |
 
 ```json
 {
@@ -269,11 +297,11 @@ Plots each row as a point by two numbers to show relationships, clusters and out
 | `tooltip` | boolean |  | `true` | Show a hover tooltip (web binding only). |
 | `format` | format string |  |  | Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE. |
 | `colors` | object |  |  | Series (or slice/category) name to CSS colour, e.g. {"Revenue":"#2962FF"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours. |
-| `transform` | array of steps |  |  | Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output. |
+| `transform` | array of steps |  |  | Data steps run before the chart reads its columns, in order (at most 10): filter, timeUnit, aggregate, sort, top, bin (round bins: start and end columns), window (running sum, mean, count, rank, pctChange, lag, lead, movingMean, per group, in a sort order) and fold (wide columns to key/value rows). No expressions. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output. |
 | `patterns` | boolean |  |  | Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print. |
 | `xLabel` | string |  |  | Title of the horizontal axis. |
 | `yLabel` | string |  |  | Title of the vertical axis (include the unit). |
-| `annotations` | array |  |  | Reference marks: {axis:"y", value:100, label:"Target"} draws a line; add `to` for a band. |
+| `annotations` | array |  |  | Reference marks: {axis:"y", value:100, label:"Target"} draws a line; add `to` for a band. {x:"2026-03-01", y:120, label:"Launch"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date). |
 | `facet` | column name |  |  | Split into small multiples: one panel per value of this column (at most 12), sharing axes, colours and one legend. |
 | `zoom` | `none` \| `x` \| `xy` |  |  | Default none. Let the viewer zoom and pan a continuous axis (web binding): Ctrl/⌘-scroll or pinch to zoom, drag to pan, double-click or 0 to reset. Scatter, line and area. |
 | `brush` | `none` \| `x` \| `xy` |  |  | Default none. Let the viewer drag out a range to select (web binding). The selection comes back as a filter step, ready for `transform`. With `zoom` too, Shift-drag pans. |
@@ -282,7 +310,14 @@ Plots each row as a point by two numbers to show relationships, clusters and out
 | `series` | column name |  |  | Column that colours points by group. |
 | `size` | column name |  |  | Numeric column mapped to bubble area. |
 | `label` | column name |  |  | Column used as each point's name in the tooltip. |
-| `trend` | `none` \| `linear` |  | `"none"` | Draw a least-squares line per series. |
+| `trend` | `none` \| `linear` \| `loess` |  | `"none"` | Draw a fit per series: `linear` is a least-squares line, `loess` a local regression curve (tricube weights, local linear fits, evaluated on 50 points; see `trendBandwidth`). On a log axis the fit is made in log space. |
+| `trendBandwidth` | number |  |  | Default 0.3. For `trend: "loess"`: the share of the points each local fit uses. Smaller follows the data more closely, larger is smoother. |
+| `yScale` | `linear` \| `log` |  |  | Default linear. `log` draws the vertical axis in powers of ten (incomes, populations, response times); values at or below zero cannot be placed and are left out with a `log_nonpositive` warning. |
+| `xScale` | `linear` \| `log` |  |  | Default linear. `log` draws the horizontal axis in powers of ten (sizes, counts); values at or below zero cannot be placed and are left out with a `log_nonpositive` warning. Only for a numeric x; dates are refused. |
+| `yLower` | column name |  |  | Numeric column with the lower end of an interval on y (a confidence or min-max range), drawn as a vertical error bar with caps through each point. Needs `yUpper` too; the tooltip shows the interval and the axis includes it. |
+| `yUpper` | column name |  |  | Numeric column with the upper end of the interval on y; see `yLower`. |
+| `xLower` | column name |  |  | Numeric column with the lower end of an interval on x (a confidence or min-max range), drawn as a horizontal error bar with caps through each point. Needs `xUpper` too; the tooltip shows the interval and the axis includes it. |
+| `xUpper` | column name |  |  | Numeric column with the upper end of the interval on x; see `xLower`. |
 | `density` | `points` \| `hex` \| `auto` |  |  | Default points. `hex` draws hexagons coloured by how many points fall in each (with a count legend); `auto` does so above 10,000 visible points. Hexagons merge groups. |
 | `xType` | `auto` \| `linear` \| `time` |  | `"auto"` | How to read `x`. |
 | `xDomain` | [min\|null, max\|null] |  |  | Fix the horizontal range. |
@@ -350,7 +385,7 @@ Shows each category's share of a whole as angles of a circle.
 | `tooltip` | boolean |  | `true` | Show a hover tooltip (web binding only). |
 | `format` | format string |  |  | Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE. |
 | `colors` | object |  |  | Series (or slice/category) name to CSS colour, e.g. {"Revenue":"#2962FF"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours. |
-| `transform` | array of steps |  |  | Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output. |
+| `transform` | array of steps |  |  | Data steps run before the chart reads its columns, in order (at most 10): filter, timeUnit, aggregate, sort, top, bin (round bins: start and end columns), window (running sum, mean, count, rank, pctChange, lag, lead, movingMean, per group, in a sort order) and fold (wide columns to key/value rows). No expressions. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output. |
 | `patterns` | boolean |  |  | Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print. |
 | `label` | column name | yes |  | Column naming each slice. |
 | `value` | column name | yes |  | Numeric column giving each slice's size. Rows with the same label are summed; negatives are skipped. |
@@ -412,7 +447,7 @@ A pie chart with a hole; the hole shows the total.
 | `tooltip` | boolean |  | `true` | Show a hover tooltip (web binding only). |
 | `format` | format string |  |  | Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE. |
 | `colors` | object |  |  | Series (or slice/category) name to CSS colour, e.g. {"Revenue":"#2962FF"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours. |
-| `transform` | array of steps |  |  | Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output. |
+| `transform` | array of steps |  |  | Data steps run before the chart reads its columns, in order (at most 10): filter, timeUnit, aggregate, sort, top, bin (round bins: start and end columns), window (running sum, mean, count, rank, pctChange, lag, lead, movingMean, per group, in a sort order) and fold (wide columns to key/value rows). No expressions. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output. |
 | `patterns` | boolean |  |  | Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print. |
 | `label` | column name | yes |  | Column naming each slice. |
 | `value` | column name | yes |  | Numeric column giving each slice's size. Rows with the same label are summed; negatives are skipped. |
@@ -474,11 +509,11 @@ Shows how one measure is distributed by counting values into equal-width bins.
 | `tooltip` | boolean |  | `true` | Show a hover tooltip (web binding only). |
 | `format` | format string |  |  | Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE. |
 | `colors` | object |  |  | Series (or slice/category) name to CSS colour, e.g. {"Revenue":"#2962FF"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours. |
-| `transform` | array of steps |  |  | Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output. |
+| `transform` | array of steps |  |  | Data steps run before the chart reads its columns, in order (at most 10): filter, timeUnit, aggregate, sort, top, bin (round bins: start and end columns), window (running sum, mean, count, rank, pctChange, lag, lead, movingMean, per group, in a sort order) and fold (wide columns to key/value rows). No expressions. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output. |
 | `patterns` | boolean |  |  | Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print. |
 | `xLabel` | string |  |  | Title of the horizontal axis. |
 | `yLabel` | string |  |  | Title of the vertical axis (include the unit). |
-| `annotations` | array |  |  | Reference marks: {axis:"y", value:100, label:"Target"} draws a line; add `to` for a band. |
+| `annotations` | array |  |  | Reference marks: {axis:"y", value:100, label:"Target"} draws a line; add `to` for a band. {x:"2026-03-01", y:120, label:"Launch"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date). |
 | `facet` | column name |  |  | Split into small multiples: one panel per value of this column (at most 12), sharing axes, colours and one legend. |
 | `zoom` | `none` \| `x` \| `xy` |  |  | Default none. Let the viewer zoom and pan a continuous axis (web binding): Ctrl/⌘-scroll or pinch to zoom, drag to pan, double-click or 0 to reset. Scatter, line and area. |
 | `brush` | `none` \| `x` \| `xy` |  |  | Default none. Let the viewer drag out a range to select (web binding). The selection comes back as a filter step, ready for `transform`. With `zoom` too, Shift-drag pans. |
@@ -488,6 +523,7 @@ Shows how one measure is distributed by counting values into equal-width bins.
 | `binWidth` | number |  |  | Exact bin width; overrides `bins`. |
 | `mode` | `count` \| `percent` \| `density` |  | `"count"` | What bar height means: number of values, percent of values, or probability density. |
 | `showMean` | boolean |  | `false` | Draw a dashed line at the mean. |
+| `yScale` | `linear` \| `log` |  |  | Only `linear`. A bin's height (its count) starts at zero, which a log axis cannot show, so `log` is refused (`log_scale_refused`). Use a line or a scatter for values spanning several orders of magnitude. |
 
 ```json
 {
@@ -551,11 +587,11 @@ Summarises the distribution of a number for each group: median, quartiles, whisk
 | `tooltip` | boolean |  | `true` | Show a hover tooltip (web binding only). |
 | `format` | format string |  |  | Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE. |
 | `colors` | object |  |  | Series (or slice/category) name to CSS colour, e.g. {"Revenue":"#2962FF"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours. |
-| `transform` | array of steps |  |  | Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output. |
+| `transform` | array of steps |  |  | Data steps run before the chart reads its columns, in order (at most 10): filter, timeUnit, aggregate, sort, top, bin (round bins: start and end columns), window (running sum, mean, count, rank, pctChange, lag, lead, movingMean, per group, in a sort order) and fold (wide columns to key/value rows). No expressions. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output. |
 | `patterns` | boolean |  |  | Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print. |
 | `xLabel` | string |  |  | Title of the horizontal axis. |
 | `yLabel` | string |  |  | Title of the vertical axis (include the unit). |
-| `annotations` | array |  |  | Reference marks: {axis:"y", value:100, label:"Target"} draws a line; add `to` for a band. |
+| `annotations` | array |  |  | Reference marks: {axis:"y", value:100, label:"Target"} draws a line; add `to` for a band. {x:"2026-03-01", y:120, label:"Launch"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date). |
 | `facet` | column name |  |  | Split into small multiples: one panel per value of this column (at most 12), sharing axes, colours and one legend. |
 | `zoom` | `none` \| `x` \| `xy` |  |  | Default none. Let the viewer zoom and pan a continuous axis (web binding): Ctrl/⌘-scroll or pinch to zoom, drag to pan, double-click or 0 to reset. Scatter, line and area. |
 | `brush` | `none` \| `x` \| `xy` |  |  | Default none. Let the viewer drag out a range to select (web binding). The selection comes back as a filter step, ready for `transform`. With `zoom` too, Shift-drag pans. |
@@ -627,7 +663,7 @@ Colours a grid of cells by a number: one axis per category, darker means larger.
 | `tooltip` | boolean |  | `true` | Show a hover tooltip (web binding only). |
 | `format` | format string |  |  | Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE. |
 | `colors` | object |  |  | Series (or slice/category) name to CSS colour, e.g. {"Revenue":"#2962FF"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours. |
-| `transform` | array of steps |  |  | Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output. |
+| `transform` | array of steps |  |  | Data steps run before the chart reads its columns, in order (at most 10): filter, timeUnit, aggregate, sort, top, bin (round bins: start and end columns), window (running sum, mean, count, rank, pctChange, lag, lead, movingMean, per group, in a sort order) and fold (wide columns to key/value rows). No expressions. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output. |
 | `patterns` | boolean |  |  | Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print. |
 | `x` | column name | yes |  | Column for the horizontal categories. |
 | `y` | column name | yes |  | Column for the vertical categories (first value at the top). |
@@ -699,7 +735,7 @@ Compares a few items across several measures on spokes around a centre; each ite
 | `tooltip` | boolean |  | `true` | Show a hover tooltip (web binding only). |
 | `format` | format string |  |  | Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE. |
 | `colors` | object |  |  | Series (or slice/category) name to CSS colour, e.g. {"Revenue":"#2962FF"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours. |
-| `transform` | array of steps |  |  | Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output. |
+| `transform` | array of steps |  |  | Data steps run before the chart reads its columns, in order (at most 10): filter, timeUnit, aggregate, sort, top, bin (round bins: start and end columns), window (running sum, mean, count, rank, pctChange, lag, lead, movingMean, per group, in a sort order) and fold (wide columns to key/value rows). No expressions. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output. |
 | `patterns` | boolean |  |  | Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print. |
 | `x` | column name | yes |  | Column naming each spoke (the measures). 3 to 16 distinct values. |
 | `y` | column name or list of column names | yes |  | Numeric column for the distance along the spoke. Several columns give one shape per column (wide-form data). |
@@ -770,7 +806,7 @@ Shows parts of a whole as nested rectangles whose area is the value; an optional
 | `tooltip` | boolean |  | `true` | Show a hover tooltip (web binding only). |
 | `format` | format string |  |  | Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE. |
 | `colors` | object |  |  | Series (or slice/category) name to CSS colour, e.g. {"Revenue":"#2962FF"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours. |
-| `transform` | array of steps |  |  | Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output. |
+| `transform` | array of steps |  |  | Data steps run before the chart reads its columns, in order (at most 10): filter, timeUnit, aggregate, sort, top, bin (round bins: start and end columns), window (running sum, mean, count, rank, pctChange, lag, lead, movingMean, per group, in a sort order) and fold (wide columns to key/value rows). No expressions. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output. |
 | `patterns` | boolean |  |  | Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print. |
 | `label` | column name | yes |  | Column naming each tile. |
 | `value` | column name | yes |  | Numeric column giving each tile's area. Rows with the same group and label are summed; zero and negative values are skipped. |
@@ -839,7 +875,7 @@ Shows how a quantity flows between stages: bands between nodes, the band width i
 | `tooltip` | boolean |  | `true` | Show a hover tooltip (web binding only). |
 | `format` | format string |  |  | Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE. |
 | `colors` | object |  |  | Series (or slice/category) name to CSS colour, e.g. {"Revenue":"#2962FF"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours. |
-| `transform` | array of steps |  |  | Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output. |
+| `transform` | array of steps |  |  | Data steps run before the chart reads its columns, in order (at most 10): filter, timeUnit, aggregate, sort, top, bin (round bins: start and end columns), window (running sum, mean, count, rank, pctChange, lag, lead, movingMean, per group, in a sort order) and fold (wide columns to key/value rows). No expressions. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output. |
 | `patterns` | boolean |  |  | Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print. |
 | `from` | column name | yes |  | Column naming where each flow starts. |
 | `to` | column name | yes |  | Column naming where each flow ends. |
@@ -907,7 +943,7 @@ Colours each region of a map by a number; raise regions by the value for a 3D vi
 | `tooltip` | boolean |  | `true` | Show a hover tooltip (web binding only). |
 | `format` | format string |  |  | Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE. |
 | `colors` | object |  |  | Series (or slice/category) name to CSS colour, e.g. {"Revenue":"#2962FF"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours. |
-| `transform` | array of steps |  |  | Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output. |
+| `transform` | array of steps |  |  | Data steps run before the chart reads its columns, in order (at most 10): filter, timeUnit, aggregate, sort, top, bin (round bins: start and end columns), window (running sum, mean, count, rank, pctChange, lag, lead, movingMean, per group, in a sort order) and fold (wide columns to key/value rows). No expressions. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output. |
 | `patterns` | boolean |  |  | Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print. |
 | `geo` | geography name or GeoJSON/TopoJSON object | yes |  | Region boundaries to colour. The name of a geography registered with registerGeography (Super Plot ships none), or an inline GeoJSON FeatureCollection / TopoJSON Topology (key: feature id, else properties.id, else properties.name). |
 | `region` | column name | yes |  | Column naming each row's region: its key, name or an alias (case ignored). Rows with the same region are summed. |
@@ -983,7 +1019,7 @@ Places a circle per row on a map by longitude/latitude (or region), sized by a n
 | `tooltip` | boolean |  | `true` | Show a hover tooltip (web binding only). |
 | `format` | format string |  |  | Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE. |
 | `colors` | object |  |  | Series (or slice/category) name to CSS colour, e.g. {"Revenue":"#2962FF"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours. |
-| `transform` | array of steps |  |  | Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output. |
+| `transform` | array of steps |  |  | Data steps run before the chart reads its columns, in order (at most 10): filter, timeUnit, aggregate, sort, top, bin (round bins: start and end columns), window (running sum, mean, count, rank, pctChange, lag, lead, movingMean, per group, in a sort order) and fold (wide columns to key/value rows). No expressions. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output. |
 | `patterns` | boolean |  |  | Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print. |
 | `geo` | geography name or GeoJSON/TopoJSON object |  |  | Optional boundaries drawn as land under the bubbles (needed when placing by region). The name of a geography registered with registerGeography (Super Plot ships none), or an inline GeoJSON FeatureCollection / TopoJSON Topology (key: feature id, else properties.id, else properties.name). |
 | `lat` | column name |  |  | Latitude column, degrees (-90..90). With lng, places each bubble. |
@@ -1060,7 +1096,7 @@ Raises a column per row from its place on a globe or a tilted map, height by a n
 | `tooltip` | boolean |  | `true` | Show a hover tooltip (web binding only). |
 | `format` | format string |  |  | Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE. |
 | `colors` | object |  |  | Series (or slice/category) name to CSS colour, e.g. {"Revenue":"#2962FF"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours. |
-| `transform` | array of steps |  |  | Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output. |
+| `transform` | array of steps |  |  | Data steps run before the chart reads its columns, in order (at most 10): filter, timeUnit, aggregate, sort, top, bin (round bins: start and end columns), window (running sum, mean, count, rank, pctChange, lag, lead, movingMean, per group, in a sort order) and fold (wide columns to key/value rows). No expressions. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output. |
 | `patterns` | boolean |  |  | Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print. |
 | `geo` | geography name or GeoJSON/TopoJSON object |  |  | Optional boundaries drawn as land under the columns (needed when placing by region). The name of a geography registered with registerGeography (Super Plot ships none), or an inline GeoJSON FeatureCollection / TopoJSON Topology (key: feature id, else properties.id, else properties.name). |
 | `lat` | column name |  |  | Latitude column, degrees (-90..90). With lng, places each column. |
@@ -1137,7 +1173,7 @@ Draws an arc from origin to destination per row, width by a number, on a globe o
 | `tooltip` | boolean |  | `true` | Show a hover tooltip (web binding only). |
 | `format` | format string |  |  | Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE. |
 | `colors` | object |  |  | Series (or slice/category) name to CSS colour, e.g. {"Revenue":"#2962FF"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours. |
-| `transform` | array of steps |  |  | Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output. |
+| `transform` | array of steps |  |  | Data steps run before the chart reads its columns, in order (at most 10): filter, timeUnit, aggregate, sort, top, bin (round bins: start and end columns), window (running sum, mean, count, rank, pctChange, lag, lead, movingMean, per group, in a sort order) and fold (wide columns to key/value rows). No expressions. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output. |
 | `patterns` | boolean |  |  | Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print. |
 | `geo` | geography name or GeoJSON/TopoJSON object |  |  | Optional boundaries drawn as land (needed when from/to name regions). The name of a geography registered with registerGeography (Super Plot ships none), or an inline GeoJSON FeatureCollection / TopoJSON Topology (key: feature id, else properties.id, else properties.name). |
 | `from` | column name |  |  | Origin region column (needs geo), or the origin's name when fromLat/fromLng are given. |

@@ -442,6 +442,814 @@
       }
     }
   ],
+  "logTicks": [
+    {
+      "in": [
+        1,
+        1000000,
+        5
+      ],
+      "out": [
+        1,
+        100,
+        10000,
+        1000000
+      ]
+    },
+    {
+      "in": [
+        1,
+        1000,
+        8
+      ],
+      "out": [
+        1,
+        10,
+        100,
+        1000
+      ]
+    },
+    {
+      "in": [
+        1,
+        100,
+        8
+      ],
+      "out": [
+        1,
+        2,
+        5,
+        10,
+        20,
+        50,
+        100
+      ]
+    },
+    {
+      "in": [
+        0.01,
+        1,
+        9
+      ],
+      "out": [
+        0.01,
+        0.02,
+        0.05,
+        0.1,
+        0.2,
+        0.5,
+        1
+      ]
+    },
+    {
+      "in": [
+        20,
+        80,
+        5
+      ],
+      "out": [
+        20,
+        50
+      ]
+    },
+    {
+      "in": [
+        3,
+        800,
+        4
+      ],
+      "out": [
+        10,
+        100
+      ]
+    },
+    {
+      "in": [
+        0.5,
+        2000000000,
+        6
+      ],
+      "out": [
+        1,
+        100,
+        10000,
+        1000000,
+        100000000
+      ]
+    },
+    {
+      "in": [
+        0.000001,
+        0.001,
+        3
+      ],
+      "out": [
+        0.000001,
+        0.0001
+      ]
+    }
+  ],
+  "logNiceDomain": [
+    {
+      "in": [
+        3,
+        800
+      ],
+      "out": [
+        1,
+        1000
+      ]
+    },
+    {
+      "in": [
+        10,
+        10
+      ],
+      "out": [
+        1,
+        100
+      ]
+    },
+    {
+      "in": [
+        1,
+        1000
+      ],
+      "out": [
+        1,
+        1000
+      ]
+    },
+    {
+      "in": [
+        0.02,
+        0.5
+      ],
+      "out": [
+        0.01,
+        1
+      ]
+    },
+    {
+      "in": [
+        7,
+        7.5
+      ],
+      "out": [
+        1,
+        10
+      ]
+    }
+  ],
+  "loess": [
+    {
+      "in": {
+        "xs": [
+          5,
+          1,
+          3,
+          2,
+          4,
+          8,
+          6,
+          7,
+          9,
+          10
+        ],
+        "ys": [
+          2,
+          9,
+          4,
+          7,
+          3,
+          6,
+          1,
+          8,
+          5,
+          2
+        ],
+        "bandwidth": 0.5,
+        "grid": 10
+      },
+      "out": [
+        [
+          1,
+          9.036443599
+        ],
+        [
+          2,
+          6.766155478
+        ],
+        [
+          3,
+          4.572621035
+        ],
+        [
+          4,
+          3
+        ],
+        [
+          5,
+          2
+        ],
+        [
+          6,
+          3.29048414
+        ],
+        [
+          7,
+          5.423205342
+        ],
+        [
+          8,
+          6.286310518
+        ],
+        [
+          9,
+          4.335387741
+        ],
+        [
+          10,
+          2.346580158
+        ]
+      ]
+    },
+    {
+      "in": {
+        "xs": [
+          5,
+          1,
+          3,
+          2,
+          4,
+          8,
+          6,
+          7,
+          9,
+          10
+        ],
+        "ys": [
+          2,
+          9,
+          4,
+          7,
+          3,
+          6,
+          1,
+          8,
+          5,
+          2
+        ],
+        "bandwidth": 0.3,
+        "grid": 50
+      },
+      "out": [
+        [
+          1,
+          9
+        ],
+        [
+          1.183673469,
+          8.632653061
+        ],
+        [
+          1.367346939,
+          8.265306122
+        ],
+        [
+          1.551020408,
+          7.897959184
+        ],
+        [
+          1.734693878,
+          7.530612245
+        ],
+        [
+          1.918367347,
+          7.163265306
+        ],
+        [
+          2.102040816,
+          6.693877551
+        ],
+        [
+          2.285714286,
+          6.142857143
+        ],
+        [
+          2.469387755,
+          5.591836735
+        ],
+        [
+          2.653061224,
+          5.040816327
+        ],
+        [
+          2.836734694,
+          4.489795918
+        ],
+        [
+          3.020408163,
+          3.979591837
+        ],
+        [
+          3.204081633,
+          3.795918367
+        ],
+        [
+          3.387755102,
+          3.612244898
+        ],
+        [
+          3.571428571,
+          3.428571429
+        ],
+        [
+          3.755102041,
+          3.244897959
+        ],
+        [
+          3.93877551,
+          3.06122449
+        ],
+        [
+          4.12244898,
+          2.87755102
+        ],
+        [
+          4.306122449,
+          2.693877551
+        ],
+        [
+          4.489795918,
+          2.510204082
+        ],
+        [
+          4.673469388,
+          2.326530612
+        ],
+        [
+          4.857142857,
+          2.142857143
+        ],
+        [
+          5.040816327,
+          1.959183673
+        ],
+        [
+          5.224489796,
+          1.775510204
+        ],
+        [
+          5.408163265,
+          1.591836735
+        ],
+        [
+          5.591836735,
+          1.408163265
+        ],
+        [
+          5.775510204,
+          1.224489796
+        ],
+        [
+          5.959183673,
+          1.040816327
+        ],
+        [
+          6.142857143,
+          2
+        ],
+        [
+          6.326530612,
+          3.285714286
+        ],
+        [
+          6.510204082,
+          4.571428571
+        ],
+        [
+          6.693877551,
+          5.857142857
+        ],
+        [
+          6.87755102,
+          7.142857143
+        ],
+        [
+          7.06122449,
+          7.87755102
+        ],
+        [
+          7.244897959,
+          7.510204082
+        ],
+        [
+          7.428571429,
+          7.142857143
+        ],
+        [
+          7.612244898,
+          6.775510204
+        ],
+        [
+          7.795918367,
+          6.408163265
+        ],
+        [
+          7.979591837,
+          6.040816327
+        ],
+        [
+          8.163265306,
+          5.836734694
+        ],
+        [
+          8.346938776,
+          5.653061224
+        ],
+        [
+          8.530612245,
+          5.469387755
+        ],
+        [
+          8.714285714,
+          5.285714286
+        ],
+        [
+          8.897959184,
+          5.102040816
+        ],
+        [
+          9.081632653,
+          4.755102041
+        ],
+        [
+          9.265306122,
+          4.204081633
+        ],
+        [
+          9.448979592,
+          3.653061224
+        ],
+        [
+          9.632653061,
+          3.102040816
+        ],
+        [
+          9.816326531,
+          2.551020408
+        ],
+        [
+          10,
+          2
+        ]
+      ]
+    },
+    {
+      "in": {
+        "xs": [
+          5,
+          1,
+          3,
+          2,
+          4,
+          8,
+          6,
+          7,
+          9,
+          10
+        ],
+        "ys": [
+          2,
+          9,
+          4,
+          7,
+          3,
+          6,
+          1,
+          8,
+          5,
+          2
+        ],
+        "bandwidth": 1,
+        "grid": 7
+      },
+      "out": [
+        [
+          1,
+          7.101348529
+        ],
+        [
+          2.5,
+          5.766545179
+        ],
+        [
+          4,
+          4.708219931
+        ],
+        [
+          5.5,
+          3.890778196
+        ],
+        [
+          7,
+          4.121257105
+        ],
+        [
+          8.5,
+          4.299383602
+        ],
+        [
+          10,
+          4.470627748
+        ]
+      ]
+    },
+    {
+      "in": {
+        "xs": [
+          1,
+          1,
+          1,
+          2,
+          2,
+          3
+        ],
+        "ys": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "bandwidth": 0.3,
+        "grid": 5
+      },
+      "out": [
+        [
+          1,
+          1.5
+        ],
+        [
+          1.5,
+          2.5
+        ],
+        [
+          2,
+          4.5
+        ],
+        [
+          2.5,
+          4.5
+        ],
+        [
+          3,
+          6
+        ]
+      ]
+    },
+    {
+      "in": {
+        "xs": [
+          4,
+          4,
+          4
+        ],
+        "ys": [
+          1,
+          2,
+          6
+        ],
+        "bandwidth": 0.3,
+        "grid": 50
+      },
+      "out": [
+        [
+          4,
+          1.5
+        ]
+      ]
+    },
+    {
+      "in": {
+        "xs": [
+          1,
+          2
+        ],
+        "ys": [
+          1,
+          2
+        ],
+        "bandwidth": 0.3,
+        "grid": 50
+      },
+      "out": []
+    },
+    {
+      "in": {
+        "xs": [
+          0,
+          0.4,
+          0.8,
+          1.2,
+          1.6,
+          2,
+          2.4,
+          2.8,
+          3.2,
+          3.6,
+          4,
+          4.4,
+          4.8,
+          5.2,
+          5.6,
+          6,
+          6.4,
+          6.8,
+          7.2,
+          7.6,
+          8,
+          8.4,
+          8.8,
+          9.2,
+          9.6
+        ],
+        "ys": [
+          0,
+          3.894183423,
+          7.173560909,
+          9.32039086,
+          9.99573603,
+          9.092974268,
+          6.754631806,
+          3.349881502,
+          -0.583741434,
+          -4.425204433,
+          -7.568024953,
+          -9.516020739,
+          -9.961646088,
+          -8.834546557,
+          -6.312666379,
+          -2.794154982,
+          1.165492049,
+          4.941133511,
+          7.936678638,
+          9.67919672,
+          9.893582466,
+          8.545989081,
+          5.849171929,
+          2.228899141,
+          -1.743267812
+        ],
+        "bandwidth": 0.2,
+        "grid": 12
+      },
+      "out": [
+        [
+          0,
+          0.237907874
+        ],
+        [
+          0.872727273,
+          7.259889121
+        ],
+        [
+          1.745454545,
+          9.209652854
+        ],
+        [
+          2.618181818,
+          4.64930464
+        ],
+        [
+          3.490909091,
+          -3.224796371
+        ],
+        [
+          4.363636364,
+          -8.954134363
+        ],
+        [
+          5.236363636,
+          -8.248723179
+        ],
+        [
+          6.109090909,
+          -1.634333125
+        ],
+        [
+          6.981818182,
+          5.983447915
+        ],
+        [
+          7.854545455,
+          9.35097116
+        ],
+        [
+          8.727272727,
+          6.086927729
+        ],
+        [
+          9.6,
+          -1.58198845
+        ]
+      ]
+    }
+  ],
+  "binStep": [
+    {
+      "in": {
+        "values": [
+          0,
+          13
+        ],
+        "maxbins": 10
+      },
+      "out": [
+        0,
+        2,
+        4,
+        6,
+        8,
+        10,
+        12,
+        14
+      ]
+    },
+    {
+      "in": {
+        "values": [
+          1,
+          2,
+          2,
+          3,
+          9
+        ],
+        "maxbins": 4
+      },
+      "out": [
+        0,
+        5,
+        10
+      ]
+    },
+    {
+      "in": {
+        "values": [
+          0.1,
+          0.66
+        ],
+        "maxbins": 3
+      },
+      "out": [
+        0,
+        0.5,
+        1
+      ]
+    },
+    {
+      "in": {
+        "values": [
+          5,
+          5
+        ],
+        "maxbins": 10
+      },
+      "out": [
+        4.5,
+        5.5
+      ]
+    },
+    {
+      "in": {
+        "values": [
+          0,
+          97
+        ],
+        "maxbins": 10,
+        "step": 7
+      },
+      "out": [
+        0,
+        7,
+        14,
+        21,
+        28,
+        35,
+        42,
+        49,
+        56,
+        63,
+        70,
+        77,
+        84,
+        91,
+        98
+      ]
+    }
+  ],
   "chartExamples": [
     {
       "type": "bar",
@@ -20211,6 +21019,1978 @@
       "normalized": null
     },
     {
+      "name": "log: y on a line",
+      "spec": {
+        "type": "line",
+        "x": "d",
+        "y": "v",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ],
+        "yScale": "log"
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "line",
+        "x": "d",
+        "y": "v",
+        "yScale": "log",
+        "legend": "auto",
+        "tooltip": true,
+        "xType": "auto",
+        "curve": "linear"
+      }
+    },
+    {
+      "name": "log: y on a line, some values at or below zero",
+      "spec": {
+        "type": "line",
+        "x": "x",
+        "y": "v",
+        "yScale": "log",
+        "data": [
+          {
+            "x": 1,
+            "v": 10
+          },
+          {
+            "x": 2,
+            "v": 0
+          },
+          {
+            "x": 3,
+            "v": -5
+          },
+          {
+            "x": 4,
+            "v": 1000
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "log_nonpositive",
+          "path": "y"
+        }
+      ],
+      "normalized": {
+        "type": "line",
+        "x": "x",
+        "y": "v",
+        "yScale": "log",
+        "legend": "auto",
+        "tooltip": true,
+        "xType": "auto",
+        "curve": "linear"
+      }
+    },
+    {
+      "name": "log: every value at or below zero",
+      "spec": {
+        "type": "scatter",
+        "x": "v",
+        "y": "t",
+        "yScale": "log",
+        "data": [
+          {
+            "v": 1,
+            "t": 0
+          },
+          {
+            "v": 2,
+            "t": -1
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "log_nonpositive",
+          "path": "y"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "log: x and y on a scatter",
+      "spec": {
+        "type": "scatter",
+        "x": "v",
+        "y": "t",
+        "xScale": "log",
+        "yScale": "log",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "scatter",
+        "x": "v",
+        "y": "t",
+        "xScale": "log",
+        "yScale": "log",
+        "legend": "auto",
+        "tooltip": true,
+        "trend": "none",
+        "xType": "auto"
+      }
+    },
+    {
+      "name": "log: x on a line over dates is refused",
+      "spec": {
+        "type": "line",
+        "x": "d",
+        "y": "v",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ],
+        "xScale": "log"
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "log_scale_refused",
+          "path": "xScale"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "log: x on a scatter over dates is refused",
+      "spec": {
+        "type": "scatter",
+        "x": "d",
+        "y": "v",
+        "xScale": "log",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "log_scale_refused",
+          "path": "xScale"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "log: a domain at zero",
+      "spec": {
+        "type": "line",
+        "x": "d",
+        "y": "v",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ],
+        "yScale": "log",
+        "yDomain": [
+          0,
+          10
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "log_bad_domain",
+          "path": "yDomain"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "log: refused on a bar",
+      "spec": {
+        "type": "bar",
+        "x": "k",
+        "y": "v",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ],
+        "yScale": "log"
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "log_scale_refused",
+          "path": "yScale"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "log: linear accepted on a bar",
+      "spec": {
+        "type": "bar",
+        "x": "k",
+        "y": "v",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ],
+        "yScale": "linear"
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "bar",
+        "x": "k",
+        "y": "v",
+        "yScale": "linear",
+        "legend": "auto",
+        "tooltip": true,
+        "stack": "none",
+        "orientation": "vertical",
+        "sort": "none",
+        "labels": false
+      }
+    },
+    {
+      "name": "log: refused on an area",
+      "spec": {
+        "type": "area",
+        "x": "d",
+        "y": "v",
+        "yScale": "log",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "log_scale_refused",
+          "path": "yScale"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "log: refused on a histogram",
+      "spec": {
+        "type": "histogram",
+        "value": "v",
+        "yScale": "log",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "log_scale_refused",
+          "path": "yScale"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "log: bad value",
+      "spec": {
+        "type": "line",
+        "x": "d",
+        "y": "v",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ],
+        "yScale": "log2"
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "bad_enum",
+          "path": "yScale"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "log: gaps zero on a log axis",
+      "spec": {
+        "type": "line",
+        "x": "d",
+        "y": "v",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ],
+        "yScale": "log",
+        "gaps": "zero"
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "gaps_zero_log",
+          "path": "gaps"
+        }
+      ],
+      "normalized": {
+        "type": "line",
+        "x": "d",
+        "y": "v",
+        "yScale": "log",
+        "gaps": "zero",
+        "legend": "auto",
+        "tooltip": true,
+        "xType": "auto",
+        "curve": "linear"
+      }
+    },
+    {
+      "name": "interval: band on a line",
+      "spec": {
+        "type": "line",
+        "x": "d",
+        "y": "v",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ],
+        "yLower": "v",
+        "yUpper": "t"
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "interval_reversed",
+          "path": "yLower"
+        }
+      ],
+      "normalized": {
+        "type": "line",
+        "x": "d",
+        "y": "v",
+        "yLower": "v",
+        "yUpper": "t",
+        "legend": "auto",
+        "tooltip": true,
+        "xType": "auto",
+        "curve": "linear"
+      }
+    },
+    {
+      "name": "interval: lower only",
+      "spec": {
+        "type": "line",
+        "x": "d",
+        "y": "v",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ],
+        "yLower": "v"
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "interval_incomplete",
+          "path": "yUpper"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "interval: upper only on a scatter",
+      "spec": {
+        "type": "scatter",
+        "x": "v",
+        "y": "t",
+        "xUpper": "t",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "interval_incomplete",
+          "path": "xLower"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "interval: several y columns",
+      "spec": {
+        "type": "line",
+        "x": "d",
+        "y": [
+          "v",
+          "t"
+        ],
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ],
+        "yLower": "v",
+        "yUpper": "t"
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "interval_reversed",
+          "path": "yLower"
+        },
+        {
+          "severity": "warning",
+          "code": "interval_needs_one_y",
+          "path": "yLower"
+        }
+      ],
+      "normalized": {
+        "type": "line",
+        "x": "d",
+        "y": [
+          "v",
+          "t"
+        ],
+        "yLower": "v",
+        "yUpper": "t",
+        "legend": "auto",
+        "tooltip": true,
+        "xType": "auto",
+        "curve": "linear"
+      }
+    },
+    {
+      "name": "interval: on a stacked area",
+      "spec": {
+        "type": "area",
+        "x": "d",
+        "y": "v",
+        "series": "g",
+        "stack": "stack",
+        "yLower": "v",
+        "yUpper": "t",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "interval_reversed",
+          "path": "yLower"
+        },
+        {
+          "severity": "warning",
+          "code": "interval_ignored_stacked",
+          "path": "yLower"
+        }
+      ],
+      "normalized": {
+        "type": "area",
+        "x": "d",
+        "y": "v",
+        "series": "g",
+        "stack": "stack",
+        "yLower": "v",
+        "yUpper": "t",
+        "legend": "auto",
+        "tooltip": true,
+        "xType": "auto",
+        "curve": "linear"
+      }
+    },
+    {
+      "name": "interval: whiskers on grouped bars",
+      "spec": {
+        "type": "bar",
+        "x": "k",
+        "y": "v",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ],
+        "yLower": "v",
+        "yUpper": "t"
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "interval_reversed",
+          "path": "yLower"
+        }
+      ],
+      "normalized": {
+        "type": "bar",
+        "x": "k",
+        "y": "v",
+        "yLower": "v",
+        "yUpper": "t",
+        "legend": "auto",
+        "tooltip": true,
+        "stack": "none",
+        "orientation": "vertical",
+        "sort": "none",
+        "labels": false
+      }
+    },
+    {
+      "name": "interval: whiskers on stacked bars",
+      "spec": {
+        "type": "bar",
+        "x": "k",
+        "y": "v",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ],
+        "stack": "stack",
+        "yLower": "v",
+        "yUpper": "t"
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "interval_reversed",
+          "path": "yLower"
+        },
+        {
+          "severity": "warning",
+          "code": "interval_ignored_stacked",
+          "path": "yLower"
+        }
+      ],
+      "normalized": {
+        "type": "bar",
+        "x": "k",
+        "y": "v",
+        "stack": "stack",
+        "yLower": "v",
+        "yUpper": "t",
+        "legend": "auto",
+        "tooltip": true,
+        "orientation": "vertical",
+        "sort": "none",
+        "labels": false
+      }
+    },
+    {
+      "name": "interval: ends swapped",
+      "spec": {
+        "type": "scatter",
+        "x": "v",
+        "y": "t",
+        "yLower": "t",
+        "yUpper": "v",
+        "data": [
+          {
+            "v": 1,
+            "t": 5
+          },
+          {
+            "v": 2,
+            "t": 1
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "interval_reversed",
+          "path": "yLower"
+        }
+      ],
+      "normalized": {
+        "type": "scatter",
+        "x": "v",
+        "y": "t",
+        "yLower": "t",
+        "yUpper": "v",
+        "legend": "auto",
+        "tooltip": true,
+        "trend": "none",
+        "xType": "auto"
+      }
+    },
+    {
+      "name": "interval: not numeric",
+      "spec": {
+        "type": "line",
+        "x": "d",
+        "y": "v",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ],
+        "yLower": "k",
+        "yUpper": "t"
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "not_numeric",
+          "path": "yLower"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "interval: no such column",
+      "spec": {
+        "type": "line",
+        "x": "d",
+        "y": "v",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ],
+        "yLower": "low",
+        "yUpper": "t"
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "no_such_column",
+          "path": "yLower"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "annotation: a point",
+      "spec": {
+        "type": "line",
+        "x": "d",
+        "y": "v",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ],
+        "annotations": [
+          {
+            "x": "2026-02-09",
+            "y": 8,
+            "label": "Peak",
+            "tone": "positive"
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "line",
+        "x": "d",
+        "y": "v",
+        "annotations": [
+          {
+            "x": "2026-02-09",
+            "y": 8,
+            "label": "Peak",
+            "tone": "positive"
+          }
+        ],
+        "legend": "auto",
+        "tooltip": true,
+        "xType": "auto",
+        "curve": "linear"
+      }
+    },
+    {
+      "name": "annotation: a point with a category",
+      "spec": {
+        "type": "bar",
+        "x": "k",
+        "y": "v",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ],
+        "annotations": [
+          {
+            "x": "b",
+            "y": 8,
+            "label": "Best"
+          },
+          {
+            "axis": "y",
+            "value": 5,
+            "label": "Target"
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "bar",
+        "x": "k",
+        "y": "v",
+        "annotations": [
+          {
+            "x": "b",
+            "y": 8,
+            "label": "Best"
+          },
+          {
+            "axis": "y",
+            "value": 5,
+            "label": "Target"
+          }
+        ],
+        "legend": "auto",
+        "tooltip": true,
+        "stack": "none",
+        "orientation": "vertical",
+        "sort": "none",
+        "labels": false
+      }
+    },
+    {
+      "name": "annotation: a point without label",
+      "spec": {
+        "type": "line",
+        "x": "d",
+        "y": "v",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ],
+        "annotations": [
+          {
+            "x": "2026-02-09",
+            "y": 8
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "missing_required",
+          "path": "annotations[0].label"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "annotation: a point without y",
+      "spec": {
+        "type": "line",
+        "x": "d",
+        "y": "v",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ],
+        "annotations": [
+          {
+            "x": "2026-02-09",
+            "label": "Peak"
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "missing_required",
+          "path": "annotations[0].y"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "annotation: a point with a bad x",
+      "spec": {
+        "type": "line",
+        "x": "d",
+        "y": "v",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ],
+        "annotations": [
+          {
+            "x": null,
+            "y": 8,
+            "label": "Peak"
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "bad_type",
+          "path": "annotations[0].x"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "annotation: a point with a line field",
+      "spec": {
+        "type": "line",
+        "x": "d",
+        "y": "v",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ],
+        "annotations": [
+          {
+            "x": 1,
+            "y": 8,
+            "label": "Peak",
+            "to": 3
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "unknown_field",
+          "path": "annotations[0].to"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "annotation: a line with a point field",
+      "spec": {
+        "type": "line",
+        "x": "d",
+        "y": "v",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ],
+        "annotations": [
+          {
+            "axis": "y",
+            "value": 8,
+            "y": 3
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "unknown_field",
+          "path": "annotations[0].y"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "gaps: connect",
+      "spec": {
+        "type": "line",
+        "x": "d",
+        "y": "v",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ],
+        "gaps": "connect"
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "line",
+        "x": "d",
+        "y": "v",
+        "gaps": "connect",
+        "legend": "auto",
+        "tooltip": true,
+        "xType": "auto",
+        "curve": "linear"
+      }
+    },
+    {
+      "name": "gaps: zero on an area",
+      "spec": {
+        "type": "area",
+        "x": "d",
+        "y": "v",
+        "gaps": "zero",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "area",
+        "x": "d",
+        "y": "v",
+        "gaps": "zero",
+        "legend": "auto",
+        "tooltip": true,
+        "xType": "auto",
+        "curve": "linear",
+        "stack": "none"
+      }
+    },
+    {
+      "name": "gaps: bad value",
+      "spec": {
+        "type": "line",
+        "x": "d",
+        "y": "v",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ],
+        "gaps": "skip"
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "bad_enum",
+          "path": "gaps"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "gaps: not on a bar",
+      "spec": {
+        "type": "bar",
+        "x": "k",
+        "y": "v",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ],
+        "gaps": "connect"
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "unknown_field",
+          "path": "gaps"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "trend: loess",
+      "spec": {
+        "type": "scatter",
+        "x": "v",
+        "y": "t",
+        "trend": "loess",
+        "trendBandwidth": 0.5,
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "scatter",
+        "x": "v",
+        "y": "t",
+        "trend": "loess",
+        "trendBandwidth": 0.5,
+        "legend": "auto",
+        "tooltip": true,
+        "xType": "auto"
+      }
+    },
+    {
+      "name": "trend: bandwidth without loess",
+      "spec": {
+        "type": "scatter",
+        "x": "v",
+        "y": "t",
+        "trendBandwidth": 0.5,
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "trend_bandwidth_ignored",
+          "path": "trendBandwidth"
+        }
+      ],
+      "normalized": {
+        "type": "scatter",
+        "x": "v",
+        "y": "t",
+        "trendBandwidth": 0.5,
+        "legend": "auto",
+        "tooltip": true,
+        "trend": "none",
+        "xType": "auto"
+      }
+    },
+    {
+      "name": "trend: bandwidth out of range",
+      "spec": {
+        "type": "scatter",
+        "x": "v",
+        "y": "t",
+        "trend": "loess",
+        "trendBandwidth": 2,
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "out_of_range",
+          "path": "trendBandwidth"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "mark: lollipop",
+      "spec": {
+        "type": "bar",
+        "x": "k",
+        "y": "v",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ],
+        "mark": "lollipop",
+        "labels": true
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "bar",
+        "x": "k",
+        "y": "v",
+        "mark": "lollipop",
+        "labels": true,
+        "legend": "auto",
+        "tooltip": true,
+        "stack": "none",
+        "orientation": "vertical",
+        "sort": "none"
+      }
+    },
+    {
+      "name": "mark: lollipop stacked",
+      "spec": {
+        "type": "bar",
+        "x": "k",
+        "y": [
+          "v",
+          "t"
+        ],
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ],
+        "mark": "lollipop",
+        "stack": "normalize"
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "lollipop_stacked",
+          "path": "mark"
+        }
+      ],
+      "normalized": {
+        "type": "bar",
+        "x": "k",
+        "y": [
+          "v",
+          "t"
+        ],
+        "mark": "lollipop",
+        "stack": "normalize",
+        "legend": "auto",
+        "tooltip": true,
+        "orientation": "vertical",
+        "sort": "none",
+        "labels": false
+      }
+    },
+    {
+      "name": "mark: bad value",
+      "spec": {
+        "type": "bar",
+        "x": "k",
+        "y": "v",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ],
+        "mark": "dot"
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "bad_enum",
+          "path": "mark"
+        }
+      ],
+      "normalized": null
+    },
+    {
       "name": "map: unknown geography name",
       "spec": {
         "type": "choropleth",
@@ -36606,6 +39386,4760 @@
           "severity": "error",
           "code": "empty_after_transform",
           "path": "transform"
+        }
+      ],
+      "normalized": null,
+      "rows": null,
+      "describe": null
+    },
+    {
+      "name": "bin: default maxbins, default names",
+      "spec": {
+        "type": "bar",
+        "x": "region",
+        "y": "revenue",
+        "data": [
+          {
+            "date": "2026-01-05",
+            "region": "APAC",
+            "revenue": 120,
+            "units": 3
+          },
+          {
+            "date": "2026-01-19",
+            "region": "EMEA",
+            "revenue": 80,
+            "units": "2"
+          },
+          {
+            "date": "2026-02-02T10:30:00Z",
+            "region": "APAC",
+            "revenue": 60.5,
+            "units": null
+          },
+          {
+            "date": "2026-02-14",
+            "region": "EMEA",
+            "revenue": null,
+            "units": 5
+          },
+          {
+            "date": "2026-03-01",
+            "region": "LATAM",
+            "revenue": 40,
+            "units": 1
+          },
+          {
+            "date": 1775001600000,
+            "region": "APAC",
+            "revenue": "10",
+            "units": 2
+          }
+        ],
+        "transform": [
+          {
+            "bin": {
+              "field": "revenue"
+            }
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "bar",
+        "x": "region",
+        "y": "revenue",
+        "transform": [
+          {
+            "bin": {
+              "field": "revenue"
+            }
+          }
+        ],
+        "legend": "auto",
+        "tooltip": true,
+        "stack": "none",
+        "orientation": "vertical",
+        "sort": "none",
+        "labels": false
+      },
+      "rows": [
+        {
+          "date": "2026-01-05",
+          "region": "APAC",
+          "revenue": 120,
+          "units": 3,
+          "revenue_start": 120,
+          "revenue_end": 140
+        },
+        {
+          "date": "2026-01-19",
+          "region": "EMEA",
+          "revenue": 80,
+          "units": "2",
+          "revenue_start": 80,
+          "revenue_end": 100
+        },
+        {
+          "date": "2026-02-02T10:30:00Z",
+          "region": "APAC",
+          "revenue": 60.5,
+          "units": null,
+          "revenue_start": 60,
+          "revenue_end": 80
+        },
+        {
+          "date": "2026-02-14",
+          "region": "EMEA",
+          "revenue": null,
+          "units": 5,
+          "revenue_start": null,
+          "revenue_end": null
+        },
+        {
+          "date": "2026-03-01",
+          "region": "LATAM",
+          "revenue": 40,
+          "units": 1,
+          "revenue_start": 40,
+          "revenue_end": 60
+        },
+        {
+          "date": 1775001600000,
+          "region": "APAC",
+          "revenue": "10",
+          "units": 2,
+          "revenue_start": 0,
+          "revenue_end": 20
+        }
+      ],
+      "describe": "Bar chart. 3 categories. Highest: APAC (190.5). Lowest: LATAM (40). Total: 310.5."
+    },
+    {
+      "name": "bin: maxbins is a maximum (the histogram step is made coarser)",
+      "spec": {
+        "type": "bar",
+        "x": "b0",
+        "y": "n",
+        "data": [
+          {
+            "v": 0
+          },
+          {
+            "v": 1
+          },
+          {
+            "v": 2
+          },
+          {
+            "v": 3
+          },
+          {
+            "v": 4
+          },
+          {
+            "v": 5
+          },
+          {
+            "v": 6
+          },
+          {
+            "v": 7
+          },
+          {
+            "v": 8
+          },
+          {
+            "v": 9
+          },
+          {
+            "v": 10
+          },
+          {
+            "v": 11
+          },
+          {
+            "v": 12
+          },
+          {
+            "v": 13
+          }
+        ],
+        "transform": [
+          {
+            "bin": {
+              "field": "v",
+              "maxbins": 4,
+              "as": [
+                "b0",
+                "b1"
+              ]
+            }
+          },
+          {
+            "aggregate": {
+              "groupBy": [
+                "b0",
+                "b1"
+              ],
+              "count": "n"
+            }
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "bar",
+        "x": "b0",
+        "y": "n",
+        "transform": [
+          {
+            "bin": {
+              "field": "v",
+              "maxbins": 4,
+              "as": [
+                "b0",
+                "b1"
+              ]
+            }
+          },
+          {
+            "aggregate": {
+              "groupBy": [
+                "b0",
+                "b1"
+              ],
+              "count": "n"
+            }
+          }
+        ],
+        "legend": "auto",
+        "tooltip": true,
+        "stack": "none",
+        "orientation": "vertical",
+        "sort": "none",
+        "labels": false
+      },
+      "rows": [
+        {
+          "b0": 0,
+          "b1": 5,
+          "n": 5
+        },
+        {
+          "b0": 5,
+          "b1": 10,
+          "n": 5
+        },
+        {
+          "b0": 10,
+          "b1": 15,
+          "n": 4
+        }
+      ],
+      "describe": "Bar chart. 3 categories. Highest: 0 (5). Lowest: 10 (4). Total: 14."
+    },
+    {
+      "name": "bin: a step",
+      "spec": {
+        "type": "bar",
+        "x": "from",
+        "y": "revenue",
+        "data": [
+          {
+            "date": "2026-01-05",
+            "region": "APAC",
+            "revenue": 120,
+            "units": 3
+          },
+          {
+            "date": "2026-01-19",
+            "region": "EMEA",
+            "revenue": 80,
+            "units": "2"
+          },
+          {
+            "date": "2026-02-02T10:30:00Z",
+            "region": "APAC",
+            "revenue": 60.5,
+            "units": null
+          },
+          {
+            "date": "2026-02-14",
+            "region": "EMEA",
+            "revenue": null,
+            "units": 5
+          },
+          {
+            "date": "2026-03-01",
+            "region": "LATAM",
+            "revenue": 40,
+            "units": 1
+          },
+          {
+            "date": 1775001600000,
+            "region": "APAC",
+            "revenue": "10",
+            "units": 2
+          }
+        ],
+        "transform": [
+          {
+            "bin": {
+              "field": "revenue",
+              "step": 25,
+              "as": [
+                "from",
+                "to"
+              ]
+            }
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "bar",
+        "x": "from",
+        "y": "revenue",
+        "transform": [
+          {
+            "bin": {
+              "field": "revenue",
+              "step": 25,
+              "as": [
+                "from",
+                "to"
+              ]
+            }
+          }
+        ],
+        "legend": "auto",
+        "tooltip": true,
+        "stack": "none",
+        "orientation": "vertical",
+        "sort": "none",
+        "labels": false
+      },
+      "rows": [
+        {
+          "date": "2026-01-05",
+          "region": "APAC",
+          "revenue": 120,
+          "units": 3,
+          "from": 100,
+          "to": 125
+        },
+        {
+          "date": "2026-01-19",
+          "region": "EMEA",
+          "revenue": 80,
+          "units": "2",
+          "from": 75,
+          "to": 100
+        },
+        {
+          "date": "2026-02-02T10:30:00Z",
+          "region": "APAC",
+          "revenue": 60.5,
+          "units": null,
+          "from": 50,
+          "to": 75
+        },
+        {
+          "date": "2026-02-14",
+          "region": "EMEA",
+          "revenue": null,
+          "units": 5,
+          "from": null,
+          "to": null
+        },
+        {
+          "date": "2026-03-01",
+          "region": "LATAM",
+          "revenue": 40,
+          "units": 1,
+          "from": 25,
+          "to": 50
+        },
+        {
+          "date": 1775001600000,
+          "region": "APAC",
+          "revenue": "10",
+          "units": 2,
+          "from": 0,
+          "to": 25
+        }
+      ],
+      "describe": "Bar chart. 6 categories. Highest: 100 (120). Lowest:  (0). Total: 310.5."
+    },
+    {
+      "name": "bin: one value",
+      "spec": {
+        "type": "bar",
+        "x": "v_start",
+        "y": "n",
+        "data": [
+          {
+            "v": 3
+          },
+          {
+            "v": 3
+          }
+        ],
+        "transform": [
+          {
+            "bin": {
+              "field": "v"
+            }
+          },
+          {
+            "aggregate": {
+              "groupBy": [
+                "v_start"
+              ],
+              "count": "n"
+            }
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "bar",
+        "x": "v_start",
+        "y": "n",
+        "transform": [
+          {
+            "bin": {
+              "field": "v"
+            }
+          },
+          {
+            "aggregate": {
+              "groupBy": [
+                "v_start"
+              ],
+              "count": "n"
+            }
+          }
+        ],
+        "legend": "auto",
+        "tooltip": true,
+        "stack": "none",
+        "orientation": "vertical",
+        "sort": "none",
+        "labels": false
+      },
+      "rows": [
+        {
+          "v_start": 2.5,
+          "n": 2
+        }
+      ],
+      "describe": "Bar chart. 1 category. Highest: 2.5 (2). Total: 2."
+    },
+    {
+      "name": "bin: decimals",
+      "spec": {
+        "type": "bar",
+        "x": "lo",
+        "y": "n",
+        "data": [
+          {
+            "v": 0.1
+          },
+          {
+            "v": 0.17
+          },
+          {
+            "v": 0.24
+          },
+          {
+            "v": 0.31
+          },
+          {
+            "v": 0.38
+          },
+          {
+            "v": 0.45
+          },
+          {
+            "v": 0.52
+          },
+          {
+            "v": 0.59
+          },
+          {
+            "v": 0.66
+          }
+        ],
+        "transform": [
+          {
+            "bin": {
+              "field": "v",
+              "maxbins": 3,
+              "as": [
+                "lo",
+                "hi"
+              ]
+            }
+          },
+          {
+            "aggregate": {
+              "groupBy": [
+                "lo"
+              ],
+              "count": "n"
+            }
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "bar",
+        "x": "lo",
+        "y": "n",
+        "transform": [
+          {
+            "bin": {
+              "field": "v",
+              "maxbins": 3,
+              "as": [
+                "lo",
+                "hi"
+              ]
+            }
+          },
+          {
+            "aggregate": {
+              "groupBy": [
+                "lo"
+              ],
+              "count": "n"
+            }
+          }
+        ],
+        "legend": "auto",
+        "tooltip": true,
+        "stack": "none",
+        "orientation": "vertical",
+        "sort": "none",
+        "labels": false
+      },
+      "rows": [
+        {
+          "lo": 0,
+          "n": 6
+        },
+        {
+          "lo": 0.5,
+          "n": 3
+        }
+      ],
+      "describe": "Bar chart. 2 categories. Highest: 0 (6). Lowest: 0.5 (3). Total: 9."
+    },
+    {
+      "name": "bin: not numeric",
+      "spec": {
+        "type": "bar",
+        "x": "region",
+        "y": "revenue",
+        "data": [
+          {
+            "date": "2026-01-05",
+            "region": "APAC",
+            "revenue": 120,
+            "units": 3
+          },
+          {
+            "date": "2026-01-19",
+            "region": "EMEA",
+            "revenue": 80,
+            "units": "2"
+          },
+          {
+            "date": "2026-02-02T10:30:00Z",
+            "region": "APAC",
+            "revenue": 60.5,
+            "units": null
+          },
+          {
+            "date": "2026-02-14",
+            "region": "EMEA",
+            "revenue": null,
+            "units": 5
+          },
+          {
+            "date": "2026-03-01",
+            "region": "LATAM",
+            "revenue": 40,
+            "units": 1
+          },
+          {
+            "date": 1775001600000,
+            "region": "APAC",
+            "revenue": "10",
+            "units": 2
+          }
+        ],
+        "transform": [
+          {
+            "bin": {
+              "field": "region"
+            }
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "not_numeric",
+          "path": "transform[0].bin.field"
+        }
+      ],
+      "normalized": null,
+      "rows": null,
+      "describe": null
+    },
+    {
+      "name": "bin: no field",
+      "spec": {
+        "type": "bar",
+        "x": "region",
+        "y": "revenue",
+        "data": [
+          {
+            "date": "2026-01-05",
+            "region": "APAC",
+            "revenue": 120,
+            "units": 3
+          },
+          {
+            "date": "2026-01-19",
+            "region": "EMEA",
+            "revenue": 80,
+            "units": "2"
+          },
+          {
+            "date": "2026-02-02T10:30:00Z",
+            "region": "APAC",
+            "revenue": 60.5,
+            "units": null
+          },
+          {
+            "date": "2026-02-14",
+            "region": "EMEA",
+            "revenue": null,
+            "units": 5
+          },
+          {
+            "date": "2026-03-01",
+            "region": "LATAM",
+            "revenue": 40,
+            "units": 1
+          },
+          {
+            "date": 1775001600000,
+            "region": "APAC",
+            "revenue": "10",
+            "units": 2
+          }
+        ],
+        "transform": [
+          {
+            "bin": {
+              "maxbins": 3
+            }
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "missing_required",
+          "path": "transform[0].bin.field"
+        }
+      ],
+      "normalized": null,
+      "rows": null,
+      "describe": null
+    },
+    {
+      "name": "bin: maxbins too large",
+      "spec": {
+        "type": "bar",
+        "x": "region",
+        "y": "revenue",
+        "data": [
+          {
+            "date": "2026-01-05",
+            "region": "APAC",
+            "revenue": 120,
+            "units": 3
+          },
+          {
+            "date": "2026-01-19",
+            "region": "EMEA",
+            "revenue": 80,
+            "units": "2"
+          },
+          {
+            "date": "2026-02-02T10:30:00Z",
+            "region": "APAC",
+            "revenue": 60.5,
+            "units": null
+          },
+          {
+            "date": "2026-02-14",
+            "region": "EMEA",
+            "revenue": null,
+            "units": 5
+          },
+          {
+            "date": "2026-03-01",
+            "region": "LATAM",
+            "revenue": 40,
+            "units": 1
+          },
+          {
+            "date": 1775001600000,
+            "region": "APAC",
+            "revenue": "10",
+            "units": 2
+          }
+        ],
+        "transform": [
+          {
+            "bin": {
+              "field": "revenue",
+              "maxbins": 201
+            }
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "bad_value",
+          "path": "transform[0].bin.maxbins"
+        }
+      ],
+      "normalized": null,
+      "rows": null,
+      "describe": null
+    },
+    {
+      "name": "bin: maxbins not whole",
+      "spec": {
+        "type": "bar",
+        "x": "region",
+        "y": "revenue",
+        "data": [
+          {
+            "date": "2026-01-05",
+            "region": "APAC",
+            "revenue": 120,
+            "units": 3
+          },
+          {
+            "date": "2026-01-19",
+            "region": "EMEA",
+            "revenue": 80,
+            "units": "2"
+          },
+          {
+            "date": "2026-02-02T10:30:00Z",
+            "region": "APAC",
+            "revenue": 60.5,
+            "units": null
+          },
+          {
+            "date": "2026-02-14",
+            "region": "EMEA",
+            "revenue": null,
+            "units": 5
+          },
+          {
+            "date": "2026-03-01",
+            "region": "LATAM",
+            "revenue": 40,
+            "units": 1
+          },
+          {
+            "date": 1775001600000,
+            "region": "APAC",
+            "revenue": "10",
+            "units": 2
+          }
+        ],
+        "transform": [
+          {
+            "bin": {
+              "field": "revenue",
+              "maxbins": 2.5
+            }
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "bad_value",
+          "path": "transform[0].bin.maxbins"
+        }
+      ],
+      "normalized": null,
+      "rows": null,
+      "describe": null
+    },
+    {
+      "name": "bin: step zero",
+      "spec": {
+        "type": "bar",
+        "x": "region",
+        "y": "revenue",
+        "data": [
+          {
+            "date": "2026-01-05",
+            "region": "APAC",
+            "revenue": 120,
+            "units": 3
+          },
+          {
+            "date": "2026-01-19",
+            "region": "EMEA",
+            "revenue": 80,
+            "units": "2"
+          },
+          {
+            "date": "2026-02-02T10:30:00Z",
+            "region": "APAC",
+            "revenue": 60.5,
+            "units": null
+          },
+          {
+            "date": "2026-02-14",
+            "region": "EMEA",
+            "revenue": null,
+            "units": 5
+          },
+          {
+            "date": "2026-03-01",
+            "region": "LATAM",
+            "revenue": 40,
+            "units": 1
+          },
+          {
+            "date": 1775001600000,
+            "region": "APAC",
+            "revenue": "10",
+            "units": 2
+          }
+        ],
+        "transform": [
+          {
+            "bin": {
+              "field": "revenue",
+              "step": 0
+            }
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "bad_value",
+          "path": "transform[0].bin.step"
+        }
+      ],
+      "normalized": null,
+      "rows": null,
+      "describe": null
+    },
+    {
+      "name": "bin: step too small",
+      "spec": {
+        "type": "bar",
+        "x": "region",
+        "y": "revenue",
+        "data": [
+          {
+            "date": "2026-01-05",
+            "region": "APAC",
+            "revenue": 120,
+            "units": 3
+          },
+          {
+            "date": "2026-01-19",
+            "region": "EMEA",
+            "revenue": 80,
+            "units": "2"
+          },
+          {
+            "date": "2026-02-02T10:30:00Z",
+            "region": "APAC",
+            "revenue": 60.5,
+            "units": null
+          },
+          {
+            "date": "2026-02-14",
+            "region": "EMEA",
+            "revenue": null,
+            "units": 5
+          },
+          {
+            "date": "2026-03-01",
+            "region": "LATAM",
+            "revenue": 40,
+            "units": 1
+          },
+          {
+            "date": 1775001600000,
+            "region": "APAC",
+            "revenue": "10",
+            "units": 2
+          }
+        ],
+        "transform": [
+          {
+            "bin": {
+              "field": "revenue",
+              "step": 0.1
+            }
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "too_many_bins",
+          "path": "transform[0].bin.step"
+        }
+      ],
+      "normalized": null,
+      "rows": null,
+      "describe": null
+    },
+    {
+      "name": "bin: as of one name",
+      "spec": {
+        "type": "bar",
+        "x": "region",
+        "y": "revenue",
+        "data": [
+          {
+            "date": "2026-01-05",
+            "region": "APAC",
+            "revenue": 120,
+            "units": 3
+          },
+          {
+            "date": "2026-01-19",
+            "region": "EMEA",
+            "revenue": 80,
+            "units": "2"
+          },
+          {
+            "date": "2026-02-02T10:30:00Z",
+            "region": "APAC",
+            "revenue": 60.5,
+            "units": null
+          },
+          {
+            "date": "2026-02-14",
+            "region": "EMEA",
+            "revenue": null,
+            "units": 5
+          },
+          {
+            "date": "2026-03-01",
+            "region": "LATAM",
+            "revenue": 40,
+            "units": 1
+          },
+          {
+            "date": 1775001600000,
+            "region": "APAC",
+            "revenue": "10",
+            "units": 2
+          }
+        ],
+        "transform": [
+          {
+            "bin": {
+              "field": "revenue",
+              "as": [
+                "b"
+              ]
+            }
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "bad_type",
+          "path": "transform[0].bin.as"
+        }
+      ],
+      "normalized": null,
+      "rows": null,
+      "describe": null
+    },
+    {
+      "name": "bin: as twice the same",
+      "spec": {
+        "type": "bar",
+        "x": "region",
+        "y": "revenue",
+        "data": [
+          {
+            "date": "2026-01-05",
+            "region": "APAC",
+            "revenue": 120,
+            "units": 3
+          },
+          {
+            "date": "2026-01-19",
+            "region": "EMEA",
+            "revenue": 80,
+            "units": "2"
+          },
+          {
+            "date": "2026-02-02T10:30:00Z",
+            "region": "APAC",
+            "revenue": 60.5,
+            "units": null
+          },
+          {
+            "date": "2026-02-14",
+            "region": "EMEA",
+            "revenue": null,
+            "units": 5
+          },
+          {
+            "date": "2026-03-01",
+            "region": "LATAM",
+            "revenue": 40,
+            "units": 1
+          },
+          {
+            "date": 1775001600000,
+            "region": "APAC",
+            "revenue": "10",
+            "units": 2
+          }
+        ],
+        "transform": [
+          {
+            "bin": {
+              "field": "revenue",
+              "as": [
+                "b",
+                "b"
+              ]
+            }
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "bad_type",
+          "path": "transform[0].bin.as"
+        }
+      ],
+      "normalized": null,
+      "rows": null,
+      "describe": null
+    },
+    {
+      "name": "window: sum per region by date",
+      "spec": {
+        "type": "bar",
+        "x": "date",
+        "y": "units",
+        "data": [
+          {
+            "date": "2026-01-05",
+            "region": "APAC",
+            "revenue": 120,
+            "units": 3
+          },
+          {
+            "date": "2026-01-19",
+            "region": "EMEA",
+            "revenue": 80,
+            "units": "2"
+          },
+          {
+            "date": "2026-02-02T10:30:00Z",
+            "region": "APAC",
+            "revenue": 60.5,
+            "units": null
+          },
+          {
+            "date": "2026-02-14",
+            "region": "EMEA",
+            "revenue": null,
+            "units": 5
+          },
+          {
+            "date": "2026-03-01",
+            "region": "LATAM",
+            "revenue": 40,
+            "units": 1
+          },
+          {
+            "date": 1775001600000,
+            "region": "APAC",
+            "revenue": "10",
+            "units": 2
+          }
+        ],
+        "transform": [
+          {
+            "window": {
+              "op": "sum",
+              "field": "revenue",
+              "as": "w",
+              "groupBy": [
+                "region"
+              ],
+              "sortBy": "date"
+            }
+          }
+        ],
+        "series": "region"
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "bar",
+        "x": "date",
+        "y": "units",
+        "transform": [
+          {
+            "window": {
+              "op": "sum",
+              "field": "revenue",
+              "as": "w",
+              "groupBy": [
+                "region"
+              ],
+              "sortBy": "date"
+            }
+          }
+        ],
+        "series": "region",
+        "legend": "auto",
+        "tooltip": true,
+        "stack": "none",
+        "orientation": "vertical",
+        "sort": "none",
+        "labels": false
+      },
+      "rows": [
+        {
+          "date": "2026-01-05",
+          "region": "APAC",
+          "revenue": 120,
+          "units": 3,
+          "w": 120
+        },
+        {
+          "date": "2026-01-19",
+          "region": "EMEA",
+          "revenue": 80,
+          "units": "2",
+          "w": 80
+        },
+        {
+          "date": "2026-02-02T10:30:00Z",
+          "region": "APAC",
+          "revenue": 60.5,
+          "units": null,
+          "w": 180.5
+        },
+        {
+          "date": "2026-02-14",
+          "region": "EMEA",
+          "revenue": null,
+          "units": 5,
+          "w": 80
+        },
+        {
+          "date": "2026-03-01",
+          "region": "LATAM",
+          "revenue": 40,
+          "units": 1,
+          "w": 40
+        },
+        {
+          "date": 1775001600000,
+          "region": "APAC",
+          "revenue": "10",
+          "units": 2,
+          "w": 190.5
+        }
+      ],
+      "describe": "Bar chart. 6 categories, 3 series (APAC, EMEA, LATAM). Highest: 2026-02-14 (5). Lowest: 2026-02-02T10:30:00Z (0). Total: 13."
+    },
+    {
+      "name": "window: mean per region by date",
+      "spec": {
+        "type": "bar",
+        "x": "date",
+        "y": "units",
+        "data": [
+          {
+            "date": "2026-01-05",
+            "region": "APAC",
+            "revenue": 120,
+            "units": 3
+          },
+          {
+            "date": "2026-01-19",
+            "region": "EMEA",
+            "revenue": 80,
+            "units": "2"
+          },
+          {
+            "date": "2026-02-02T10:30:00Z",
+            "region": "APAC",
+            "revenue": 60.5,
+            "units": null
+          },
+          {
+            "date": "2026-02-14",
+            "region": "EMEA",
+            "revenue": null,
+            "units": 5
+          },
+          {
+            "date": "2026-03-01",
+            "region": "LATAM",
+            "revenue": 40,
+            "units": 1
+          },
+          {
+            "date": 1775001600000,
+            "region": "APAC",
+            "revenue": "10",
+            "units": 2
+          }
+        ],
+        "transform": [
+          {
+            "window": {
+              "op": "mean",
+              "field": "revenue",
+              "as": "w",
+              "groupBy": [
+                "region"
+              ],
+              "sortBy": "date"
+            }
+          }
+        ],
+        "series": "region"
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "bar",
+        "x": "date",
+        "y": "units",
+        "transform": [
+          {
+            "window": {
+              "op": "mean",
+              "field": "revenue",
+              "as": "w",
+              "groupBy": [
+                "region"
+              ],
+              "sortBy": "date"
+            }
+          }
+        ],
+        "series": "region",
+        "legend": "auto",
+        "tooltip": true,
+        "stack": "none",
+        "orientation": "vertical",
+        "sort": "none",
+        "labels": false
+      },
+      "rows": [
+        {
+          "date": "2026-01-05",
+          "region": "APAC",
+          "revenue": 120,
+          "units": 3,
+          "w": 120
+        },
+        {
+          "date": "2026-01-19",
+          "region": "EMEA",
+          "revenue": 80,
+          "units": "2",
+          "w": 80
+        },
+        {
+          "date": "2026-02-02T10:30:00Z",
+          "region": "APAC",
+          "revenue": 60.5,
+          "units": null,
+          "w": 90.25
+        },
+        {
+          "date": "2026-02-14",
+          "region": "EMEA",
+          "revenue": null,
+          "units": 5,
+          "w": 80
+        },
+        {
+          "date": "2026-03-01",
+          "region": "LATAM",
+          "revenue": 40,
+          "units": 1,
+          "w": 40
+        },
+        {
+          "date": 1775001600000,
+          "region": "APAC",
+          "revenue": "10",
+          "units": 2,
+          "w": 63.5
+        }
+      ],
+      "describe": "Bar chart. 6 categories, 3 series (APAC, EMEA, LATAM). Highest: 2026-02-14 (5). Lowest: 2026-02-02T10:30:00Z (0). Total: 13."
+    },
+    {
+      "name": "window: count per region by date",
+      "spec": {
+        "type": "bar",
+        "x": "date",
+        "y": "units",
+        "data": [
+          {
+            "date": "2026-01-05",
+            "region": "APAC",
+            "revenue": 120,
+            "units": 3
+          },
+          {
+            "date": "2026-01-19",
+            "region": "EMEA",
+            "revenue": 80,
+            "units": "2"
+          },
+          {
+            "date": "2026-02-02T10:30:00Z",
+            "region": "APAC",
+            "revenue": 60.5,
+            "units": null
+          },
+          {
+            "date": "2026-02-14",
+            "region": "EMEA",
+            "revenue": null,
+            "units": 5
+          },
+          {
+            "date": "2026-03-01",
+            "region": "LATAM",
+            "revenue": 40,
+            "units": 1
+          },
+          {
+            "date": 1775001600000,
+            "region": "APAC",
+            "revenue": "10",
+            "units": 2
+          }
+        ],
+        "transform": [
+          {
+            "window": {
+              "op": "count",
+              "field": "revenue",
+              "as": "w",
+              "groupBy": [
+                "region"
+              ],
+              "sortBy": "date"
+            }
+          }
+        ],
+        "series": "region"
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "bar",
+        "x": "date",
+        "y": "units",
+        "transform": [
+          {
+            "window": {
+              "op": "count",
+              "field": "revenue",
+              "as": "w",
+              "groupBy": [
+                "region"
+              ],
+              "sortBy": "date"
+            }
+          }
+        ],
+        "series": "region",
+        "legend": "auto",
+        "tooltip": true,
+        "stack": "none",
+        "orientation": "vertical",
+        "sort": "none",
+        "labels": false
+      },
+      "rows": [
+        {
+          "date": "2026-01-05",
+          "region": "APAC",
+          "revenue": 120,
+          "units": 3,
+          "w": 1
+        },
+        {
+          "date": "2026-01-19",
+          "region": "EMEA",
+          "revenue": 80,
+          "units": "2",
+          "w": 1
+        },
+        {
+          "date": "2026-02-02T10:30:00Z",
+          "region": "APAC",
+          "revenue": 60.5,
+          "units": null,
+          "w": 2
+        },
+        {
+          "date": "2026-02-14",
+          "region": "EMEA",
+          "revenue": null,
+          "units": 5,
+          "w": 1
+        },
+        {
+          "date": "2026-03-01",
+          "region": "LATAM",
+          "revenue": 40,
+          "units": 1,
+          "w": 1
+        },
+        {
+          "date": 1775001600000,
+          "region": "APAC",
+          "revenue": "10",
+          "units": 2,
+          "w": 3
+        }
+      ],
+      "describe": "Bar chart. 6 categories, 3 series (APAC, EMEA, LATAM). Highest: 2026-02-14 (5). Lowest: 2026-02-02T10:30:00Z (0). Total: 13."
+    },
+    {
+      "name": "window: rank per region by date",
+      "spec": {
+        "type": "bar",
+        "x": "date",
+        "y": "units",
+        "data": [
+          {
+            "date": "2026-01-05",
+            "region": "APAC",
+            "revenue": 120,
+            "units": 3
+          },
+          {
+            "date": "2026-01-19",
+            "region": "EMEA",
+            "revenue": 80,
+            "units": "2"
+          },
+          {
+            "date": "2026-02-02T10:30:00Z",
+            "region": "APAC",
+            "revenue": 60.5,
+            "units": null
+          },
+          {
+            "date": "2026-02-14",
+            "region": "EMEA",
+            "revenue": null,
+            "units": 5
+          },
+          {
+            "date": "2026-03-01",
+            "region": "LATAM",
+            "revenue": 40,
+            "units": 1
+          },
+          {
+            "date": 1775001600000,
+            "region": "APAC",
+            "revenue": "10",
+            "units": 2
+          }
+        ],
+        "transform": [
+          {
+            "window": {
+              "op": "rank",
+              "field": "revenue",
+              "as": "w",
+              "groupBy": [
+                "region"
+              ],
+              "sortBy": "date"
+            }
+          }
+        ],
+        "series": "region"
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "bar",
+        "x": "date",
+        "y": "units",
+        "transform": [
+          {
+            "window": {
+              "op": "rank",
+              "field": "revenue",
+              "as": "w",
+              "groupBy": [
+                "region"
+              ],
+              "sortBy": "date"
+            }
+          }
+        ],
+        "series": "region",
+        "legend": "auto",
+        "tooltip": true,
+        "stack": "none",
+        "orientation": "vertical",
+        "sort": "none",
+        "labels": false
+      },
+      "rows": [
+        {
+          "date": "2026-01-05",
+          "region": "APAC",
+          "revenue": 120,
+          "units": 3,
+          "w": 1
+        },
+        {
+          "date": "2026-01-19",
+          "region": "EMEA",
+          "revenue": 80,
+          "units": "2",
+          "w": 1
+        },
+        {
+          "date": "2026-02-02T10:30:00Z",
+          "region": "APAC",
+          "revenue": 60.5,
+          "units": null,
+          "w": 2
+        },
+        {
+          "date": "2026-02-14",
+          "region": "EMEA",
+          "revenue": null,
+          "units": 5,
+          "w": 2
+        },
+        {
+          "date": "2026-03-01",
+          "region": "LATAM",
+          "revenue": 40,
+          "units": 1,
+          "w": 1
+        },
+        {
+          "date": 1775001600000,
+          "region": "APAC",
+          "revenue": "10",
+          "units": 2,
+          "w": 3
+        }
+      ],
+      "describe": "Bar chart. 6 categories, 3 series (APAC, EMEA, LATAM). Highest: 2026-02-14 (5). Lowest: 2026-02-02T10:30:00Z (0). Total: 13."
+    },
+    {
+      "name": "window: pctChange per region by date",
+      "spec": {
+        "type": "bar",
+        "x": "date",
+        "y": "units",
+        "data": [
+          {
+            "date": "2026-01-05",
+            "region": "APAC",
+            "revenue": 120,
+            "units": 3
+          },
+          {
+            "date": "2026-01-19",
+            "region": "EMEA",
+            "revenue": 80,
+            "units": "2"
+          },
+          {
+            "date": "2026-02-02T10:30:00Z",
+            "region": "APAC",
+            "revenue": 60.5,
+            "units": null
+          },
+          {
+            "date": "2026-02-14",
+            "region": "EMEA",
+            "revenue": null,
+            "units": 5
+          },
+          {
+            "date": "2026-03-01",
+            "region": "LATAM",
+            "revenue": 40,
+            "units": 1
+          },
+          {
+            "date": 1775001600000,
+            "region": "APAC",
+            "revenue": "10",
+            "units": 2
+          }
+        ],
+        "transform": [
+          {
+            "window": {
+              "op": "pctChange",
+              "field": "revenue",
+              "as": "w",
+              "groupBy": [
+                "region"
+              ],
+              "sortBy": "date"
+            }
+          }
+        ],
+        "series": "region"
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "bar",
+        "x": "date",
+        "y": "units",
+        "transform": [
+          {
+            "window": {
+              "op": "pctChange",
+              "field": "revenue",
+              "as": "w",
+              "groupBy": [
+                "region"
+              ],
+              "sortBy": "date"
+            }
+          }
+        ],
+        "series": "region",
+        "legend": "auto",
+        "tooltip": true,
+        "stack": "none",
+        "orientation": "vertical",
+        "sort": "none",
+        "labels": false
+      },
+      "rows": [
+        {
+          "date": "2026-01-05",
+          "region": "APAC",
+          "revenue": 120,
+          "units": 3,
+          "w": null
+        },
+        {
+          "date": "2026-01-19",
+          "region": "EMEA",
+          "revenue": 80,
+          "units": "2",
+          "w": null
+        },
+        {
+          "date": "2026-02-02T10:30:00Z",
+          "region": "APAC",
+          "revenue": 60.5,
+          "units": null,
+          "w": -0.495833333
+        },
+        {
+          "date": "2026-02-14",
+          "region": "EMEA",
+          "revenue": null,
+          "units": 5,
+          "w": null
+        },
+        {
+          "date": "2026-03-01",
+          "region": "LATAM",
+          "revenue": 40,
+          "units": 1,
+          "w": null
+        },
+        {
+          "date": 1775001600000,
+          "region": "APAC",
+          "revenue": "10",
+          "units": 2,
+          "w": -0.834710744
+        }
+      ],
+      "describe": "Bar chart. 6 categories, 3 series (APAC, EMEA, LATAM). Highest: 2026-02-14 (5). Lowest: 2026-02-02T10:30:00Z (0). Total: 13."
+    },
+    {
+      "name": "window: lag per region by date",
+      "spec": {
+        "type": "bar",
+        "x": "date",
+        "y": "units",
+        "data": [
+          {
+            "date": "2026-01-05",
+            "region": "APAC",
+            "revenue": 120,
+            "units": 3
+          },
+          {
+            "date": "2026-01-19",
+            "region": "EMEA",
+            "revenue": 80,
+            "units": "2"
+          },
+          {
+            "date": "2026-02-02T10:30:00Z",
+            "region": "APAC",
+            "revenue": 60.5,
+            "units": null
+          },
+          {
+            "date": "2026-02-14",
+            "region": "EMEA",
+            "revenue": null,
+            "units": 5
+          },
+          {
+            "date": "2026-03-01",
+            "region": "LATAM",
+            "revenue": 40,
+            "units": 1
+          },
+          {
+            "date": 1775001600000,
+            "region": "APAC",
+            "revenue": "10",
+            "units": 2
+          }
+        ],
+        "transform": [
+          {
+            "window": {
+              "op": "lag",
+              "field": "revenue",
+              "as": "w",
+              "groupBy": [
+                "region"
+              ],
+              "sortBy": "date"
+            }
+          }
+        ],
+        "series": "region"
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "bar",
+        "x": "date",
+        "y": "units",
+        "transform": [
+          {
+            "window": {
+              "op": "lag",
+              "field": "revenue",
+              "as": "w",
+              "groupBy": [
+                "region"
+              ],
+              "sortBy": "date"
+            }
+          }
+        ],
+        "series": "region",
+        "legend": "auto",
+        "tooltip": true,
+        "stack": "none",
+        "orientation": "vertical",
+        "sort": "none",
+        "labels": false
+      },
+      "rows": [
+        {
+          "date": "2026-01-05",
+          "region": "APAC",
+          "revenue": 120,
+          "units": 3,
+          "w": null
+        },
+        {
+          "date": "2026-01-19",
+          "region": "EMEA",
+          "revenue": 80,
+          "units": "2",
+          "w": null
+        },
+        {
+          "date": "2026-02-02T10:30:00Z",
+          "region": "APAC",
+          "revenue": 60.5,
+          "units": null,
+          "w": 120
+        },
+        {
+          "date": "2026-02-14",
+          "region": "EMEA",
+          "revenue": null,
+          "units": 5,
+          "w": 80
+        },
+        {
+          "date": "2026-03-01",
+          "region": "LATAM",
+          "revenue": 40,
+          "units": 1,
+          "w": null
+        },
+        {
+          "date": 1775001600000,
+          "region": "APAC",
+          "revenue": "10",
+          "units": 2,
+          "w": 60.5
+        }
+      ],
+      "describe": "Bar chart. 6 categories, 3 series (APAC, EMEA, LATAM). Highest: 2026-02-14 (5). Lowest: 2026-02-02T10:30:00Z (0). Total: 13."
+    },
+    {
+      "name": "window: lead per region by date",
+      "spec": {
+        "type": "bar",
+        "x": "date",
+        "y": "units",
+        "data": [
+          {
+            "date": "2026-01-05",
+            "region": "APAC",
+            "revenue": 120,
+            "units": 3
+          },
+          {
+            "date": "2026-01-19",
+            "region": "EMEA",
+            "revenue": 80,
+            "units": "2"
+          },
+          {
+            "date": "2026-02-02T10:30:00Z",
+            "region": "APAC",
+            "revenue": 60.5,
+            "units": null
+          },
+          {
+            "date": "2026-02-14",
+            "region": "EMEA",
+            "revenue": null,
+            "units": 5
+          },
+          {
+            "date": "2026-03-01",
+            "region": "LATAM",
+            "revenue": 40,
+            "units": 1
+          },
+          {
+            "date": 1775001600000,
+            "region": "APAC",
+            "revenue": "10",
+            "units": 2
+          }
+        ],
+        "transform": [
+          {
+            "window": {
+              "op": "lead",
+              "field": "revenue",
+              "as": "w",
+              "groupBy": [
+                "region"
+              ],
+              "sortBy": "date"
+            }
+          }
+        ],
+        "series": "region"
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "bar",
+        "x": "date",
+        "y": "units",
+        "transform": [
+          {
+            "window": {
+              "op": "lead",
+              "field": "revenue",
+              "as": "w",
+              "groupBy": [
+                "region"
+              ],
+              "sortBy": "date"
+            }
+          }
+        ],
+        "series": "region",
+        "legend": "auto",
+        "tooltip": true,
+        "stack": "none",
+        "orientation": "vertical",
+        "sort": "none",
+        "labels": false
+      },
+      "rows": [
+        {
+          "date": "2026-01-05",
+          "region": "APAC",
+          "revenue": 120,
+          "units": 3,
+          "w": 60.5
+        },
+        {
+          "date": "2026-01-19",
+          "region": "EMEA",
+          "revenue": 80,
+          "units": "2",
+          "w": null
+        },
+        {
+          "date": "2026-02-02T10:30:00Z",
+          "region": "APAC",
+          "revenue": 60.5,
+          "units": null,
+          "w": "10"
+        },
+        {
+          "date": "2026-02-14",
+          "region": "EMEA",
+          "revenue": null,
+          "units": 5,
+          "w": null
+        },
+        {
+          "date": "2026-03-01",
+          "region": "LATAM",
+          "revenue": 40,
+          "units": 1,
+          "w": null
+        },
+        {
+          "date": 1775001600000,
+          "region": "APAC",
+          "revenue": "10",
+          "units": 2,
+          "w": null
+        }
+      ],
+      "describe": "Bar chart. 6 categories, 3 series (APAC, EMEA, LATAM). Highest: 2026-02-14 (5). Lowest: 2026-02-02T10:30:00Z (0). Total: 13."
+    },
+    {
+      "name": "window: movingMean per region by date",
+      "spec": {
+        "type": "bar",
+        "x": "date",
+        "y": "units",
+        "data": [
+          {
+            "date": "2026-01-05",
+            "region": "APAC",
+            "revenue": 120,
+            "units": 3
+          },
+          {
+            "date": "2026-01-19",
+            "region": "EMEA",
+            "revenue": 80,
+            "units": "2"
+          },
+          {
+            "date": "2026-02-02T10:30:00Z",
+            "region": "APAC",
+            "revenue": 60.5,
+            "units": null
+          },
+          {
+            "date": "2026-02-14",
+            "region": "EMEA",
+            "revenue": null,
+            "units": 5
+          },
+          {
+            "date": "2026-03-01",
+            "region": "LATAM",
+            "revenue": 40,
+            "units": 1
+          },
+          {
+            "date": 1775001600000,
+            "region": "APAC",
+            "revenue": "10",
+            "units": 2
+          }
+        ],
+        "transform": [
+          {
+            "window": {
+              "op": "movingMean",
+              "field": "revenue",
+              "as": "w",
+              "groupBy": [
+                "region"
+              ],
+              "sortBy": "date"
+            }
+          }
+        ],
+        "series": "region"
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "bar",
+        "x": "date",
+        "y": "units",
+        "transform": [
+          {
+            "window": {
+              "op": "movingMean",
+              "field": "revenue",
+              "as": "w",
+              "groupBy": [
+                "region"
+              ],
+              "sortBy": "date"
+            }
+          }
+        ],
+        "series": "region",
+        "legend": "auto",
+        "tooltip": true,
+        "stack": "none",
+        "orientation": "vertical",
+        "sort": "none",
+        "labels": false
+      },
+      "rows": [
+        {
+          "date": "2026-01-05",
+          "region": "APAC",
+          "revenue": 120,
+          "units": 3,
+          "w": 120
+        },
+        {
+          "date": "2026-01-19",
+          "region": "EMEA",
+          "revenue": 80,
+          "units": "2",
+          "w": 80
+        },
+        {
+          "date": "2026-02-02T10:30:00Z",
+          "region": "APAC",
+          "revenue": 60.5,
+          "units": null,
+          "w": 90.25
+        },
+        {
+          "date": "2026-02-14",
+          "region": "EMEA",
+          "revenue": null,
+          "units": 5,
+          "w": 80
+        },
+        {
+          "date": "2026-03-01",
+          "region": "LATAM",
+          "revenue": 40,
+          "units": 1,
+          "w": 40
+        },
+        {
+          "date": 1775001600000,
+          "region": "APAC",
+          "revenue": "10",
+          "units": 2,
+          "w": 63.5
+        }
+      ],
+      "describe": "Bar chart. 6 categories, 3 series (APAC, EMEA, LATAM). Highest: 2026-02-14 (5). Lowest: 2026-02-02T10:30:00Z (0). Total: 13."
+    },
+    {
+      "name": "window: sum descending, no groups",
+      "spec": {
+        "type": "bar",
+        "x": "region",
+        "y": "w",
+        "data": [
+          {
+            "date": "2026-01-05",
+            "region": "APAC",
+            "revenue": 120,
+            "units": 3
+          },
+          {
+            "date": "2026-01-19",
+            "region": "EMEA",
+            "revenue": 80,
+            "units": "2"
+          },
+          {
+            "date": "2026-02-02T10:30:00Z",
+            "region": "APAC",
+            "revenue": 60.5,
+            "units": null
+          },
+          {
+            "date": "2026-02-14",
+            "region": "EMEA",
+            "revenue": null,
+            "units": 5
+          },
+          {
+            "date": "2026-03-01",
+            "region": "LATAM",
+            "revenue": 40,
+            "units": 1
+          },
+          {
+            "date": 1775001600000,
+            "region": "APAC",
+            "revenue": "10",
+            "units": 2
+          }
+        ],
+        "transform": [
+          {
+            "window": {
+              "op": "sum",
+              "field": "units",
+              "as": "w",
+              "sortBy": "revenue",
+              "order": "desc"
+            }
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "bar",
+        "x": "region",
+        "y": "w",
+        "transform": [
+          {
+            "window": {
+              "op": "sum",
+              "field": "units",
+              "as": "w",
+              "sortBy": "revenue",
+              "order": "desc"
+            }
+          }
+        ],
+        "legend": "auto",
+        "tooltip": true,
+        "stack": "none",
+        "orientation": "vertical",
+        "sort": "none",
+        "labels": false
+      },
+      "rows": [
+        {
+          "date": "2026-01-05",
+          "region": "APAC",
+          "revenue": 120,
+          "units": 3,
+          "w": 3
+        },
+        {
+          "date": "2026-01-19",
+          "region": "EMEA",
+          "revenue": 80,
+          "units": "2",
+          "w": 5
+        },
+        {
+          "date": "2026-02-02T10:30:00Z",
+          "region": "APAC",
+          "revenue": 60.5,
+          "units": null,
+          "w": 5
+        },
+        {
+          "date": "2026-02-14",
+          "region": "EMEA",
+          "revenue": null,
+          "units": 5,
+          "w": 13
+        },
+        {
+          "date": "2026-03-01",
+          "region": "LATAM",
+          "revenue": 40,
+          "units": 1,
+          "w": 6
+        },
+        {
+          "date": 1775001600000,
+          "region": "APAC",
+          "revenue": "10",
+          "units": 2,
+          "w": 8
+        }
+      ],
+      "describe": "Bar chart. 3 categories. Highest: EMEA (18). Lowest: LATAM (6). Total: 40."
+    },
+    {
+      "name": "window: rank without sortBy ranks the field, ties share",
+      "spec": {
+        "type": "bar",
+        "x": "k",
+        "y": "v",
+        "data": [
+          {
+            "k": "b",
+            "v": 10
+          },
+          {
+            "k": "a",
+            "v": "9"
+          },
+          {
+            "k": null,
+            "v": null
+          },
+          {
+            "k": "B",
+            "v": "x"
+          },
+          {
+            "k": "😀",
+            "v": "2026-01-01"
+          },
+          {
+            "k": "～",
+            "v": -1
+          },
+          {
+            "v": 2.5
+          },
+          {
+            "k": "a",
+            "v": 10
+          },
+          {
+            "k": "",
+            "v": ""
+          },
+          {
+            "k": 7,
+            "v": true
+          }
+        ],
+        "transform": [
+          {
+            "window": {
+              "op": "rank",
+              "field": "v",
+              "as": "r",
+              "order": "desc"
+            }
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "some_not_numeric",
+          "path": "y"
+        }
+      ],
+      "normalized": {
+        "type": "bar",
+        "x": "k",
+        "y": "v",
+        "transform": [
+          {
+            "window": {
+              "op": "rank",
+              "field": "v",
+              "as": "r",
+              "order": "desc"
+            }
+          }
+        ],
+        "legend": "auto",
+        "tooltip": true,
+        "stack": "none",
+        "orientation": "vertical",
+        "sort": "none",
+        "labels": false
+      },
+      "rows": [
+        {
+          "k": "b",
+          "v": 10,
+          "r": 5
+        },
+        {
+          "k": "a",
+          "v": "9",
+          "r": 7
+        },
+        {
+          "k": null,
+          "v": null,
+          "r": null
+        },
+        {
+          "k": "B",
+          "v": "x",
+          "r": 1
+        },
+        {
+          "k": "😀",
+          "v": "2026-01-01",
+          "r": 4
+        },
+        {
+          "k": "～",
+          "v": -1,
+          "r": 9
+        },
+        {
+          "v": 2.5,
+          "r": 8
+        },
+        {
+          "k": "a",
+          "v": 10,
+          "r": 5
+        },
+        {
+          "k": "",
+          "v": "",
+          "r": 3
+        },
+        {
+          "k": 7,
+          "v": true,
+          "r": 2
+        }
+      ],
+      "describe": "Bar chart. 7 categories. Highest: a (19). Lowest: ～ (-1). Total: 30.5."
+    },
+    {
+      "name": "window: rank of text",
+      "spec": {
+        "type": "bar",
+        "x": "k",
+        "y": "r",
+        "data": [
+          {
+            "k": "b",
+            "v": 10
+          },
+          {
+            "k": "a",
+            "v": "9"
+          },
+          {
+            "k": null,
+            "v": null
+          },
+          {
+            "k": "B",
+            "v": "x"
+          },
+          {
+            "k": "😀",
+            "v": "2026-01-01"
+          },
+          {
+            "k": "～",
+            "v": -1
+          },
+          {
+            "v": 2.5
+          },
+          {
+            "k": "a",
+            "v": 10
+          },
+          {
+            "k": "",
+            "v": ""
+          },
+          {
+            "k": 7,
+            "v": true
+          }
+        ],
+        "transform": [
+          {
+            "window": {
+              "op": "rank",
+              "field": "k",
+              "as": "r"
+            }
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "bar",
+        "x": "k",
+        "y": "r",
+        "transform": [
+          {
+            "window": {
+              "op": "rank",
+              "field": "k",
+              "as": "r"
+            }
+          }
+        ],
+        "legend": "auto",
+        "tooltip": true,
+        "stack": "none",
+        "orientation": "vertical",
+        "sort": "none",
+        "labels": false
+      },
+      "rows": [
+        {
+          "k": "b",
+          "v": 10,
+          "r": 6
+        },
+        {
+          "k": "a",
+          "v": "9",
+          "r": 4
+        },
+        {
+          "k": null,
+          "v": null,
+          "r": null
+        },
+        {
+          "k": "B",
+          "v": "x",
+          "r": 3
+        },
+        {
+          "k": "😀",
+          "v": "2026-01-01",
+          "r": 7
+        },
+        {
+          "k": "～",
+          "v": -1,
+          "r": 8
+        },
+        {
+          "v": 2.5,
+          "r": null
+        },
+        {
+          "k": "a",
+          "v": 10,
+          "r": 4
+        },
+        {
+          "k": "",
+          "v": "",
+          "r": 2
+        },
+        {
+          "k": 7,
+          "v": true,
+          "r": 1
+        }
+      ],
+      "describe": "Bar chart. 7 categories. Highest: a (8). Lowest: 7 (1). Total: 35."
+    },
+    {
+      "name": "window: movingMean over 2 rows",
+      "spec": {
+        "type": "bar",
+        "x": "region",
+        "y": "m",
+        "data": [
+          {
+            "date": "2026-01-05",
+            "region": "APAC",
+            "revenue": 120,
+            "units": 3
+          },
+          {
+            "date": "2026-01-19",
+            "region": "EMEA",
+            "revenue": 80,
+            "units": "2"
+          },
+          {
+            "date": "2026-02-02T10:30:00Z",
+            "region": "APAC",
+            "revenue": 60.5,
+            "units": null
+          },
+          {
+            "date": "2026-02-14",
+            "region": "EMEA",
+            "revenue": null,
+            "units": 5
+          },
+          {
+            "date": "2026-03-01",
+            "region": "LATAM",
+            "revenue": 40,
+            "units": 1
+          },
+          {
+            "date": 1775001600000,
+            "region": "APAC",
+            "revenue": "10",
+            "units": 2
+          }
+        ],
+        "transform": [
+          {
+            "window": {
+              "op": "movingMean",
+              "field": "revenue",
+              "as": "m",
+              "sortBy": "date",
+              "frame": 2
+            }
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "bar",
+        "x": "region",
+        "y": "m",
+        "transform": [
+          {
+            "window": {
+              "op": "movingMean",
+              "field": "revenue",
+              "as": "m",
+              "sortBy": "date",
+              "frame": 2
+            }
+          }
+        ],
+        "legend": "auto",
+        "tooltip": true,
+        "stack": "none",
+        "orientation": "vertical",
+        "sort": "none",
+        "labels": false
+      },
+      "rows": [
+        {
+          "date": "2026-01-05",
+          "region": "APAC",
+          "revenue": 120,
+          "units": 3,
+          "m": 120
+        },
+        {
+          "date": "2026-01-19",
+          "region": "EMEA",
+          "revenue": 80,
+          "units": "2",
+          "m": 100
+        },
+        {
+          "date": "2026-02-02T10:30:00Z",
+          "region": "APAC",
+          "revenue": 60.5,
+          "units": null,
+          "m": 70.25
+        },
+        {
+          "date": "2026-02-14",
+          "region": "EMEA",
+          "revenue": null,
+          "units": 5,
+          "m": 60.5
+        },
+        {
+          "date": "2026-03-01",
+          "region": "LATAM",
+          "revenue": 40,
+          "units": 1,
+          "m": 40
+        },
+        {
+          "date": 1775001600000,
+          "region": "APAC",
+          "revenue": "10",
+          "units": 2,
+          "m": 25
+        }
+      ],
+      "describe": "Bar chart. 3 categories. Highest: APAC (215.3). Lowest: LATAM (40). Total: 415.8."
+    },
+    {
+      "name": "window: data order without sortBy",
+      "spec": {
+        "type": "bar",
+        "x": "k",
+        "y": "v",
+        "data": [
+          {
+            "k": "b",
+            "v": 10
+          },
+          {
+            "k": "a",
+            "v": "9"
+          },
+          {
+            "k": null,
+            "v": null
+          },
+          {
+            "k": "B",
+            "v": "x"
+          },
+          {
+            "k": "😀",
+            "v": "2026-01-01"
+          },
+          {
+            "k": "～",
+            "v": -1
+          },
+          {
+            "v": 2.5
+          },
+          {
+            "k": "a",
+            "v": 10
+          },
+          {
+            "k": "",
+            "v": ""
+          },
+          {
+            "k": 7,
+            "v": true
+          }
+        ],
+        "transform": [
+          {
+            "window": {
+              "op": "lag",
+              "field": "k",
+              "as": "prev"
+            }
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "some_not_numeric",
+          "path": "y"
+        }
+      ],
+      "normalized": {
+        "type": "bar",
+        "x": "k",
+        "y": "v",
+        "transform": [
+          {
+            "window": {
+              "op": "lag",
+              "field": "k",
+              "as": "prev"
+            }
+          }
+        ],
+        "legend": "auto",
+        "tooltip": true,
+        "stack": "none",
+        "orientation": "vertical",
+        "sort": "none",
+        "labels": false
+      },
+      "rows": [
+        {
+          "k": "b",
+          "v": 10,
+          "prev": null
+        },
+        {
+          "k": "a",
+          "v": "9",
+          "prev": "b"
+        },
+        {
+          "k": null,
+          "v": null,
+          "prev": "a"
+        },
+        {
+          "k": "B",
+          "v": "x",
+          "prev": null
+        },
+        {
+          "k": "😀",
+          "v": "2026-01-01",
+          "prev": "B"
+        },
+        {
+          "k": "～",
+          "v": -1,
+          "prev": "😀"
+        },
+        {
+          "v": 2.5,
+          "prev": "～"
+        },
+        {
+          "k": "a",
+          "v": 10,
+          "prev": null
+        },
+        {
+          "k": "",
+          "v": "",
+          "prev": "a"
+        },
+        {
+          "k": 7,
+          "v": true,
+          "prev": ""
+        }
+      ],
+      "describe": "Bar chart. 7 categories. Highest: a (19). Lowest: ～ (-1). Total: 30.5."
+    },
+    {
+      "name": "window: frame ignored",
+      "spec": {
+        "type": "bar",
+        "x": "region",
+        "y": "revenue",
+        "data": [
+          {
+            "date": "2026-01-05",
+            "region": "APAC",
+            "revenue": 120,
+            "units": 3
+          },
+          {
+            "date": "2026-01-19",
+            "region": "EMEA",
+            "revenue": 80,
+            "units": "2"
+          },
+          {
+            "date": "2026-02-02T10:30:00Z",
+            "region": "APAC",
+            "revenue": 60.5,
+            "units": null
+          },
+          {
+            "date": "2026-02-14",
+            "region": "EMEA",
+            "revenue": null,
+            "units": 5
+          },
+          {
+            "date": "2026-03-01",
+            "region": "LATAM",
+            "revenue": 40,
+            "units": 1
+          },
+          {
+            "date": 1775001600000,
+            "region": "APAC",
+            "revenue": "10",
+            "units": 2
+          }
+        ],
+        "transform": [
+          {
+            "window": {
+              "op": "sum",
+              "field": "revenue",
+              "as": "w",
+              "frame": 4
+            }
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "frame_ignored",
+          "path": "transform[0].window.frame"
+        }
+      ],
+      "normalized": {
+        "type": "bar",
+        "x": "region",
+        "y": "revenue",
+        "transform": [
+          {
+            "window": {
+              "op": "sum",
+              "field": "revenue",
+              "as": "w",
+              "frame": 4
+            }
+          }
+        ],
+        "legend": "auto",
+        "tooltip": true,
+        "stack": "none",
+        "orientation": "vertical",
+        "sort": "none",
+        "labels": false
+      },
+      "rows": [
+        {
+          "date": "2026-01-05",
+          "region": "APAC",
+          "revenue": 120,
+          "units": 3,
+          "w": 120
+        },
+        {
+          "date": "2026-01-19",
+          "region": "EMEA",
+          "revenue": 80,
+          "units": "2",
+          "w": 200
+        },
+        {
+          "date": "2026-02-02T10:30:00Z",
+          "region": "APAC",
+          "revenue": 60.5,
+          "units": null,
+          "w": 260.5
+        },
+        {
+          "date": "2026-02-14",
+          "region": "EMEA",
+          "revenue": null,
+          "units": 5,
+          "w": 260.5
+        },
+        {
+          "date": "2026-03-01",
+          "region": "LATAM",
+          "revenue": 40,
+          "units": 1,
+          "w": 300.5
+        },
+        {
+          "date": 1775001600000,
+          "region": "APAC",
+          "revenue": "10",
+          "units": 2,
+          "w": 310.5
+        }
+      ],
+      "describe": "Bar chart. 3 categories. Highest: APAC (190.5). Lowest: LATAM (40). Total: 310.5."
+    },
+    {
+      "name": "window: order without sortBy",
+      "spec": {
+        "type": "bar",
+        "x": "region",
+        "y": "revenue",
+        "data": [
+          {
+            "date": "2026-01-05",
+            "region": "APAC",
+            "revenue": 120,
+            "units": 3
+          },
+          {
+            "date": "2026-01-19",
+            "region": "EMEA",
+            "revenue": 80,
+            "units": "2"
+          },
+          {
+            "date": "2026-02-02T10:30:00Z",
+            "region": "APAC",
+            "revenue": 60.5,
+            "units": null
+          },
+          {
+            "date": "2026-02-14",
+            "region": "EMEA",
+            "revenue": null,
+            "units": 5
+          },
+          {
+            "date": "2026-03-01",
+            "region": "LATAM",
+            "revenue": 40,
+            "units": 1
+          },
+          {
+            "date": 1775001600000,
+            "region": "APAC",
+            "revenue": "10",
+            "units": 2
+          }
+        ],
+        "transform": [
+          {
+            "window": {
+              "op": "sum",
+              "field": "revenue",
+              "as": "w",
+              "order": "desc"
+            }
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "order_ignored",
+          "path": "transform[0].window.order"
+        }
+      ],
+      "normalized": {
+        "type": "bar",
+        "x": "region",
+        "y": "revenue",
+        "transform": [
+          {
+            "window": {
+              "op": "sum",
+              "field": "revenue",
+              "as": "w",
+              "order": "desc"
+            }
+          }
+        ],
+        "legend": "auto",
+        "tooltip": true,
+        "stack": "none",
+        "orientation": "vertical",
+        "sort": "none",
+        "labels": false
+      },
+      "rows": [
+        {
+          "date": "2026-01-05",
+          "region": "APAC",
+          "revenue": 120,
+          "units": 3,
+          "w": 120
+        },
+        {
+          "date": "2026-01-19",
+          "region": "EMEA",
+          "revenue": 80,
+          "units": "2",
+          "w": 200
+        },
+        {
+          "date": "2026-02-02T10:30:00Z",
+          "region": "APAC",
+          "revenue": 60.5,
+          "units": null,
+          "w": 260.5
+        },
+        {
+          "date": "2026-02-14",
+          "region": "EMEA",
+          "revenue": null,
+          "units": 5,
+          "w": 260.5
+        },
+        {
+          "date": "2026-03-01",
+          "region": "LATAM",
+          "revenue": 40,
+          "units": 1,
+          "w": 300.5
+        },
+        {
+          "date": 1775001600000,
+          "region": "APAC",
+          "revenue": "10",
+          "units": 2,
+          "w": 310.5
+        }
+      ],
+      "describe": "Bar chart. 3 categories. Highest: APAC (190.5). Lowest: LATAM (40). Total: 310.5."
+    },
+    {
+      "name": "window: as in place",
+      "spec": {
+        "type": "bar",
+        "x": "region",
+        "y": "revenue",
+        "data": [
+          {
+            "date": "2026-01-05",
+            "region": "APAC",
+            "revenue": 120,
+            "units": 3
+          },
+          {
+            "date": "2026-01-19",
+            "region": "EMEA",
+            "revenue": 80,
+            "units": "2"
+          },
+          {
+            "date": "2026-02-02T10:30:00Z",
+            "region": "APAC",
+            "revenue": 60.5,
+            "units": null
+          },
+          {
+            "date": "2026-02-14",
+            "region": "EMEA",
+            "revenue": null,
+            "units": 5
+          },
+          {
+            "date": "2026-03-01",
+            "region": "LATAM",
+            "revenue": 40,
+            "units": 1
+          },
+          {
+            "date": 1775001600000,
+            "region": "APAC",
+            "revenue": "10",
+            "units": 2
+          }
+        ],
+        "transform": [
+          {
+            "window": {
+              "op": "sum",
+              "field": "revenue",
+              "as": "revenue",
+              "sortBy": "date"
+            }
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "bar",
+        "x": "region",
+        "y": "revenue",
+        "transform": [
+          {
+            "window": {
+              "op": "sum",
+              "field": "revenue",
+              "as": "revenue",
+              "sortBy": "date"
+            }
+          }
+        ],
+        "legend": "auto",
+        "tooltip": true,
+        "stack": "none",
+        "orientation": "vertical",
+        "sort": "none",
+        "labels": false
+      },
+      "rows": [
+        {
+          "date": "2026-01-05",
+          "region": "APAC",
+          "revenue": 120,
+          "units": 3
+        },
+        {
+          "date": "2026-01-19",
+          "region": "EMEA",
+          "revenue": 200,
+          "units": "2"
+        },
+        {
+          "date": "2026-02-02T10:30:00Z",
+          "region": "APAC",
+          "revenue": 260.5,
+          "units": null
+        },
+        {
+          "date": "2026-02-14",
+          "region": "EMEA",
+          "revenue": 260.5,
+          "units": 5
+        },
+        {
+          "date": "2026-03-01",
+          "region": "LATAM",
+          "revenue": 300.5,
+          "units": 1
+        },
+        {
+          "date": 1775001600000,
+          "region": "APAC",
+          "revenue": 310.5,
+          "units": 2
+        }
+      ],
+      "describe": "Bar chart. 3 categories. Highest: APAC (691). Lowest: LATAM (300.5). Total: 1,452."
+    },
+    {
+      "name": "window: unknown op",
+      "spec": {
+        "type": "bar",
+        "x": "region",
+        "y": "revenue",
+        "data": [
+          {
+            "date": "2026-01-05",
+            "region": "APAC",
+            "revenue": 120,
+            "units": 3
+          },
+          {
+            "date": "2026-01-19",
+            "region": "EMEA",
+            "revenue": 80,
+            "units": "2"
+          },
+          {
+            "date": "2026-02-02T10:30:00Z",
+            "region": "APAC",
+            "revenue": 60.5,
+            "units": null
+          },
+          {
+            "date": "2026-02-14",
+            "region": "EMEA",
+            "revenue": null,
+            "units": 5
+          },
+          {
+            "date": "2026-03-01",
+            "region": "LATAM",
+            "revenue": 40,
+            "units": 1
+          },
+          {
+            "date": 1775001600000,
+            "region": "APAC",
+            "revenue": "10",
+            "units": 2
+          }
+        ],
+        "transform": [
+          {
+            "window": {
+              "op": "cumsum",
+              "field": "revenue",
+              "as": "w"
+            }
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "bad_enum",
+          "path": "transform[0].window.op"
+        }
+      ],
+      "normalized": null,
+      "rows": null,
+      "describe": null
+    },
+    {
+      "name": "window: no op",
+      "spec": {
+        "type": "bar",
+        "x": "region",
+        "y": "revenue",
+        "data": [
+          {
+            "date": "2026-01-05",
+            "region": "APAC",
+            "revenue": 120,
+            "units": 3
+          },
+          {
+            "date": "2026-01-19",
+            "region": "EMEA",
+            "revenue": 80,
+            "units": "2"
+          },
+          {
+            "date": "2026-02-02T10:30:00Z",
+            "region": "APAC",
+            "revenue": 60.5,
+            "units": null
+          },
+          {
+            "date": "2026-02-14",
+            "region": "EMEA",
+            "revenue": null,
+            "units": 5
+          },
+          {
+            "date": "2026-03-01",
+            "region": "LATAM",
+            "revenue": 40,
+            "units": 1
+          },
+          {
+            "date": 1775001600000,
+            "region": "APAC",
+            "revenue": "10",
+            "units": 2
+          }
+        ],
+        "transform": [
+          {
+            "window": {
+              "field": "revenue",
+              "as": "w"
+            }
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "missing_required",
+          "path": "transform[0].window.op"
+        }
+      ],
+      "normalized": null,
+      "rows": null,
+      "describe": null
+    },
+    {
+      "name": "window: no as",
+      "spec": {
+        "type": "bar",
+        "x": "region",
+        "y": "revenue",
+        "data": [
+          {
+            "date": "2026-01-05",
+            "region": "APAC",
+            "revenue": 120,
+            "units": 3
+          },
+          {
+            "date": "2026-01-19",
+            "region": "EMEA",
+            "revenue": 80,
+            "units": "2"
+          },
+          {
+            "date": "2026-02-02T10:30:00Z",
+            "region": "APAC",
+            "revenue": 60.5,
+            "units": null
+          },
+          {
+            "date": "2026-02-14",
+            "region": "EMEA",
+            "revenue": null,
+            "units": 5
+          },
+          {
+            "date": "2026-03-01",
+            "region": "LATAM",
+            "revenue": 40,
+            "units": 1
+          },
+          {
+            "date": 1775001600000,
+            "region": "APAC",
+            "revenue": "10",
+            "units": 2
+          }
+        ],
+        "transform": [
+          {
+            "window": {
+              "op": "sum",
+              "field": "revenue"
+            }
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "missing_required",
+          "path": "transform[0].window.as"
+        }
+      ],
+      "normalized": null,
+      "rows": null,
+      "describe": null
+    },
+    {
+      "name": "window: no such sortBy",
+      "spec": {
+        "type": "bar",
+        "x": "region",
+        "y": "revenue",
+        "data": [
+          {
+            "date": "2026-01-05",
+            "region": "APAC",
+            "revenue": 120,
+            "units": 3
+          },
+          {
+            "date": "2026-01-19",
+            "region": "EMEA",
+            "revenue": 80,
+            "units": "2"
+          },
+          {
+            "date": "2026-02-02T10:30:00Z",
+            "region": "APAC",
+            "revenue": 60.5,
+            "units": null
+          },
+          {
+            "date": "2026-02-14",
+            "region": "EMEA",
+            "revenue": null,
+            "units": 5
+          },
+          {
+            "date": "2026-03-01",
+            "region": "LATAM",
+            "revenue": 40,
+            "units": 1
+          },
+          {
+            "date": 1775001600000,
+            "region": "APAC",
+            "revenue": "10",
+            "units": 2
+          }
+        ],
+        "transform": [
+          {
+            "window": {
+              "op": "sum",
+              "field": "revenue",
+              "as": "w",
+              "sortBy": "when"
+            }
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "no_such_column",
+          "path": "transform[0].window.sortBy"
+        }
+      ],
+      "normalized": null,
+      "rows": null,
+      "describe": null
+    },
+    {
+      "name": "window: groupBy is a string",
+      "spec": {
+        "type": "bar",
+        "x": "region",
+        "y": "revenue",
+        "data": [
+          {
+            "date": "2026-01-05",
+            "region": "APAC",
+            "revenue": 120,
+            "units": 3
+          },
+          {
+            "date": "2026-01-19",
+            "region": "EMEA",
+            "revenue": 80,
+            "units": "2"
+          },
+          {
+            "date": "2026-02-02T10:30:00Z",
+            "region": "APAC",
+            "revenue": 60.5,
+            "units": null
+          },
+          {
+            "date": "2026-02-14",
+            "region": "EMEA",
+            "revenue": null,
+            "units": 5
+          },
+          {
+            "date": "2026-03-01",
+            "region": "LATAM",
+            "revenue": 40,
+            "units": 1
+          },
+          {
+            "date": 1775001600000,
+            "region": "APAC",
+            "revenue": "10",
+            "units": 2
+          }
+        ],
+        "transform": [
+          {
+            "window": {
+              "op": "sum",
+              "field": "revenue",
+              "as": "w",
+              "groupBy": "region"
+            }
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "bad_type",
+          "path": "transform[0].window.groupBy"
+        }
+      ],
+      "normalized": null,
+      "rows": null,
+      "describe": null
+    },
+    {
+      "name": "window: bad order",
+      "spec": {
+        "type": "bar",
+        "x": "region",
+        "y": "revenue",
+        "data": [
+          {
+            "date": "2026-01-05",
+            "region": "APAC",
+            "revenue": 120,
+            "units": 3
+          },
+          {
+            "date": "2026-01-19",
+            "region": "EMEA",
+            "revenue": 80,
+            "units": "2"
+          },
+          {
+            "date": "2026-02-02T10:30:00Z",
+            "region": "APAC",
+            "revenue": 60.5,
+            "units": null
+          },
+          {
+            "date": "2026-02-14",
+            "region": "EMEA",
+            "revenue": null,
+            "units": 5
+          },
+          {
+            "date": "2026-03-01",
+            "region": "LATAM",
+            "revenue": 40,
+            "units": 1
+          },
+          {
+            "date": 1775001600000,
+            "region": "APAC",
+            "revenue": "10",
+            "units": 2
+          }
+        ],
+        "transform": [
+          {
+            "window": {
+              "op": "sum",
+              "field": "revenue",
+              "as": "w",
+              "sortBy": "date",
+              "order": "descending"
+            }
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "bad_enum",
+          "path": "transform[0].window.order"
+        }
+      ],
+      "normalized": null,
+      "rows": null,
+      "describe": null
+    },
+    {
+      "name": "window: frame zero",
+      "spec": {
+        "type": "bar",
+        "x": "region",
+        "y": "revenue",
+        "data": [
+          {
+            "date": "2026-01-05",
+            "region": "APAC",
+            "revenue": 120,
+            "units": 3
+          },
+          {
+            "date": "2026-01-19",
+            "region": "EMEA",
+            "revenue": 80,
+            "units": "2"
+          },
+          {
+            "date": "2026-02-02T10:30:00Z",
+            "region": "APAC",
+            "revenue": 60.5,
+            "units": null
+          },
+          {
+            "date": "2026-02-14",
+            "region": "EMEA",
+            "revenue": null,
+            "units": 5
+          },
+          {
+            "date": "2026-03-01",
+            "region": "LATAM",
+            "revenue": 40,
+            "units": 1
+          },
+          {
+            "date": 1775001600000,
+            "region": "APAC",
+            "revenue": "10",
+            "units": 2
+          }
+        ],
+        "transform": [
+          {
+            "window": {
+              "op": "movingMean",
+              "field": "revenue",
+              "as": "w",
+              "frame": 0
+            }
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "bad_value",
+          "path": "transform[0].window.frame"
+        }
+      ],
+      "normalized": null,
+      "rows": null,
+      "describe": null
+    },
+    {
+      "name": "fold: two columns",
+      "spec": {
+        "type": "bar",
+        "x": "region",
+        "y": "value",
+        "series": "key",
+        "data": [
+          {
+            "date": "2026-01-05",
+            "region": "APAC",
+            "revenue": 120,
+            "units": 3
+          },
+          {
+            "date": "2026-01-19",
+            "region": "EMEA",
+            "revenue": 80,
+            "units": "2"
+          },
+          {
+            "date": "2026-02-02T10:30:00Z",
+            "region": "APAC",
+            "revenue": 60.5,
+            "units": null
+          },
+          {
+            "date": "2026-02-14",
+            "region": "EMEA",
+            "revenue": null,
+            "units": 5
+          },
+          {
+            "date": "2026-03-01",
+            "region": "LATAM",
+            "revenue": 40,
+            "units": 1
+          },
+          {
+            "date": 1775001600000,
+            "region": "APAC",
+            "revenue": "10",
+            "units": 2
+          }
+        ],
+        "transform": [
+          {
+            "fold": {
+              "fields": [
+                "revenue",
+                "units"
+              ]
+            }
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "bar",
+        "x": "region",
+        "y": "value",
+        "series": "key",
+        "transform": [
+          {
+            "fold": {
+              "fields": [
+                "revenue",
+                "units"
+              ]
+            }
+          }
+        ],
+        "legend": "auto",
+        "tooltip": true,
+        "stack": "none",
+        "orientation": "vertical",
+        "sort": "none",
+        "labels": false
+      },
+      "rows": [
+        {
+          "date": "2026-01-05",
+          "region": "APAC",
+          "key": "revenue",
+          "value": 120
+        },
+        {
+          "date": "2026-01-05",
+          "region": "APAC",
+          "key": "units",
+          "value": 3
+        },
+        {
+          "date": "2026-01-19",
+          "region": "EMEA",
+          "key": "revenue",
+          "value": 80
+        },
+        {
+          "date": "2026-01-19",
+          "region": "EMEA",
+          "key": "units",
+          "value": "2"
+        },
+        {
+          "date": "2026-02-02T10:30:00Z",
+          "region": "APAC",
+          "key": "revenue",
+          "value": 60.5
+        },
+        {
+          "date": "2026-02-02T10:30:00Z",
+          "region": "APAC",
+          "key": "units",
+          "value": null
+        },
+        {
+          "date": "2026-02-14",
+          "region": "EMEA",
+          "key": "revenue",
+          "value": null
+        },
+        {
+          "date": "2026-02-14",
+          "region": "EMEA",
+          "key": "units",
+          "value": 5
+        },
+        {
+          "date": "2026-03-01",
+          "region": "LATAM",
+          "key": "revenue",
+          "value": 40
+        },
+        {
+          "date": "2026-03-01",
+          "region": "LATAM",
+          "key": "units",
+          "value": 1
+        },
+        {
+          "date": 1775001600000,
+          "region": "APAC",
+          "key": "revenue",
+          "value": "10"
+        },
+        {
+          "date": 1775001600000,
+          "region": "APAC",
+          "key": "units",
+          "value": 2
+        }
+      ],
+      "describe": "Bar chart. 3 categories, 2 series (revenue, units). Highest: APAC (195.5). Lowest: LATAM (41). Total: 323.5."
+    },
+    {
+      "name": "fold: named, then a window over the folded rows",
+      "spec": {
+        "type": "line",
+        "x": "date",
+        "y": "total",
+        "series": "measure",
+        "data": [
+          {
+            "date": "2026-01-05",
+            "region": "APAC",
+            "revenue": 120,
+            "units": 3
+          },
+          {
+            "date": "2026-01-19",
+            "region": "EMEA",
+            "revenue": 80,
+            "units": "2"
+          },
+          {
+            "date": "2026-02-02T10:30:00Z",
+            "region": "APAC",
+            "revenue": 60.5,
+            "units": null
+          },
+          {
+            "date": "2026-02-14",
+            "region": "EMEA",
+            "revenue": null,
+            "units": 5
+          },
+          {
+            "date": "2026-03-01",
+            "region": "LATAM",
+            "revenue": 40,
+            "units": 1
+          },
+          {
+            "date": 1775001600000,
+            "region": "APAC",
+            "revenue": "10",
+            "units": 2
+          }
+        ],
+        "transform": [
+          {
+            "fold": {
+              "fields": [
+                "revenue",
+                "units"
+              ],
+              "as": [
+                "measure",
+                "amount"
+              ]
+            }
+          },
+          {
+            "window": {
+              "op": "sum",
+              "field": "amount",
+              "as": "total",
+              "groupBy": [
+                "measure"
+              ],
+              "sortBy": "date"
+            }
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "line",
+        "x": "date",
+        "y": "total",
+        "series": "measure",
+        "transform": [
+          {
+            "fold": {
+              "fields": [
+                "revenue",
+                "units"
+              ],
+              "as": [
+                "measure",
+                "amount"
+              ]
+            }
+          },
+          {
+            "window": {
+              "op": "sum",
+              "field": "amount",
+              "as": "total",
+              "groupBy": [
+                "measure"
+              ],
+              "sortBy": "date"
+            }
+          }
+        ],
+        "legend": "auto",
+        "tooltip": true,
+        "xType": "auto",
+        "curve": "linear"
+      },
+      "rows": [
+        {
+          "date": "2026-01-05",
+          "region": "APAC",
+          "measure": "revenue",
+          "amount": 120,
+          "total": 120
+        },
+        {
+          "date": "2026-01-05",
+          "region": "APAC",
+          "measure": "units",
+          "amount": 3,
+          "total": 3
+        },
+        {
+          "date": "2026-01-19",
+          "region": "EMEA",
+          "measure": "revenue",
+          "amount": 80,
+          "total": 200
+        },
+        {
+          "date": "2026-01-19",
+          "region": "EMEA",
+          "measure": "units",
+          "amount": "2",
+          "total": 5
+        },
+        {
+          "date": "2026-02-02T10:30:00Z",
+          "region": "APAC",
+          "measure": "revenue",
+          "amount": 60.5,
+          "total": 260.5
+        },
+        {
+          "date": "2026-02-02T10:30:00Z",
+          "region": "APAC",
+          "measure": "units",
+          "amount": null,
+          "total": 5
+        },
+        {
+          "date": "2026-02-14",
+          "region": "EMEA",
+          "measure": "revenue",
+          "amount": null,
+          "total": 260.5
+        },
+        {
+          "date": "2026-02-14",
+          "region": "EMEA",
+          "measure": "units",
+          "amount": 5,
+          "total": 10
+        },
+        {
+          "date": "2026-03-01",
+          "region": "LATAM",
+          "measure": "revenue",
+          "amount": 40,
+          "total": 300.5
+        },
+        {
+          "date": "2026-03-01",
+          "region": "LATAM",
+          "measure": "units",
+          "amount": 1,
+          "total": 11
+        },
+        {
+          "date": 1775001600000,
+          "region": "APAC",
+          "measure": "revenue",
+          "amount": "10",
+          "total": 310.5
+        },
+        {
+          "date": 1775001600000,
+          "region": "APAC",
+          "measure": "units",
+          "amount": 2,
+          "total": 13
+        }
+      ],
+      "describe": "Line chart. 2 series (revenue, units) over categories. revenue: from 120 at 2026-01-05 to 310.5 at 1775001600000 (158.8%); peak 310.5 at 1775001600000, low 120 at 2026-01-05. units: from 3 at 2026-01-05 to 13 at 1775001600000 (333.3%); peak 13 at 1775001600000, low 3 at 2026-01-05."
+    },
+    {
+      "name": "fold: a folded column is gone for the next step",
+      "spec": {
+        "type": "bar",
+        "x": "region",
+        "y": "revenue",
+        "data": [
+          {
+            "date": "2026-01-05",
+            "region": "APAC",
+            "revenue": 120,
+            "units": 3
+          },
+          {
+            "date": "2026-01-19",
+            "region": "EMEA",
+            "revenue": 80,
+            "units": "2"
+          },
+          {
+            "date": "2026-02-02T10:30:00Z",
+            "region": "APAC",
+            "revenue": 60.5,
+            "units": null
+          },
+          {
+            "date": "2026-02-14",
+            "region": "EMEA",
+            "revenue": null,
+            "units": 5
+          },
+          {
+            "date": "2026-03-01",
+            "region": "LATAM",
+            "revenue": 40,
+            "units": 1
+          },
+          {
+            "date": 1775001600000,
+            "region": "APAC",
+            "revenue": "10",
+            "units": 2
+          }
+        ],
+        "transform": [
+          {
+            "fold": {
+              "fields": [
+                "revenue",
+                "units"
+              ]
+            }
+          },
+          {
+            "sort": {
+              "field": "revenue"
+            }
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "no_such_column",
+          "path": "transform[1].sort.field"
+        }
+      ],
+      "normalized": null,
+      "rows": null,
+      "describe": null
+    },
+    {
+      "name": "fold: no fields",
+      "spec": {
+        "type": "bar",
+        "x": "region",
+        "y": "revenue",
+        "data": [
+          {
+            "date": "2026-01-05",
+            "region": "APAC",
+            "revenue": 120,
+            "units": 3
+          },
+          {
+            "date": "2026-01-19",
+            "region": "EMEA",
+            "revenue": 80,
+            "units": "2"
+          },
+          {
+            "date": "2026-02-02T10:30:00Z",
+            "region": "APAC",
+            "revenue": 60.5,
+            "units": null
+          },
+          {
+            "date": "2026-02-14",
+            "region": "EMEA",
+            "revenue": null,
+            "units": 5
+          },
+          {
+            "date": "2026-03-01",
+            "region": "LATAM",
+            "revenue": 40,
+            "units": 1
+          },
+          {
+            "date": 1775001600000,
+            "region": "APAC",
+            "revenue": "10",
+            "units": 2
+          }
+        ],
+        "transform": [
+          {
+            "fold": {}
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "missing_required",
+          "path": "transform[0].fold.fields"
+        }
+      ],
+      "normalized": null,
+      "rows": null,
+      "describe": null
+    },
+    {
+      "name": "fold: empty fields",
+      "spec": {
+        "type": "bar",
+        "x": "region",
+        "y": "revenue",
+        "data": [
+          {
+            "date": "2026-01-05",
+            "region": "APAC",
+            "revenue": 120,
+            "units": 3
+          },
+          {
+            "date": "2026-01-19",
+            "region": "EMEA",
+            "revenue": 80,
+            "units": "2"
+          },
+          {
+            "date": "2026-02-02T10:30:00Z",
+            "region": "APAC",
+            "revenue": 60.5,
+            "units": null
+          },
+          {
+            "date": "2026-02-14",
+            "region": "EMEA",
+            "revenue": null,
+            "units": 5
+          },
+          {
+            "date": "2026-03-01",
+            "region": "LATAM",
+            "revenue": 40,
+            "units": 1
+          },
+          {
+            "date": 1775001600000,
+            "region": "APAC",
+            "revenue": "10",
+            "units": 2
+          }
+        ],
+        "transform": [
+          {
+            "fold": {
+              "fields": []
+            }
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "bad_type",
+          "path": "transform[0].fold.fields"
+        }
+      ],
+      "normalized": null,
+      "rows": null,
+      "describe": null
+    },
+    {
+      "name": "fold: no such column",
+      "spec": {
+        "type": "bar",
+        "x": "region",
+        "y": "revenue",
+        "data": [
+          {
+            "date": "2026-01-05",
+            "region": "APAC",
+            "revenue": 120,
+            "units": 3
+          },
+          {
+            "date": "2026-01-19",
+            "region": "EMEA",
+            "revenue": 80,
+            "units": "2"
+          },
+          {
+            "date": "2026-02-02T10:30:00Z",
+            "region": "APAC",
+            "revenue": 60.5,
+            "units": null
+          },
+          {
+            "date": "2026-02-14",
+            "region": "EMEA",
+            "revenue": null,
+            "units": 5
+          },
+          {
+            "date": "2026-03-01",
+            "region": "LATAM",
+            "revenue": 40,
+            "units": 1
+          },
+          {
+            "date": 1775001600000,
+            "region": "APAC",
+            "revenue": "10",
+            "units": 2
+          }
+        ],
+        "transform": [
+          {
+            "fold": {
+              "fields": [
+                "revenue",
+                "cost"
+              ]
+            }
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "no_such_column",
+          "path": "transform[0].fold.fields[1]"
+        }
+      ],
+      "normalized": null,
+      "rows": null,
+      "describe": null
+    },
+    {
+      "name": "fold: a column twice",
+      "spec": {
+        "type": "bar",
+        "x": "region",
+        "y": "revenue",
+        "data": [
+          {
+            "date": "2026-01-05",
+            "region": "APAC",
+            "revenue": 120,
+            "units": 3
+          },
+          {
+            "date": "2026-01-19",
+            "region": "EMEA",
+            "revenue": 80,
+            "units": "2"
+          },
+          {
+            "date": "2026-02-02T10:30:00Z",
+            "region": "APAC",
+            "revenue": 60.5,
+            "units": null
+          },
+          {
+            "date": "2026-02-14",
+            "region": "EMEA",
+            "revenue": null,
+            "units": 5
+          },
+          {
+            "date": "2026-03-01",
+            "region": "LATAM",
+            "revenue": 40,
+            "units": 1
+          },
+          {
+            "date": 1775001600000,
+            "region": "APAC",
+            "revenue": "10",
+            "units": 2
+          }
+        ],
+        "transform": [
+          {
+            "fold": {
+              "fields": [
+                "revenue",
+                "revenue"
+              ]
+            }
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "duplicate",
+          "path": "transform[0].fold.fields[1]"
+        }
+      ],
+      "normalized": null,
+      "rows": null,
+      "describe": null
+    },
+    {
+      "name": "fold: as of one name",
+      "spec": {
+        "type": "bar",
+        "x": "region",
+        "y": "revenue",
+        "data": [
+          {
+            "date": "2026-01-05",
+            "region": "APAC",
+            "revenue": 120,
+            "units": 3
+          },
+          {
+            "date": "2026-01-19",
+            "region": "EMEA",
+            "revenue": 80,
+            "units": "2"
+          },
+          {
+            "date": "2026-02-02T10:30:00Z",
+            "region": "APAC",
+            "revenue": 60.5,
+            "units": null
+          },
+          {
+            "date": "2026-02-14",
+            "region": "EMEA",
+            "revenue": null,
+            "units": 5
+          },
+          {
+            "date": "2026-03-01",
+            "region": "LATAM",
+            "revenue": 40,
+            "units": 1
+          },
+          {
+            "date": 1775001600000,
+            "region": "APAC",
+            "revenue": "10",
+            "units": 2
+          }
+        ],
+        "transform": [
+          {
+            "fold": {
+              "fields": [
+                "revenue"
+              ],
+              "as": [
+                "k"
+              ]
+            }
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "bad_type",
+          "path": "transform[0].fold.as"
+        }
+      ],
+      "normalized": null,
+      "rows": null,
+      "describe": null
+    },
+    {
+      "name": "pipeline: fold, bin, aggregate, window",
+      "spec": {
+        "type": "line",
+        "x": "from",
+        "y": "cum",
+        "series": "k",
+        "data": [
+          {
+            "a": 0,
+            "b": 0
+          },
+          {
+            "a": 14,
+            "b": 11
+          },
+          {
+            "a": 5,
+            "b": 5
+          },
+          {
+            "a": 19,
+            "b": 16
+          },
+          {
+            "a": 10,
+            "b": 10
+          },
+          {
+            "a": 1,
+            "b": 4
+          },
+          {
+            "a": 15,
+            "b": 15
+          },
+          {
+            "a": 6,
+            "b": 9
+          },
+          {
+            "a": 20,
+            "b": 3
+          },
+          {
+            "a": 11,
+            "b": 14
+          },
+          {
+            "a": 2,
+            "b": 8
+          },
+          {
+            "a": 16,
+            "b": 2
+          },
+          {
+            "a": 7,
+            "b": 13
+          },
+          {
+            "a": 21,
+            "b": 7
+          },
+          {
+            "a": 12,
+            "b": 1
+          },
+          {
+            "a": 3,
+            "b": 12
+          },
+          {
+            "a": 17,
+            "b": 6
+          },
+          {
+            "a": 8,
+            "b": 0
+          },
+          {
+            "a": 22,
+            "b": 11
+          },
+          {
+            "a": 13,
+            "b": 5
+          },
+          {
+            "a": 4,
+            "b": 16
+          },
+          {
+            "a": 18,
+            "b": 10
+          },
+          {
+            "a": 9,
+            "b": 4
+          },
+          {
+            "a": 0,
+            "b": 15
+          },
+          {
+            "a": 14,
+            "b": 9
+          },
+          {
+            "a": 5,
+            "b": 3
+          },
+          {
+            "a": 19,
+            "b": 14
+          },
+          {
+            "a": 10,
+            "b": 8
+          },
+          {
+            "a": 1,
+            "b": 2
+          },
+          {
+            "a": 15,
+            "b": 13
+          },
+          {
+            "a": 6,
+            "b": 7
+          },
+          {
+            "a": 20,
+            "b": 1
+          },
+          {
+            "a": 11,
+            "b": 12
+          },
+          {
+            "a": 2,
+            "b": 6
+          },
+          {
+            "a": 16,
+            "b": 0
+          },
+          {
+            "a": 7,
+            "b": 11
+          },
+          {
+            "a": 21,
+            "b": 5
+          },
+          {
+            "a": 12,
+            "b": 16
+          },
+          {
+            "a": 3,
+            "b": 10
+          },
+          {
+            "a": 17,
+            "b": 4
+          }
+        ],
+        "transform": [
+          {
+            "fold": {
+              "fields": [
+                "a",
+                "b"
+              ],
+              "as": [
+                "k",
+                "v"
+              ]
+            }
+          },
+          {
+            "bin": {
+              "field": "v",
+              "maxbins": 4,
+              "as": [
+                "from",
+                "to"
+              ]
+            }
+          },
+          {
+            "aggregate": {
+              "groupBy": [
+                "k",
+                "from"
+              ],
+              "count": "n"
+            }
+          },
+          {
+            "window": {
+              "op": "sum",
+              "field": "n",
+              "as": "cum",
+              "groupBy": [
+                "k"
+              ],
+              "sortBy": "from"
+            }
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "line",
+        "x": "from",
+        "y": "cum",
+        "series": "k",
+        "transform": [
+          {
+            "fold": {
+              "fields": [
+                "a",
+                "b"
+              ],
+              "as": [
+                "k",
+                "v"
+              ]
+            }
+          },
+          {
+            "bin": {
+              "field": "v",
+              "maxbins": 4,
+              "as": [
+                "from",
+                "to"
+              ]
+            }
+          },
+          {
+            "aggregate": {
+              "groupBy": [
+                "k",
+                "from"
+              ],
+              "count": "n"
+            }
+          },
+          {
+            "window": {
+              "op": "sum",
+              "field": "n",
+              "as": "cum",
+              "groupBy": [
+                "k"
+              ],
+              "sortBy": "from"
+            }
+          }
+        ],
+        "legend": "auto",
+        "tooltip": true,
+        "xType": "auto",
+        "curve": "linear"
+      },
+      "rows": [
+        {
+          "k": "a",
+          "from": 0,
+          "n": 17,
+          "cum": 17
+        },
+        {
+          "k": "b",
+          "from": 0,
+          "n": 23,
+          "cum": 23
+        },
+        {
+          "k": "a",
+          "from": 10,
+          "n": 18,
+          "cum": 35
+        },
+        {
+          "k": "b",
+          "from": 10,
+          "n": 17,
+          "cum": 40
+        },
+        {
+          "k": "a",
+          "from": 20,
+          "n": 5,
+          "cum": 40
+        }
+      ],
+      "describe": "Line chart. 2 series (a, b) over a numeric x axis. a: from 17 at 0 to 40 at 20 (135.3%); peak 40 at 20, low 17 at 0. b: from 23 at 0 to 40 at 10 (73.9%); peak 40 at 10, low 23 at 0."
+    },
+    {
+      "name": "no expression step",
+      "spec": {
+        "type": "bar",
+        "x": "region",
+        "y": "revenue",
+        "data": [
+          {
+            "date": "2026-01-05",
+            "region": "APAC",
+            "revenue": 120,
+            "units": 3
+          },
+          {
+            "date": "2026-01-19",
+            "region": "EMEA",
+            "revenue": 80,
+            "units": "2"
+          },
+          {
+            "date": "2026-02-02T10:30:00Z",
+            "region": "APAC",
+            "revenue": 60.5,
+            "units": null
+          },
+          {
+            "date": "2026-02-14",
+            "region": "EMEA",
+            "revenue": null,
+            "units": 5
+          },
+          {
+            "date": "2026-03-01",
+            "region": "LATAM",
+            "revenue": 40,
+            "units": 1
+          },
+          {
+            "date": 1775001600000,
+            "region": "APAC",
+            "revenue": "10",
+            "units": 2
+          }
+        ],
+        "transform": [
+          {
+            "calculate": "datum.revenue * 2",
+            "as": "x2"
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "bad_transform",
+          "path": "transform[0]"
         }
       ],
       "normalized": null,

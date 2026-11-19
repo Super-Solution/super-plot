@@ -57,6 +57,58 @@ describe('axis helpers', () => {
   })
 })
 
+describe('log axes', () => {
+  const log: AxisInfo = { kind: 'linear', scale: 'log', domain: [1, 1000], range: [0, 300], field: 'v' }
+  it('maps pixels to data in log space', () => {
+    expect(invert(log, 100)).toBeCloseTo(10, 9)
+    expect(invert(log, 150)).toBeCloseTo(Math.sqrt(1000), 9)
+    expect(pixelOf(log, 100)).toBeCloseTo(200, 9)
+    expect(pixelOf(log, 1)).toBe(0)
+  })
+  it('zooms and pans in log space, so the domain stays positive and the point under the pointer stays put', () => {
+    const z = zoomDomain([1, 1000], 10, 2, log)
+    expect(z[0]).toBeCloseTo(Math.sqrt(10), 9)
+    expect(z[1]).toBeCloseTo(100, 9)
+    // A big zoom out stays above zero (a linear zoom would cross it).
+    const out = zoomDomain([1, 1000], 2, 0.1, log)
+    expect(out[0]).toBeGreaterThan(0)
+    const p = panDomain(log, [1, 1000], 100)
+    expect(p[0]).toBeCloseTo(0.1, 9)
+    expect(p[1]).toBeCloseTo(100, 9)
+  })
+  it('a log scatter reports its axis as log; wheel zoom and brush work in data units', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+    const zooms: (ZoomRange | null)[] = []
+    const brushes: (BrushSelection | null)[] = []
+    const data = Array.from({ length: 40 }, (_, i) => ({ x: i + 1, y: 10 ** (i / 10) }))
+    const p = new SuperPlot(host, { type: 'scatter', x: 'x', y: 'y', yScale: 'log', data, zoom: 'xy', brush: 'xy' }, { width: 600, height: 400, animate: false, onZoom: z => zooms.push(z), onBrush: b => brushes.push(b) })
+    const root = rootOf()
+    const a = p.getScene()!.axes!
+    expect(a.y.scale).toBe('log')
+    expect(a.y.domain).toEqual([1, 10000])
+    const cx = a.plot.x + a.plot.w / 2, cy = a.plot.y + a.plot.h / 2
+    root.dispatchEvent(new WheelEvent('wheel', { bubbles: true, cancelable: true, ctrlKey: true, deltaY: -200, clientX: cx, clientY: cy }))
+    vi.advanceTimersByTime(300)
+    const y = zooms.at(-1)!.y!.range as [number, number]
+    expect(y[0]).toBeGreaterThan(1)
+    expect(y[1]).toBeLessThan(10000)
+    // Symmetric around 100 (the middle of 1..10,000 in log space).
+    expect(Math.log10(y[0]) + Math.log10(y[1])).toBeCloseTo(4, 6)
+    p.resetZoom()
+    await raf()
+    // A brush over the upper half of the plot covers 100..10,000.
+    const b = p.getScene()!.axes!
+    ptr(root, 'pointerdown', b.plot.x + 10, b.plot.y + 1)
+    ptr(root, 'pointermove', b.plot.x + 200, b.plot.y + b.plot.h / 2)
+    ptr(root, 'pointerup', b.plot.x + 200, b.plot.y + b.plot.h / 2)
+    const sel = brushes.at(-1)!
+    const yr = sel.y as { range: [number, number] }
+    expect(yr.range[0]).toBeCloseTo(100, 6)
+    expect(yr.range[1]).toBeGreaterThan(9000)
+    vi.useRealTimers()
+  })
+})
+
 describe('fast dots', () => {
   it('stamps covered pixels with an anti-aliased edge, overlaps keep the larger coverage', () => {
     const img = rasterDots({ cx: Float64Array.of(10, 11), cy: Float64Array.of(10, 10), r: Float64Array.of(3, 3) }, 1, [255, 0, 0], 100, 100)!
