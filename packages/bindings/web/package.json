@@ -1,6 +1,6 @@
 {
   "name": "@supersolutions/super-plot-web",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Mount Super Plot in the browser: resize, tooltip, hover, legend toggle, export; plus a <super-plot> web component.",
   "private": true,
   "license": "UNLICENSED",
@@ -21,7 +21,7 @@
     "README.md"
   ],
   "dependencies": {
-    "@supersolutions/super-plot-core": "0.3.0",
+    "@supersolutions/super-plot-core": "0.4.0",
     "earcut": "3.0.2"
   },
   "exports": {
