@@ -138,6 +138,8 @@ export const gallery: { id: string; note: string; spec: Record<string, unknown> 
     }
   },
   { id: 'beeswarm', note: 'Every value as a dot, one lane per group', spec: by('beeswarm') },
+  { id: 'scatter3d', note: 'Points in a box: drag or use the arrow keys to turn; orthographic, so sizes do not change with depth', spec: by('scatter3d') },
+  { id: 'surface', note: 'A height field on a regular grid, coloured by height; Tab steps through the grid', spec: by('surface') },
   { id: 'choropleth', note: 'Regions coloured by value (invented islands: Super Plot ships no boundaries)', spec: by('choropleth') },
   { id: 'bubble-map', note: 'Places sized by value, on imported land', spec: by('bubble-map') },
   { id: 'column-map', note: '3D columns on a globe: drag to turn', spec: by('column-map') },

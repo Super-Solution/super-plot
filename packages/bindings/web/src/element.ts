@@ -22,7 +22,7 @@ type EventKey = (typeof EVENTS)[number]
  * Events (bubbling CustomEvents): `plot-select` (detail: SelectEvent), `plot-issues` (detail: Issue[]),
  * `plot-hover` (SelectEvent or null), `plot-render` (RenderEvent), `plot-zoom` (ZoomRange or null),
  * `plot-brush` (BrushSelection or null), `plot-drill` (the focus path, string[]) and, for maps, `plot-camera`
- * (Camera) when the viewer moved the map.
+ * (Camera; a Camera3d for a 3D chart) when the viewer moved the map or turned the box.
  * Methods: `appendRows(rows, { max })`, `setZoom()`, `getZoom()`, `setBrush()`, `getBrush()`, `toSvg()`, `toPng()`,
  * `toCsv()`, `sonify(options)`.
  */

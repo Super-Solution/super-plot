@@ -8829,6 +8829,987 @@
       "describe": "Beeswarm plot \"Response time by region\". 120 values of ms, one dot each, in 3 groups by region (Europe, Americas, Asia). Overall median 87, range 41 to 269. Europe: 40 values, median 75.5, range 41 to 228. Americas: 40 values, median 84, range 54 to 259. Asia: 40 values, median 98.5, range 66 to 269."
     },
     {
+      "type": "scatter3d",
+      "spec": {
+        "type": "scatter3d",
+        "title": "Three clusters in three measures",
+        "subtitle": "Invented measurements; drag to turn the box",
+        "x": "width",
+        "y": "depth",
+        "z": "height",
+        "series": "kind",
+        "label": "id",
+        "xLabel": "Width (mm)",
+        "yLabel": "Depth (mm)",
+        "zLabel": "Height (mm)",
+        "data": [
+          {
+            "id": "A1",
+            "kind": "Kind A",
+            "width": 20,
+            "depth": 36,
+            "height": 12
+          },
+          {
+            "id": "A2",
+            "kind": "Kind A",
+            "width": 25.9,
+            "depth": 26,
+            "height": 15.9
+          },
+          {
+            "id": "A3",
+            "kind": "Kind A",
+            "width": 18.5,
+            "depth": 29.3,
+            "height": 16.9
+          },
+          {
+            "id": "A4",
+            "kind": "Kind A",
+            "width": 14.4,
+            "depth": 34.9,
+            "height": 14.1
+          },
+          {
+            "id": "A5",
+            "kind": "Kind A",
+            "width": 23,
+            "depth": 24.2,
+            "height": 9.8
+          },
+          {
+            "id": "A6",
+            "kind": "Kind A",
+            "width": 24.8,
+            "depth": 32.9,
+            "height": 7.1
+          },
+          {
+            "id": "A7",
+            "kind": "Kind A",
+            "width": 15.8,
+            "depth": 32,
+            "height": 8.1
+          },
+          {
+            "id": "A8",
+            "kind": "Kind A",
+            "width": 16.3,
+            "depth": 24.5,
+            "height": 12.1
+          },
+          {
+            "id": "A9",
+            "kind": "Kind A",
+            "width": 25.2,
+            "depth": 35.4,
+            "height": 16
+          },
+          {
+            "id": "B1",
+            "kind": "Kind B",
+            "width": 39,
+            "depth": 45.5,
+            "height": 21.7
+          },
+          {
+            "id": "B2",
+            "kind": "Kind B",
+            "width": 36.6,
+            "depth": 45.6,
+            "height": 17.6
+          },
+          {
+            "id": "B3",
+            "kind": "Kind B",
+            "width": 28.3,
+            "depth": 53.7,
+            "height": 16
+          },
+          {
+            "id": "B4",
+            "kind": "Kind B",
+            "width": 32.9,
+            "depth": 42.8,
+            "height": 18.2
+          },
+          {
+            "id": "B5",
+            "kind": "Kind B",
+            "width": 40,
+            "depth": 49.2,
+            "height": 22.6
+          },
+          {
+            "id": "B6",
+            "kind": "Kind B",
+            "width": 33.5,
+            "depth": 51.6,
+            "height": 25.7
+          },
+          {
+            "id": "B7",
+            "kind": "Kind B",
+            "width": 28.1,
+            "depth": 42,
+            "height": 25.3
+          },
+          {
+            "id": "B8",
+            "kind": "Kind B",
+            "width": 36,
+            "depth": 52.4,
+            "height": 21.6
+          },
+          {
+            "id": "B9",
+            "kind": "Kind B",
+            "width": 39.4,
+            "depth": 48.1,
+            "height": 17.5
+          },
+          {
+            "id": "C1",
+            "kind": "Kind C",
+            "width": 53.5,
+            "depth": 34.1,
+            "height": 28.6
+          },
+          {
+            "id": "C2",
+            "kind": "Kind C",
+            "width": 44.8,
+            "depth": 44,
+            "height": 32.9
+          },
+          {
+            "id": "C3",
+            "kind": "Kind C",
+            "width": 43.4,
+            "depth": 33.9,
+            "height": 35
+          },
+          {
+            "id": "C4",
+            "kind": "Kind C",
+            "width": 52.4,
+            "depth": 37.4,
+            "height": 33.3
+          },
+          {
+            "id": "C5",
+            "kind": "Kind C",
+            "width": 51.5,
+            "depth": 42.8,
+            "height": 29.1
+          },
+          {
+            "id": "C6",
+            "kind": "Kind C",
+            "width": 42.7,
+            "depth": 32.1,
+            "height": 25.6
+          },
+          {
+            "id": "C7",
+            "kind": "Kind C",
+            "width": 45.9,
+            "depth": 41,
+            "height": 25.4
+          },
+          {
+            "id": "C8",
+            "kind": "Kind C",
+            "width": 53.8,
+            "depth": 39.9,
+            "height": 28.7
+          },
+          {
+            "id": "C9",
+            "kind": "Kind C",
+            "width": 48.6,
+            "depth": 32.5,
+            "height": 33
+          }
+        ]
+      },
+      "valid": true,
+      "issueCodes": [
+        "perspective_3d"
+      ],
+      "normalized": {
+        "type": "scatter3d",
+        "title": "Three clusters in three measures",
+        "subtitle": "Invented measurements; drag to turn the box",
+        "x": "width",
+        "y": "depth",
+        "z": "height",
+        "series": "kind",
+        "label": "id",
+        "xLabel": "Width (mm)",
+        "yLabel": "Depth (mm)",
+        "zLabel": "Height (mm)",
+        "legend": "auto",
+        "tooltip": true,
+        "projection": "orthographic"
+      },
+      "describe": "3D scatter plot \"Three clusters in three measures\". 27 points of height against width and depth, in 3 groups (Kind A, Kind B, Kind C). width ranges from 14.4 to 53.8, depth from 24.2 to 53.7 and height from 7.1 to 35. Highest height: 35 (C3, width 43.4, depth 33.9). Lowest: 7.1 (A6, width 24.8, depth 32.9)."
+    },
+    {
+      "type": "surface",
+      "spec": {
+        "type": "surface",
+        "title": "Yield by temperature and pressure",
+        "subtitle": "Invented response surface; drag to turn",
+        "x": "temp",
+        "y": "pressure",
+        "z": "yield",
+        "xLabel": "Temperature (°C)",
+        "yLabel": "Pressure (bar)",
+        "zLabel": "Yield (%)",
+        "format": "fixed:1",
+        "data": [
+          {
+            "temp": 14,
+            "pressure": 1,
+            "yield": 50.3
+          },
+          {
+            "temp": 14,
+            "pressure": 1.8,
+            "yield": 57.7
+          },
+          {
+            "temp": 14,
+            "pressure": 2.6,
+            "yield": 63.1
+          },
+          {
+            "temp": 14,
+            "pressure": 3.4,
+            "yield": 66.6
+          },
+          {
+            "temp": 14,
+            "pressure": 4.2,
+            "yield": 68.2
+          },
+          {
+            "temp": 14,
+            "pressure": 5,
+            "yield": 67.9
+          },
+          {
+            "temp": 14,
+            "pressure": 5.8,
+            "yield": 65.7
+          },
+          {
+            "temp": 14,
+            "pressure": 6.6,
+            "yield": 61.5
+          },
+          {
+            "temp": 14,
+            "pressure": 7.4,
+            "yield": 55.4
+          },
+          {
+            "temp": 14,
+            "pressure": 8.2,
+            "yield": 47.4
+          },
+          {
+            "temp": 14,
+            "pressure": 9,
+            "yield": 37.5
+          },
+          {
+            "temp": 15.5,
+            "pressure": 1,
+            "yield": 53.9
+          },
+          {
+            "temp": 15.5,
+            "pressure": 1.8,
+            "yield": 61.5
+          },
+          {
+            "temp": 15.5,
+            "pressure": 2.6,
+            "yield": 67.2
+          },
+          {
+            "temp": 15.5,
+            "pressure": 3.4,
+            "yield": 70.9
+          },
+          {
+            "temp": 15.5,
+            "pressure": 4.2,
+            "yield": 72.8
+          },
+          {
+            "temp": 15.5,
+            "pressure": 5,
+            "yield": 72.7
+          },
+          {
+            "temp": 15.5,
+            "pressure": 5.8,
+            "yield": 70.7
+          },
+          {
+            "temp": 15.5,
+            "pressure": 6.6,
+            "yield": 66.8
+          },
+          {
+            "temp": 15.5,
+            "pressure": 7.4,
+            "yield": 60.9
+          },
+          {
+            "temp": 15.5,
+            "pressure": 8.2,
+            "yield": 53.2
+          },
+          {
+            "temp": 15.5,
+            "pressure": 9,
+            "yield": 43.5
+          },
+          {
+            "temp": 17,
+            "pressure": 1,
+            "yield": 56.5
+          },
+          {
+            "temp": 17,
+            "pressure": 1.8,
+            "yield": 64.3
+          },
+          {
+            "temp": 17,
+            "pressure": 2.6,
+            "yield": 70.3
+          },
+          {
+            "temp": 17,
+            "pressure": 3.4,
+            "yield": 74.3
+          },
+          {
+            "temp": 17,
+            "pressure": 4.2,
+            "yield": 76.3
+          },
+          {
+            "temp": 17,
+            "pressure": 5,
+            "yield": 76.5
+          },
+          {
+            "temp": 17,
+            "pressure": 5.8,
+            "yield": 74.7
+          },
+          {
+            "temp": 17,
+            "pressure": 6.6,
+            "yield": 71.1
+          },
+          {
+            "temp": 17,
+            "pressure": 7.4,
+            "yield": 65.5
+          },
+          {
+            "temp": 17,
+            "pressure": 8.2,
+            "yield": 57.9
+          },
+          {
+            "temp": 17,
+            "pressure": 9,
+            "yield": 48.5
+          },
+          {
+            "temp": 18.5,
+            "pressure": 1,
+            "yield": 58.1
+          },
+          {
+            "temp": 18.5,
+            "pressure": 1.8,
+            "yield": 66.2
+          },
+          {
+            "temp": 18.5,
+            "pressure": 2.6,
+            "yield": 72.3
+          },
+          {
+            "temp": 18.5,
+            "pressure": 3.4,
+            "yield": 76.6
+          },
+          {
+            "temp": 18.5,
+            "pressure": 4.2,
+            "yield": 78.9
+          },
+          {
+            "temp": 18.5,
+            "pressure": 5,
+            "yield": 79.3
+          },
+          {
+            "temp": 18.5,
+            "pressure": 5.8,
+            "yield": 77.8
+          },
+          {
+            "temp": 18.5,
+            "pressure": 6.6,
+            "yield": 74.3
+          },
+          {
+            "temp": 18.5,
+            "pressure": 7.4,
+            "yield": 69
+          },
+          {
+            "temp": 18.5,
+            "pressure": 8.2,
+            "yield": 61.7
+          },
+          {
+            "temp": 18.5,
+            "pressure": 9,
+            "yield": 52.5
+          },
+          {
+            "temp": 20,
+            "pressure": 1,
+            "yield": 58.7
+          },
+          {
+            "temp": 20,
+            "pressure": 1.8,
+            "yield": 67
+          },
+          {
+            "temp": 20,
+            "pressure": 2.6,
+            "yield": 73.4
+          },
+          {
+            "temp": 20,
+            "pressure": 3.4,
+            "yield": 77.9
+          },
+          {
+            "temp": 20,
+            "pressure": 4.2,
+            "yield": 80.5
+          },
+          {
+            "temp": 20,
+            "pressure": 5,
+            "yield": 81.1
+          },
+          {
+            "temp": 20,
+            "pressure": 5.8,
+            "yield": 79.8
+          },
+          {
+            "temp": 20,
+            "pressure": 6.6,
+            "yield": 76.6
+          },
+          {
+            "temp": 20,
+            "pressure": 7.4,
+            "yield": 71.5
+          },
+          {
+            "temp": 20,
+            "pressure": 8.2,
+            "yield": 64.5
+          },
+          {
+            "temp": 20,
+            "pressure": 9,
+            "yield": 55.5
+          },
+          {
+            "temp": 21.5,
+            "pressure": 1,
+            "yield": 58.3
+          },
+          {
+            "temp": 21.5,
+            "pressure": 1.8,
+            "yield": 66.9
+          },
+          {
+            "temp": 21.5,
+            "pressure": 2.6,
+            "yield": 73.5
+          },
+          {
+            "temp": 21.5,
+            "pressure": 3.4,
+            "yield": 78.3
+          },
+          {
+            "temp": 21.5,
+            "pressure": 4.2,
+            "yield": 81.1
+          },
+          {
+            "temp": 21.5,
+            "pressure": 5,
+            "yield": 81.9
+          },
+          {
+            "temp": 21.5,
+            "pressure": 5.8,
+            "yield": 80.9
+          },
+          {
+            "temp": 21.5,
+            "pressure": 6.6,
+            "yield": 77.9
+          },
+          {
+            "temp": 21.5,
+            "pressure": 7.4,
+            "yield": 73.1
+          },
+          {
+            "temp": 21.5,
+            "pressure": 8.2,
+            "yield": 66.3
+          },
+          {
+            "temp": 21.5,
+            "pressure": 9,
+            "yield": 57.5
+          },
+          {
+            "temp": 23,
+            "pressure": 1,
+            "yield": 57
+          },
+          {
+            "temp": 23,
+            "pressure": 1.8,
+            "yield": 65.8
+          },
+          {
+            "temp": 23,
+            "pressure": 2.6,
+            "yield": 72.7
+          },
+          {
+            "temp": 23,
+            "pressure": 3.4,
+            "yield": 77.6
+          },
+          {
+            "temp": 23,
+            "pressure": 4.2,
+            "yield": 80.7
+          },
+          {
+            "temp": 23,
+            "pressure": 5,
+            "yield": 81.8
+          },
+          {
+            "temp": 23,
+            "pressure": 5.8,
+            "yield": 81
+          },
+          {
+            "temp": 23,
+            "pressure": 6.6,
+            "yield": 78.3
+          },
+          {
+            "temp": 23,
+            "pressure": 7.4,
+            "yield": 73.6
+          },
+          {
+            "temp": 23,
+            "pressure": 8.2,
+            "yield": 67.1
+          },
+          {
+            "temp": 23,
+            "pressure": 9,
+            "yield": 58.6
+          },
+          {
+            "temp": 24.5,
+            "pressure": 1,
+            "yield": 54.6
+          },
+          {
+            "temp": 24.5,
+            "pressure": 1.8,
+            "yield": 63.7
+          },
+          {
+            "temp": 24.5,
+            "pressure": 2.6,
+            "yield": 70.8
+          },
+          {
+            "temp": 24.5,
+            "pressure": 3.4,
+            "yield": 76
+          },
+          {
+            "temp": 24.5,
+            "pressure": 4.2,
+            "yield": 79.3
+          },
+          {
+            "temp": 24.5,
+            "pressure": 5,
+            "yield": 80.6
+          },
+          {
+            "temp": 24.5,
+            "pressure": 5.8,
+            "yield": 80.1
+          },
+          {
+            "temp": 24.5,
+            "pressure": 6.6,
+            "yield": 77.6
+          },
+          {
+            "temp": 24.5,
+            "pressure": 7.4,
+            "yield": 73.2
+          },
+          {
+            "temp": 24.5,
+            "pressure": 8.2,
+            "yield": 66.9
+          },
+          {
+            "temp": 24.5,
+            "pressure": 9,
+            "yield": 58.6
+          },
+          {
+            "temp": 26,
+            "pressure": 1,
+            "yield": 51.3
+          },
+          {
+            "temp": 26,
+            "pressure": 1.8,
+            "yield": 60.6
+          },
+          {
+            "temp": 26,
+            "pressure": 2.6,
+            "yield": 67.9
+          },
+          {
+            "temp": 26,
+            "pressure": 3.4,
+            "yield": 73.4
+          },
+          {
+            "temp": 26,
+            "pressure": 4.2,
+            "yield": 76.9
+          },
+          {
+            "temp": 26,
+            "pressure": 5,
+            "yield": 78.5
+          },
+          {
+            "temp": 26,
+            "pressure": 5.8,
+            "yield": 78.2
+          },
+          {
+            "temp": 26,
+            "pressure": 6.6,
+            "yield": 75.9
+          },
+          {
+            "temp": 26,
+            "pressure": 7.4,
+            "yield": 71.8
+          },
+          {
+            "temp": 26,
+            "pressure": 8.2,
+            "yield": 65.7
+          },
+          {
+            "temp": 26,
+            "pressure": 9,
+            "yield": 57.7
+          },
+          {
+            "temp": 27.5,
+            "pressure": 1,
+            "yield": 46.9
+          },
+          {
+            "temp": 27.5,
+            "pressure": 1.8,
+            "yield": 56.5
+          },
+          {
+            "temp": 27.5,
+            "pressure": 2.6,
+            "yield": 64.1
+          },
+          {
+            "temp": 27.5,
+            "pressure": 3.4,
+            "yield": 69.7
+          },
+          {
+            "temp": 27.5,
+            "pressure": 4.2,
+            "yield": 73.5
+          },
+          {
+            "temp": 27.5,
+            "pressure": 5,
+            "yield": 75.3
+          },
+          {
+            "temp": 27.5,
+            "pressure": 5.8,
+            "yield": 75.3
+          },
+          {
+            "temp": 27.5,
+            "pressure": 6.6,
+            "yield": 73.3
+          },
+          {
+            "temp": 27.5,
+            "pressure": 7.4,
+            "yield": 69.3
+          },
+          {
+            "temp": 27.5,
+            "pressure": 8.2,
+            "yield": 63.5
+          },
+          {
+            "temp": 27.5,
+            "pressure": 9,
+            "yield": 55.7
+          },
+          {
+            "temp": 29,
+            "pressure": 1,
+            "yield": 41.6
+          },
+          {
+            "temp": 29,
+            "pressure": 1.8,
+            "yield": 51.4
+          },
+          {
+            "temp": 29,
+            "pressure": 2.6,
+            "yield": 59.2
+          },
+          {
+            "temp": 29,
+            "pressure": 3.4,
+            "yield": 65.1
+          },
+          {
+            "temp": 29,
+            "pressure": 4.2,
+            "yield": 69.1
+          },
+          {
+            "temp": 29,
+            "pressure": 5,
+            "yield": 71.2
+          },
+          {
+            "temp": 29,
+            "pressure": 5.8,
+            "yield": 71.4
+          },
+          {
+            "temp": 29,
+            "pressure": 6.6,
+            "yield": 69.6
+          },
+          {
+            "temp": 29,
+            "pressure": 7.4,
+            "yield": 65.9
+          },
+          {
+            "temp": 29,
+            "pressure": 8.2,
+            "yield": 60.3
+          },
+          {
+            "temp": 29,
+            "pressure": 9,
+            "yield": 52.8
+          },
+          {
+            "temp": 30.5,
+            "pressure": 1,
+            "yield": 35.3
+          },
+          {
+            "temp": 30.5,
+            "pressure": 1.8,
+            "yield": 45.3
+          },
+          {
+            "temp": 30.5,
+            "pressure": 2.6,
+            "yield": 53.4
+          },
+          {
+            "temp": 30.5,
+            "pressure": 3.4,
+            "yield": 59.5
+          },
+          {
+            "temp": 30.5,
+            "pressure": 4.2,
+            "yield": 63.8
+          },
+          {
+            "temp": 30.5,
+            "pressure": 5,
+            "yield": 66.1
+          },
+          {
+            "temp": 30.5,
+            "pressure": 5.8,
+            "yield": 66.5
+          },
+          {
+            "temp": 30.5,
+            "pressure": 6.6,
+            "yield": 65
+          },
+          {
+            "temp": 30.5,
+            "pressure": 7.4,
+            "yield": 61.5
+          },
+          {
+            "temp": 30.5,
+            "pressure": 8.2,
+            "yield": 56.2
+          },
+          {
+            "temp": 30.5,
+            "pressure": 9,
+            "yield": 48.9
+          },
+          {
+            "temp": 32,
+            "pressure": 1,
+            "yield": 28
+          },
+          {
+            "temp": 32,
+            "pressure": 1.8,
+            "yield": 38.2
+          },
+          {
+            "temp": 32,
+            "pressure": 2.6,
+            "yield": 46.6
+          },
+          {
+            "temp": 32,
+            "pressure": 3.4,
+            "yield": 53
+          },
+          {
+            "temp": 32,
+            "pressure": 4.2,
+            "yield": 57.4
+          },
+          {
+            "temp": 32,
+            "pressure": 5,
+            "yield": 60
+          },
+          {
+            "temp": 32,
+            "pressure": 5.8,
+            "yield": 60.6
+          },
+          {
+            "temp": 32,
+            "pressure": 6.6,
+            "yield": 59.4
+          },
+          {
+            "temp": 32,
+            "pressure": 7.4,
+            "yield": 56.2
+          },
+          {
+            "temp": 32,
+            "pressure": 8.2,
+            "yield": 51
+          },
+          {
+            "temp": 32,
+            "pressure": 9,
+            "yield": 44
+          }
+        ]
+      },
+      "valid": true,
+      "issueCodes": [
+        "perspective_3d"
+      ],
+      "normalized": {
+        "type": "surface",
+        "title": "Yield by temperature and pressure",
+        "subtitle": "Invented response surface; drag to turn",
+        "x": "temp",
+        "y": "pressure",
+        "z": "yield",
+        "xLabel": "Temperature (°C)",
+        "yLabel": "Pressure (bar)",
+        "zLabel": "Yield (%)",
+        "format": "fixed:1",
+        "legend": "auto",
+        "tooltip": true,
+        "mesh": true,
+        "projection": "orthographic"
+      },
+      "describe": "Surface \"Yield by temperature and pressure\". yield over a grid of 13 temp by 11 pressure values, coloured by yield. temp ranges from 14 to 32 and pressure from 1 to 9. Highest yield: 81.9 at temp 21.5, pressure 5. Lowest: 28.0 at temp 32, pressure 1."
+    },
+    {
       "type": "choropleth",
       "spec": {
         "type": "choropleth",
@@ -34984,6 +35965,2886 @@
           "severity": "error",
           "code": "out_of_range",
           "path": "radius"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "scatter3d: ok",
+      "spec": {
+        "type": "scatter3d",
+        "x": "x",
+        "y": "y",
+        "z": "z",
+        "series": "g",
+        "data": [
+          {
+            "x": 3,
+            "y": 1,
+            "z": 2,
+            "g": "a"
+          },
+          {
+            "x": 1,
+            "y": 5,
+            "z": 4,
+            "g": "b"
+          },
+          {
+            "x": 2,
+            "y": 2,
+            "z": 9,
+            "g": "a"
+          },
+          {
+            "x": 1,
+            "y": 2,
+            "z": 1,
+            "g": "b"
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "info",
+          "code": "perspective_3d",
+          "path": "projection"
+        }
+      ],
+      "normalized": {
+        "type": "scatter3d",
+        "x": "x",
+        "y": "y",
+        "z": "z",
+        "series": "g",
+        "legend": "auto",
+        "tooltip": true,
+        "projection": "orthographic"
+      }
+    },
+    {
+      "name": "scatter3d: perspective with a camera",
+      "spec": {
+        "type": "scatter3d",
+        "x": "x",
+        "y": "y",
+        "z": "z",
+        "projection": "perspective",
+        "camera": {
+          "pitch": 30,
+          "bearing": -30,
+          "zoom": 2
+        },
+        "data": [
+          {
+            "x": 3,
+            "y": 1,
+            "z": 2,
+            "g": "a"
+          },
+          {
+            "x": 1,
+            "y": 5,
+            "z": 4,
+            "g": "b"
+          },
+          {
+            "x": 2,
+            "y": 2,
+            "z": 9,
+            "g": "a"
+          },
+          {
+            "x": 1,
+            "y": 2,
+            "z": 1,
+            "g": "b"
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "info",
+          "code": "perspective_3d",
+          "path": "projection"
+        }
+      ],
+      "normalized": {
+        "type": "scatter3d",
+        "x": "x",
+        "y": "y",
+        "z": "z",
+        "projection": "perspective",
+        "camera": {
+          "pitch": 30,
+          "bearing": -30,
+          "zoom": 2
+        },
+        "legend": "auto",
+        "tooltip": true
+      }
+    },
+    {
+      "name": "scatter3d: bearing past a full turn, zoom too far",
+      "spec": {
+        "type": "scatter3d",
+        "x": "x",
+        "y": "y",
+        "z": "z",
+        "camera": {
+          "bearing": 400,
+          "zoom": 20
+        },
+        "data": [
+          {
+            "x": 3,
+            "y": 1,
+            "z": 2,
+            "g": "a"
+          },
+          {
+            "x": 1,
+            "y": 5,
+            "z": 4,
+            "g": "b"
+          },
+          {
+            "x": 2,
+            "y": 2,
+            "z": 9,
+            "g": "a"
+          },
+          {
+            "x": 1,
+            "y": 2,
+            "z": 1,
+            "g": "b"
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "out_of_range",
+          "path": "camera.bearing"
+        },
+        {
+          "severity": "error",
+          "code": "out_of_range",
+          "path": "camera.zoom"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "scatter3d: a map camera field",
+      "spec": {
+        "type": "scatter3d",
+        "x": "x",
+        "y": "y",
+        "z": "z",
+        "camera": {
+          "lng": 10,
+          "pitch": 20
+        },
+        "data": [
+          {
+            "x": 3,
+            "y": 1,
+            "z": 2,
+            "g": "a"
+          },
+          {
+            "x": 1,
+            "y": 5,
+            "z": 4,
+            "g": "b"
+          },
+          {
+            "x": 2,
+            "y": 2,
+            "z": 9,
+            "g": "a"
+          },
+          {
+            "x": 1,
+            "y": 2,
+            "z": 1,
+            "g": "b"
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "unknown_field",
+          "path": "camera.lng"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "scatter3d: pitch out of range",
+      "spec": {
+        "type": "scatter3d",
+        "x": "x",
+        "y": "y",
+        "z": "z",
+        "camera": {
+          "pitch": 120
+        },
+        "data": [
+          {
+            "x": 3,
+            "y": 1,
+            "z": 2,
+            "g": "a"
+          },
+          {
+            "x": 1,
+            "y": 5,
+            "z": 4,
+            "g": "b"
+          },
+          {
+            "x": 2,
+            "y": 2,
+            "z": 9,
+            "g": "a"
+          },
+          {
+            "x": 1,
+            "y": 2,
+            "z": 1,
+            "g": "b"
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "out_of_range",
+          "path": "camera.pitch"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "scatter3d: unknown projection",
+      "spec": {
+        "type": "scatter3d",
+        "x": "x",
+        "y": "y",
+        "z": "z",
+        "projection": "fisheye",
+        "data": [
+          {
+            "x": 3,
+            "y": 1,
+            "z": 2,
+            "g": "a"
+          },
+          {
+            "x": 1,
+            "y": 5,
+            "z": 4,
+            "g": "b"
+          },
+          {
+            "x": 2,
+            "y": 2,
+            "z": 9,
+            "g": "a"
+          },
+          {
+            "x": 1,
+            "y": 2,
+            "z": 1,
+            "g": "b"
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "bad_enum",
+          "path": "projection"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "scatter3d: z missing",
+      "spec": {
+        "type": "scatter3d",
+        "x": "x",
+        "y": "y",
+        "data": [
+          {
+            "x": 3,
+            "y": 1,
+            "z": 2,
+            "g": "a"
+          },
+          {
+            "x": 1,
+            "y": 5,
+            "z": 4,
+            "g": "b"
+          },
+          {
+            "x": 2,
+            "y": 2,
+            "z": 9,
+            "g": "a"
+          },
+          {
+            "x": 1,
+            "y": 2,
+            "z": 1,
+            "g": "b"
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "missing_required",
+          "path": "z"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "scatter3d: no complete point",
+      "spec": {
+        "type": "scatter3d",
+        "x": "x",
+        "y": "y",
+        "z": "z",
+        "data": [
+          {
+            "x": 1,
+            "y": "a",
+            "z": 2
+          },
+          {
+            "x": null,
+            "y": 1,
+            "z": 1
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "some_not_numeric",
+          "path": "y"
+        },
+        {
+          "severity": "info",
+          "code": "perspective_3d",
+          "path": "projection"
+        },
+        {
+          "severity": "error",
+          "code": "no_points",
+          "path": "data"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "scatter3d: incomplete rows, negative size",
+      "spec": {
+        "type": "scatter3d",
+        "x": "x",
+        "y": "y",
+        "z": "z",
+        "size": "s",
+        "data": [
+          {
+            "x": 3,
+            "y": 1,
+            "z": 2,
+            "g": "a",
+            "s": 2
+          },
+          {
+            "x": 1,
+            "y": 5,
+            "z": 4,
+            "g": "b",
+            "s": 2
+          },
+          {
+            "x": 2,
+            "y": 2,
+            "z": 9,
+            "g": "a",
+            "s": 2
+          },
+          {
+            "x": 1,
+            "y": 2,
+            "z": 1,
+            "g": "b",
+            "s": 2
+          },
+          {
+            "x": 1,
+            "y": 2,
+            "z": 3,
+            "s": -1
+          },
+          {
+            "x": 1,
+            "y": null,
+            "z": 3,
+            "s": 1
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "info",
+          "code": "perspective_3d",
+          "path": "projection"
+        },
+        {
+          "severity": "warning",
+          "code": "negative_skipped",
+          "path": "size"
+        },
+        {
+          "severity": "warning",
+          "code": "incomplete_rows",
+          "path": "data"
+        }
+      ],
+      "normalized": {
+        "type": "scatter3d",
+        "x": "x",
+        "y": "y",
+        "z": "z",
+        "size": "s",
+        "legend": "auto",
+        "tooltip": true,
+        "projection": "orthographic"
+      }
+    },
+    {
+      "name": "scatter3d: facet is not a field",
+      "spec": {
+        "type": "scatter3d",
+        "x": "x",
+        "y": "y",
+        "z": "z",
+        "facet": "g",
+        "data": [
+          {
+            "x": 3,
+            "y": 1,
+            "z": 2,
+            "g": "a"
+          },
+          {
+            "x": 1,
+            "y": 5,
+            "z": 4,
+            "g": "b"
+          },
+          {
+            "x": 2,
+            "y": 2,
+            "z": 9,
+            "g": "a"
+          },
+          {
+            "x": 1,
+            "y": 2,
+            "z": 1,
+            "g": "b"
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "unknown_field",
+          "path": "facet"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "surface: ok",
+      "spec": {
+        "type": "surface",
+        "x": "x",
+        "y": "y",
+        "z": "z",
+        "data": [
+          {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          {
+            "x": 1,
+            "y": 0,
+            "z": 2
+          },
+          {
+            "x": 2,
+            "y": 0,
+            "z": 4
+          },
+          {
+            "x": 3,
+            "y": 0,
+            "z": 6
+          },
+          {
+            "x": 0,
+            "y": 1,
+            "z": -1
+          },
+          {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          {
+            "x": 2,
+            "y": 1,
+            "z": 3
+          },
+          {
+            "x": 3,
+            "y": 1,
+            "z": 5
+          },
+          {
+            "x": 0,
+            "y": 2,
+            "z": -2
+          },
+          {
+            "x": 1,
+            "y": 2,
+            "z": 0
+          },
+          {
+            "x": 2,
+            "y": 2,
+            "z": 2
+          },
+          {
+            "x": 3,
+            "y": 2,
+            "z": 4
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "info",
+          "code": "perspective_3d",
+          "path": "projection"
+        }
+      ],
+      "normalized": {
+        "type": "surface",
+        "x": "x",
+        "y": "y",
+        "z": "z",
+        "legend": "auto",
+        "tooltip": true,
+        "mesh": true,
+        "projection": "orthographic"
+      }
+    },
+    {
+      "name": "surface: missing cells",
+      "spec": {
+        "type": "surface",
+        "x": "x",
+        "y": "y",
+        "z": "z",
+        "data": [
+          {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          {
+            "x": 1,
+            "y": 0,
+            "z": 2
+          },
+          {
+            "x": 3,
+            "y": 0,
+            "z": 6
+          },
+          {
+            "x": 0,
+            "y": 1,
+            "z": -1
+          },
+          {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          {
+            "x": 2,
+            "y": 1,
+            "z": 3
+          },
+          {
+            "x": 0,
+            "y": 2,
+            "z": -2
+          },
+          {
+            "x": 1,
+            "y": 2,
+            "z": 0
+          },
+          {
+            "x": 2,
+            "y": 2,
+            "z": 2
+          },
+          {
+            "x": 3,
+            "y": 2,
+            "z": 4
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "info",
+          "code": "perspective_3d",
+          "path": "projection"
+        },
+        {
+          "severity": "warning",
+          "code": "missing_cells",
+          "path": "data"
+        }
+      ],
+      "normalized": {
+        "type": "surface",
+        "x": "x",
+        "y": "y",
+        "z": "z",
+        "legend": "auto",
+        "tooltip": true,
+        "mesh": true,
+        "projection": "orthographic"
+      }
+    },
+    {
+      "name": "surface: duplicate cells",
+      "spec": {
+        "type": "surface",
+        "x": "x",
+        "y": "y",
+        "z": "z",
+        "data": [
+          {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          {
+            "x": 1,
+            "y": 0,
+            "z": 2
+          },
+          {
+            "x": 2,
+            "y": 0,
+            "z": 4
+          },
+          {
+            "x": 0,
+            "y": 1,
+            "z": -1
+          },
+          {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          {
+            "x": 2,
+            "y": 1,
+            "z": 3
+          },
+          {
+            "x": 0,
+            "y": 2,
+            "z": -2
+          },
+          {
+            "x": 1,
+            "y": 2,
+            "z": 0
+          },
+          {
+            "x": 2,
+            "y": 2,
+            "z": 2
+          },
+          {
+            "x": 0,
+            "y": 0,
+            "z": 9
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "info",
+          "code": "perspective_3d",
+          "path": "projection"
+        },
+        {
+          "severity": "warning",
+          "code": "duplicate_cells",
+          "path": "data"
+        }
+      ],
+      "normalized": {
+        "type": "surface",
+        "x": "x",
+        "y": "y",
+        "z": "z",
+        "legend": "auto",
+        "tooltip": true,
+        "mesh": true,
+        "projection": "orthographic"
+      }
+    },
+    {
+      "name": "surface: grid too small",
+      "spec": {
+        "type": "surface",
+        "x": "x",
+        "y": "y",
+        "z": "z",
+        "data": [
+          {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "y": 1,
+            "z": -1
+          },
+          {
+            "x": 0,
+            "y": 2,
+            "z": -2
+          },
+          {
+            "x": 0,
+            "y": 3,
+            "z": -3
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "info",
+          "code": "perspective_3d",
+          "path": "projection"
+        },
+        {
+          "severity": "error",
+          "code": "grid_too_small",
+          "path": "x"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "surface: grid too large",
+      "spec": {
+        "type": "surface",
+        "x": "x",
+        "y": "y",
+        "z": "z",
+        "data": [
+          {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          {
+            "x": 1,
+            "y": 0,
+            "z": 2
+          },
+          {
+            "x": 2,
+            "y": 0,
+            "z": 4
+          },
+          {
+            "x": 3,
+            "y": 0,
+            "z": 6
+          },
+          {
+            "x": 4,
+            "y": 0,
+            "z": 8
+          },
+          {
+            "x": 5,
+            "y": 0,
+            "z": 10
+          },
+          {
+            "x": 6,
+            "y": 0,
+            "z": 12
+          },
+          {
+            "x": 7,
+            "y": 0,
+            "z": 14
+          },
+          {
+            "x": 8,
+            "y": 0,
+            "z": 16
+          },
+          {
+            "x": 9,
+            "y": 0,
+            "z": 18
+          },
+          {
+            "x": 10,
+            "y": 0,
+            "z": 20
+          },
+          {
+            "x": 11,
+            "y": 0,
+            "z": 22
+          },
+          {
+            "x": 12,
+            "y": 0,
+            "z": 24
+          },
+          {
+            "x": 13,
+            "y": 0,
+            "z": 26
+          },
+          {
+            "x": 14,
+            "y": 0,
+            "z": 28
+          },
+          {
+            "x": 15,
+            "y": 0,
+            "z": 30
+          },
+          {
+            "x": 16,
+            "y": 0,
+            "z": 32
+          },
+          {
+            "x": 17,
+            "y": 0,
+            "z": 34
+          },
+          {
+            "x": 18,
+            "y": 0,
+            "z": 36
+          },
+          {
+            "x": 19,
+            "y": 0,
+            "z": 38
+          },
+          {
+            "x": 20,
+            "y": 0,
+            "z": 40
+          },
+          {
+            "x": 21,
+            "y": 0,
+            "z": 42
+          },
+          {
+            "x": 22,
+            "y": 0,
+            "z": 44
+          },
+          {
+            "x": 23,
+            "y": 0,
+            "z": 46
+          },
+          {
+            "x": 24,
+            "y": 0,
+            "z": 48
+          },
+          {
+            "x": 25,
+            "y": 0,
+            "z": 50
+          },
+          {
+            "x": 26,
+            "y": 0,
+            "z": 52
+          },
+          {
+            "x": 27,
+            "y": 0,
+            "z": 54
+          },
+          {
+            "x": 28,
+            "y": 0,
+            "z": 56
+          },
+          {
+            "x": 29,
+            "y": 0,
+            "z": 58
+          },
+          {
+            "x": 30,
+            "y": 0,
+            "z": 60
+          },
+          {
+            "x": 31,
+            "y": 0,
+            "z": 62
+          },
+          {
+            "x": 32,
+            "y": 0,
+            "z": 64
+          },
+          {
+            "x": 33,
+            "y": 0,
+            "z": 66
+          },
+          {
+            "x": 34,
+            "y": 0,
+            "z": 68
+          },
+          {
+            "x": 35,
+            "y": 0,
+            "z": 70
+          },
+          {
+            "x": 36,
+            "y": 0,
+            "z": 72
+          },
+          {
+            "x": 37,
+            "y": 0,
+            "z": 74
+          },
+          {
+            "x": 38,
+            "y": 0,
+            "z": 76
+          },
+          {
+            "x": 39,
+            "y": 0,
+            "z": 78
+          },
+          {
+            "x": 40,
+            "y": 0,
+            "z": 80
+          },
+          {
+            "x": 41,
+            "y": 0,
+            "z": 82
+          },
+          {
+            "x": 42,
+            "y": 0,
+            "z": 84
+          },
+          {
+            "x": 43,
+            "y": 0,
+            "z": 86
+          },
+          {
+            "x": 44,
+            "y": 0,
+            "z": 88
+          },
+          {
+            "x": 45,
+            "y": 0,
+            "z": 90
+          },
+          {
+            "x": 46,
+            "y": 0,
+            "z": 92
+          },
+          {
+            "x": 47,
+            "y": 0,
+            "z": 94
+          },
+          {
+            "x": 48,
+            "y": 0,
+            "z": 96
+          },
+          {
+            "x": 49,
+            "y": 0,
+            "z": 98
+          },
+          {
+            "x": 50,
+            "y": 0,
+            "z": 100
+          },
+          {
+            "x": 51,
+            "y": 0,
+            "z": 102
+          },
+          {
+            "x": 52,
+            "y": 0,
+            "z": 104
+          },
+          {
+            "x": 53,
+            "y": 0,
+            "z": 106
+          },
+          {
+            "x": 54,
+            "y": 0,
+            "z": 108
+          },
+          {
+            "x": 55,
+            "y": 0,
+            "z": 110
+          },
+          {
+            "x": 56,
+            "y": 0,
+            "z": 112
+          },
+          {
+            "x": 57,
+            "y": 0,
+            "z": 114
+          },
+          {
+            "x": 58,
+            "y": 0,
+            "z": 116
+          },
+          {
+            "x": 59,
+            "y": 0,
+            "z": 118
+          },
+          {
+            "x": 60,
+            "y": 0,
+            "z": 120
+          },
+          {
+            "x": 61,
+            "y": 0,
+            "z": 122
+          },
+          {
+            "x": 62,
+            "y": 0,
+            "z": 124
+          },
+          {
+            "x": 63,
+            "y": 0,
+            "z": 126
+          },
+          {
+            "x": 64,
+            "y": 0,
+            "z": 128
+          },
+          {
+            "x": 65,
+            "y": 0,
+            "z": 130
+          },
+          {
+            "x": 66,
+            "y": 0,
+            "z": 132
+          },
+          {
+            "x": 67,
+            "y": 0,
+            "z": 134
+          },
+          {
+            "x": 68,
+            "y": 0,
+            "z": 136
+          },
+          {
+            "x": 69,
+            "y": 0,
+            "z": 138
+          },
+          {
+            "x": 70,
+            "y": 0,
+            "z": 140
+          },
+          {
+            "x": 71,
+            "y": 0,
+            "z": 142
+          },
+          {
+            "x": 72,
+            "y": 0,
+            "z": 144
+          },
+          {
+            "x": 73,
+            "y": 0,
+            "z": 146
+          },
+          {
+            "x": 74,
+            "y": 0,
+            "z": 148
+          },
+          {
+            "x": 75,
+            "y": 0,
+            "z": 150
+          },
+          {
+            "x": 76,
+            "y": 0,
+            "z": 152
+          },
+          {
+            "x": 77,
+            "y": 0,
+            "z": 154
+          },
+          {
+            "x": 78,
+            "y": 0,
+            "z": 156
+          },
+          {
+            "x": 79,
+            "y": 0,
+            "z": 158
+          },
+          {
+            "x": 80,
+            "y": 0,
+            "z": 160
+          },
+          {
+            "x": 81,
+            "y": 0,
+            "z": 162
+          },
+          {
+            "x": 82,
+            "y": 0,
+            "z": 164
+          },
+          {
+            "x": 83,
+            "y": 0,
+            "z": 166
+          },
+          {
+            "x": 84,
+            "y": 0,
+            "z": 168
+          },
+          {
+            "x": 85,
+            "y": 0,
+            "z": 170
+          },
+          {
+            "x": 86,
+            "y": 0,
+            "z": 172
+          },
+          {
+            "x": 87,
+            "y": 0,
+            "z": 174
+          },
+          {
+            "x": 88,
+            "y": 0,
+            "z": 176
+          },
+          {
+            "x": 89,
+            "y": 0,
+            "z": 178
+          },
+          {
+            "x": 90,
+            "y": 0,
+            "z": 180
+          },
+          {
+            "x": 91,
+            "y": 0,
+            "z": 182
+          },
+          {
+            "x": 92,
+            "y": 0,
+            "z": 184
+          },
+          {
+            "x": 93,
+            "y": 0,
+            "z": 186
+          },
+          {
+            "x": 94,
+            "y": 0,
+            "z": 188
+          },
+          {
+            "x": 95,
+            "y": 0,
+            "z": 190
+          },
+          {
+            "x": 96,
+            "y": 0,
+            "z": 192
+          },
+          {
+            "x": 97,
+            "y": 0,
+            "z": 194
+          },
+          {
+            "x": 98,
+            "y": 0,
+            "z": 196
+          },
+          {
+            "x": 99,
+            "y": 0,
+            "z": 198
+          },
+          {
+            "x": 100,
+            "y": 0,
+            "z": 200
+          },
+          {
+            "x": 101,
+            "y": 0,
+            "z": 202
+          },
+          {
+            "x": 102,
+            "y": 0,
+            "z": 204
+          },
+          {
+            "x": 103,
+            "y": 0,
+            "z": 206
+          },
+          {
+            "x": 104,
+            "y": 0,
+            "z": 208
+          },
+          {
+            "x": 105,
+            "y": 0,
+            "z": 210
+          },
+          {
+            "x": 106,
+            "y": 0,
+            "z": 212
+          },
+          {
+            "x": 107,
+            "y": 0,
+            "z": 214
+          },
+          {
+            "x": 108,
+            "y": 0,
+            "z": 216
+          },
+          {
+            "x": 109,
+            "y": 0,
+            "z": 218
+          },
+          {
+            "x": 110,
+            "y": 0,
+            "z": 220
+          },
+          {
+            "x": 111,
+            "y": 0,
+            "z": 222
+          },
+          {
+            "x": 112,
+            "y": 0,
+            "z": 224
+          },
+          {
+            "x": 113,
+            "y": 0,
+            "z": 226
+          },
+          {
+            "x": 114,
+            "y": 0,
+            "z": 228
+          },
+          {
+            "x": 115,
+            "y": 0,
+            "z": 230
+          },
+          {
+            "x": 116,
+            "y": 0,
+            "z": 232
+          },
+          {
+            "x": 117,
+            "y": 0,
+            "z": 234
+          },
+          {
+            "x": 118,
+            "y": 0,
+            "z": 236
+          },
+          {
+            "x": 119,
+            "y": 0,
+            "z": 238
+          },
+          {
+            "x": 120,
+            "y": 0,
+            "z": 240
+          },
+          {
+            "x": 121,
+            "y": 0,
+            "z": 242
+          },
+          {
+            "x": 122,
+            "y": 0,
+            "z": 244
+          },
+          {
+            "x": 123,
+            "y": 0,
+            "z": 246
+          },
+          {
+            "x": 124,
+            "y": 0,
+            "z": 248
+          },
+          {
+            "x": 125,
+            "y": 0,
+            "z": 250
+          },
+          {
+            "x": 126,
+            "y": 0,
+            "z": 252
+          },
+          {
+            "x": 127,
+            "y": 0,
+            "z": 254
+          },
+          {
+            "x": 128,
+            "y": 0,
+            "z": 256
+          },
+          {
+            "x": 129,
+            "y": 0,
+            "z": 258
+          },
+          {
+            "x": 130,
+            "y": 0,
+            "z": 260
+          },
+          {
+            "x": 131,
+            "y": 0,
+            "z": 262
+          },
+          {
+            "x": 132,
+            "y": 0,
+            "z": 264
+          },
+          {
+            "x": 133,
+            "y": 0,
+            "z": 266
+          },
+          {
+            "x": 134,
+            "y": 0,
+            "z": 268
+          },
+          {
+            "x": 135,
+            "y": 0,
+            "z": 270
+          },
+          {
+            "x": 136,
+            "y": 0,
+            "z": 272
+          },
+          {
+            "x": 137,
+            "y": 0,
+            "z": 274
+          },
+          {
+            "x": 138,
+            "y": 0,
+            "z": 276
+          },
+          {
+            "x": 139,
+            "y": 0,
+            "z": 278
+          },
+          {
+            "x": 140,
+            "y": 0,
+            "z": 280
+          },
+          {
+            "x": 141,
+            "y": 0,
+            "z": 282
+          },
+          {
+            "x": 142,
+            "y": 0,
+            "z": 284
+          },
+          {
+            "x": 143,
+            "y": 0,
+            "z": 286
+          },
+          {
+            "x": 144,
+            "y": 0,
+            "z": 288
+          },
+          {
+            "x": 145,
+            "y": 0,
+            "z": 290
+          },
+          {
+            "x": 146,
+            "y": 0,
+            "z": 292
+          },
+          {
+            "x": 147,
+            "y": 0,
+            "z": 294
+          },
+          {
+            "x": 148,
+            "y": 0,
+            "z": 296
+          },
+          {
+            "x": 149,
+            "y": 0,
+            "z": 298
+          },
+          {
+            "x": 150,
+            "y": 0,
+            "z": 300
+          },
+          {
+            "x": 151,
+            "y": 0,
+            "z": 302
+          },
+          {
+            "x": 152,
+            "y": 0,
+            "z": 304
+          },
+          {
+            "x": 153,
+            "y": 0,
+            "z": 306
+          },
+          {
+            "x": 154,
+            "y": 0,
+            "z": 308
+          },
+          {
+            "x": 155,
+            "y": 0,
+            "z": 310
+          },
+          {
+            "x": 156,
+            "y": 0,
+            "z": 312
+          },
+          {
+            "x": 157,
+            "y": 0,
+            "z": 314
+          },
+          {
+            "x": 158,
+            "y": 0,
+            "z": 316
+          },
+          {
+            "x": 159,
+            "y": 0,
+            "z": 318
+          },
+          {
+            "x": 160,
+            "y": 0,
+            "z": 320
+          },
+          {
+            "x": 161,
+            "y": 0,
+            "z": 322
+          },
+          {
+            "x": 162,
+            "y": 0,
+            "z": 324
+          },
+          {
+            "x": 163,
+            "y": 0,
+            "z": 326
+          },
+          {
+            "x": 164,
+            "y": 0,
+            "z": 328
+          },
+          {
+            "x": 165,
+            "y": 0,
+            "z": 330
+          },
+          {
+            "x": 166,
+            "y": 0,
+            "z": 332
+          },
+          {
+            "x": 167,
+            "y": 0,
+            "z": 334
+          },
+          {
+            "x": 168,
+            "y": 0,
+            "z": 336
+          },
+          {
+            "x": 169,
+            "y": 0,
+            "z": 338
+          },
+          {
+            "x": 170,
+            "y": 0,
+            "z": 340
+          },
+          {
+            "x": 171,
+            "y": 0,
+            "z": 342
+          },
+          {
+            "x": 172,
+            "y": 0,
+            "z": 344
+          },
+          {
+            "x": 173,
+            "y": 0,
+            "z": 346
+          },
+          {
+            "x": 174,
+            "y": 0,
+            "z": 348
+          },
+          {
+            "x": 175,
+            "y": 0,
+            "z": 350
+          },
+          {
+            "x": 176,
+            "y": 0,
+            "z": 352
+          },
+          {
+            "x": 177,
+            "y": 0,
+            "z": 354
+          },
+          {
+            "x": 178,
+            "y": 0,
+            "z": 356
+          },
+          {
+            "x": 179,
+            "y": 0,
+            "z": 358
+          },
+          {
+            "x": 180,
+            "y": 0,
+            "z": 360
+          },
+          {
+            "x": 181,
+            "y": 0,
+            "z": 362
+          },
+          {
+            "x": 182,
+            "y": 0,
+            "z": 364
+          },
+          {
+            "x": 183,
+            "y": 0,
+            "z": 366
+          },
+          {
+            "x": 184,
+            "y": 0,
+            "z": 368
+          },
+          {
+            "x": 185,
+            "y": 0,
+            "z": 370
+          },
+          {
+            "x": 186,
+            "y": 0,
+            "z": 372
+          },
+          {
+            "x": 187,
+            "y": 0,
+            "z": 374
+          },
+          {
+            "x": 188,
+            "y": 0,
+            "z": 376
+          },
+          {
+            "x": 189,
+            "y": 0,
+            "z": 378
+          },
+          {
+            "x": 190,
+            "y": 0,
+            "z": 380
+          },
+          {
+            "x": 191,
+            "y": 0,
+            "z": 382
+          },
+          {
+            "x": 192,
+            "y": 0,
+            "z": 384
+          },
+          {
+            "x": 193,
+            "y": 0,
+            "z": 386
+          },
+          {
+            "x": 194,
+            "y": 0,
+            "z": 388
+          },
+          {
+            "x": 195,
+            "y": 0,
+            "z": 390
+          },
+          {
+            "x": 196,
+            "y": 0,
+            "z": 392
+          },
+          {
+            "x": 197,
+            "y": 0,
+            "z": 394
+          },
+          {
+            "x": 198,
+            "y": 0,
+            "z": 396
+          },
+          {
+            "x": 199,
+            "y": 0,
+            "z": 398
+          },
+          {
+            "x": 200,
+            "y": 0,
+            "z": 400
+          },
+          {
+            "x": 0,
+            "y": 1,
+            "z": -1
+          },
+          {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          {
+            "x": 2,
+            "y": 1,
+            "z": 3
+          },
+          {
+            "x": 3,
+            "y": 1,
+            "z": 5
+          },
+          {
+            "x": 4,
+            "y": 1,
+            "z": 7
+          },
+          {
+            "x": 5,
+            "y": 1,
+            "z": 9
+          },
+          {
+            "x": 6,
+            "y": 1,
+            "z": 11
+          },
+          {
+            "x": 7,
+            "y": 1,
+            "z": 13
+          },
+          {
+            "x": 8,
+            "y": 1,
+            "z": 15
+          },
+          {
+            "x": 9,
+            "y": 1,
+            "z": 17
+          },
+          {
+            "x": 10,
+            "y": 1,
+            "z": 19
+          },
+          {
+            "x": 11,
+            "y": 1,
+            "z": 21
+          },
+          {
+            "x": 12,
+            "y": 1,
+            "z": 23
+          },
+          {
+            "x": 13,
+            "y": 1,
+            "z": 25
+          },
+          {
+            "x": 14,
+            "y": 1,
+            "z": 27
+          },
+          {
+            "x": 15,
+            "y": 1,
+            "z": 29
+          },
+          {
+            "x": 16,
+            "y": 1,
+            "z": 31
+          },
+          {
+            "x": 17,
+            "y": 1,
+            "z": 33
+          },
+          {
+            "x": 18,
+            "y": 1,
+            "z": 35
+          },
+          {
+            "x": 19,
+            "y": 1,
+            "z": 37
+          },
+          {
+            "x": 20,
+            "y": 1,
+            "z": 39
+          },
+          {
+            "x": 21,
+            "y": 1,
+            "z": 41
+          },
+          {
+            "x": 22,
+            "y": 1,
+            "z": 43
+          },
+          {
+            "x": 23,
+            "y": 1,
+            "z": 45
+          },
+          {
+            "x": 24,
+            "y": 1,
+            "z": 47
+          },
+          {
+            "x": 25,
+            "y": 1,
+            "z": 49
+          },
+          {
+            "x": 26,
+            "y": 1,
+            "z": 51
+          },
+          {
+            "x": 27,
+            "y": 1,
+            "z": 53
+          },
+          {
+            "x": 28,
+            "y": 1,
+            "z": 55
+          },
+          {
+            "x": 29,
+            "y": 1,
+            "z": 57
+          },
+          {
+            "x": 30,
+            "y": 1,
+            "z": 59
+          },
+          {
+            "x": 31,
+            "y": 1,
+            "z": 61
+          },
+          {
+            "x": 32,
+            "y": 1,
+            "z": 63
+          },
+          {
+            "x": 33,
+            "y": 1,
+            "z": 65
+          },
+          {
+            "x": 34,
+            "y": 1,
+            "z": 67
+          },
+          {
+            "x": 35,
+            "y": 1,
+            "z": 69
+          },
+          {
+            "x": 36,
+            "y": 1,
+            "z": 71
+          },
+          {
+            "x": 37,
+            "y": 1,
+            "z": 73
+          },
+          {
+            "x": 38,
+            "y": 1,
+            "z": 75
+          },
+          {
+            "x": 39,
+            "y": 1,
+            "z": 77
+          },
+          {
+            "x": 40,
+            "y": 1,
+            "z": 79
+          },
+          {
+            "x": 41,
+            "y": 1,
+            "z": 81
+          },
+          {
+            "x": 42,
+            "y": 1,
+            "z": 83
+          },
+          {
+            "x": 43,
+            "y": 1,
+            "z": 85
+          },
+          {
+            "x": 44,
+            "y": 1,
+            "z": 87
+          },
+          {
+            "x": 45,
+            "y": 1,
+            "z": 89
+          },
+          {
+            "x": 46,
+            "y": 1,
+            "z": 91
+          },
+          {
+            "x": 47,
+            "y": 1,
+            "z": 93
+          },
+          {
+            "x": 48,
+            "y": 1,
+            "z": 95
+          },
+          {
+            "x": 49,
+            "y": 1,
+            "z": 97
+          },
+          {
+            "x": 50,
+            "y": 1,
+            "z": 99
+          },
+          {
+            "x": 51,
+            "y": 1,
+            "z": 101
+          },
+          {
+            "x": 52,
+            "y": 1,
+            "z": 103
+          },
+          {
+            "x": 53,
+            "y": 1,
+            "z": 105
+          },
+          {
+            "x": 54,
+            "y": 1,
+            "z": 107
+          },
+          {
+            "x": 55,
+            "y": 1,
+            "z": 109
+          },
+          {
+            "x": 56,
+            "y": 1,
+            "z": 111
+          },
+          {
+            "x": 57,
+            "y": 1,
+            "z": 113
+          },
+          {
+            "x": 58,
+            "y": 1,
+            "z": 115
+          },
+          {
+            "x": 59,
+            "y": 1,
+            "z": 117
+          },
+          {
+            "x": 60,
+            "y": 1,
+            "z": 119
+          },
+          {
+            "x": 61,
+            "y": 1,
+            "z": 121
+          },
+          {
+            "x": 62,
+            "y": 1,
+            "z": 123
+          },
+          {
+            "x": 63,
+            "y": 1,
+            "z": 125
+          },
+          {
+            "x": 64,
+            "y": 1,
+            "z": 127
+          },
+          {
+            "x": 65,
+            "y": 1,
+            "z": 129
+          },
+          {
+            "x": 66,
+            "y": 1,
+            "z": 131
+          },
+          {
+            "x": 67,
+            "y": 1,
+            "z": 133
+          },
+          {
+            "x": 68,
+            "y": 1,
+            "z": 135
+          },
+          {
+            "x": 69,
+            "y": 1,
+            "z": 137
+          },
+          {
+            "x": 70,
+            "y": 1,
+            "z": 139
+          },
+          {
+            "x": 71,
+            "y": 1,
+            "z": 141
+          },
+          {
+            "x": 72,
+            "y": 1,
+            "z": 143
+          },
+          {
+            "x": 73,
+            "y": 1,
+            "z": 145
+          },
+          {
+            "x": 74,
+            "y": 1,
+            "z": 147
+          },
+          {
+            "x": 75,
+            "y": 1,
+            "z": 149
+          },
+          {
+            "x": 76,
+            "y": 1,
+            "z": 151
+          },
+          {
+            "x": 77,
+            "y": 1,
+            "z": 153
+          },
+          {
+            "x": 78,
+            "y": 1,
+            "z": 155
+          },
+          {
+            "x": 79,
+            "y": 1,
+            "z": 157
+          },
+          {
+            "x": 80,
+            "y": 1,
+            "z": 159
+          },
+          {
+            "x": 81,
+            "y": 1,
+            "z": 161
+          },
+          {
+            "x": 82,
+            "y": 1,
+            "z": 163
+          },
+          {
+            "x": 83,
+            "y": 1,
+            "z": 165
+          },
+          {
+            "x": 84,
+            "y": 1,
+            "z": 167
+          },
+          {
+            "x": 85,
+            "y": 1,
+            "z": 169
+          },
+          {
+            "x": 86,
+            "y": 1,
+            "z": 171
+          },
+          {
+            "x": 87,
+            "y": 1,
+            "z": 173
+          },
+          {
+            "x": 88,
+            "y": 1,
+            "z": 175
+          },
+          {
+            "x": 89,
+            "y": 1,
+            "z": 177
+          },
+          {
+            "x": 90,
+            "y": 1,
+            "z": 179
+          },
+          {
+            "x": 91,
+            "y": 1,
+            "z": 181
+          },
+          {
+            "x": 92,
+            "y": 1,
+            "z": 183
+          },
+          {
+            "x": 93,
+            "y": 1,
+            "z": 185
+          },
+          {
+            "x": 94,
+            "y": 1,
+            "z": 187
+          },
+          {
+            "x": 95,
+            "y": 1,
+            "z": 189
+          },
+          {
+            "x": 96,
+            "y": 1,
+            "z": 191
+          },
+          {
+            "x": 97,
+            "y": 1,
+            "z": 193
+          },
+          {
+            "x": 98,
+            "y": 1,
+            "z": 195
+          },
+          {
+            "x": 99,
+            "y": 1,
+            "z": 197
+          },
+          {
+            "x": 100,
+            "y": 1,
+            "z": 199
+          },
+          {
+            "x": 101,
+            "y": 1,
+            "z": 201
+          },
+          {
+            "x": 102,
+            "y": 1,
+            "z": 203
+          },
+          {
+            "x": 103,
+            "y": 1,
+            "z": 205
+          },
+          {
+            "x": 104,
+            "y": 1,
+            "z": 207
+          },
+          {
+            "x": 105,
+            "y": 1,
+            "z": 209
+          },
+          {
+            "x": 106,
+            "y": 1,
+            "z": 211
+          },
+          {
+            "x": 107,
+            "y": 1,
+            "z": 213
+          },
+          {
+            "x": 108,
+            "y": 1,
+            "z": 215
+          },
+          {
+            "x": 109,
+            "y": 1,
+            "z": 217
+          },
+          {
+            "x": 110,
+            "y": 1,
+            "z": 219
+          },
+          {
+            "x": 111,
+            "y": 1,
+            "z": 221
+          },
+          {
+            "x": 112,
+            "y": 1,
+            "z": 223
+          },
+          {
+            "x": 113,
+            "y": 1,
+            "z": 225
+          },
+          {
+            "x": 114,
+            "y": 1,
+            "z": 227
+          },
+          {
+            "x": 115,
+            "y": 1,
+            "z": 229
+          },
+          {
+            "x": 116,
+            "y": 1,
+            "z": 231
+          },
+          {
+            "x": 117,
+            "y": 1,
+            "z": 233
+          },
+          {
+            "x": 118,
+            "y": 1,
+            "z": 235
+          },
+          {
+            "x": 119,
+            "y": 1,
+            "z": 237
+          },
+          {
+            "x": 120,
+            "y": 1,
+            "z": 239
+          },
+          {
+            "x": 121,
+            "y": 1,
+            "z": 241
+          },
+          {
+            "x": 122,
+            "y": 1,
+            "z": 243
+          },
+          {
+            "x": 123,
+            "y": 1,
+            "z": 245
+          },
+          {
+            "x": 124,
+            "y": 1,
+            "z": 247
+          },
+          {
+            "x": 125,
+            "y": 1,
+            "z": 249
+          },
+          {
+            "x": 126,
+            "y": 1,
+            "z": 251
+          },
+          {
+            "x": 127,
+            "y": 1,
+            "z": 253
+          },
+          {
+            "x": 128,
+            "y": 1,
+            "z": 255
+          },
+          {
+            "x": 129,
+            "y": 1,
+            "z": 257
+          },
+          {
+            "x": 130,
+            "y": 1,
+            "z": 259
+          },
+          {
+            "x": 131,
+            "y": 1,
+            "z": 261
+          },
+          {
+            "x": 132,
+            "y": 1,
+            "z": 263
+          },
+          {
+            "x": 133,
+            "y": 1,
+            "z": 265
+          },
+          {
+            "x": 134,
+            "y": 1,
+            "z": 267
+          },
+          {
+            "x": 135,
+            "y": 1,
+            "z": 269
+          },
+          {
+            "x": 136,
+            "y": 1,
+            "z": 271
+          },
+          {
+            "x": 137,
+            "y": 1,
+            "z": 273
+          },
+          {
+            "x": 138,
+            "y": 1,
+            "z": 275
+          },
+          {
+            "x": 139,
+            "y": 1,
+            "z": 277
+          },
+          {
+            "x": 140,
+            "y": 1,
+            "z": 279
+          },
+          {
+            "x": 141,
+            "y": 1,
+            "z": 281
+          },
+          {
+            "x": 142,
+            "y": 1,
+            "z": 283
+          },
+          {
+            "x": 143,
+            "y": 1,
+            "z": 285
+          },
+          {
+            "x": 144,
+            "y": 1,
+            "z": 287
+          },
+          {
+            "x": 145,
+            "y": 1,
+            "z": 289
+          },
+          {
+            "x": 146,
+            "y": 1,
+            "z": 291
+          },
+          {
+            "x": 147,
+            "y": 1,
+            "z": 293
+          },
+          {
+            "x": 148,
+            "y": 1,
+            "z": 295
+          },
+          {
+            "x": 149,
+            "y": 1,
+            "z": 297
+          },
+          {
+            "x": 150,
+            "y": 1,
+            "z": 299
+          },
+          {
+            "x": 151,
+            "y": 1,
+            "z": 301
+          },
+          {
+            "x": 152,
+            "y": 1,
+            "z": 303
+          },
+          {
+            "x": 153,
+            "y": 1,
+            "z": 305
+          },
+          {
+            "x": 154,
+            "y": 1,
+            "z": 307
+          },
+          {
+            "x": 155,
+            "y": 1,
+            "z": 309
+          },
+          {
+            "x": 156,
+            "y": 1,
+            "z": 311
+          },
+          {
+            "x": 157,
+            "y": 1,
+            "z": 313
+          },
+          {
+            "x": 158,
+            "y": 1,
+            "z": 315
+          },
+          {
+            "x": 159,
+            "y": 1,
+            "z": 317
+          },
+          {
+            "x": 160,
+            "y": 1,
+            "z": 319
+          },
+          {
+            "x": 161,
+            "y": 1,
+            "z": 321
+          },
+          {
+            "x": 162,
+            "y": 1,
+            "z": 323
+          },
+          {
+            "x": 163,
+            "y": 1,
+            "z": 325
+          },
+          {
+            "x": 164,
+            "y": 1,
+            "z": 327
+          },
+          {
+            "x": 165,
+            "y": 1,
+            "z": 329
+          },
+          {
+            "x": 166,
+            "y": 1,
+            "z": 331
+          },
+          {
+            "x": 167,
+            "y": 1,
+            "z": 333
+          },
+          {
+            "x": 168,
+            "y": 1,
+            "z": 335
+          },
+          {
+            "x": 169,
+            "y": 1,
+            "z": 337
+          },
+          {
+            "x": 170,
+            "y": 1,
+            "z": 339
+          },
+          {
+            "x": 171,
+            "y": 1,
+            "z": 341
+          },
+          {
+            "x": 172,
+            "y": 1,
+            "z": 343
+          },
+          {
+            "x": 173,
+            "y": 1,
+            "z": 345
+          },
+          {
+            "x": 174,
+            "y": 1,
+            "z": 347
+          },
+          {
+            "x": 175,
+            "y": 1,
+            "z": 349
+          },
+          {
+            "x": 176,
+            "y": 1,
+            "z": 351
+          },
+          {
+            "x": 177,
+            "y": 1,
+            "z": 353
+          },
+          {
+            "x": 178,
+            "y": 1,
+            "z": 355
+          },
+          {
+            "x": 179,
+            "y": 1,
+            "z": 357
+          },
+          {
+            "x": 180,
+            "y": 1,
+            "z": 359
+          },
+          {
+            "x": 181,
+            "y": 1,
+            "z": 361
+          },
+          {
+            "x": 182,
+            "y": 1,
+            "z": 363
+          },
+          {
+            "x": 183,
+            "y": 1,
+            "z": 365
+          },
+          {
+            "x": 184,
+            "y": 1,
+            "z": 367
+          },
+          {
+            "x": 185,
+            "y": 1,
+            "z": 369
+          },
+          {
+            "x": 186,
+            "y": 1,
+            "z": 371
+          },
+          {
+            "x": 187,
+            "y": 1,
+            "z": 373
+          },
+          {
+            "x": 188,
+            "y": 1,
+            "z": 375
+          },
+          {
+            "x": 189,
+            "y": 1,
+            "z": 377
+          },
+          {
+            "x": 190,
+            "y": 1,
+            "z": 379
+          },
+          {
+            "x": 191,
+            "y": 1,
+            "z": 381
+          },
+          {
+            "x": 192,
+            "y": 1,
+            "z": 383
+          },
+          {
+            "x": 193,
+            "y": 1,
+            "z": 385
+          },
+          {
+            "x": 194,
+            "y": 1,
+            "z": 387
+          },
+          {
+            "x": 195,
+            "y": 1,
+            "z": 389
+          },
+          {
+            "x": 196,
+            "y": 1,
+            "z": 391
+          },
+          {
+            "x": 197,
+            "y": 1,
+            "z": 393
+          },
+          {
+            "x": 198,
+            "y": 1,
+            "z": 395
+          },
+          {
+            "x": 199,
+            "y": 1,
+            "z": 397
+          },
+          {
+            "x": 200,
+            "y": 1,
+            "z": 399
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "info",
+          "code": "perspective_3d",
+          "path": "projection"
+        },
+        {
+          "severity": "error",
+          "code": "grid_too_large",
+          "path": "x"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "surface: no points",
+      "spec": {
+        "type": "surface",
+        "x": "x",
+        "y": "y",
+        "z": "z",
+        "data": [
+          {
+            "x": "a",
+            "y": 1,
+            "z": 2
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "not_numeric",
+          "path": "x"
         }
       ],
       "normalized": null
@@ -73015,6 +76876,212 @@
       "describe": "Beeswarm plot. 4 values of v, one dot each, in 3 groups by g (a, b, c). Overall median 3.3, range 1.0 to 8.0. a: 2 values, median 2.5, range 1.0 to 4.0. b: 1 value, median 2.5, range 2.5 to 2.5. c: 1 value, median 8.0, range 8.0 to 8.0.",
       "issueCodes": [
         "some_not_numeric"
+      ]
+    },
+    {
+      "name": "scatter3d: groups",
+      "spec": {
+        "type": "scatter3d",
+        "x": "x",
+        "y": "y",
+        "z": "z",
+        "series": "g",
+        "title": "Parts",
+        "data": [
+          {
+            "x": 3,
+            "y": 1,
+            "z": 2,
+            "g": "a"
+          },
+          {
+            "x": 1,
+            "y": 5,
+            "z": 4,
+            "g": "b"
+          },
+          {
+            "x": 2,
+            "y": 2,
+            "z": 9,
+            "g": "a"
+          },
+          {
+            "x": 1,
+            "y": 2,
+            "z": 1,
+            "g": "b"
+          }
+        ]
+      },
+      "describe": "3D scatter plot \"Parts\". 4 points of z against x and y, in 2 groups (a, b). x ranges from 1 to 3, y from 1 to 5 and z from 1 to 9. Highest z: 9 (x 2, y 2). Lowest: 1 (x 1, y 2).",
+      "issueCodes": [
+        "perspective_3d"
+      ]
+    },
+    {
+      "name": "scatter3d: sized, labelled axes",
+      "spec": {
+        "type": "scatter3d",
+        "x": "x",
+        "y": "y",
+        "z": "z",
+        "size": "s",
+        "xLabel": "Width",
+        "yLabel": "Depth",
+        "zLabel": "Height",
+        "format": "fixed:1",
+        "data": [
+          {
+            "x": 3,
+            "y": 1,
+            "z": 2,
+            "g": "a",
+            "s": 1
+          },
+          {
+            "x": 1,
+            "y": 5,
+            "z": 4,
+            "g": "b",
+            "s": 2
+          },
+          {
+            "x": 2,
+            "y": 2,
+            "z": 9,
+            "g": "a",
+            "s": 3
+          },
+          {
+            "x": 1,
+            "y": 2,
+            "z": 1,
+            "g": "b",
+            "s": 4
+          }
+        ]
+      },
+      "describe": "3D scatter plot. 4 points of z against x and y, sized by s. x ranges from 1 to 3, y from 1 to 5 and z from 1.0 to 9.0. Highest z: 9.0 (x 2, y 2). Lowest: 1.0 (x 1, y 2).",
+      "issueCodes": [
+        "perspective_3d"
+      ]
+    },
+    {
+      "name": "surface: full grid",
+      "spec": {
+        "type": "surface",
+        "x": "x",
+        "y": "y",
+        "z": "z",
+        "title": "Yield",
+        "data": [
+          {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          {
+            "x": 1,
+            "y": 0,
+            "z": 2
+          },
+          {
+            "x": 2,
+            "y": 0,
+            "z": 4
+          },
+          {
+            "x": 3,
+            "y": 0,
+            "z": 6
+          },
+          {
+            "x": 0,
+            "y": 1,
+            "z": -1
+          },
+          {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          {
+            "x": 2,
+            "y": 1,
+            "z": 3
+          },
+          {
+            "x": 3,
+            "y": 1,
+            "z": 5
+          },
+          {
+            "x": 0,
+            "y": 2,
+            "z": -2
+          },
+          {
+            "x": 1,
+            "y": 2,
+            "z": 0
+          },
+          {
+            "x": 2,
+            "y": 2,
+            "z": 2
+          },
+          {
+            "x": 3,
+            "y": 2,
+            "z": 4
+          }
+        ]
+      },
+      "describe": "Surface \"Yield\". z over a grid of 4 x by 3 y values, coloured by z. x ranges from 0 to 3 and y from 0 to 2. Highest z: 6 at x 3, y 0. Lowest: -2 at x 0, y 2.",
+      "issueCodes": [
+        "perspective_3d"
+      ]
+    },
+    {
+      "name": "surface: holes",
+      "spec": {
+        "type": "surface",
+        "x": "x",
+        "y": "y",
+        "z": "z",
+        "data": [
+          {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          {
+            "x": 1,
+            "y": 0,
+            "z": 2
+          },
+          {
+            "x": 2,
+            "y": 0,
+            "z": 4
+          },
+          {
+            "x": 0,
+            "y": 1,
+            "z": -1
+          },
+          {
+            "x": 2,
+            "y": 1,
+            "z": 3
+          }
+        ]
+      },
+      "describe": "Surface. z over a grid of 3 x by 2 y values (1 of 6 points missing), coloured by z. x ranges from 0 to 2 and y from 0 to 1. Highest z: 4 at x 2, y 0. Lowest: -1 at x 0, y 1.",
+      "issueCodes": [
+        "perspective_3d",
+        "missing_cells"
       ]
     },
     {

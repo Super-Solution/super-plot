@@ -1721,6 +1721,158 @@ Places one dot per row along a number axis, pushed aside so no dot hides another
     },
 ```
 
+## `scatter3d` — 3D scatter plot
+
+Places each row as a point in a box by three numbers (x, y and the vertical z), with drop lines to the floor; the viewer turns the box.
+
+**Use when:** Exploring how three measures relate when all three matter at once (clusters in three dimensions). Depth hides points and positions on screen mix all three values, so for comparison a 2D scatter of two measures (colour or size for the third) or small multiples read better. Exact values are in the tooltip and the data table.
+
+| Field | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `type` | string | yes |  | Chart type: scatter3d. |
+| `version` | `1` |  |  | Spec format version. Only 1 exists; may be omitted. |
+| `data` | array of rows | yes |  | Tabular rows: an array of flat objects, one per observation. Numbers must be numbers (or plain numeric strings). |
+| `title` | string |  |  | Chart title. State the takeaway or the subject, not "Chart". |
+| `subtitle` | string |  |  | One line of context under the title: unit, period, filter. |
+| `description` | string |  |  | Long description for screen readers and agents. Generated from the data when omitted. |
+| `source` | string |  |  | Source line shown small under the chart. |
+| `legend` | `auto` \| `top` \| `bottom` \| `right` \| `none` |  | `"auto"` | Legend placement. `auto` hides it for a single series and picks a side from the available width. |
+| `tooltip` | boolean |  | `true` | Show a hover tooltip (web binding only). |
+| `format` | format string |  |  | Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE. |
+| `colors` | object |  |  | Series (or slice/category) name to CSS colour, e.g. {"Revenue":"#2962FF"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours. |
+| `transform` | array of steps |  |  | Data steps run before the chart reads its columns, in order (at most 10): filter, timeUnit, aggregate, sort, top, bin (round bins: start and end columns), window (running sum, mean, count, rank, pctChange, lag, lead, movingMean, per group, in a sort order) and fold (wide columns to key/value rows). No expressions. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output. |
+| `patterns` | boolean |  |  | Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print. |
+| `x` | column name | yes |  | Numeric column for x (left to right on the floor). |
+| `y` | column name | yes |  | Numeric column for y (front to back on the floor). |
+| `z` | column name | yes |  | Numeric column for z (height). |
+| `series` | column name |  |  | Column that colours points by group (with a legend). |
+| `size` | column name |  |  | Numeric column mapped to point area (negative values are skipped). |
+| `label` | column name |  |  | Column used as each point's name in the tooltip. |
+| `dropLines` | boolean |  |  | Default true (off above 2000 visible points, with a warning). A thin line from each point down to the floor, and a dot where it lands: it shows where the point sits in x and y, which depth alone cannot. |
+| `projection` | `orthographic` \| `perspective` |  | `"orthographic"` | `orthographic` (default): a size or length on screen does not change with depth. `perspective`: nearer is drawn larger, which reads as depth but makes sizes and distances impossible to compare. |
+| `camera` | {zoom, pitch, bearing} |  |  | Starting view: pitch (0 looks straight down, 90 from the side; default 60), bearing (degrees clockwise; default 35) and zoom (1 fits the box, up to 8). The viewer can drag, use the arrow keys and zoom from there. |
+| `xLabel` | string |  |  | Title of the x axis (default: the x column). |
+| `yLabel` | string |  |  | Title of the y axis (default: the y column). |
+| `zLabel` | string |  |  | Title of the vertical z axis (default: the z column; include the unit). |
+
+```json
+{
+  "type": "scatter3d",
+  "title": "Three clusters in three measures",
+  "subtitle": "Invented measurements; drag to turn the box",
+  "x": "width",
+  "y": "depth",
+  "z": "height",
+  "series": "kind",
+  "label": "id",
+  "xLabel": "Width (mm)",
+  "yLabel": "Depth (mm)",
+  "zLabel": "Height (mm)",
+  "data": [
+    {
+      "id": "A1",
+      "kind": "Kind A",
+      "width": 20,
+      "depth": 36,
+      "height": 12
+    },
+    {
+      "id": "A2",
+      "kind": "Kind A",
+      "width": 25.9,
+      "depth": 26,
+      "height": 15.9
+    },
+    {
+      "id": "A3",
+      "kind": "Kind A",
+      "width": 18.5,
+      "depth": 29.3,
+      "height": 16.9
+    },
+    {
+      "id": "A4",
+      "kind": "Kind A",
+      "width": 14.4,
+      "depth": 34.9,
+      "height": 14.1
+```
+
+## `surface` — Surface
+
+Draws z over a regular grid of x and y as a coloured surface in a box (colour is the z value, with a key); the viewer turns it.
+
+**Use when:** Showing the shape of a function of two numbers (a response surface, a terrain, a fitted model) where peaks, valleys and saddles matter more than exact values. Give one row per grid point. Depth hides parts of the surface: for exact reading a heatmap of the same grid is clearer. Exact values are in the tooltip and the data table.
+
+| Field | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `type` | string | yes |  | Chart type: surface. |
+| `version` | `1` |  |  | Spec format version. Only 1 exists; may be omitted. |
+| `data` | array of rows | yes |  | Tabular rows: an array of flat objects, one per observation. Numbers must be numbers (or plain numeric strings). |
+| `title` | string |  |  | Chart title. State the takeaway or the subject, not "Chart". |
+| `subtitle` | string |  |  | One line of context under the title: unit, period, filter. |
+| `description` | string |  |  | Long description for screen readers and agents. Generated from the data when omitted. |
+| `source` | string |  |  | Source line shown small under the chart. |
+| `legend` | `auto` \| `top` \| `bottom` \| `right` \| `none` |  | `"auto"` | Legend placement. `auto` hides it for a single series and picks a side from the available width. |
+| `tooltip` | boolean |  | `true` | Show a hover tooltip (web binding only). |
+| `format` | format string |  |  | Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE. |
+| `colors` | object |  |  | Series (or slice/category) name to CSS colour, e.g. {"Revenue":"#2962FF"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours. |
+| `transform` | array of steps |  |  | Data steps run before the chart reads its columns, in order (at most 10): filter, timeUnit, aggregate, sort, top, bin (round bins: start and end columns), window (running sum, mean, count, rank, pctChange, lag, lead, movingMean, per group, in a sort order) and fold (wide columns to key/value rows). No expressions. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output. |
+| `patterns` | boolean |  |  | Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print. |
+| `x` | column name | yes |  | Numeric column for x: the grid's columns (at most 200 distinct values). |
+| `y` | column name | yes |  | Numeric column for y: the grid's rows (at most 200 distinct values). |
+| `z` | column name | yes |  | Numeric column for the height at each (x, y). Missing grid points are drawn as holes; repeated ones keep the first value. |
+| `mesh` | boolean |  | `true` | Outline each grid cell, which helps the eye follow the shape. |
+| `domain` | [min\|null, max\|null] |  |  | Fix the colour range, e.g. [0, 100], to compare surfaces. |
+| `projection` | `orthographic` \| `perspective` |  | `"orthographic"` | `orthographic` (default): a size or length on screen does not change with depth. `perspective`: nearer is drawn larger, which reads as depth but makes sizes and distances impossible to compare. |
+| `camera` | {zoom, pitch, bearing} |  |  | Starting view: pitch (0 looks straight down, 90 from the side; default 60), bearing (degrees clockwise; default 35) and zoom (1 fits the box, up to 8). The viewer can drag, use the arrow keys and zoom from there. |
+| `xLabel` | string |  |  | Title of the x axis (default: the x column). |
+| `yLabel` | string |  |  | Title of the y axis (default: the y column). |
+| `zLabel` | string |  |  | Title of the vertical z axis (default: the z column; include the unit). |
+
+```json
+{
+  "type": "surface",
+  "title": "Yield by temperature and pressure",
+  "subtitle": "Invented response surface; drag to turn",
+  "x": "temp",
+  "y": "pressure",
+  "z": "yield",
+  "xLabel": "Temperature (°C)",
+  "yLabel": "Pressure (bar)",
+  "zLabel": "Yield (%)",
+  "format": "fixed:1",
+  "data": [
+    {
+      "temp": 14,
+      "pressure": 1,
+      "yield": 50.3
+    },
+    {
+      "temp": 14,
+      "pressure": 1.8,
+      "yield": 57.7
+    },
+    {
+      "temp": 14,
+      "pressure": 2.6,
+      "yield": 63.1
+    },
+    {
+      "temp": 14,
+      "pressure": 3.4,
+      "yield": 66.6
+    },
+    {
+      "temp": 14,
+      "pressure": 4.2,
+      "yield": 68.2
+    },
+    {
+      "temp": 14,
+      "pressure": 5,
+```
+
 ## `choropleth` — Choropleth map
 
 Colours each region of a map by a number; raise regions by the value for a 3D view.

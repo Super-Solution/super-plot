@@ -5878,6 +5878,446 @@
       }
     },
     {
+      "title": "3D scatter plot",
+      "description": "Places each row as a point in a box by three numbers (x, y and the vertical z), with drop lines to the floor; the viewer turns the box. Exploring how three measures relate when all three matter at once (clusters in three dimensions). Depth hides points and positions on screen mix all three values, so for comparison a 2D scatter of two measures (colour or size for the third) or small multiples read better. Exact values are in the tooltip and the data table.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "data",
+        "x",
+        "y",
+        "z"
+      ],
+      "properties": {
+        "type": {
+          "const": "scatter3d"
+        },
+        "version": {
+          "const": 1,
+          "description": "Spec format version. Only 1 exists; may be omitted."
+        },
+        "data": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 50000,
+          "items": {
+            "type": "object"
+          },
+          "description": "Tabular rows: an array of flat objects, one per observation. Numbers must be numbers (or plain numeric strings)."
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 120,
+          "description": "Chart title. State the takeaway or the subject, not \"Chart\"."
+        },
+        "subtitle": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "One line of context under the title: unit, period, filter."
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 1000,
+          "description": "Long description for screen readers and agents. Generated from the data when omitted."
+        },
+        "source": {
+          "type": "string",
+          "maxLength": 160,
+          "description": "Source line shown small under the chart."
+        },
+        "legend": {
+          "enum": [
+            "auto",
+            "top",
+            "bottom",
+            "right",
+            "none"
+          ],
+          "default": "auto",
+          "description": "Legend placement. `auto` hides it for a single series and picks a side from the available width."
+        },
+        "tooltip": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show a hover tooltip (web binding only)."
+        },
+        "format": {
+          "type": "string",
+          "pattern": "^(auto|compact|integer|percent|fixed:\\d{1,2}|currency:[A-Za-z]{3})$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+        },
+        "colors": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "description": "Series (or slice/category) name to CSS colour, e.g. {\"Revenue\":\"#2962FF\"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours."
+        },
+        "transform": {
+          "type": "array",
+          "maxItems": 10,
+          "items": {
+            "type": "object",
+            "minProperties": 1,
+            "maxProperties": 1,
+            "properties": {
+              "filter": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "timeUnit": {
+                "type": "object",
+                "required": [
+                  "field",
+                  "unit"
+                ]
+              },
+              "aggregate": {
+                "type": "object"
+              },
+              "sort": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "top": {
+                "type": "object",
+                "required": [
+                  "n",
+                  "by"
+                ]
+              },
+              "bin": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "window": {
+                "type": "object",
+                "required": [
+                  "op",
+                  "field",
+                  "as"
+                ]
+              },
+              "fold": {
+                "type": "object",
+                "required": [
+                  "fields"
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "Data steps run before the chart reads its columns, in order (at most 10): filter, timeUnit, aggregate, sort, top, bin (round bins: start and end columns), window (running sum, mean, count, rank, pctChange, lag, lead, movingMean, per group, in a sort order) and fold (wide columns to key/value rows). No expressions. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+        },
+        "patterns": {
+          "type": "boolean",
+          "description": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
+        },
+        "x": {
+          "type": "string",
+          "description": "Numeric column for x (left to right on the floor). (name of a column in data)"
+        },
+        "y": {
+          "type": "string",
+          "description": "Numeric column for y (front to back on the floor). (name of a column in data)"
+        },
+        "z": {
+          "type": "string",
+          "description": "Numeric column for z (height). (name of a column in data)"
+        },
+        "series": {
+          "type": "string",
+          "description": "Column that colours points by group (with a legend). (name of a column in data)"
+        },
+        "size": {
+          "type": "string",
+          "description": "Numeric column mapped to point area (negative values are skipped). (name of a column in data)"
+        },
+        "label": {
+          "type": "string",
+          "description": "Column used as each point's name in the tooltip. (name of a column in data)"
+        },
+        "dropLines": {
+          "type": "boolean",
+          "description": "Default true (off above 2000 visible points, with a warning). A thin line from each point down to the floor, and a dot where it lands: it shows where the point sits in x and y, which depth alone cannot."
+        },
+        "projection": {
+          "enum": [
+            "orthographic",
+            "perspective"
+          ],
+          "default": "orthographic",
+          "description": "`orthographic` (default): a size or length on screen does not change with depth. `perspective`: nearer is drawn larger, which reads as depth but makes sizes and distances impossible to compare."
+        },
+        "camera": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "zoom": {
+              "type": "number",
+              "minimum": 0.5,
+              "maximum": 8
+            },
+            "pitch": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 90
+            },
+            "bearing": {
+              "type": "number",
+              "minimum": -360,
+              "maximum": 360
+            }
+          },
+          "description": "Starting view: pitch (0 looks straight down, 90 from the side; default 60), bearing (degrees clockwise; default 35) and zoom (1 fits the box, up to 8). The viewer can drag, use the arrow keys and zoom from there."
+        },
+        "xLabel": {
+          "type": "string",
+          "maxLength": 80,
+          "description": "Title of the x axis (default: the x column)."
+        },
+        "yLabel": {
+          "type": "string",
+          "maxLength": 80,
+          "description": "Title of the y axis (default: the y column)."
+        },
+        "zLabel": {
+          "type": "string",
+          "maxLength": 80,
+          "description": "Title of the vertical z axis (default: the z column; include the unit)."
+        }
+      }
+    },
+    {
+      "title": "Surface",
+      "description": "Draws z over a regular grid of x and y as a coloured surface in a box (colour is the z value, with a key); the viewer turns it. Showing the shape of a function of two numbers (a response surface, a terrain, a fitted model) where peaks, valleys and saddles matter more than exact values. Give one row per grid point. Depth hides parts of the surface: for exact reading a heatmap of the same grid is clearer. Exact values are in the tooltip and the data table.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "data",
+        "x",
+        "y",
+        "z"
+      ],
+      "properties": {
+        "type": {
+          "const": "surface"
+        },
+        "version": {
+          "const": 1,
+          "description": "Spec format version. Only 1 exists; may be omitted."
+        },
+        "data": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 50000,
+          "items": {
+            "type": "object"
+          },
+          "description": "Tabular rows: an array of flat objects, one per observation. Numbers must be numbers (or plain numeric strings)."
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 120,
+          "description": "Chart title. State the takeaway or the subject, not \"Chart\"."
+        },
+        "subtitle": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "One line of context under the title: unit, period, filter."
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 1000,
+          "description": "Long description for screen readers and agents. Generated from the data when omitted."
+        },
+        "source": {
+          "type": "string",
+          "maxLength": 160,
+          "description": "Source line shown small under the chart."
+        },
+        "legend": {
+          "enum": [
+            "auto",
+            "top",
+            "bottom",
+            "right",
+            "none"
+          ],
+          "default": "auto",
+          "description": "Legend placement. `auto` hides it for a single series and picks a side from the available width."
+        },
+        "tooltip": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show a hover tooltip (web binding only)."
+        },
+        "format": {
+          "type": "string",
+          "pattern": "^(auto|compact|integer|percent|fixed:\\d{1,2}|currency:[A-Za-z]{3})$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+        },
+        "colors": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "description": "Series (or slice/category) name to CSS colour, e.g. {\"Revenue\":\"#2962FF\"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours."
+        },
+        "transform": {
+          "type": "array",
+          "maxItems": 10,
+          "items": {
+            "type": "object",
+            "minProperties": 1,
+            "maxProperties": 1,
+            "properties": {
+              "filter": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "timeUnit": {
+                "type": "object",
+                "required": [
+                  "field",
+                  "unit"
+                ]
+              },
+              "aggregate": {
+                "type": "object"
+              },
+              "sort": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "top": {
+                "type": "object",
+                "required": [
+                  "n",
+                  "by"
+                ]
+              },
+              "bin": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "window": {
+                "type": "object",
+                "required": [
+                  "op",
+                  "field",
+                  "as"
+                ]
+              },
+              "fold": {
+                "type": "object",
+                "required": [
+                  "fields"
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "Data steps run before the chart reads its columns, in order (at most 10): filter, timeUnit, aggregate, sort, top, bin (round bins: start and end columns), window (running sum, mean, count, rank, pctChange, lag, lead, movingMean, per group, in a sort order) and fold (wide columns to key/value rows). No expressions. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+        },
+        "patterns": {
+          "type": "boolean",
+          "description": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
+        },
+        "x": {
+          "type": "string",
+          "description": "Numeric column for x: the grid's columns (at most 200 distinct values). (name of a column in data)"
+        },
+        "y": {
+          "type": "string",
+          "description": "Numeric column for y: the grid's rows (at most 200 distinct values). (name of a column in data)"
+        },
+        "z": {
+          "type": "string",
+          "description": "Numeric column for the height at each (x, y). Missing grid points are drawn as holes; repeated ones keep the first value. (name of a column in data)"
+        },
+        "mesh": {
+          "type": "boolean",
+          "default": true,
+          "description": "Outline each grid cell, which helps the eye follow the shape."
+        },
+        "domain": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": [
+              "number",
+              "string",
+              "null"
+            ]
+          },
+          "description": "Fix the colour range, e.g. [0, 100], to compare surfaces."
+        },
+        "projection": {
+          "enum": [
+            "orthographic",
+            "perspective"
+          ],
+          "default": "orthographic",
+          "description": "`orthographic` (default): a size or length on screen does not change with depth. `perspective`: nearer is drawn larger, which reads as depth but makes sizes and distances impossible to compare."
+        },
+        "camera": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "zoom": {
+              "type": "number",
+              "minimum": 0.5,
+              "maximum": 8
+            },
+            "pitch": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 90
+            },
+            "bearing": {
+              "type": "number",
+              "minimum": -360,
+              "maximum": 360
+            }
+          },
+          "description": "Starting view: pitch (0 looks straight down, 90 from the side; default 60), bearing (degrees clockwise; default 35) and zoom (1 fits the box, up to 8). The viewer can drag, use the arrow keys and zoom from there."
+        },
+        "xLabel": {
+          "type": "string",
+          "maxLength": 80,
+          "description": "Title of the x axis (default: the x column)."
+        },
+        "yLabel": {
+          "type": "string",
+          "maxLength": 80,
+          "description": "Title of the y axis (default: the y column)."
+        },
+        "zLabel": {
+          "type": "string",
+          "maxLength": 80,
+          "description": "Title of the vertical z axis (default: the z column; include the unit)."
+        }
+      }
+    },
+    {
       "title": "Choropleth map",
       "description": "Colours each region of a map by a number; raise regions by the value for a 3D view. Comparing a rate or share across countries, provinces or districts. Map rates (per person, percent), not raw totals, or big regions dominate. Needs region boundaries (geo). For exact ranking use a sorted bar chart.",
       "type": "object",

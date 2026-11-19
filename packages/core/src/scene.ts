@@ -83,6 +83,8 @@ export interface Scene {
   clips?: Record<string, string>
   /** Maps only: the geography and data in longitude/latitude, for renderers that project it themselves (WebGL). */
   geo?: SceneGeo
+  /** 3D charts only (`scatter3d`, `surface`): the camera, and the keyboard order of the data marks. */
+  view3d?: SceneView3d
   /** Charts on two axes: the plot rectangle and both scales, so a binding can map pixels back to data (zoom, brush). */
   axes?: SceneAxes
   /** Small multiples (`facet`): one entry per panel. */
@@ -142,6 +144,18 @@ export interface SceneGeo {
   points: GeoPointItem[]
   columns: GeoColumnItem[]
   arcs: GeoArcItem[]
+}
+
+export interface SceneView3d {
+  /** The resolved view (plain numbers: see `makeView3d`). */
+  view: import('./view3d.js').View3d
+  /** The view's inputs: give them a new camera with `makeView3d`. */
+  input: import('./view3d.js').View3dInput
+  /**
+   * Indices of the data marks in the order Tab steps through them: by x, then y (then z), whatever the camera.
+   * Their drawing order is back to front instead, and changes as the box turns.
+   */
+  order: number[]
 }
 
 export interface Rect { x: number; y: number; w: number; h: number }

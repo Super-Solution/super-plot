@@ -35,6 +35,20 @@
       360
     ]
   },
+  "camera3d": {
+    "zoom": [
+      0.5,
+      8
+    ],
+    "pitch": [
+      0,
+      90
+    ],
+    "bearing": [
+      -360,
+      360
+    ]
+  },
   "currencies": {
     "AED": {
       "symbol": "AED",
@@ -4360,6 +4374,356 @@
           "name": "xDomain",
           "kind": "domain",
           "desc": "Fix the horizontal range."
+        }
+      ]
+    },
+    {
+      "type": "scatter3d",
+      "fields": [
+        {
+          "name": "type",
+          "kind": "string",
+          "required": true,
+          "desc": "Chart type: scatter3d."
+        },
+        {
+          "name": "version",
+          "kind": "version",
+          "desc": "Spec format version. Only 1 exists; may be omitted."
+        },
+        {
+          "name": "data",
+          "kind": "data",
+          "required": true,
+          "desc": "Tabular rows: an array of flat objects, one per observation. Numbers must be numbers (or plain numeric strings)."
+        },
+        {
+          "name": "title",
+          "kind": "string",
+          "max": 120,
+          "desc": "Chart title. State the takeaway or the subject, not \"Chart\"."
+        },
+        {
+          "name": "subtitle",
+          "kind": "string",
+          "max": 200,
+          "desc": "One line of context under the title: unit, period, filter."
+        },
+        {
+          "name": "description",
+          "kind": "string",
+          "max": 1000,
+          "desc": "Long description for screen readers and agents. Generated from the data when omitted."
+        },
+        {
+          "name": "source",
+          "kind": "string",
+          "max": 160,
+          "desc": "Source line shown small under the chart."
+        },
+        {
+          "name": "legend",
+          "kind": "enum",
+          "values": [
+            "auto",
+            "top",
+            "bottom",
+            "right",
+            "none"
+          ],
+          "default": "auto",
+          "desc": "Legend placement. `auto` hides it for a single series and picks a side from the available width."
+        },
+        {
+          "name": "tooltip",
+          "kind": "boolean",
+          "default": true,
+          "desc": "Show a hover tooltip (web binding only)."
+        },
+        {
+          "name": "format",
+          "kind": "format",
+          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+        },
+        {
+          "name": "colors",
+          "kind": "colors",
+          "desc": "Series (or slice/category) name to CSS colour, e.g. {\"Revenue\":\"#2962FF\"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours."
+        },
+        {
+          "name": "transform",
+          "kind": "transform",
+          "desc": "Data steps run before the chart reads its columns, in order (at most 10): filter, timeUnit, aggregate, sort, top, bin (round bins: start and end columns), window (running sum, mean, count, rank, pctChange, lag, lead, movingMean, per group, in a sort order) and fold (wide columns to key/value rows). No expressions. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+        },
+        {
+          "name": "patterns",
+          "kind": "boolean",
+          "desc": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
+        },
+        {
+          "name": "x",
+          "kind": "column",
+          "role": "number",
+          "required": true,
+          "desc": "Numeric column for x (left to right on the floor)."
+        },
+        {
+          "name": "y",
+          "kind": "column",
+          "role": "number",
+          "required": true,
+          "desc": "Numeric column for y (front to back on the floor)."
+        },
+        {
+          "name": "z",
+          "kind": "column",
+          "role": "number",
+          "required": true,
+          "desc": "Numeric column for z (height)."
+        },
+        {
+          "name": "series",
+          "kind": "column",
+          "role": "any",
+          "desc": "Column that colours points by group (with a legend)."
+        },
+        {
+          "name": "size",
+          "kind": "column",
+          "role": "number",
+          "desc": "Numeric column mapped to point area (negative values are skipped)."
+        },
+        {
+          "name": "label",
+          "kind": "column",
+          "role": "any",
+          "desc": "Column used as each point's name in the tooltip."
+        },
+        {
+          "name": "dropLines",
+          "kind": "boolean",
+          "desc": "Default true (off above 2000 visible points, with a warning). A thin line from each point down to the floor, and a dot where it lands: it shows where the point sits in x and y, which depth alone cannot."
+        },
+        {
+          "name": "projection",
+          "kind": "enum",
+          "values": [
+            "orthographic",
+            "perspective"
+          ],
+          "default": "orthographic",
+          "desc": "`orthographic` (default): a size or length on screen does not change with depth. `perspective`: nearer is drawn larger, which reads as depth but makes sizes and distances impossible to compare."
+        },
+        {
+          "name": "camera",
+          "kind": "camera",
+          "keys": [
+            "zoom",
+            "pitch",
+            "bearing"
+          ],
+          "limits": {
+            "zoom": [
+              0.5,
+              8
+            ],
+            "pitch": [
+              0,
+              90
+            ],
+            "bearing": [
+              -360,
+              360
+            ]
+          },
+          "desc": "Starting view: pitch (0 looks straight down, 90 from the side; default 60), bearing (degrees clockwise; default 35) and zoom (1 fits the box, up to 8). The viewer can drag, use the arrow keys and zoom from there."
+        },
+        {
+          "name": "xLabel",
+          "kind": "string",
+          "max": 80,
+          "desc": "Title of the x axis (default: the x column)."
+        },
+        {
+          "name": "yLabel",
+          "kind": "string",
+          "max": 80,
+          "desc": "Title of the y axis (default: the y column)."
+        },
+        {
+          "name": "zLabel",
+          "kind": "string",
+          "max": 80,
+          "desc": "Title of the vertical z axis (default: the z column; include the unit)."
+        }
+      ]
+    },
+    {
+      "type": "surface",
+      "fields": [
+        {
+          "name": "type",
+          "kind": "string",
+          "required": true,
+          "desc": "Chart type: surface."
+        },
+        {
+          "name": "version",
+          "kind": "version",
+          "desc": "Spec format version. Only 1 exists; may be omitted."
+        },
+        {
+          "name": "data",
+          "kind": "data",
+          "required": true,
+          "desc": "Tabular rows: an array of flat objects, one per observation. Numbers must be numbers (or plain numeric strings)."
+        },
+        {
+          "name": "title",
+          "kind": "string",
+          "max": 120,
+          "desc": "Chart title. State the takeaway or the subject, not \"Chart\"."
+        },
+        {
+          "name": "subtitle",
+          "kind": "string",
+          "max": 200,
+          "desc": "One line of context under the title: unit, period, filter."
+        },
+        {
+          "name": "description",
+          "kind": "string",
+          "max": 1000,
+          "desc": "Long description for screen readers and agents. Generated from the data when omitted."
+        },
+        {
+          "name": "source",
+          "kind": "string",
+          "max": 160,
+          "desc": "Source line shown small under the chart."
+        },
+        {
+          "name": "legend",
+          "kind": "enum",
+          "values": [
+            "auto",
+            "top",
+            "bottom",
+            "right",
+            "none"
+          ],
+          "default": "auto",
+          "desc": "Legend placement. `auto` hides it for a single series and picks a side from the available width."
+        },
+        {
+          "name": "tooltip",
+          "kind": "boolean",
+          "default": true,
+          "desc": "Show a hover tooltip (web binding only)."
+        },
+        {
+          "name": "format",
+          "kind": "format",
+          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+        },
+        {
+          "name": "colors",
+          "kind": "colors",
+          "desc": "Series (or slice/category) name to CSS colour, e.g. {\"Revenue\":\"#2962FF\"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours."
+        },
+        {
+          "name": "transform",
+          "kind": "transform",
+          "desc": "Data steps run before the chart reads its columns, in order (at most 10): filter, timeUnit, aggregate, sort, top, bin (round bins: start and end columns), window (running sum, mean, count, rank, pctChange, lag, lead, movingMean, per group, in a sort order) and fold (wide columns to key/value rows). No expressions. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+        },
+        {
+          "name": "patterns",
+          "kind": "boolean",
+          "desc": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
+        },
+        {
+          "name": "x",
+          "kind": "column",
+          "role": "number",
+          "required": true,
+          "desc": "Numeric column for x: the grid's columns (at most 200 distinct values)."
+        },
+        {
+          "name": "y",
+          "kind": "column",
+          "role": "number",
+          "required": true,
+          "desc": "Numeric column for y: the grid's rows (at most 200 distinct values)."
+        },
+        {
+          "name": "z",
+          "kind": "column",
+          "role": "number",
+          "required": true,
+          "desc": "Numeric column for the height at each (x, y). Missing grid points are drawn as holes; repeated ones keep the first value."
+        },
+        {
+          "name": "mesh",
+          "kind": "boolean",
+          "default": true,
+          "desc": "Outline each grid cell, which helps the eye follow the shape."
+        },
+        {
+          "name": "domain",
+          "kind": "domain",
+          "desc": "Fix the colour range, e.g. [0, 100], to compare surfaces."
+        },
+        {
+          "name": "projection",
+          "kind": "enum",
+          "values": [
+            "orthographic",
+            "perspective"
+          ],
+          "default": "orthographic",
+          "desc": "`orthographic` (default): a size or length on screen does not change with depth. `perspective`: nearer is drawn larger, which reads as depth but makes sizes and distances impossible to compare."
+        },
+        {
+          "name": "camera",
+          "kind": "camera",
+          "keys": [
+            "zoom",
+            "pitch",
+            "bearing"
+          ],
+          "limits": {
+            "zoom": [
+              0.5,
+              8
+            ],
+            "pitch": [
+              0,
+              90
+            ],
+            "bearing": [
+              -360,
+              360
+            ]
+          },
+          "desc": "Starting view: pitch (0 looks straight down, 90 from the side; default 60), bearing (degrees clockwise; default 35) and zoom (1 fits the box, up to 8). The viewer can drag, use the arrow keys and zoom from there."
+        },
+        {
+          "name": "xLabel",
+          "kind": "string",
+          "max": 80,
+          "desc": "Title of the x axis (default: the x column)."
+        },
+        {
+          "name": "yLabel",
+          "kind": "string",
+          "max": 80,
+          "desc": "Title of the y axis (default: the y column)."
+        },
+        {
+          "name": "zLabel",
+          "kind": "string",
+          "max": 80,
+          "desc": "Title of the vertical z axis (default: the z column; include the unit)."
         }
       ]
     },

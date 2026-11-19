@@ -1,4 +1,4 @@
-import { chartCatalog, GEO_PRESETS, registerGeography, getGeography, type Issue } from '@supersolutions/super-plot-core'
+import { chartCatalog, GEO_PRESETS, registerGeography, getGeography, type Camera, type Camera3d, type Issue } from '@supersolutions/super-plot-core'
 import { SuperPlot } from '@supersolutions/super-plot-web'
 
 type Spec = Record<string, unknown>
@@ -61,8 +61,10 @@ seg('r', RENDERERS.map(r => [r, r === 'webgl' ? 'WebGL' : r[0].toUpperCase() + r
 document.querySelector<HTMLButtonElement>('#chart [data-v="imported"]')!.hidden = true
 
 function show(): void {
-  const c = plot.getCamera()
-  const cam = c ? ` · camera ${c.lng.toFixed(1)}°, ${c.lat.toFixed(1)}° · zoom ${c.zoom.toFixed(2)} · pitch ${c.pitch.toFixed(0)}° · bearing ${c.bearing.toFixed(0)}°` : ''
+  const c = plot.getCamera<Camera | Camera3d>()
+  // A 3D chart (scatter3d, surface) has a camera too, without lng and lat.
+  const at = c && 'lng' in c ? ` · camera ${c.lng.toFixed(1)}°, ${c.lat.toFixed(1)}°` : ''
+  const cam = c ? `${at} · zoom ${c.zoom.toFixed(2)} · pitch ${c.pitch.toFixed(0)}° · bearing ${c.bearing.toFixed(0)}°` : ''
   stat.innerHTML = `Renderer <b>${plot.getRenderer()}</b>${cam}`
   for (const b of document.querySelectorAll<HTMLElement & { sync?: () => void }>('.seg')) b.sync?.()
   document.body.dataset.ready = '1'

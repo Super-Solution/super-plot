@@ -41,7 +41,7 @@ Status marks: ✅ built · 🚧 built with a stated limit · ⛔ refused on purp
 | candlestick, indicators | ECharts, Plotly, Highcharts Stock, amCharts Stock, AG | ⛔ | Super Chart's job; never duplicated across Super libs |
 | network graph, chord, arc, venn, marimekko | ECharts, Highcharts, Nivo, amCharts, visx | ❓ | Force layouts are not deterministic without extra care and are hard to read; build if a use case asks (OPEN-DECISIONS) |
 | word cloud | Highcharts, visx, ECharts (third-party) | ⛔ | Word size by length and area misleads; a sorted bar chart says the same honestly |
-| 3D charts other than maps | Plotly, ECharts GL, Highcharts 3D | ⛔ | Perspective distorts comparison; 3D stays for maps, where depth carries geography |
+| 3D charts other than maps | Plotly, ECharts GL, Highcharts 3D | ✅ | `scatter3d` and `surface` (round 6). Safe by default: orthographic projection, exact x, y, z in tooltips, description and data table, an `info` issue (`perspective_3d`) naming the 2D chart that compares exactly, no auto-rotation, keyboard turning and Tab through the data in x order. `perspective` is opt-in and says what it distorts. No 3D bars (`bar3D`): a 3D bar hides its neighbours and its height reads against a slanted floor; a heatmap or grouped bars say the same |
 | pictorial bars | ECharts, Highcharts | ⛔ | Decoration over data; a waffle covers countable shares |
 
 ## B. Scales and marks
@@ -124,4 +124,4 @@ Status marks: ✅ built · 🚧 built with a stated limit · ⛔ refused on purp
 
 ## What was not copied, in one place
 
-Gauge, candlestick, word cloud, non-map 3D, pictorial bars, dual axis, broken axis, an expression language, animated data transitions, LTTB, input widgets, editor features (undo, drawing tools, context menus), voice and tactile export. Each has its reason above. Network-style charts, Arrow input and drawing in a worker are open, not refused.
+Gauge, candlestick, word cloud, 3D bars, pictorial bars, dual axis, broken axis, an expression language, animated data transitions, LTTB, input widgets, editor features (undo, drawing tools, context menus), voice and tactile export. Each has its reason above. Non-map 3D was on this list until round 6; it is now built as `scatter3d` and `surface`, with the safety measures in its row. Network-style charts, Arrow input and drawing in a worker are open, not refused.

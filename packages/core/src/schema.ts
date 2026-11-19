@@ -28,7 +28,11 @@ export type FieldDef = { desc: string; required?: boolean } & (
   | { kind: 'data' }
   | { kind: 'version' }
   | { kind: 'geo' }
-  | { kind: 'camera' }
+  /**
+   * `keys`: which camera fields this chart takes (default all of `CAMERA_KEYS`); `limits`: ranges that differ
+   * from the map camera's (the 3D charts take zoom, pitch and bearing, pitch up to 90).
+   */
+  | { kind: 'camera'; keys?: readonly string[]; limits?: Readonly<Record<string, readonly [number, number]>> }
   | { kind: 'transform' }
   | { kind: 'flag' }
   /** A list of data values (strings or numbers, compared as strings), e.g. a path of group names. `max`: longest list. */
@@ -47,7 +51,11 @@ export function setGeoResolver(fn: (value: unknown, issues: Issue[], path: strin
 }
 
 export interface Issue {
-  severity: 'error' | 'warning'
+  /**
+   * `error`: the spec cannot be drawn. `warning`: drawn, but something was dropped or guessed. `info`: drawn as
+   * asked, with a caveat about how to read it (for example `perspective_3d`).
+   */
+  severity: 'error' | 'warning' | 'info'
   /** Stable machine-readable code. */
   code: string
   /** JSON path into the spec, e.g. `y` or `annotations[1].axis`. */
@@ -213,15 +221,17 @@ export function validateField(name: string, def: FieldDef, value: unknown, ctx: 
       return geoResolver(value, ctx.issues, name) ? value : undefined
     }
     case 'camera': {
-      if (!value || typeof value !== 'object' || Array.isArray(value)) return bad('bad_type', 'camera must be an object such as {"lng":121,"lat":24,"zoom":2}.')
+      const keys: readonly string[] = def.keys ?? CAMERA_KEYS
+      if (!value || typeof value !== 'object' || Array.isArray(value)) return bad('bad_type', `camera must be an object such as ${def.keys ? '{"pitch":60,"bearing":35,"zoom":1.5}' : '{"lng":121,"lat":24,"zoom":2}'}.`)
       const out: Record<string, number> = {}
       let ok = true
       for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
         // Own keys only: `constructor` or `toString` must not pass as camera fields.
-        const range = Object.hasOwn(CAMERA_RANGE, k) ? CAMERA_RANGE[k as (typeof CAMERA_KEYS)[number]] : undefined
+        const range = keys.includes(k) ? (def.limits && Object.hasOwn(def.limits, k) ? def.limits[k] : Object.hasOwn(CAMERA_RANGE, k) ? CAMERA_RANGE[k as (typeof CAMERA_KEYS)[number]] : undefined) : undefined
         if (!range) {
-          const near = closest(k, CAMERA_KEYS)
-          add(ctx, 'error', 'unknown_field', `${name}.${k}`, `Unknown camera field "${k}".`, near ? `Did you mean "${near}"?` : `Allowed: ${CAMERA_KEYS.join(', ')}.`)
+          const near = closest(k, keys)
+          const mapOnly = def.keys && (k === 'lng' || k === 'lat')
+          add(ctx, 'error', 'unknown_field', `${name}.${k}`, `Unknown camera field "${k}".`, mapOnly ? `A 3D chart turns round the centre of its box: lng and lat are map fields. Allowed: ${keys.join(', ')}.` : near ? `Did you mean "${near}"?` : `Allowed: ${keys.join(', ')}.`)
           ok = false
         } else if (typeof v !== 'number' || !Number.isFinite(v)) {
           add(ctx, 'error', 'bad_type', `${name}.${k}`, `camera.${k} must be a number, got ${fmt(v)}.`)
@@ -340,7 +350,10 @@ export function fieldSchema(def: FieldDef): Record<string, unknown> {
         }
       }
     case 'geo': return { oneOf: [{ type: 'string', pattern: '^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$' }, { type: 'object', required: ['type'], properties: { type: { enum: ['FeatureCollection', 'Topology'] } } }], description: d }
-    case 'camera': return { type: 'object', additionalProperties: false, properties: Object.fromEntries(CAMERA_KEYS.map(k => [k, { type: 'number', minimum: CAMERA_RANGE[k][0], maximum: CAMERA_RANGE[k][1] }])), description: d }
+    case 'camera': {
+      const range = (k: string): readonly [number, number] => def.limits?.[k] ?? CAMERA_RANGE[k as (typeof CAMERA_KEYS)[number]]
+      return { type: 'object', additionalProperties: false, properties: Object.fromEntries((def.keys ?? CAMERA_KEYS).map(k => [k, { type: 'number', minimum: range(k)[0], maximum: range(k)[1] }])), description: d }
+    }
     case 'flag': return { oneOf: [{ type: 'string' }, { type: 'array', minItems: 1, maxItems: LIMITS.maxCategories, items: { type: ['string', 'number'] } }], description: `${d} (column name, or a list of values)` }
     case 'values': return { type: 'array', maxItems: def.max ?? LIMITS.maxCategories, items: { type: ['string', 'number'] }, description: d }
     case 'column': return { type: 'string', description: `${d} (name of a column in data)` }
@@ -369,7 +382,7 @@ export function fieldType(def: FieldDef): string {
     case 'data': return 'array of rows'
     case 'version': return '`1`'
     case 'geo': return 'geography name or GeoJSON/TopoJSON object'
-    case 'camera': return '{lng, lat, zoom, pitch, bearing}'
+    case 'camera': return `{${(def.keys ?? CAMERA_KEYS).join(', ')}}`
     default: return def.kind
   }
 }

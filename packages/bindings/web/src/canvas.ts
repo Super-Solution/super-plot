@@ -215,9 +215,10 @@ export class CanvasLayer {
       c.height = Math.round(scene.height * dpr)
     }
     this.base.setAttribute('role', 'img')
-    // A map has its own keyboard on the plot root; other charts step through their marks from here.
-    this.base.tabIndex = scene.geo ? -1 : 0
-    this.base.setAttribute('aria-label', `${scene.title}. ${scene.description}${scene.geo ? '' : ` ${this.owner.keysHint()}`}`)
+    // A map or a 3D chart has its own keyboard on the plot root; other charts step through their marks from here.
+    const own = !!(scene.geo || scene.view3d)
+    this.base.tabIndex = own ? -1 : 0
+    this.base.setAttribute('aria-label', `${scene.title}. ${scene.description}${own ? '' : ` ${this.owner.keysHint()}`}`)
     for (const x of [this.ctx, this.tctx, this.octx]) {
       x.setTransform(1, 0, 0, 1, 0, 0)
       x.clearRect(0, 0, this.base.width, this.base.height)
@@ -392,7 +393,7 @@ export class CanvasLayer {
    */
   private onKey = (e: KeyboardEvent): void => {
     const s = this.scene
-    if (!s || s.geo || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return
+    if (!s || s.geo || s.view3d || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return
     const order = this.keyOrder()
     if (!order.length) return
     let next = this.cursor
