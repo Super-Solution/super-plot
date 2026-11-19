@@ -1346,10 +1346,11 @@
           "values": [
             "none",
             "stack",
-            "normalize"
+            "normalize",
+            "center"
           ],
           "default": "none",
-          "desc": "`stack` adds series on top of each other; `normalize` shows each series as a share of 100%."
+          "desc": "`stack` adds series on top of each other; `normalize` shows each series as a share of 100%; `center` is a stream graph: the stack is centred on a middle line (each x starts at minus half its total), so the outline shows how the total and its parts flow over time. A centred stack has no zero, so its value axis shows no ticks; the tooltip gives every value and the total."
         },
         {
           "name": "yScale",
@@ -2641,7 +2642,7 @@
           "kind": "column",
           "role": "x",
           "required": true,
-          "desc": "Date column: ISO dates (\"2026-03-14\") or epoch milliseconds. Days are UTC; a time of day is dropped and rows on the same day are summed."
+          "desc": "Date column: ISO dates (\"2026-03-14\") or epoch milliseconds. A time of day is dropped and rows on the same day are summed. Instants (timestamps, ISO strings with a time) count on their day in the render time zone (UTC by default); date-only strings keep their date."
         },
         {
           "name": "value",
@@ -3201,6 +3202,189 @@
           "kind": "boolean",
           "default": true,
           "desc": "Name each series at the end of its line (direct labels), so the reader does not need the legend."
+        }
+      ]
+    },
+    {
+      "type": "timeline",
+      "fields": [
+        {
+          "name": "type",
+          "kind": "string",
+          "required": true,
+          "desc": "Chart type: timeline."
+        },
+        {
+          "name": "version",
+          "kind": "version",
+          "desc": "Spec format version. Only 1 exists; may be omitted."
+        },
+        {
+          "name": "data",
+          "kind": "data",
+          "required": true,
+          "desc": "Tabular rows: an array of flat objects, one per observation. Numbers must be numbers (or plain numeric strings)."
+        },
+        {
+          "name": "title",
+          "kind": "string",
+          "max": 120,
+          "desc": "Chart title. State the takeaway or the subject, not \"Chart\"."
+        },
+        {
+          "name": "subtitle",
+          "kind": "string",
+          "max": 200,
+          "desc": "One line of context under the title: unit, period, filter."
+        },
+        {
+          "name": "description",
+          "kind": "string",
+          "max": 1000,
+          "desc": "Long description for screen readers and agents. Generated from the data when omitted."
+        },
+        {
+          "name": "source",
+          "kind": "string",
+          "max": 160,
+          "desc": "Source line shown small under the chart."
+        },
+        {
+          "name": "legend",
+          "kind": "enum",
+          "values": [
+            "auto",
+            "top",
+            "bottom",
+            "right",
+            "none"
+          ],
+          "default": "auto",
+          "desc": "Legend placement. `auto` hides it for a single series and picks a side from the available width."
+        },
+        {
+          "name": "tooltip",
+          "kind": "boolean",
+          "default": true,
+          "desc": "Show a hover tooltip (web binding only)."
+        },
+        {
+          "name": "format",
+          "kind": "format",
+          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+        },
+        {
+          "name": "colors",
+          "kind": "colors",
+          "desc": "Series (or slice/category) name to CSS colour, e.g. {\"Revenue\":\"#2962FF\"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours."
+        },
+        {
+          "name": "transform",
+          "kind": "transform",
+          "desc": "Data steps run before the chart reads its columns, in order (at most 10): filter, timeUnit, aggregate, sort, top, bin (round bins: start and end columns), window (running sum, mean, count, rank, pctChange, lag, lead, movingMean, per group, in a sort order) and fold (wide columns to key/value rows). No expressions. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+        },
+        {
+          "name": "patterns",
+          "kind": "boolean",
+          "desc": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
+        },
+        {
+          "name": "xLabel",
+          "kind": "string",
+          "max": 80,
+          "desc": "Title of the horizontal axis."
+        },
+        {
+          "name": "yLabel",
+          "kind": "string",
+          "max": 80,
+          "desc": "Title of the vertical axis (include the unit)."
+        },
+        {
+          "name": "annotations",
+          "kind": "annotations",
+          "desc": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date)."
+        },
+        {
+          "name": "facet",
+          "kind": "column",
+          "role": "any",
+          "desc": "Split into small multiples: one panel per value of this column (at most 12), sharing axes, colours and one legend."
+        },
+        {
+          "name": "zoom",
+          "kind": "enum",
+          "values": [
+            "none",
+            "x",
+            "xy"
+          ],
+          "desc": "Default none. Let the viewer zoom and pan a continuous axis (web binding): Ctrl/⌘-scroll or pinch to zoom, drag to pan, double-click or 0 to reset. Scatter, line and area."
+        },
+        {
+          "name": "brush",
+          "kind": "enum",
+          "values": [
+            "none",
+            "x",
+            "xy"
+          ],
+          "desc": "Default none. Let the viewer drag out a range to select (web binding). The selection comes back as a filter step, ready for `transform`. With `zoom` too, Shift-drag pans."
+        },
+        {
+          "name": "y",
+          "kind": "column",
+          "role": "any",
+          "required": true,
+          "desc": "Column naming the lane (task, resource, room) each bar sits in; lanes keep the order of first appearance. Several rows may share a lane (phases one after another)."
+        },
+        {
+          "name": "start",
+          "kind": "column",
+          "role": "x",
+          "required": true,
+          "desc": "Column with where each bar starts: ISO dates or timestamps, or plain numbers (days, minutes, versions). The kind is detected from start and end together; override with `xType`."
+        },
+        {
+          "name": "end",
+          "kind": "column",
+          "role": "x",
+          "required": true,
+          "desc": "Column with where each bar ends, in the same units as `start`. An end before its start is swapped (`range_reversed`); a row without either is skipped (`missing_range`)."
+        },
+        {
+          "name": "series",
+          "kind": "column",
+          "role": "any",
+          "desc": "Column that colours the bars (phase, owner, status) and gives them a legend; toggling an entry hides its bars."
+        },
+        {
+          "name": "label",
+          "kind": "column",
+          "role": "any",
+          "desc": "Column naming each bar (shown in its tooltip, and on the bar with `labels`). Default: the lane."
+        },
+        {
+          "name": "labels",
+          "kind": "boolean",
+          "default": false,
+          "desc": "Print each bar's label (or, without `label`, its duration) inside the bar, or just after it when it does not fit."
+        },
+        {
+          "name": "xType",
+          "kind": "enum",
+          "values": [
+            "auto",
+            "linear",
+            "time"
+          ],
+          "default": "auto",
+          "desc": "How to read `start` and `end`. `auto` detects numbers and ISO dates."
+        },
+        {
+          "name": "xDomain",
+          "kind": "domain",
+          "desc": "Fix the visible range of the time axis (dates as ISO strings). Bars running past it are cut at the edge; `zoom: \"x\"` lets the viewer change it."
         }
       ]
     },

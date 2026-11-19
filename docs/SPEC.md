@@ -232,7 +232,7 @@ A line chart with the area under it filled; stacked areas show how parts add up 
 | `gaps` | `break` \| `connect` \| `zero` |  |  | Default break. What a missing or null y does: `break` leaves a gap in the line, `connect` joins the points on either side, `zero` draws it as 0 (the tooltip says "missing"). Stacked areas always count a missing value as 0. |
 | `yLower` | column name |  |  | Numeric column with the lower end of an interval on y (a confidence or min-max range), drawn as a shaded band behind each line (one band per series; with long-form `series`, not with several `y` columns). Needs `yUpper` too; the tooltip shows the interval and the axis includes it. |
 | `yUpper` | column name |  |  | Numeric column with the upper end of the interval on y; see `yLower`. |
-| `stack` | `none` \| `stack` \| `normalize` |  | `"none"` | `stack` adds series on top of each other; `normalize` shows each series as a share of 100%. |
+| `stack` | `none` \| `stack` \| `normalize` \| `center` |  | `"none"` | `stack` adds series on top of each other; `normalize` shows each series as a share of 100%; `center` is a stream graph: the stack is centred on a middle line (each x starts at minus half its total), so the outline shows how the total and its parts flow over time. A centred stack has no zero, so its value axis shows no ticks; the tooltip gives every value and the total. |
 | `yScale` | `linear` \| `log` |  |  | Only `linear`. An area starts at zero, which a log axis cannot show, so `log` is refused (`log_scale_refused`). Use a line or a scatter for values spanning several orders of magnitude. |
 
 ```json
@@ -816,7 +816,7 @@ One cell per day, weeks as columns and weekdays as rows, coloured by a number: a
 | `colors` | object |  |  | Series (or slice/category) name to CSS colour, e.g. {"Revenue":"#2962FF"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours. |
 | `transform` | array of steps |  |  | Data steps run before the chart reads its columns, in order (at most 10): filter, timeUnit, aggregate, sort, top, bin (round bins: start and end columns), window (running sum, mean, count, rank, pctChange, lag, lead, movingMean, per group, in a sort order) and fold (wide columns to key/value rows). No expressions. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output. |
 | `patterns` | boolean |  |  | Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print. |
-| `x` | column name | yes |  | Date column: ISO dates ("2026-03-14") or epoch milliseconds. Days are UTC; a time of day is dropped and rows on the same day are summed. |
+| `x` | column name | yes |  | Date column: ISO dates ("2026-03-14") or epoch milliseconds. A time of day is dropped and rows on the same day are summed. Instants (timestamps, ISO strings with a time) count on their day in the render time zone (UTC by default); date-only strings keep their date. |
 | `value` | column name | yes |  | Numeric column giving each day's colour. |
 | `weekStart` | `monday` \| `sunday` |  | `"monday"` | First weekday, the top row. |
 | `domain` | [min\|null, max\|null] |  |  | Fix the colour scale range, e.g. [0, 20], to compare several calendars. |
@@ -1097,6 +1097,85 @@ Shows how the rank of each series changes along an ordered x: rank 1 on top, one
     },
     {
       "year": 2023,
+```
+
+## `timeline` — Timeline
+
+Floating horizontal bars from a start to an end, one lane per task or resource: a Gantt chart, a schedule, a history of states.
+
+**Use when:** Tasks, bookings, shifts, releases or incidents with a start and an end (dates or numbers), a few to a few hundred bars in up to ~40 lanes. Add `series` to colour by phase or owner, and an x annotation for "today". Use a bar chart for durations without positions in time, a calendar for daily values.
+
+| Field | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `type` | string | yes |  | Chart type: timeline. |
+| `version` | `1` |  |  | Spec format version. Only 1 exists; may be omitted. |
+| `data` | array of rows | yes |  | Tabular rows: an array of flat objects, one per observation. Numbers must be numbers (or plain numeric strings). |
+| `title` | string |  |  | Chart title. State the takeaway or the subject, not "Chart". |
+| `subtitle` | string |  |  | One line of context under the title: unit, period, filter. |
+| `description` | string |  |  | Long description for screen readers and agents. Generated from the data when omitted. |
+| `source` | string |  |  | Source line shown small under the chart. |
+| `legend` | `auto` \| `top` \| `bottom` \| `right` \| `none` |  | `"auto"` | Legend placement. `auto` hides it for a single series and picks a side from the available width. |
+| `tooltip` | boolean |  | `true` | Show a hover tooltip (web binding only). |
+| `format` | format string |  |  | Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE. |
+| `colors` | object |  |  | Series (or slice/category) name to CSS colour, e.g. {"Revenue":"#2962FF"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours. |
+| `transform` | array of steps |  |  | Data steps run before the chart reads its columns, in order (at most 10): filter, timeUnit, aggregate, sort, top, bin (round bins: start and end columns), window (running sum, mean, count, rank, pctChange, lag, lead, movingMean, per group, in a sort order) and fold (wide columns to key/value rows). No expressions. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output. |
+| `patterns` | boolean |  |  | Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print. |
+| `xLabel` | string |  |  | Title of the horizontal axis. |
+| `yLabel` | string |  |  | Title of the vertical axis (include the unit). |
+| `annotations` | array |  |  | Reference marks: {axis:"y", value:100, label:"Target"} draws a line; add `to` for a band. {x:"2026-03-01", y:120, label:"Launch"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date). |
+| `facet` | column name |  |  | Split into small multiples: one panel per value of this column (at most 12), sharing axes, colours and one legend. |
+| `zoom` | `none` \| `x` \| `xy` |  |  | Default none. Let the viewer zoom and pan a continuous axis (web binding): Ctrl/⌘-scroll or pinch to zoom, drag to pan, double-click or 0 to reset. Scatter, line and area. |
+| `brush` | `none` \| `x` \| `xy` |  |  | Default none. Let the viewer drag out a range to select (web binding). The selection comes back as a filter step, ready for `transform`. With `zoom` too, Shift-drag pans. |
+| `y` | column name | yes |  | Column naming the lane (task, resource, room) each bar sits in; lanes keep the order of first appearance. Several rows may share a lane (phases one after another). |
+| `start` | column name | yes |  | Column with where each bar starts: ISO dates or timestamps, or plain numbers (days, minutes, versions). The kind is detected from start and end together; override with `xType`. |
+| `end` | column name | yes |  | Column with where each bar ends, in the same units as `start`. An end before its start is swapped (`range_reversed`); a row without either is skipped (`missing_range`). |
+| `series` | column name |  |  | Column that colours the bars (phase, owner, status) and gives them a legend; toggling an entry hides its bars. |
+| `label` | column name |  |  | Column naming each bar (shown in its tooltip, and on the bar with `labels`). Default: the lane. |
+| `labels` | boolean |  | `false` | Print each bar's label (or, without `label`, its duration) inside the bar, or just after it when it does not fit. |
+| `xType` | `auto` \| `linear` \| `time` |  | `"auto"` | How to read `start` and `end`. `auto` detects numbers and ISO dates. |
+| `xDomain` | [min\|null, max\|null] |  |  | Fix the visible range of the time axis (dates as ISO strings). Bars running past it are cut at the edge; `zoom: "x"` lets the viewer change it. |
+
+```json
+{
+  "type": "timeline",
+  "title": "Release 4.2 plan",
+  "subtitle": "Work by team, March to May 2026",
+  "y": "task",
+  "start": "from",
+  "end": "to",
+  "series": "team",
+  "annotations": [
+    {
+      "axis": "x",
+      "value": "2026-04-06",
+      "label": "Today",
+      "tone": "warning"
+    }
+  ],
+  "data": [
+    {
+      "task": "Research",
+      "team": "Design",
+      "from": "2026-03-02",
+      "to": "2026-03-20"
+    },
+    {
+      "task": "Wireframes",
+      "team": "Design",
+      "from": "2026-03-16",
+      "to": "2026-04-03"
+    },
+    {
+      "task": "API",
+      "team": "Backend",
+      "from": "2026-03-23",
+      "to": "2026-04-24"
+    },
+    {
+      "task": "Web app",
+      "team": "Frontend",
+      "from": "2026-04-06",
+      "to": "2026-05-08"
 ```
 
 ## `radar` — Radar chart

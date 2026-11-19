@@ -2,7 +2,9 @@ import type { ChartCtx } from './context.js'
 import type { AxisInfo, Rect } from './scene.js'
 import type { BandScale, LinearScale } from './scale.js'
 import { fit } from './util/text.js'
-import { toTime } from './util/time.js'
+import { toTime, zoneOffset } from './util/time.js'
+
+const DAY = 864e5
 import { toNumber } from './util/num.js'
 import { timeTickList } from './scale.js'
 import { tickLabel } from './util/time.js'
@@ -192,6 +194,16 @@ function drawPointAnnotation(c: ChartCtx, plot: Rect, x: Axis, y: Axis, i: numbe
   c.marks.push(c.text(tx, ey, label, { role: 'annotation', anchor: right ? 'start' : 'end', baseline: 'middle', fill: color, size, weight: 500 }))
 }
 
+/**
+ * A time axis whose values are all date-only (UTC midnights) under another render time zone: they are instants at
+ * midnight UTC, so they land between the local day ticks. Warn once (`time_zone_dates`) instead of guessing.
+ */
+export function warnZoneDates(c: ChartCtx, values: number[], path: string): void {
+  const tz = c.timeZone
+  if (tz === 'UTC' || !values.length || values.some(v => v % DAY !== 0) || values.every(v => zoneOffset(v, tz) === 0)) return
+  c.warn('time_zone_dates', path, `Every ${path} value is a date without a time of day, read as midnight UTC; in ${tz} that is not midnight, so the points sit between the day ticks and tooltips show a local time.`, 'Give instants with their offset (2026-03-01T00:00-05:00) or as timestamps, or leave timeZone at UTC for calendar dates.')
+}
+
 export interface ValueAxisOptions { title?: string; vertical: boolean; format?: string; grid?: boolean }
 
 /** A linear or time axis with tick labels that never collide. */
@@ -204,7 +216,7 @@ export function valueAxis(c: ChartCtx, scale: LinearScale, o: ValueAxisOptions):
       let count = Math.max(2, Math.round(length / (o.vertical ? (c.compact ? 34 : 42) : c.compact ? 70 : 88)))
       for (;;) {
         const labels: AxisTick[] = scale.kind === 'time'
-          ? timeTickList(scale.domain, count, c.locale).map(t => ({ key: t.value, label: t.label }))
+          ? timeTickList(scale.domain, count, c.locale, c.timeZone).map(t => ({ key: t.value, label: t.label }))
           : scale.log
             ? (() => {
                 // Log ticks span decades: one shared precision does not fit, so each tick uses the value format
@@ -237,7 +249,9 @@ const ISO_BUCKET = /^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):00:00(?:\.000)?Z)?$/
 
 /**
  * Categories that are all ISO dates (what `timeUnit` produces) read like a time axis: "2026, Feb, Mar" for
- * months, "Jan 5" for days, "14:00" for hours. Only when the chart did not label them itself.
+ * months, "Jan 5" for days, "14:00" for hours. Only when the chart did not label them itself. They stay UTC under a
+ * `timeZone` render option: the buckets are UTC (as `timeUnit` makes them in every port), so shifting the label
+ * would name the wrong day.
  */
 export function dateLabels(keys: readonly string[], labels: Record<string, string>, locale: string): Record<string, string> | null {
   if (!keys.length || keys.some(k => labels[k] !== undefined && labels[k] !== k)) return null

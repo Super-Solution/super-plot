@@ -74,7 +74,7 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
   if (all.length > MAX_TILES) {
     const keep = [...all].sort((a, b) => b.value - a.value)
     const rest = keep.slice(MAX_TILES - 1)
-    all = [...keep.slice(0, MAX_TILES - 1), { label: 'Other', group: s.group ? 'Other' : '', value: rest.reduce((q, t) => q + t.value, 0) }]
+    all = [...keep.slice(0, MAX_TILES - 1), { label: c.t('other'), group: s.group ? c.t('other') : '', value: rest.reduce((q, t) => q + t.value, 0) }]
     c.warn('many_tiles', 'data', `More than ${MAX_TILES} tiles: the smallest were merged into "Other".`)
   }
   const grouped = Boolean(s.group)
@@ -97,7 +97,7 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
     const share = total ? t.value / total : 0
     c.marks.push({
       type: 'rect', role: 'data', series: grouped ? t.group : undefined, x: b.x + gap / 2, y: b.y + gap / 2, w, h, r: Math.min(3, w / 4, h / 4), fill, anim: 'fade',
-      tip: { title: clip(t.label, 60), rows: [...(grouped ? [{ label: String(s.group), value: clip(t.group, 40) }] : []), { label: String(s.value), value: fmt(t.value), color: fill }, { label: 'Share', value: formatPercent(share, c.locale) }] },
+      tip: { title: clip(t.label, 60), rows: [...(grouped ? [{ label: String(s.group), value: clip(t.group, 40) }] : []), { label: String(s.value), value: fmt(t.value), color: fill }, { label: c.t('share'), value: formatPercent(share, c.locale) }] },
       aria: `${t.label}${grouped ? ` (${t.group})` : ''}: ${fmt(t.value)}, ${formatPercent(share, c.locale)}`, datum: { label: t.label, group: grouped ? t.group : undefined, value: t.value }
     })
     const pad = 6

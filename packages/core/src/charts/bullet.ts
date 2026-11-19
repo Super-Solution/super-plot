@@ -83,17 +83,17 @@ function compile(c: ChartCtx): { series: SeriesInfo[] } {
     const out: Tip['rows'] = []
     if (r.value !== null) out.push({ label: series[0].label, value: fmt(r.value), color: vColor })
     if (r.target !== null && tKey) out.push({ label: clip(tKey, 60), value: fmt(r.target), color: tColor })
-    if (r.value !== null && r.target !== null && r.target !== 0) out.push({ label: 'Of target', value: formatPercent(r.value / r.target, c.locale) })
-    for (const [n, t] of r.ranges) out.push({ label: clip(n, 40), value: `up to ${fmt(t)}` })
-    if (r.value !== null && r.ranges.length) out.push({ label: 'In range', value: clip(rangeOf(r, r.value) ?? `above ${r.ranges[r.ranges.length - 1][0]}`, 40) })
+    if (r.value !== null && r.target !== null && r.target !== 0) out.push({ label: c.t('ofTarget'), value: formatPercent(r.value / r.target, c.locale) })
+    for (const [n, t] of r.ranges) out.push({ label: clip(n, 40), value: c.t('upTo', { value: fmt(t) }) })
+    if (r.value !== null && r.ranges.length) out.push({ label: c.t('inRange'), value: clip(rangeOf(r, r.value) ?? c.t('above', { range: r.ranges[r.ranges.length - 1][0] }), 40) })
     return { title: clip(r.key, 60), rows: out }
   }
   const ariaOf = (r: BulletRow): string => {
-    const parts = [r.value !== null ? `${vKey} ${fmt(r.value)}` : `no ${vKey}`]
+    const parts = [r.value !== null ? `${vKey} ${fmt(r.value)}` : c.t('noValue', { name: vKey })]
     if (r.target !== null && tKey) parts.push(`${tKey} ${fmt(r.target)}`)
     if (r.value !== null && r.ranges.length) {
       const g = rangeOf(r, r.value)
-      parts.push(g ? `in range ${g}` : 'above every range')
+      parts.push(g ? c.t('inRangeAria', { range: g }) : c.t('aboveEveryRange'))
     }
     return `${r.key}: ${parts.join(', ')}`
   }

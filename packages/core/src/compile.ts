@@ -10,6 +10,8 @@ import { clamp } from './util/num.js'
 import { distinct, xKey } from './data.js'
 import { fmtList, pointNotes } from './charts/shared.js'
 import type { Camera } from './geo/view.js'
+import { resolveStrings, type UiStringKey } from './strings.js'
+import { renderTimeZone } from './util/time.js'
 
 /**
  * A plugin sees every compiled scene before it is drawn and may return a changed one (add a mark, move a
@@ -31,8 +33,16 @@ export interface RenderOptions {
   theme?: ThemeOption
   /** What `'auto'` resolves to; the web binding passes the OS preference. */
   prefersDark?: boolean
-  /** BCP 47 locale for numbers and dates. Default `en`. */
+  /** BCP 47 locale for numbers and dates (month and weekday names come from `Intl`). Default `en`. */
   locale?: string
+  /**
+   * IANA time zone (`"Europe/London"`) in which time axes place their ticks (local midnights, months) and dates are
+   * shown, in ticks, tooltips, `aria` text and the description. Default `UTC`. An unknown name is a `bad_time_zone`
+   * warning and UTC is used. Data are instants either way: an ISO string without an offset is read as UTC.
+   */
+  timeZone?: string
+  /** Overrides for the English UI strings core writes into the scene; keys and defaults in `DEFAULT_STRINGS`. */
+  strings?: Partial<Record<UiStringKey, string>>
   /** Series keys to leave out (legend toggles). */
   hidden?: Iterable<string>
   /** Text measurer; the web binding passes a canvas-backed one. */
@@ -68,7 +78,9 @@ export function compilePlot(input: unknown, options: RenderOptions = {}): Compil
   const width = Math.round(clamp(options.width ?? 640, 120, 4000))
   const height = Math.round(clamp(options.height ?? defaultHeight(spec.type, width), 100, 4000))
   const issues = [...v.issues]
-  const env: RenderEnv = { theme, locale, measure: options.measure ?? estimateWidth, ...(options.camera ? { camera: options.camera } : {}) }
+  const timeZone = renderTimeZone(options.timeZone, issues)
+  const strings = resolveStrings(options.strings, issues)
+  const env: RenderEnv = { theme, locale, timeZone, strings, measure: options.measure ?? estimateWidth, ...(options.camera ? { camera: options.camera } : {}) }
   const hidden = [...(options.hidden ?? [])]
   // The viewer's zoom replaces the fixed ranges (only on charts that have them).
   if (options.view && !spec.facet) {
@@ -97,7 +109,7 @@ export function compilePlot(input: unknown, options: RenderOptions = {}): Compil
   if (spec.patterns === true) applyPatterns(marks, series)
 
   const title = typeof spec.title === 'string' && spec.title ? spec.title : def.name
-  let description = typeof spec.description === 'string' && spec.description ? spec.description : def.describe(spec, { locale }) + pointNotes(spec)
+  let description = typeof spec.description === 'string' && spec.description ? spec.description : def.describe(spec, { locale, timeZone }) + pointNotes(spec)
   if (spec.facet && !(typeof spec.description === 'string' && spec.description) && panels) description += ` Split into ${panels.length} panels by ${spec.facet}: ${fmtList(panels.map(p => p.key))}.`
   let scene: Scene = {
     width,

@@ -1082,10 +1082,11 @@
           "enum": [
             "none",
             "stack",
-            "normalize"
+            "normalize",
+            "center"
           ],
           "default": "none",
-          "description": "`stack` adds series on top of each other; `normalize` shows each series as a share of 100%."
+          "description": "`stack` adds series on top of each other; `normalize` shows each series as a share of 100%; `center` is a stream graph: the stack is centred on a middle line (each x starts at minus half its total), so the outline shows how the total and its parts flow over time. A centred stack has no zero, so its value axis shows no ticks; the tooltip gives every value and the total."
         },
         "yScale": {
           "enum": [
@@ -3092,7 +3093,7 @@
         },
         "x": {
           "type": "string",
-          "description": "Date column: ISO dates (\"2026-03-14\") or epoch milliseconds. Days are UTC; a time of day is dropped and rows on the same day are summed. (name of a column in data)"
+          "description": "Date column: ISO dates (\"2026-03-14\") or epoch milliseconds. A time of day is dropped and rows on the same day are summed. Instants (timestamps, ISO strings with a time) count on their day in the render time zone (UTC by default); date-only strings keep their date. (name of a column in data)"
         },
         "value": {
           "type": "string",
@@ -4069,6 +4070,316 @@
           "type": "boolean",
           "default": true,
           "description": "Name each series at the end of its line (direct labels), so the reader does not need the legend."
+        }
+      }
+    },
+    {
+      "title": "Timeline",
+      "description": "Floating horizontal bars from a start to an end, one lane per task or resource: a Gantt chart, a schedule, a history of states. Tasks, bookings, shifts, releases or incidents with a start and an end (dates or numbers), a few to a few hundred bars in up to ~40 lanes. Add `series` to colour by phase or owner, and an x annotation for \"today\". Use a bar chart for durations without positions in time, a calendar for daily values.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "data",
+        "y",
+        "start",
+        "end"
+      ],
+      "properties": {
+        "type": {
+          "const": "timeline"
+        },
+        "version": {
+          "const": 1,
+          "description": "Spec format version. Only 1 exists; may be omitted."
+        },
+        "data": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 50000,
+          "items": {
+            "type": "object"
+          },
+          "description": "Tabular rows: an array of flat objects, one per observation. Numbers must be numbers (or plain numeric strings)."
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 120,
+          "description": "Chart title. State the takeaway or the subject, not \"Chart\"."
+        },
+        "subtitle": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "One line of context under the title: unit, period, filter."
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 1000,
+          "description": "Long description for screen readers and agents. Generated from the data when omitted."
+        },
+        "source": {
+          "type": "string",
+          "maxLength": 160,
+          "description": "Source line shown small under the chart."
+        },
+        "legend": {
+          "enum": [
+            "auto",
+            "top",
+            "bottom",
+            "right",
+            "none"
+          ],
+          "default": "auto",
+          "description": "Legend placement. `auto` hides it for a single series and picks a side from the available width."
+        },
+        "tooltip": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show a hover tooltip (web binding only)."
+        },
+        "format": {
+          "type": "string",
+          "pattern": "^(auto|compact|integer|percent|fixed:\\d{1,2}|currency:[A-Za-z]{3})$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+        },
+        "colors": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "description": "Series (or slice/category) name to CSS colour, e.g. {\"Revenue\":\"#2962FF\"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours."
+        },
+        "transform": {
+          "type": "array",
+          "maxItems": 10,
+          "items": {
+            "type": "object",
+            "minProperties": 1,
+            "maxProperties": 1,
+            "properties": {
+              "filter": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "timeUnit": {
+                "type": "object",
+                "required": [
+                  "field",
+                  "unit"
+                ]
+              },
+              "aggregate": {
+                "type": "object"
+              },
+              "sort": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "top": {
+                "type": "object",
+                "required": [
+                  "n",
+                  "by"
+                ]
+              },
+              "bin": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "window": {
+                "type": "object",
+                "required": [
+                  "op",
+                  "field",
+                  "as"
+                ]
+              },
+              "fold": {
+                "type": "object",
+                "required": [
+                  "fields"
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "Data steps run before the chart reads its columns, in order (at most 10): filter, timeUnit, aggregate, sort, top, bin (round bins: start and end columns), window (running sum, mean, count, rank, pctChange, lag, lead, movingMean, per group, in a sort order) and fold (wide columns to key/value rows). No expressions. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+        },
+        "patterns": {
+          "type": "boolean",
+          "description": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
+        },
+        "xLabel": {
+          "type": "string",
+          "maxLength": 80,
+          "description": "Title of the horizontal axis."
+        },
+        "yLabel": {
+          "type": "string",
+          "maxLength": 80,
+          "description": "Title of the vertical axis (include the unit)."
+        },
+        "annotations": {
+          "type": "array",
+          "maxItems": 50,
+          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date).",
+          "items": {
+            "oneOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "axis",
+                  "value"
+                ],
+                "properties": {
+                  "axis": {
+                    "enum": [
+                      "x",
+                      "y"
+                    ]
+                  },
+                  "value": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "to": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "label": {
+                    "type": "string",
+                    "maxLength": 80
+                  },
+                  "tone": {
+                    "enum": [
+                      "neutral",
+                      "positive",
+                      "negative",
+                      "warning",
+                      "info"
+                    ]
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "x",
+                  "y",
+                  "label"
+                ],
+                "properties": {
+                  "x": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "y": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "label": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 80
+                  },
+                  "tone": {
+                    "enum": [
+                      "neutral",
+                      "positive",
+                      "negative",
+                      "warning",
+                      "info"
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "facet": {
+          "type": "string",
+          "description": "Split into small multiples: one panel per value of this column (at most 12), sharing axes, colours and one legend. (name of a column in data)"
+        },
+        "zoom": {
+          "enum": [
+            "none",
+            "x",
+            "xy"
+          ],
+          "description": "Default none. Let the viewer zoom and pan a continuous axis (web binding): Ctrl/⌘-scroll or pinch to zoom, drag to pan, double-click or 0 to reset. Scatter, line and area."
+        },
+        "brush": {
+          "enum": [
+            "none",
+            "x",
+            "xy"
+          ],
+          "description": "Default none. Let the viewer drag out a range to select (web binding). The selection comes back as a filter step, ready for `transform`. With `zoom` too, Shift-drag pans."
+        },
+        "y": {
+          "type": "string",
+          "description": "Column naming the lane (task, resource, room) each bar sits in; lanes keep the order of first appearance. Several rows may share a lane (phases one after another). (name of a column in data)"
+        },
+        "start": {
+          "type": "string",
+          "description": "Column with where each bar starts: ISO dates or timestamps, or plain numbers (days, minutes, versions). The kind is detected from start and end together; override with `xType`. (name of a column in data)"
+        },
+        "end": {
+          "type": "string",
+          "description": "Column with where each bar ends, in the same units as `start`. An end before its start is swapped (`range_reversed`); a row without either is skipped (`missing_range`). (name of a column in data)"
+        },
+        "series": {
+          "type": "string",
+          "description": "Column that colours the bars (phase, owner, status) and gives them a legend; toggling an entry hides its bars. (name of a column in data)"
+        },
+        "label": {
+          "type": "string",
+          "description": "Column naming each bar (shown in its tooltip, and on the bar with `labels`). Default: the lane. (name of a column in data)"
+        },
+        "labels": {
+          "type": "boolean",
+          "default": false,
+          "description": "Print each bar's label (or, without `label`, its duration) inside the bar, or just after it when it does not fit."
+        },
+        "xType": {
+          "enum": [
+            "auto",
+            "linear",
+            "time"
+          ],
+          "default": "auto",
+          "description": "How to read `start` and `end`. `auto` detects numbers and ISO dates."
+        },
+        "xDomain": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": [
+              "number",
+              "string",
+              "null"
+            ]
+          },
+          "description": "Fix the visible range of the time axis (dates as ISO strings). Bars running past it are cut at the edge; `zoom: \"x\"` lets the viewer change it."
         }
       }
     },

@@ -148,8 +148,8 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
     const d = `M${r2(x0)} ${r2(inner.y + p.sy)}C${r2(xm)} ${r2(inner.y + p.sy)} ${r2(xm)} ${r2(inner.y + p.ty)} ${r2(x1)} ${r2(inner.y + p.ty)}V${r2(inner.y + p.ty + th)}C${r2(xm)} ${r2(inner.y + p.ty + th)} ${r2(xm)} ${r2(inner.y + p.sy + sh)} ${r2(x0)} ${r2(inner.y + p.sy + sh)}Z`
     c.marks.push({
       type: 'path', role: 'data', series: l.source, d, fill: colorOf(l.source), opacity: 0.32, anim: 'fade',
-      tip: { title: `${clip(l.source, 40)} → ${clip(l.target, 40)}`, rows: [{ label: String(s.value), value: fmt(l.value), color: colorOf(l.source) }, { label: `Share of ${clip(l.source, 24)}`, value: formatPercent(l.value / (a.out || 1), c.locale) }] },
-      aria: `${l.source} to ${l.target}: ${fmt(l.value)}`, datum: { source: l.source, target: l.target, value: l.value }
+      tip: { title: `${clip(l.source, 40)} → ${clip(l.target, 40)}`, rows: [{ label: String(s.value), value: fmt(l.value), color: colorOf(l.source) }, { label: c.t('shareOfSource', { name: clip(l.source, 24) }), value: formatPercent(l.value / (a.out || 1), c.locale) }] },
+      aria: c.t('linkAria', { source: l.source, target: l.target, value: fmt(l.value) }), datum: { source: l.source, target: l.target, value: l.value }
     })
   }
   const lastLayer = Math.max(...[...nodes.values()].map(n => n.layer))
@@ -158,8 +158,8 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
     const x = inner.x + n.x
     c.marks.push({
       type: 'rect', role: 'data', series: n.key, x: r2(x), y: r2(inner.y + n.y), w: nodeW, h: r2(n.h), r: 2, fill: col,
-      tip: { title: clip(n.key, 60), rows: [...(n.in ? [{ label: 'In', value: fmt(n.in), color: col }] : []), ...(n.out ? [{ label: 'Out', value: fmt(n.out), color: col }] : [])] },
-      aria: `${n.key}: in ${fmt(n.in)}, out ${fmt(n.out)}`, datum: { node: n.key, in: n.in, out: n.out }
+      tip: { title: clip(n.key, 60), rows: [...(n.in ? [{ label: c.t('flowIn'), value: fmt(n.in), color: col }] : []), ...(n.out ? [{ label: c.t('flowOut'), value: fmt(n.out), color: col }] : [])] },
+      aria: c.t('nodeAria', { name: n.key, in: fmt(n.in), out: fmt(n.out) }), datum: { node: n.key, in: n.in, out: n.out }
     })
     const room = n.layer === lastLayer ? labelRoom - 6 : labelRoom + 40
     c.marks.push(c.text(x + nodeW + 6, inner.y + n.y + n.h / 2, fit(n.key, room, c.size, c.env.measure, 500), { role: 'label', anchor: 'start', baseline: 'middle', fill: c.c('text'), weight: 500 }))
