@@ -140,7 +140,7 @@ export function timeScale(domain: [number, number]): LinearScale {
   return linearScale(domain, 'time')
 }
 
-export const timeTickList = (domain: [number, number], count: number, locale: string): Tick[] => timeTicks(domain[0], domain[1], count, locale)
+export const timeTickList = (domain: [number, number], count: number, locale: string, timeZone = 'UTC'): Tick[] => timeTicks(domain[0], domain[1], count, locale, timeZone)
 
 export interface BandScale extends Scale {
   kind: 'band'

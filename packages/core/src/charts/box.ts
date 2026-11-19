@@ -57,7 +57,7 @@ export function pointMarks(c: ChartCtx, o: { key: string; values: number[]; outl
   const out: Mark[] = []
   if (o.outliers) {
     for (const v of o.outliers) {
-      out.push({ type: 'circle', role: 'data', series: o.key, cx: o.horizontal ? o.at(v) : o.mid, cy: o.horizontal ? o.mid : o.at(v), r: 3.5, fill: c.c('background'), stroke: o.color, strokeWidth: 1.5, tip: { title: `${clip(o.key, 40)} outlier`, rows: [{ label: o.column, value: fmt(v) }] }, aria: `${o.key} outlier ${fmt(v)}`, datum: { group: o.key, value: v } })
+      out.push({ type: 'circle', role: 'data', series: o.key, cx: o.horizontal ? o.at(v) : o.mid, cy: o.horizontal ? o.mid : o.at(v), r: 3.5, fill: c.c('background'), stroke: o.color, strokeWidth: 1.5, tip: { title: c.t('outlier', { name: clip(o.key, 40) }), rows: [{ label: o.column, value: fmt(v) }] }, aria: `${c.t('outlier', { name: o.key })} ${fmt(v)}`, datum: { group: o.key, value: v } })
     }
     return out
   }
@@ -123,11 +123,11 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
       : { type: 'line', role: 'data', series: k, x1: mid - across, x2: mid + across, y1: P(a), y2: P(b), stroke: col, strokeWidth: w }
     const tip = {
       title: clip(k, 60),
-      rows: [['Max', st.max], ['Q3', st.q3], ['Median', st.median], ['Q1', st.q1], ['Min', st.min]].map(([label, v]) => ({ label: label as string, value: fmt(v as number) })).concat([{ label: 'Mean', value: fmt(st.mean) }, { label: 'n', value: String(st.n) }])
+      rows: ([['max', st.max], ['q3', st.q3], ['median', st.median], ['q1', st.q1], ['min', st.min]] as const).map(([key, v]) => ({ label: c.t(key), value: fmt(v) })).concat([{ label: c.t('mean'), value: fmt(st.mean) }, { label: c.t('n'), value: String(st.n) }])
     }
     out.push(seg(st.lowWhisker, st.q1, 0), seg(st.q3, st.highWhisker, 0))
     out.push(seg(st.lowWhisker, st.lowWhisker, boxW * 0.25), seg(st.highWhisker, st.highWhisker, boxW * 0.25))
-    out.push(rect(st.q1, st.q3, { fill: col, opacity: 0.22, stroke: col, strokeWidth: 1.5, r: 3, tip, aria: `${k}: median ${fmt(st.median)}, Q1 ${fmt(st.q1)}, Q3 ${fmt(st.q3)}`, anim: horizontal ? 'x' : 'y', datum: { group: k, ...st } }))
+    out.push(rect(st.q1, st.q3, { fill: col, opacity: 0.22, stroke: col, strokeWidth: 1.5, r: 3, tip, aria: c.t('boxAria', { name: k, median: fmt(st.median), q1: fmt(st.q1), q3: fmt(st.q3) }), anim: horizontal ? 'x' : 'y', datum: { group: k, ...st } }))
     out.push(seg(st.median, st.median, boxW / 2, c.theme.lineWidth + 0.5))
     if (showOut) out.push(...pointMarks(c, { key: k, values: g.get(k)!, outliers: mode === 'all' ? null : st.outliers, mid, at: P, horizontal, color: col, spread: () => boxW * 0.4, column: String(s.y) }))
   }

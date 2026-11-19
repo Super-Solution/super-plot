@@ -91,7 +91,8 @@ export interface LineSpec extends CartesianSpec, IntervalFields {
 export interface AreaSpec extends CartesianSpec, IntervalFields {
   type: 'area'
   gaps?: 'break' | 'connect' | 'zero'
-  stack?: Stack
+  /** `center` is a stream graph: the stack centred on a middle line (no zero, so no value ticks). */
+  stack?: Stack | 'center'
   curve?: 'linear' | 'smooth' | 'step'
 }
 
@@ -162,4 +163,27 @@ export interface HeatmapSpec extends BaseSpec {
   yLabel?: string
 }
 
-export type PlotSpec = BarSpec | LineSpec | AreaSpec | ScatterSpec | PieSpec | HistogramSpec | BoxSpec | HeatmapSpec
+/** Floating bars from `start` to `end`, one lane per value of `y` (a Gantt chart). */
+export interface TimelineSpec extends BaseSpec {
+  type: 'timeline'
+  /** Lane column. */
+  y: string
+  /** Start column: ISO dates, timestamps or numbers. */
+  start: string
+  /** End column, in the same units as `start`. */
+  end: string
+  series?: string
+  /** Column naming each bar. */
+  label?: string
+  labels?: boolean
+  xType?: 'auto' | 'linear' | 'time'
+  xDomain?: [number | string | null, number | string | null]
+  xLabel?: string
+  yLabel?: string
+  annotations?: Annotation[]
+  facet?: string
+  zoom?: 'none' | 'x' | 'xy'
+  brush?: 'none' | 'x' | 'xy'
+}
+
+export type PlotSpec = BarSpec | LineSpec | AreaSpec | ScatterSpec | PieSpec | HistogramSpec | BoxSpec | HeatmapSpec | TimelineSpec

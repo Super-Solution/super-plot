@@ -42,6 +42,7 @@ export const gallery: { id: string; note: string; spec: Record<string, unknown> 
     }
   },
   { id: 'area', note: 'Stacked areas over a numeric axis', spec: by('area') },
+  { id: 'area-stream', note: 'Stream graph (stack: "center"): layers centred, so the value axis has no zero and no ticks', spec: { ...by('area'), title: 'Energy mix as a stream', stack: 'center' } },
   { id: 'scatter', note: 'Groups, bubble size and per-group trend', spec: by('scatter') },
   {
     id: 'scatter-log', note: 'Log axes, error bars and a LOESS trend',
@@ -109,6 +110,14 @@ export const gallery: { id: string; note: string; spec: Record<string, unknown> 
     }
   },
   { id: 'bump', note: 'Ranks over time, labelled at the line ends', spec: by('bump') },
+  { id: 'timeline', note: 'Gantt-style plan: one lane per task, colour by team, a "today" line', spec: by('timeline') },
+  {
+    id: 'timeline-hours', note: 'Shifts over one night: dates with times, durations printed on the bars',
+    spec: {
+      type: 'timeline', title: 'On-call shifts', subtitle: 'Times in UTC; durations on the bars', y: 'person', start: 'from', end: 'to', series: 'rota', labels: true,
+      data: [['Ana', 'Primary', '2026-03-07T22:00:00Z', '2026-03-08T06:00:00Z'], ['Ben', 'Primary', '2026-03-08T06:00:00Z', '2026-03-08T14:30:00Z'], ['Chen', 'Primary', '2026-03-08T14:30:00Z', '2026-03-08T22:00:00Z'], ['Dev', 'Backup', '2026-03-07T22:00:00Z', '2026-03-08T10:00:00Z'], ['Eli', 'Backup', '2026-03-08T10:00:00Z', '2026-03-08T22:00:00Z']].map(([person, rota, from, to]) => ({ person, rota, from, to }))
+    }
+  },
   { id: 'calendar', note: 'One cell per day; days without data stay empty', spec: by('calendar') },
   { id: 'radar', note: 'A few items across shared measures', spec: by('radar') },
   { id: 'treemap', note: 'Area is the value; groups get a colour', spec: by('treemap') },

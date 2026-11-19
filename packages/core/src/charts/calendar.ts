@@ -1,7 +1,7 @@
 import type { ChartDef } from '../registry.js'
 import type { ChartCtx } from '../context.js'
 import { toNumber } from '../util/num.js'
-import { formatTime, formatWeekday, toTime } from '../util/time.js'
+import { formatTime, formatWeekday, toTime, toWall } from '../util/time.js'
 import { fit } from '../util/text.js'
 import { formatter, lead, seqLegend, seqScale } from './shared.js'
 
@@ -13,18 +13,22 @@ const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Frida
 const yearOf = (day: number): number => new Date(day * DAY).getUTCFullYear()
 const iso = (day: number): string => new Date(day * DAY).toISOString().slice(0, 10)
 
+const DATE_ONLY = /^\s*\d{4}-\d{2}(?:-\d{2})?\s*$/
+
 /**
- * Sum of `value` per UTC calendar day (epoch day number = floor(ms / 86400000)). Dates may be ISO strings or
- * epoch milliseconds; a time of day is dropped, so several readings on one day add up. Rows without a date or a
- * numeric value are skipped.
+ * Sum of `value` per calendar day (day number = floor(ms / 86400000) of the date's midnight). Dates may be ISO
+ * strings or epoch milliseconds; a time of day is dropped, so several readings on one day add up. Rows without a
+ * date or a numeric value are skipped. With a `timeZone` other than UTC an instant (a timestamp, or an ISO string
+ * with a time) counts on its local day there; a date-only string is already a calendar day and keeps it.
  */
-export function calendarDays(rows: Record<string, unknown>[], x: string, value: string): Map<number, number> {
+export function calendarDays(rows: Record<string, unknown>[], x: string, value: string, timeZone = 'UTC'): Map<number, number> {
   const out = new Map<number, number>()
   for (const r of rows) {
-    const t = toTime(r[x])
+    const raw = r[x]
+    const t = toTime(raw)
     const v = toNumber(r[value])
     if (t === null || v === null) continue
-    const d = Math.floor(t / DAY)
+    const d = Math.floor((typeof raw === 'string' && DATE_ONLY.test(raw) ? t : toWall(t, timeZone)) / DAY)
     out.set(d, (out.get(d) ?? 0) + v)
   }
   return out
@@ -37,7 +41,7 @@ function years(days: Map<number, number>): { all: number[]; shown: number[] } {
 
 function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
   const s = c.spec
-  const days = calendarDays(s.data, s.x, s.value)
+  const days = calendarDays(s.data, s.x, s.value, c.timeZone)
   const { shown } = years(days)
   const kept = [...days].filter(([d]) => shown.includes(yearOf(d)))
   const vals = kept.map(([, v]) => v)
@@ -119,7 +123,7 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
       const date = formatTime(d * DAY, 'full', c.locale)
       c.marks.push({
         type: 'rect', role: 'data', x, y, w, h: w, r, fill, anim: 'fade',
-        tip: { title: date, rows: [{ label: String(s.value), value: fmt(v), color: fill }, { label: 'Weekday', value: formatWeekday(d * DAY, 'long', c.locale) }] },
+        tip: { title: date, rows: [{ label: String(s.value), value: fmt(v), color: fill }, { label: c.t('weekday'), value: formatWeekday(d * DAY, 'long', c.locale) }] },
         aria: `${date}: ${fmt(v)}`, datum: { date: iso(d), value: v }
       })
     }
@@ -132,7 +136,7 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
     const ly = frame.y + headH * 2
     seqLegend(c, x, ly, h, lo, hi)
     c.marks.push({ type: 'rect', role: 'legend', x: x + 0.5, y: ly + h + 10.5, w: 11, h: 11, r: 2, fill: empty, stroke: grid, strokeWidth: 1 })
-    c.marks.push(c.text(x + 18, ly + h + 16, 'No data', { role: 'legend', baseline: 'middle', size }))
+    c.marks.push(c.text(x + 18, ly + h + 16, c.t('noData'), { role: 'legend', baseline: 'middle', size }))
   }
   return { series: [] }
 }
@@ -144,7 +148,7 @@ export const calendar: ChartDef = {
   useWhen: 'Daily values over months or years where weekly rhythm and streaks matter (commits, sales per day, sleep, energy use). Days without data stay empty, distinct from zero. Not for a few weeks (use a bar or line chart) or more than 5 years.',
   cartesian: false,
   fields: {
-    x: { kind: 'column', role: 'x', required: true, desc: 'Date column: ISO dates ("2026-03-14") or epoch milliseconds. Days are UTC; a time of day is dropped and rows on the same day are summed.' },
+    x: { kind: 'column', role: 'x', required: true, desc: 'Date column: ISO dates ("2026-03-14") or epoch milliseconds. A time of day is dropped and rows on the same day are summed. Instants (timestamps, ISO strings with a time) count on their day in the render time zone (UTC by default); date-only strings keep their date.' },
     value: { kind: 'column', role: 'number', required: true, desc: 'Numeric column giving each day\'s colour.' },
     weekStart: { kind: 'enum', values: ['monday', 'sunday'], default: 'monday', desc: 'First weekday, the top row.' },
     domain: { kind: 'domain', desc: 'Fix the colour scale range, e.g. [0, 20], to compare several calendars.' }
@@ -179,7 +183,7 @@ export const calendar: ChartDef = {
   compile,
   describe(spec, env) {
     const f = formatter(spec, env.locale)
-    const all = calendarDays(spec.data, spec.x, spec.value)
+    const all = calendarDays(spec.data, spec.x, spec.value, env.timeZone)
     const ys = years(all)
     const kept = [...all].filter(([d]) => ys.shown.includes(yearOf(d))).sort((a, b) => a[0] - b[0])
     if (!kept.length) return `${lead(spec, 'Calendar heatmap')} No days with data.`

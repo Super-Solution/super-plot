@@ -1,8 +1,8 @@
 import type { ChartCtx } from '../context.js'
 import type { ChartDef } from '../registry.js'
-import type { Mark } from '../scene.js'
+import type { Mark, Tip } from '../scene.js'
 import { bandScale, linearScale, logScale, niceLinear, niceLog, type LinearScale } from '../scale.js'
-import { bandAxis, drawAnnotations, layoutCartesian, valueAxis, type Axis } from '../cartesian.js'
+import { bandAxis, drawAnnotations, layoutCartesian, valueAxis, warnZoneDates, type Axis } from '../cartesian.js'
 import { detectXKind, distinct, observations, xKey, type XKind } from '../data.js'
 import { toTime, formatTime, hasTimeOfDay } from '../util/time.js'
 import { toNumber } from '../util/num.js'
@@ -87,7 +87,8 @@ function compileSeries(c: ChartCtx, area: boolean): { series: ReturnType<ChartCt
   const totalAt = new Map<number | string, number>()
   if (stack !== 'none') {
     for (const x of xs) totalAt.set(x, visible.reduce((q, k) => q + Math.max(0, val.get(k)?.get(x) ?? 0), 0))
-    const acc = new Map<number | string, number>()
+    // A stream graph starts each x at minus half its total, so the layers sit centred on the middle line.
+    const acc = new Map<number | string, number>(stack === 'center' ? xs.map(x => [x, -(totalAt.get(x) ?? 0) / 2]) : [])
     for (const k of visible) {
       const lo = new Map<number | string, number>()
       const up = new Map<number | string, number>()
@@ -118,6 +119,13 @@ function compileSeries(c: ChartCtx, area: boolean): { series: ReturnType<ChartCt
       lo = Math.min(lo, 0)
       hi = Math.max(hi, 0)
     }
+  } else if (stack === 'center') {
+    hi = Math.max(0, ...[...totalAt.entries()].filter(([x]) => inX(x)).map(([, v]) => v / 2))
+    lo = -hi
+    if (hi === 0) {
+      lo = -0.5
+      hi = 0.5
+    }
   } else {
     lo = 0
     hi = stack === 'normalize' ? 1 : Math.max(0, ...[...upper.values()].flatMap(m => [...m.values()]))
@@ -132,7 +140,9 @@ function compileSeries(c: ChartCtx, area: boolean): { series: ReturnType<ChartCt
     ? (fixedY ? logScale([override![0] ?? (lo > 0 ? lo : 1), override![1] ?? (hi > 0 ? hi : 10)]) : niceLog(lo > 0 ? lo : 1, hi > 0 ? hi : 10))
     : fixedY
       ? linearScale([override![0] ?? lo, override![1] ?? hi])
-      : niceLinear(lo, hi, { zero: area || (lo >= 0 && lo < hi * 0.5) })
+      : stack === 'center'
+        ? linearScale([lo, hi])
+        : niceLinear(lo, hi, { zero: area || (lo >= 0 && lo < hi * 0.5) })
   const yfmt = stack === 'normalize' ? 'percent' : s.format
 
   // x scale.
@@ -154,7 +164,9 @@ function compileSeries(c: ChartCtx, area: boolean): { series: ReturnType<ChartCt
     xScale = ls
     xAxis = valueAxis(c, ls, { title: s.xLabel, vertical: false, format: 'auto', grid: false })
   }
-  const yAxis = valueAxis(c, yScale, { title: s.yLabel, vertical: true, format: yfmt })
+  // A stream graph's vertical position has no zero: the middle is half of each total. Tick values would read as
+  // amounts that do not exist, so the axis shows no ticks or gridlines; the tooltip gives each value and the total.
+  const yAxis: Axis = stack === 'center' ? { scale: yScale, title: s.yLabel, grid: false, ticks: () => [] } : valueAxis(c, yScale, { title: s.yLabel, vertical: true, format: yfmt })
 
   const frame = c.frame({ series, autoSide: 'top' })
   const plot = layoutCartesian(c, frame, xAxis, yAxis)
@@ -164,8 +176,9 @@ function compileSeries(c: ChartCtx, area: boolean): { series: ReturnType<ChartCt
   if (clipTo) c.clips.plot = `M${plot.x} ${plot.y}h${plot.w}v${plot.h}h${-plot.w}Z`
 
   const fmt = c.format
-  const intraday = kind === 'time' && hasTimeOfDay(xs as number[])
-  const xTitle = (x: number | string): string => (kind === 'time' ? formatTime(x as number, intraday ? 'datetime' : 'full', c.locale) : kind === 'linear' ? new Intl.NumberFormat(c.locale, { maximumFractionDigits: 4 }).format(x as number) : clip(String(x), 60))
+  if (kind === 'time') warnZoneDates(c, xs as number[], 'x')
+  const intraday = kind === 'time' && hasTimeOfDay(xs as number[], c.timeZone)
+  const xTitle = (x: number | string): string => (kind === 'time' ? formatTime(x as number, intraday ? 'datetime' : 'full', c.locale, c.timeZone) : kind === 'linear' ? new Intl.NumberFormat(c.locale, { maximumFractionDigits: 4 }).format(x as number) : clip(String(x), 60))
   const px = (x: number | string): number => (xScale.at as (v: number | string) => number)(x)
 
   const marks: Mark[] = []
@@ -202,6 +215,8 @@ function compileSeries(c: ChartCtx, area: boolean): { series: ReturnType<ChartCt
       if (area) {
         const bottom: Pt[] = decimate(run.map(p => [p.px, stack !== 'none' ? p.y0! : yScale.at(Math.max(yScale.domain[0], Math.min(0, yScale.domain[1])))] as Pt), plot.w)
         marks.push({ type: 'path', role: 'data', series: k, d: areaPath(top, bottom, curve), fill: color, opacity: 0.16, anim: 'fade', ...(clipTo ? { clip: clipTo } : {}) })
+        // A stream graph's lowest layer floats too: outline its lower edge as well, or the shape reads lopsided.
+        if (stack === 'center' && k === draw[0]) marks.push({ type: 'path', role: 'data', series: k, d: curvePath(bottom, curve), stroke: color, strokeWidth: c.theme.lineWidth, anim: 'draw', ...(clipTo ? { clip: clipTo } : {}) })
       }
       marks.push({ type: 'path', role: 'data', series: k, d: curvePath(top, curve), stroke: color, strokeWidth: c.theme.lineWidth, anim: 'draw', ...(clipTo ? { clip: clipTo } : {}) })
     }
@@ -226,16 +241,17 @@ function compileSeries(c: ChartCtx, area: boolean): { series: ReturnType<ChartCt
     const x = xs[i]
     const left = ai === 0 ? plot.x : (cx[anchors[ai - 1]] + cx[i]) / 2
     const right = ai === anchors.length - 1 ? plot.x + plot.w : (cx[i] + cx[anchors[ai + 1]]) / 2
-    const rows = visible.flatMap(k => {
+    const rows: Tip['rows'] = visible.flatMap(k => {
       const v = val.get(k)?.get(x)
       const sv = series[keys.indexOf(k)]
-      if (v === undefined) return stack === 'none' && gaps === 'zero' && !logY && val.has(k) ? [{ label: sv.label, value: `${fmt(0)} (missing)`, color: sv.color }] : []
+      if (v === undefined) return stack === 'none' && gaps === 'zero' && !logY && val.has(k) ? [{ label: sv.label, value: c.t('missing', { value: fmt(0) }), color: sv.color }] : []
       const a = lowV.get(k)?.get(x)
       const b = highV.get(k)?.get(x)
       const shown = stack === 'normalize' ? `${fmt(v)} (${formatPercent(totalAt.get(x) ? Math.max(0, v) / totalAt.get(x)! : 0, c.locale)})` : a !== undefined && b !== undefined ? `${fmt(v)} (${intervalText(fmt, a, b)})` : fmt(v)
       return [{ label: sv.label, value: shown, color: sv.color }]
     })
     if (!rows.length) return
+    if (stack === 'center' && rows.length > 1) rows.push({ label: c.t('total'), value: fmt(totalAt.get(x) ?? 0) })
     const focus = visible.flatMap(k => {
       const v = stack === 'none' ? valueAt(k, x) : val.get(k)?.get(x)
       if (v === undefined) return []
@@ -248,13 +264,13 @@ function compileSeries(c: ChartCtx, area: boolean): { series: ReturnType<ChartCt
   return { series }
 }
 
-function describeSeries(spec: Record<string, any>, env: { locale: string }, name: string): string {
+function describeSeries(spec: Record<string, any>, env: { locale: string; timeZone?: string }, name: string): string {
   const obs = observations(spec.data, spec.x, spec.y, spec.series)
   const kind = detectXKind(spec.xType, obs.map(o => o.x))
   const keys = distinct(obs.map(o => o.s))
   const f = formatter(spec, env.locale)
   const xk = (r: unknown): number | string | null => (kind === 'category' ? xKey(r) : kind === 'time' ? toTime(r) : toNumber(r))
-  const label = (x: number | string): string => (kind === 'time' ? formatTime(x as number, 'full', env.locale) : String(x))
+  const label = (x: number | string): string => (kind === 'time' ? formatTime(x as number, 'full', env.locale, env.timeZone) : String(x))
   let t = `${lead(spec, name)} ${keys.length} ${keys.length === 1 ? 'series' : 'series'}${keys.length > 1 ? ` (${fmtList(keys)})` : ''} over ${kind === 'category' ? 'categories' : kind === 'time' ? 'time' : 'a numeric x axis'}.`
   for (const k of keys.slice(0, 4)) {
     const pts = obs.filter(o => o.s === k && o.y !== null && xk(o.x) !== null && (spec.yScale !== 'log' || o.y > 0) && (spec.xScale !== 'log' || kind !== 'linear' || (xk(o.x) as number) > 0)).map(o => ({ x: xk(o.x)!, y: o.y! }))
@@ -289,7 +305,7 @@ const seriesCheck = (area: boolean): NonNullable<ChartDef['check']> => (spec, ct
   }
   if (intervalCheck(spec, ctx, 'y')) {
     if (multi) ctx.issues.push({ severity: 'warning', code: 'interval_needs_one_y', path: 'yLower', message: 'yLower and yUpper describe one column; with several `y` columns no band is drawn.', hint: 'Fold the columns into long form (a `fold` step) and use `series`, with one lower and one upper column.' })
-    else if (spec.stack === 'stack' || spec.stack === 'normalize') ctx.issues.push({ severity: 'warning', code: 'interval_ignored_stacked', path: 'yLower', message: 'An interval cannot be shown on a stacked area (the band would sit on the series below); no band is drawn.', hint: 'Set stack to "none", or use a line chart.' })
+    else if (spec.stack === 'stack' || spec.stack === 'normalize' || spec.stack === 'center') ctx.issues.push({ severity: 'warning', code: 'interval_ignored_stacked', path: 'yLower', message: 'An interval cannot be shown on a stacked area (the band would sit on the series below); no band is drawn.', hint: 'Set stack to "none", or use a line chart.' })
   }
   if (area) {
     refuseLog(spec, ctx, 'yScale', 'an area is filled down to zero, which a log axis cannot show.', 'Use a line chart for values spanning several orders of magnitude.')
@@ -362,7 +378,7 @@ export const areaChart: ChartDef = {
   cartesian: true,
   fields: {
     ...SERIES_FIELDS,
-    stack: { kind: 'enum', values: ['none', 'stack', 'normalize'], default: 'none', desc: '`stack` adds series on top of each other; `normalize` shows each series as a share of 100%.' },
+    stack: { kind: 'enum', values: ['none', 'stack', 'normalize', 'center'], default: 'none', desc: '`stack` adds series on top of each other; `normalize` shows each series as a share of 100%; `center` is a stream graph: the stack is centred on a middle line (each x starts at minus half its total), so the outline shows how the total and its parts flow over time. A centred stack has no zero, so its value axis shows no ticks; the tooltip gives every value and the total.' },
     yScale: zeroBaselineScale('An area')
   },
   example: {
@@ -384,5 +400,5 @@ export const areaChart: ChartDef = {
   },
   check: seriesCheck(true),
   compile: c => compileSeries(c, true),
-  describe: (spec, env) => describeSeries(spec, env, spec.stack === 'normalize' ? 'Stacked area chart (100%)' : spec.stack === 'stack' ? 'Stacked area chart' : 'Area chart')
+  describe: (spec, env) => describeSeries(spec, env, spec.stack === 'normalize' ? 'Stacked area chart (100%)' : spec.stack === 'stack' ? 'Stacked area chart' : spec.stack === 'center' ? 'Stream graph' : 'Area chart') + (spec.stack === 'center' ? ' The layers are stacked around a centre line, so the vertical axis has no zero; the thickness of each layer is its value.' : '')
 }

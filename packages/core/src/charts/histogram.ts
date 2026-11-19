@@ -45,7 +45,7 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
   const yScale = niceLinear(0, top || 1, { zero: true })
   const xScale = linearScale([edges[0], edges[edges.length - 1]])
   const frame = c.frame({ series, autoSide: 'top' })
-  const yTitle = s.yLabel ?? (mode === 'count' ? 'Count' : mode === 'percent' ? 'Share of values (%)' : 'Density')
+  const yTitle = s.yLabel ?? (mode === 'count' ? c.t('count') : mode === 'percent' ? c.t('shareOfValues') : c.t('density'))
   const xAxis = valueAxis(c, xScale, { title: s.xLabel ?? String(s.value), vertical: false, format: 'auto', grid: false })
   const yAxis = valueAxis(c, yScale, { title: yTitle, vertical: true, format: mode === 'density' ? 'auto' : 'integer' })
   const plot = layoutCartesian(c, frame, xAxis, yAxis)
@@ -68,8 +68,8 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
       const count = Math.round(mode === 'count' ? v : mode === 'percent' ? (v / 100) * n : v * n * width)
       c.marks.push({
         type: 'rect', role: 'data', series: k, x: x0, y, w, h: plot.y + plot.h - y, r: [r, r, 0, 0], fill: series[si].color, opacity: overlap ? 0.6 : 1, anim: 'y',
-        tip: { title: `${xf(edges[i])} to ${xf(edges[i + 1])}`, rows: [{ label: overlap ? series[si].label : 'Count', value: String(count), color: series[si].color }, { label: 'Share', value: formatPercent(count / n, c.locale) }] },
-        aria: `${xf(edges[i])} to ${xf(edges[i + 1])}: ${count} values`, datum: { from: edges[i], to: edges[i + 1], count, series: k }
+        tip: { title: c.t('binRange', { from: xf(edges[i]), to: xf(edges[i + 1]) }), rows: [{ label: overlap ? series[si].label : c.t('count'), value: String(count), color: series[si].color }, { label: c.t('share'), value: formatPercent(count / n, c.locale) }] },
+        aria: c.t('binAria', { from: xf(edges[i]), to: xf(edges[i + 1]), count }), datum: { from: edges[i], to: edges[i + 1], count, series: k }
       })
     })
   }
@@ -78,7 +78,7 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
     if (Number.isFinite(m) && m >= edges[0] && m <= edges[edges.length - 1]) {
       const px = xScale.at(m)
       c.marks.push({ type: 'line', role: 'annotation', x1: px, x2: px, y1: plot.y, y2: plot.y + plot.h, stroke: c.c('text'), strokeWidth: 1.5, dash: '5 4' })
-      const label = `Mean ${xf(Math.round(m * 100) / 100)}`
+      const label = `${c.t('mean')} ${xf(Math.round(m * 100) / 100)}`
       const right = px + 6 + c.measure(label, c.size - 1) < plot.x + plot.w
       c.marks.push(c.text(right ? px + 6 : px - 6, plot.y + 4, label, { role: 'annotation', baseline: 'hanging', anchor: right ? 'start' : 'end', size: c.size - 1, fill: c.c('text') }))
     }
