@@ -3,7 +3,7 @@ import { SuperPlot, type BrushSelection, type SelectEvent, type SuperPlotOptions
 import { idleController, type SonifyController, type SonifyOptions } from './sound.js'
 
 /** Callbacks the element turns into DOM events; one passed in `options` is called as well. */
-const EVENTS = ['onSelect', 'onIssues', 'onCameraChange', 'onHover', 'onRender', 'onZoom', 'onBrush'] as const
+const EVENTS = ['onSelect', 'onIssues', 'onCameraChange', 'onHover', 'onRender', 'onZoom', 'onBrush', 'onDrill'] as const
 type EventKey = (typeof EVENTS)[number]
 
 /**
@@ -14,10 +14,12 @@ type EventKey = (typeof EVENTS)[number]
  * Properties: `spec` (object or JSON string) and `options` (any `SuperPlotOptions`, set as an object: what
  * Vue, Svelte and Angular do with a property binding). Attributes: `spec`, `theme`, `locale`, `renderer`
  * (auto | svg | canvas | webgl), `toolbar` (present for the default buttons, or a comma list such as
- * `"png,csv,sound"`; `"false"` for none) and `sync` (a group key). Attributes win over the same key in `options`.
+ * `"png,csv,sound"`; `"false"` for none), `sync` (a group key), and the flags `navigator` and `drill` (present
+ * for true, `"false"` for false). Attributes win over the same key in `options`.
  * Events (bubbling CustomEvents): `plot-select` (detail: SelectEvent), `plot-issues` (detail: Issue[]),
  * `plot-hover` (SelectEvent or null), `plot-render` (RenderEvent), `plot-zoom` (ZoomRange or null),
- * `plot-brush` (BrushSelection or null) and, for maps, `plot-camera` (Camera) when the viewer moved the map.
+ * `plot-brush` (BrushSelection or null), `plot-drill` (the focus path, string[]) and, for maps, `plot-camera`
+ * (Camera) when the viewer moved the map.
  * Methods: `appendRows(rows, { max })`, `setZoom()`, `getZoom()`, `setBrush()`, `getBrush()`, `toSvg()`, `toPng()`,
  * `toCsv()`, `sonify(options)`.
  */
@@ -25,7 +27,7 @@ export function defineSuperPlot(name = 'super-plot'): CustomElementConstructor {
   const existing = customElements.get(name)
   if (existing) return existing
   class SuperPlotElement extends HTMLElement {
-    static observedAttributes = ['spec', 'theme', 'locale', 'renderer', 'toolbar', 'sync']
+    static observedAttributes = ['spec', 'theme', 'locale', 'renderer', 'toolbar', 'sync', 'navigator', 'drill']
     private plot: SuperPlot | null = null
     private _spec: unknown = undefined
     private _options: Partial<SuperPlotOptions> = {}
@@ -115,7 +117,8 @@ export function defineSuperPlot(name = 'super-plot'): CustomElementConstructor {
           onHover: this.emit('onHover', 'plot-hover'),
           onRender: this.emit('onRender', 'plot-render'),
           onZoom: this.emit('onZoom', 'plot-zoom'),
-          onBrush: this.emit('onBrush', 'plot-brush')
+          onBrush: this.emit('onBrush', 'plot-brush'),
+          onDrill: this.emit('onDrill', 'plot-drill')
         })
       }
     }
@@ -138,6 +141,7 @@ function optionOf(attr: string, v: string | null): Partial<SuperPlotOptions> {
     if (t === 'false') return { toolbar: false }
     return { toolbar: t.split(',').map(s => s.trim()).filter(Boolean) as ToolbarItem[] }
   }
+  if (attr === 'navigator' || attr === 'drill') return v === null ? {} : { [attr]: v.trim() !== 'false' }
   return { [attr]: v ?? undefined }
 }
 

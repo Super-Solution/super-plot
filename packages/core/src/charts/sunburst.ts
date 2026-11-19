@@ -7,6 +7,7 @@ import { toNumber } from '../util/num.js'
 import { tokenValue } from '../theme.js'
 import { clip, fit } from '../util/text.js'
 import { arc, fmtList, formatter, lead } from './shared.js'
+import { breadcrumb, checkFocus, focusField, focusNode } from './drill.js'
 
 /** Children kept per parent; the smallest beyond it are merged into one "Other" node. */
 export const MAX_CHILDREN = 30
@@ -79,10 +80,18 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
   if (merged) c.warn('many_children', 'path', `${merged} small groups were merged into "Other" (at most ${MAX_CHILDREN} per parent).`, 'Filter or aggregate with `transform` to show them.')
   const firsts = root.children.map(n => n.name)
   const series = c.makeSeries(firsts)
-  const live = root.children.filter(n => !c.hidden.has(n.name))
-  const total = live.reduce((q, n) => q + n.value, 0)
-  const frame = c.frame({ series, autoSide: 'right', trailing: key => (c.hidden.has(key) ? '' : formatPercent(total ? (root.children.find(n => n.name === key)?.value ?? 0) / total : 0, c.locale)) })
-  const depth = Math.max(1, depthOf(root))
+  // Drill-down: draw only the focused subtree. Its rings keep the colours they have in the whole tree, so the
+  // legend (first-level branches) gives way to the breadcrumb, and legend toggles do not apply.
+  const focus = focusNode(root, s.focus)
+  const top = focus ?? root
+  const live = focus ? focus.children : root.children.filter(n => !c.hidden.has(n.name))
+  const total = focus ? root.value : live.reduce((q, n) => q + n.value, 0)
+  const span = focus ? focus.value : total
+  const base = focus ? focus.path.length : 0
+  const frame = focus
+    ? breadcrumb(c, c.frame({ series: [] }), focus.path)
+    : c.frame({ series, autoSide: 'right', trailing: key => (c.hidden.has(key) ? '' : formatPercent(total ? (root.children.find(n => n.name === key)?.value ?? 0) / total : 0, c.locale)) })
+  const depth = Math.max(1, depthOf(top))
   const R = Math.max(20, Math.min(frame.w, frame.h) / 2 - 4)
   const cx = frame.x + frame.w / 2
   const cy = frame.y + frame.h / 2
@@ -95,7 +104,8 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
   let dropped = 0
 
   const visit = (n: HierarchyNode, parent: number, a0: number, a1: number, d: number, hex: string, paint: string, key: string): void => {
-    const r0 = hole + (d - 1) * ring
+    // `d` is the node's depth in the whole tree; the ring it is drawn on counts from the focus.
+    const r0 = hole + (d - base - 1) * ring
     const r1 = r0 + ring
     const mid = (r0 + r1) / 2
     // Sub-pixel slivers are left to their parent's colour.
@@ -114,7 +124,8 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
       type: 'path', role: 'data', series: key, d: arc(cx, cy, r0, r1, a0, a1), fill, stroke: c.c('background'), strokeWidth: 1, anim: 'fade',
       tip: { title: clip(name, 80), rows },
       aria: `${n.path.join(' > ')}: ${fmt(n.value)}${d > 1 ? `, ${pct(shareParent)} of ${n.path[n.path.length - 2]}` : ''}, ${pct(shareTotal)} of the total`,
-      datum: { path: n.path, value: n.value, depth: d }
+      datum: { path: n.path, value: n.value, depth: d },
+      ...(n.children.length ? { drill: n.path } : {})
     })
     if (s.labels !== false) {
       const text = n.name
@@ -147,19 +158,22 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
   }
 
   let a = -Math.PI / 2
+  const branch = focus ? focus.path[0] : ''
+  const bi = firsts.indexOf(branch)
   for (const n of live) {
-    const i = firsts.indexOf(n.name)
-    const sweep = total ? (n.value / total) * Math.PI * 2 : 0
-    visit(n, total, a, a + sweep, 1, c.seriesHex(n.name, i), series[i].color, n.name)
+    const i = focus ? bi : firsts.indexOf(n.name)
+    const key = focus ? branch : n.name
+    const sweep = span ? (n.value / span) * Math.PI * 2 : 0
+    visit(n, focus ? focus.value : total, a, a + sweep, base + 1, c.seriesHex(key, i), series[i].color, key)
     a += sweep
   }
   if (dropped) c.warn('many_nodes', 'path', `Only the first ${MAX_ARCS} arcs were drawn; ${dropped} more were left out.`, 'Use fewer levels in `path`, or filter with `transform`.')
-  if (hole > 30 && total > 0) {
-    const t = fmt(total)
+  if (hole > 30 && span > 0) {
+    const t = fmt(span)
     const big = c.compact ? 14 : 18
     if (c.measure(t, big, 600) < hole * 1.8) {
       c.marks.push(c.text(cx, cy - 1, t, { role: 'label', anchor: 'middle', baseline: 'alphabetic', size: big, weight: 600, fill: c.c('text') }))
-      c.marks.push(c.text(cx, cy + c.size + 2, 'Total', { role: 'label', anchor: 'middle', baseline: 'alphabetic', fill: c.c('text-muted') }))
+      c.marks.push(c.text(cx, cy + c.size + 2, focus ? fit(focus.name, hole * 1.7, c.size, c.env.measure) : 'Total', { role: 'label', anchor: 'middle', baseline: 'alphabetic', fill: c.c('text-muted') }))
     }
   }
   return { series }
@@ -174,7 +188,8 @@ export const sunburst: ChartDef = {
   fields: {
     path: { kind: 'columns', role: 'any', min: 1, max: MAX_LEVELS, required: true, desc: `Columns that form the hierarchy, outermost group first, e.g. ["region","country","city"] (1 to ${MAX_LEVELS} levels). A row whose level is empty stops there and still counts toward its parents.` },
     value: { kind: 'column', role: 'number', required: true, desc: 'Numeric column giving each row\'s size. Rows on the same path are summed; zero and negative values are skipped.' },
-    labels: { kind: 'boolean', default: true, desc: 'Print names on arcs large enough.' }
+    labels: { kind: 'boolean', default: true, desc: 'Print names on arcs large enough.' },
+    focus: focusField('one value per `path` level, e.g. ["Asia","Japan"]')
   },
   example: {
     type: 'sunburst', title: 'Sales by region, country and city', subtitle: 'USD thousands', path: ['region', 'country', 'city'], value: 'sales', format: 'compact',
@@ -198,6 +213,10 @@ export const sunburst: ChartDef = {
       if (v !== null && v <= 0) neg++
     }
     if (neg) ctx.issues.push({ severity: 'warning', code: 'negative_slices', path: 'value', message: `${neg} zero or negative value(s) will be skipped; a share cannot be negative.` })
+    if (Array.isArray(spec.focus) && spec.focus.length) {
+      if (spec.focus.length >= levels.length) ctx.issues.push({ severity: 'warning', code: 'focus_leaf', path: `focus[${spec.focus.length - 1}]`, message: `focus names ${spec.focus.length} level(s) and path has ${levels.length}: the last level has nothing under it to drill into; the whole tree is drawn.`, hint: `Give at most ${levels.length - 1} value(s).` })
+      else checkFocus(hierarchy(ctx.rows, levels, spec.value as string).root, spec.focus, ctx.issues)
+    }
   },
   compile,
   describe(spec, env) {
@@ -220,6 +239,12 @@ export const sunburst: ChartDef = {
     let t = `${lead(spec, 'Sunburst')} ${levels.length} level${levels.length > 1 ? 's' : ''} (${levels.join(' > ')}), ${leaves} leaves totalling ${f(root.value)}. First level: ${root.children.length} groups, largest ${fmtList(top, 3)}.`
     const b = biggest as HierarchyNode | null
     if (b && b.path.length > 1) t += ` Largest leaf: ${clip(b.path.join(' > '), 80)} (${f(b.value)}, ${pct(b.value)}).`
+    const fn = focusNode(root, spec.focus)
+    if (fn) {
+      const share = (v: number): string => formatPercent(fn.value ? v / fn.value : 0, env.locale)
+      const kids = fn.children.slice(0, 3).map(n => `${clip(n.name, 30)} (${share(n.value)})`)
+      t += ` Showing only ${clip(fn.path.join(' > '), 80)}: ${f(fn.value)}, ${pct(fn.value)} of the total, in ${fn.children.length} group${fn.children.length > 1 ? 's' : ''}, largest ${fmtList(kids, 3)}.`
+    }
     return t
   }
 }

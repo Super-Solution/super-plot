@@ -29,6 +29,8 @@ export type FieldDef = { desc: string; required?: boolean } & (
   | { kind: 'camera' }
   | { kind: 'transform' }
   | { kind: 'flag' }
+  /** A list of data values (strings or numbers, compared as strings), e.g. a path of group names. `max`: longest list. */
+  | { kind: 'values'; max?: number }
 )
 
 export type FieldMap = Record<string, FieldDef>
@@ -244,6 +246,17 @@ export function validateField(name: string, def: FieldDef, value: unknown, ctx: 
       }
       return value.map(v => String(v))
     }
+    case 'values': {
+      if (!Array.isArray(value)) return bad('bad_type', `${name} must be a list of values, e.g. ["Asia","Japan"], got ${fmt(value)}.`)
+      const max = def.max ?? LIMITS.maxCategories
+      if (value.length > max) return bad('too_many', `${name} lists ${value.length} values; at most ${max}.`)
+      const at = value.findIndex(v => !(typeof v === 'string' || (typeof v === 'number' && Number.isFinite(v))))
+      if (at >= 0) {
+        add(ctx, 'error', 'bad_type', `${name}[${at}]`, `${name}[${at}] must be a string or a number, got ${fmt(value[at])}.`)
+        return undefined
+      }
+      return value.map(v => String(v))
+    }
     case 'column':
     case 'columns': {
       const names = def.kind === 'columns' ? (Array.isArray(value) ? value : [value]) : [value]
@@ -327,6 +340,7 @@ export function fieldSchema(def: FieldDef): Record<string, unknown> {
     case 'geo': return { oneOf: [{ type: 'string', pattern: '^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$' }, { type: 'object', required: ['type'], properties: { type: { enum: ['FeatureCollection', 'Topology'] } } }], description: d }
     case 'camera': return { type: 'object', additionalProperties: false, properties: Object.fromEntries(CAMERA_KEYS.map(k => [k, { type: 'number', minimum: CAMERA_RANGE[k][0], maximum: CAMERA_RANGE[k][1] }])), description: d }
     case 'flag': return { oneOf: [{ type: 'string' }, { type: 'array', minItems: 1, maxItems: LIMITS.maxCategories, items: { type: ['string', 'number'] } }], description: `${d} (column name, or a list of values)` }
+    case 'values': return { type: 'array', maxItems: def.max ?? LIMITS.maxCategories, items: { type: ['string', 'number'] }, description: d }
     case 'column': return { type: 'string', description: `${d} (name of a column in data)` }
     case 'columns': {
       const arr = { type: 'array', minItems: def.min ?? 1, ...(def.max !== undefined ? { maxItems: def.max } : {}), items: { type: 'string' } }
@@ -342,6 +356,7 @@ export function fieldType(def: FieldDef): string {
     case 'column': return 'column name'
     case 'columns': return (def.min ?? 1) <= 1 ? 'column name or list of column names' : `list of ${def.min}${def.max !== undefined ? ` to ${def.max}` : ' or more'} column names`
     case 'flag': return 'column name or list of values'
+    case 'values': return 'list of values'
     case 'number': return def.integer ? 'integer' : 'number'
     case 'bins': return '`auto` \\| integer'
     case 'domain': return '[min\\|null, max\\|null]'

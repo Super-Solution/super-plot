@@ -1,8 +1,9 @@
 import {
-  compilePlot, renderSvg, resolveTheme, estimateWidth, defaultHeight, dataMarkCount, makeView, dragCamera, zoomCamera, clampCamera, plotTable, plotCsv, svgKey,
-  type AxisInfo, type Camera, type Issue, type Mark, type Measure, type PlotPlugin, type RenderOptions, type Scene, type Tip, type ViewParams
+  compilePlot, renderSvg, resolveTheme, estimateWidth, defaultHeight, dataMarkCount, makeView, dragCamera, zoomCamera, clampCamera, plotTable, plotCsv, svgKey, cssVar,
+  type AxisInfo, type Camera, type Issue, type Mark, type Measure, type PlotPlugin, type RenderOptions, type Scene, type Theme, type Tip, type ViewParams
 } from '@supersolutions/super-plot-core/base'
-import { CanvasLayer, markCenter } from './canvas.js'
+import { CanvasLayer, markCenter, nearestMark } from './canvas.js'
+import { NAV_HEIGHT, Navigator, navigable } from './navigator.js'
 import type * as Gl from './gl/index.js'
 import { AxisControl, type BrushSelection, type ZoomRange } from './interact.js'
 import { audioContextOf, idleController, playNotes, sonifyNotes, type SonifyController, type SonifyOptions } from './sound.js'
@@ -123,7 +124,43 @@ export interface SuperPlotOptions extends Omit<RenderOptions, 'hidden' | 'measur
    * and order them, `'sound'` included. Default false.
    */
   toolbar?: boolean | readonly ToolbarItem[]
+  /**
+   * An overview strip under the chart (a range slider) for a chart with `zoom` on a continuous x (line, area,
+   * scatter): the whole x range drawn small, with a window over what is on screen. Drag the window to pan, its
+   * edges to zoom, or use the arrow keys on them (they are sliders). It drives the same zoom as the wheel and
+   * `setZoom`, so `onZoom` and sync groups follow it. Default false.
+   */
+  navigator?: boolean
+  /**
+   * Drill-down on treemap and sunburst: clicking (or Enter on) a group shows only that group, the breadcrumb
+   * at the top goes back up, and Escape goes up one level. The spec you passed is not changed (this plot keeps
+   * its own `focus` until the next `setSpec`). Default: on when the spec has more than one level (a sunburst
+   * `path` of two or more columns, a treemap with `group`).
+   */
+  drill?: boolean
+  /** The viewer drilled down or up (`drill`): the `focus` path now shown ([] for the whole tree). */
+  onDrill?: (path: string[]) => void
+  /**
+   * After `appendRows`, say in a polite live region how many points arrived and the latest one ("3 new points;
+   * latest 14:05, Revenue 1.2k"), at most once every 5 seconds. Default (undefined): only while keyboard focus
+   * is in the chart or the `dataTable` option is on; true: always; false: never.
+   */
+  announce?: boolean
+  /**
+   * When the page is printed, draw a chart in a built-in dark theme (`dark`, `accessible-dark`, or `auto` on a
+   * dark screen) in its light counterpart, so dark backgrounds do not waste ink. Default true.
+   */
+  printLight?: boolean
 }
+
+const NAV_REFUSED: Issue = { severity: 'warning', code: 'navigator_unsupported', path: '', message: 'The navigator needs `zoom` on a line, area or scatter chart with a numeric or time x axis and no facets; it was left out.', hint: 'Add zoom: "x" to the spec, or drop the navigator option.' }
+
+/** Pause between two live-data announcements, in ms. */
+const ANNOUNCE_EVERY = 5000
+/** The light theme printed instead of a built-in dark one. */
+const PRINT_LIGHT: Record<string, string> = { dark: 'light', 'accessible-dark': 'accessible' }
+/** Coarse pointers (touch, pen): a tap this close to a mark (scene px) picks it, so targets are 24 px or more. */
+const TOUCH_SLOP = 12
 
 let uid = 0
 // The WebGL layer is a separate chunk, loaded the first time a plot needs it.
@@ -136,6 +173,20 @@ const loadGl = (): Promise<typeof Gl> => (glLoading ??= import('./gl/index.js').
 const mapKeyOf = (spec: unknown): string => {
   const s = spec as { type?: unknown; geo?: unknown } | null
   return `${String(s?.type)}|${typeof s?.geo === 'string' ? s.geo : s?.geo ? 'inline' : ''}`
+}
+
+/** What identifies "the same hierarchy" for drill-down: a new one drops the viewer's focus. */
+const drillKeyOf = (spec: unknown): string => {
+  const s = spec as Record<string, unknown> | null
+  return JSON.stringify([s?.type, s?.path, s?.group, s?.label, s?.focus])
+}
+
+/** An x value of a row as the axis kind reads it (epoch ms on a time axis), or null. */
+function axisValue(kind: AxisInfo['kind'], v: unknown): number | string | null {
+  if (v === null || v === undefined || v === '') return null
+  if (kind === 'band') return String(v)
+  const n = typeof v === 'number' ? v : kind === 'time' ? (v instanceof Date ? v.getTime() : Date.parse(String(v))) : Number(v)
+  return Number.isFinite(n) ? n : null
 }
 
 /** What identifies "the same chart" for zoom and brush: type and the columns on the axes. */
@@ -207,6 +258,24 @@ export class SuperPlot {
   private ssr: Element | null = null
   /** This plot adopted server markup: it measures text the way the server did, so later draws line up with it. */
   private hydrated = false
+  /** The `navigator` option's overview strip, and the full-range scene it draws (recompiled when the data or size change). */
+  private nav: Navigator | null = null
+  private navFull: { key: string; scene: Scene } | null = null
+  /** The chart could not have a navigator (no zoom, categories on x, ...): draw without it until the spec changes. */
+  private navRefused = false
+  /** Bumped by every new spec or appended rows: part of the full-range scene's cache key. */
+  private dataVersion = 0
+  /** Drill-down: the viewer's focus path over the spec's own (null: the spec's). */
+  private focusPath: string[] | null = null
+  /** Live data: rows appended since the last announcement, the newest of them, and when we last spoke. */
+  private news = 0
+  private newest: unknown = undefined
+  private lastSaid = -Infinity
+  private sayTimer = 0
+  /** The page is being printed (between `beforeprint` and `afterprint`). */
+  private printing = false
+  /** The last pointer pressed was a finger or a pen: taps pick the nearest mark within a few pixels. */
+  private coarse = false
 
   constructor(readonly host: HTMLElement, spec: unknown, private options: SuperPlotOptions = {}) {
     const doc = host.ownerDocument
@@ -237,6 +306,9 @@ export class SuperPlot {
     this.root.addEventListener('pointerup', this.onUp)
     this.root.addEventListener('pointercancel', this.onUp)
     this.root.addEventListener('wheel', this.onWheel, { passive: false })
+    this.root.addEventListener('pointerdown', this.onPointerKind, true)
+    doc.defaultView?.addEventListener('beforeprint', this.onBeforePrint)
+    doc.defaultView?.addEventListener('afterprint', this.onAfterPrint)
     this.axis = new AxisControl({
       root: this.root,
       scene: () => this.scene,
@@ -268,8 +340,12 @@ export class SuperPlot {
     if (mapKeyOf(spec) !== mapKeyOf(this.spec)) this.cam = null
     // The same with zoom and brush: they stay while the chart shows the same columns.
     if (axisKeyOf(spec) !== axisKeyOf(this.spec)) this.axis.reset()
+    // The viewer's drill-down stays while the hierarchy (and the spec's own focus) is the same.
+    if (drillKeyOf(spec) !== drillKeyOf(this.spec)) this.focusPath = null
     this.spec = spec
     this.rows = null
+    this.navRefused = false
+    this.dataVersion++
     this.render(true)
   }
 
@@ -285,10 +361,15 @@ export class SuperPlot {
     const max = options.max
     if (max !== undefined && max >= 0 && this.rows.length > max) this.rows.splice(0, this.rows.length - max)
     this.spec = { ...spec, data: this.rows }
+    this.dataVersion++
+    this.news += rows.length
+    this.newest = rows[rows.length - 1]
     if (this.appendRaf) return
     this.appendRaf = requestAnimationFrame(() => {
       this.appendRaf = 0
-      if (!this.disposed) this.render(false)
+      if (this.disposed) return
+      this.render(false)
+      this.sayNews()
     })
   }
 
@@ -311,6 +392,7 @@ export class SuperPlot {
     if (patch.camera && JSON.stringify(patch.camera) !== JSON.stringify(prevCamera)) this.cam = null
     if ('sync' in patch) this.joinSync()
     if ('dataTable' in patch) this.tableShown = null
+    if ('navigator' in patch) this.navRefused = false
     this.render(false)
   }
 
@@ -352,7 +434,7 @@ export class SuperPlot {
   toSvg(): string {
     this.syncCamera()
     if (!this.scene) throw new Error('Nothing to export: the spec is invalid.')
-    const theme = resolveTheme(this.options.theme, this.prefersDark())
+    const theme = this.themeNow()
     return renderSvg(this.scene, { resolveVars: true, font: theme.font })
   }
 
@@ -461,6 +543,12 @@ export class SuperPlot {
     this.axis.dispose()
     this.table?.remove()
     this.table = null
+    this.nav?.dispose()
+    this.nav = null
+    clearTimeout(this.sayTimer)
+    this.root.removeEventListener('pointerdown', this.onPointerKind, true)
+    this.host.ownerDocument.defaultView?.removeEventListener('beforeprint', this.onBeforePrint)
+    this.host.ownerDocument.defaultView?.removeEventListener('afterprint', this.onAfterPrint)
     clearTimeout(this.enterTimer)
     clearTimeout(this.gestureTimer)
     this.ro?.disconnect()
@@ -474,6 +562,29 @@ export class SuperPlot {
 
   private prefersDark(): boolean { return this.mq?.matches ?? false }
 
+  /** The theme option to draw with: the spec's, or its light counterpart while printing (`printLight`). */
+  private themeOpt(): SuperPlotOptions['theme'] {
+    const t = this.options.theme
+    if (!this.printing || this.options.printLight === false) return t
+    if (t === undefined || t === 'auto') return this.prefersDark() ? 'light' : t
+    return typeof t === 'string' && PRINT_LIGHT[t] ? PRINT_LIGHT[t] : t
+  }
+
+  private themeNow(): Theme { return resolveTheme(this.themeOpt(), this.prefersDark()) }
+
+  private onBeforePrint = (): void => {
+    const before = this.themeNow()
+    this.printing = true
+    if (this.themeNow() !== before) this.render(false)
+    else this.printing = false
+  }
+
+  private onAfterPrint = (): void => {
+    if (!this.printing) return
+    this.printing = false
+    if (!this.disposed) this.render(false)
+  }
+
   private schedule(animate: boolean): void {
     if (this.raf) return
     this.raf = requestAnimationFrame(() => {
@@ -484,7 +595,7 @@ export class SuperPlot {
 
   private measure: Measure = (text, size, weight = 400) => {
     const doc = this.host.ownerDocument
-    const font = resolveTheme(this.options.theme, this.prefersDark()).font
+    const font = this.themeNow().font
     const key = `${weight}|${size}|${text}`
     const hit = this.measureCache.get(key)
     if (hit !== undefined) return hit
@@ -511,9 +622,26 @@ export class SuperPlot {
   private hostHeight(): number {
     const prev = this.root.style.height
     this.root.style.height = '0px'
+    // The navigator and a visible data table sit in the host too: they are not a height the host has of its own.
+    const others = ([this.nav?.el, this.table] as (HTMLElement | null | undefined)[]).filter((e): e is HTMLElement => !!e && e.parentNode === this.host)
+    const shown = others.map(e => e.style.display)
+    for (const e of others) e.style.display = 'none'
     const h = this.host.clientHeight
+    others.forEach((e, i) => { e.style.display = shown[i] })
     this.root.style.height = prev
     return h
+  }
+
+  /** The `navigator` option asks for a strip, and this spec has not been found unable to have one. */
+  private navWanted(): boolean {
+    const s = this.spec as Record<string, unknown> | null
+    return this.options.navigator === true && !this.navRefused && !!s && typeof s === 'object' && !s.facet
+  }
+
+  /** The spec to compile: the caller's, with the viewer's drill-down focus when there is one. */
+  private specNow(): unknown {
+    const s = this.spec
+    return this.focusPath && s && typeof s === 'object' ? { ...(s as Record<string, unknown>), focus: this.focusPath } : s
   }
 
   private render(enter: boolean): void {
@@ -525,8 +653,11 @@ export class SuperPlot {
     // Decide again on every render whether the host has a height of its own (it may have been detached,
     // hidden or unstyled when the plot was created). Without one, the plot picks a height from the width.
     if (o.height === undefined) this.autoHeight = this.hostHeight() === 0
-    const height = o.height ?? (this.autoHeight ? defaultHeight(this.specType(), width) : Math.floor(this.host.clientHeight) || defaultHeight(this.specType(), width))
-    if (o.width !== undefined || o.height !== undefined || this.autoHeight) {
+    let height = o.height ?? (this.autoHeight ? defaultHeight(this.specType(), width) : Math.floor(this.host.clientHeight) || defaultHeight(this.specType(), width))
+    // The navigator takes its strip from a fixed height; with an automatic height it adds it below the chart.
+    const navH = this.navWanted() ? NAV_HEIGHT : 0
+    if (navH && (o.height !== undefined || !this.autoHeight)) height = Math.max(100, height - navH)
+    if (o.width !== undefined || o.height !== undefined || this.autoHeight || navH) {
       this.root.style.height = `${height}px`
       if (o.width !== undefined) this.root.style.width = `${o.width}px`
     } else this.root.style.height = ''
@@ -534,7 +665,13 @@ export class SuperPlot {
     const view = this.axis.view
     // Hydrating (or hydrated): measure text with the estimator the server used, or the markup cannot match.
     const measure = this.ssr || this.hydrated ? estimateWidth : this.measure
-    const result = compilePlot(this.spec, { ...o, width, height, hidden: this.hidden, measure, prefersDark: this.prefersDark(), ...(camera ? { camera } : {}), ...(view ? { view } : {}) })
+    const result = compilePlot(this.specNow(), { ...o, theme: this.themeOpt(), width, height, hidden: this.hidden, measure, prefersDark: this.prefersDark(), ...(camera ? { camera } : {}), ...(view ? { view } : {}) })
+    if (navH && result.ok && !navigable(result.scene)) {
+      // Asked for, but this chart cannot have one: draw again at the full height, and say why on every draw.
+      this.navRefused = true
+      return this.render(enter)
+    }
+    if (result.ok && this.options.navigator === true && (this.navRefused || (this.spec as { facet?: unknown } | null)?.facet)) result.issues.push(NAV_REFUSED)
     this.glMoved = false
     this.hideTip()
     this.overlay = null
@@ -555,6 +692,7 @@ export class SuperPlot {
       err.textContent = result.issues.filter(i => i.severity === 'error').map(i => `${i.path || 'spec'}: ${i.message}${i.hint ? ` ${i.hint}` : ''}`).join('\n')
       this.mount(err)
       this.axis.afterRender()
+      this.syncNav(null)
       this.syncTable()
       o.onIssues?.(result.issues)
       return
@@ -562,7 +700,7 @@ export class SuperPlot {
     this.scene = result.scene
     const changed = JSON.stringify(result.issues) !== JSON.stringify(this.issues)
     this.issues = result.issues
-    const theme = resolveTheme(o.theme, this.prefersDark())
+    const theme = this.themeNow()
     const font = `var(--sp-font, ${theme.font})`
     const marks = dataMarkCount(result.scene)
     // A map keeps its context once it has one (tilting back to flat must not drop and re-create it).
@@ -584,7 +722,9 @@ export class SuperPlot {
         hideTip: () => this.hideTip(),
         activate: m => this.activateMark(m),
         dragging: () => this.dragging(),
-        hovered: m => this.hovered(m)
+        hovered: m => this.hovered(m),
+        drillable: () => this.drillOn(),
+        coarse: () => this.coarse
       })
       if (this.layer) {
         // One context per plot for its lifetime: creating one costs far more than a redraw.
@@ -631,6 +771,8 @@ export class SuperPlot {
   private afterDraw(scene: Scene, started: number, report: boolean, target: { svg?: SVGSVGElement; ctx?: CanvasRenderingContext2D }): void {
     const o = this.options
     this.axis.afterRender()
+    this.syncNav(scene)
+    if (target.svg) this.syncCrumbs(target.svg, scene)
     const renderer = this.getRenderer()
     for (const p of o.plugins ?? []) {
       if (!p.afterDraw) continue
@@ -660,6 +802,136 @@ export class SuperPlot {
     for (const c of [...this.root.childNodes]) if (c !== drawing && !keep.includes(c)) c.remove()
     if (drawing.parentNode !== this.root) this.root.prepend(drawing)
     for (const k of keep) if (k.parentNode !== this.root) this.root.appendChild(k)
+  }
+
+  // ---- navigator ---------------------------------------------------------------------------
+
+  /** The overview strip: created, updated or removed after every draw. */
+  private syncNav(scene: Scene | null): void {
+    if (!scene || !this.navWanted() || !navigable(scene)) {
+      this.nav?.dispose()
+      this.nav = null
+      this.navFull = null
+      return
+    }
+    const doc = this.host.ownerDocument
+    this.nav ??= new Navigator(doc, {
+      view: () => this.axis.view?.x ?? null,
+      setX: (x, notify) => this.axis.viewX(x, notify),
+      locale: () => this.options.locale,
+      color: token => cssVar(this.themeNow(), token)
+    })
+    const el = this.nav.el
+    if (el.parentNode !== this.host || el.previousSibling !== this.root) this.host.insertBefore(el, this.root.nextSibling)
+    el.style.width = this.options.width !== undefined ? `${this.options.width}px` : ''
+    const full = this.fullScene(scene)
+    if (full) this.nav.update(full.scene, full.key)
+  }
+
+  /**
+   * The chart at its full x range, for the overview: the scene on screen when it is not zoomed, else compiled
+   * once without the view (and without plugins) and kept until the data, size, theme or hidden series change.
+   */
+  private fullScene(scene: Scene): { key: string; scene: Scene } | null {
+    const key = JSON.stringify([this.dataVersion, scene.width, scene.height, [...this.hidden].sort(), this.themeNow().name, this.prefersDark(), this.options.locale ?? ''])
+    if (!this.axis.view) return (this.navFull = { key, scene })
+    if (this.navFull?.key === key) return this.navFull
+    const o = this.options
+    const r = compilePlot(this.specNow(), { theme: this.themeOpt(), locale: o.locale, width: scene.width, height: scene.height, hidden: this.hidden, measure: this.ssr || this.hydrated ? estimateWidth : this.measure, prefersDark: this.prefersDark() })
+    return r.ok && navigable(r.scene) ? (this.navFull = { key, scene: r.scene }) : null
+  }
+
+  // ---- drill-down --------------------------------------------------------------------------
+
+  /** Clicking a group drills into it: the `drill` option, else on when the spec has more than one level. */
+  private drillOn(): boolean {
+    const s = this.spec as Record<string, unknown> | null
+    if (!s || typeof s !== 'object' || (s.type !== 'treemap' && s.type !== 'sunburst')) return false
+    if (this.options.drill !== undefined) return this.options.drill
+    return s.type === 'sunburst' ? Array.isArray(s.path) && s.path.length > 1 : typeof s.group === 'string' && s.group !== ''
+  }
+
+  /** The focus path the scene shows (from its breadcrumb; [] for the whole tree). */
+  private shownFocus(): string[] {
+    const m = this.scene?.marks.find(k => k.type === 'text' && k.drill !== undefined)
+    return m?.drill ? [...m.drill] : []
+  }
+
+  /** Show `path` (the viewer drilled), report it, and keep keyboard focus in the chart. `from` is where we came from. */
+  private drillTo(path: string[], from?: string[]): void {
+    const doc = this.host.ownerDocument
+    const had = this.root.contains(doc.activeElement)
+    this.focusPath = [...path]
+    this.hideTip()
+    this.render(true)
+    this.options.onDrill?.([...path])
+    if (this.disposed) return
+    this.announce(path.length ? `Showing ${path.join(' > ')}.` : 'Showing everything.')
+    if (!had) return
+    if (this.layer) {
+      this.layer.el.querySelector<HTMLElement>('canvas[tabindex="0"]')?.focus({ preventScroll: true })
+      return
+    }
+    const marks = this.scene?.marks ?? []
+    const same = (d: string[] | undefined): boolean => !!d && !!from && d.length === from.length && d.every((v, i) => v === from[i])
+    const i = marks.findIndex(m => m.role === 'data' && same(m.drill))
+    const el = (i >= 0 ? this.root.querySelector<HTMLElement>(`[data-i="${i}"]`) : null) ?? this.root.querySelector<HTMLElement>('.sp-data[tabindex]')
+    el?.focus({ preventScroll: true })
+  }
+
+  /** Breadcrumb items are buttons only while drilling is on. */
+  private syncCrumbs(svg: SVGSVGElement, scene: Scene): void {
+    if (this.drillOn()) return
+    scene.marks.forEach((m, i) => {
+      if (m.drill === undefined || m.role !== 'label' || m.type !== 'rect') return
+      const el = svg.querySelector(`[data-i="${i}"]`)
+      el?.removeAttribute('tabindex')
+      el?.removeAttribute('role')
+      el?.setAttribute('aria-hidden', 'true')
+    })
+  }
+
+  // ---- live-data announcements ---------------------------------------------------------------
+
+  /** `announce`: true always, false never, unset while keyboard focus is in the chart or the data table is on. */
+  private announceWanted(): boolean {
+    const a = this.options.announce
+    if (a !== undefined) return a
+    return !!this.options.dataTable || this.host.contains(this.host.ownerDocument.activeElement)
+  }
+
+  /** After appended rows are drawn: say how many and the latest one, at most once per {@link ANNOUNCE_EVERY} ms. */
+  private sayNews(): void {
+    if (!this.news || this.disposed) return
+    if (!this.announceWanted()) {
+      this.news = 0
+      return
+    }
+    const wait = this.lastSaid + ANNOUNCE_EVERY - Date.now()
+    if (wait > 0) {
+      if (!this.sayTimer) this.sayTimer = window.setTimeout(() => { this.sayTimer = 0; this.sayNews() }, wait)
+      return
+    }
+    const text = this.newsText(this.news, this.newest)
+    this.news = 0
+    this.lastSaid = Date.now()
+    this.announce(text)
+  }
+
+  /** "3 new points; latest 14:05: Revenue 1.2k, Cost 800": the count and the mark at the newest row's x. */
+  private newsText(n: number, row: unknown): string {
+    const scene = this.scene
+    const spec = this.spec as { x?: unknown } | null
+    const cartesian = !!scene?.axes && !scene.panels
+    const head = `${n} new ${cartesian ? 'point' : 'row'}${n === 1 ? '' : 's'}`
+    const a = scene?.axes
+    if (!a || !cartesian || typeof spec?.x !== 'string' || !row || typeof row !== 'object') return `${head}.`
+    const v = axisValue(a.x.kind, (row as Record<string, unknown>)[spec.x])
+    const i = v === null ? -1 : syncTarget(scene, { kind: a.x.kind, v })
+    const tip = i >= 0 ? scene!.marks[i].tip : undefined
+    if (!tip) return `${head}.`
+    const rows = tip.rows.slice(0, 2).map(r => `${r.label} ${r.value}`).join(', ')
+    return `${head}; latest ${[tip.title, rows].filter(Boolean).join(': ')}.`
   }
 
   // ---- toolbar -----------------------------------------------------------------------------
@@ -856,7 +1128,8 @@ export class SuperPlot {
     }
     if (want === 'visible') this.table.setAttribute('data-visible', '')
     else this.table.removeAttribute('data-visible')
-    if (this.table.parentNode !== this.host) this.host.insertBefore(this.table, this.root.nextSibling)
+    const after = this.nav?.el.parentNode === this.host ? this.nav.el : this.root
+    if (this.table.parentNode !== this.host || this.table.previousSibling !== after) this.host.insertBefore(this.table, after.nextSibling)
     if (this.tableOf === this.spec) return
     this.tableOf = this.spec
     const t = plotTable(this.spec)
@@ -979,12 +1252,28 @@ export class SuperPlot {
     return this.options.tooltip !== false && spec?.tooltip !== false
   }
 
+  /** Remember whether the pointer is a finger or pen (before anything else sees the press). */
+  private onPointerKind = (e: PointerEvent): void => {
+    this.coarse = e.pointerType === 'touch' || e.pointerType === 'pen'
+  }
+
+  /** A finger or pen that lands next to a small mark (not on one): the mark within {@link TOUCH_SLOP} scene px. */
+  private nearTouch(e: MouseEvent): Mark | null {
+    const pt = (e as PointerEvent).pointerType
+    if (!(pt === 'touch' || pt === 'pen' || (pt === undefined && this.coarse)) || !this.scene) return null
+    const r = this.root.getBoundingClientRect()
+    if (!r.width || !r.height) return null
+    const k = this.scene.width / r.width
+    const i = nearestMark(this.scene, (e.clientX - r.left) * k, (e.clientY - r.top) * k, TOUCH_SLOP)
+    return i >= 0 ? this.scene.marks[i] : null
+  }
+
   private onOver = (e: PointerEvent): void => {
     if (this.layer || this.dragging()) return // the canvas view handles its own pointer events
     const m = this.markOf(e.target)
-    const mark = m && this.scene?.marks[m.i]
+    const mark = (m && this.scene?.marks[m.i]) || this.nearTouch(e)
     this.hovered(mark ?? null)
-    if (!m || !mark) return this.clearHighlight()
+    if (!mark) return this.clearHighlight()
     if (mark.series !== undefined && mark.role !== 'hit') this.highlight(mark.series)
     else if (mark.role === 'hit') this.showGuide(mark)
     if (mark.tip && this.tipEnabled()) this.showTip(mark.tip, e.clientX, e.clientY, mark)
@@ -1018,11 +1307,22 @@ export class SuperPlot {
 
   private onClick = (e: MouseEvent): void => {
     if (this.dragging()) return
-    this.activate(this.markOf(e.target))
+    const m = this.markOf(e.target)
+    if (m) return this.activate(m)
+    const near = this.layer ? null : this.nearTouch(e)
+    if (near) this.activateMark(near)
   }
 
   private onKey = (e: KeyboardEvent): void => {
-    if (e.key === 'Escape') return this.onLeave()
+    if (e.key === 'Escape') {
+      // Drilled down: Escape goes up one level (and the tooltip goes away with the redraw).
+      const shown = this.drillOn() ? this.shownFocus() : []
+      if (shown.length) {
+        e.preventDefault()
+        return this.drillTo(shown.slice(0, -1), shown)
+      }
+      return this.onLeave()
+    }
     if (this.mapKey(e)) return
     if (e.key !== 'Enter' && e.key !== ' ') return
     const m = this.markOf(e.target)
@@ -1047,8 +1347,15 @@ export class SuperPlot {
       this.render(false)
       return
     }
+    // A breadcrumb item: back up to that level.
+    if (mark.drill !== undefined && mark.role === 'label') {
+      if (this.drillOn()) this.drillTo(mark.drill, this.shownFocus())
+      return
+    }
     // A hit target (the larger circle round a small dot, a line chart's column) reports what it stands for.
     if ((mark.role === 'data' || mark.role === 'hit') && mark.datum !== undefined) this.options.onSelect?.({ datum: mark.datum, series: mark.series, tip: mark.tip })
+    // A group of a treemap or sunburst: show only it.
+    if (mark.drill !== undefined && mark.role === 'data' && this.drillOn() && !this.disposed) this.drillTo(mark.drill)
   }
 
   private highlight(series: string): void {
@@ -1073,7 +1380,7 @@ export class SuperPlot {
       this.overlay.setAttribute('pointer-events', 'none')
       svg.appendChild(this.overlay)
     }
-    const theme = resolveTheme(this.options.theme, this.prefersDark())
+    const theme = this.themeNow()
     const ns = 'http://www.w3.org/2000/svg'
     const g = mark.guide
     const line = svg.ownerDocument.createElementNS(ns, 'line')
@@ -1113,7 +1420,7 @@ export class SuperPlot {
 
   private showTip(tip: Tip, x: number, y: number, mark?: Mark | null): void {
     const doc = this.host.ownerDocument
-    const theme = resolveTheme(this.options.theme, this.prefersDark())
+    const theme = this.themeNow()
     const t = this.tip
     t.style.background = `var(--sp-surface, ${theme.colors.surface})`
     t.style.color = `var(--sp-text, ${theme.colors.text})`

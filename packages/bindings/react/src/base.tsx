@@ -43,6 +43,7 @@ export const SuperPlot = forwardRef<Plot | null, SuperPlotProps>(function SuperP
       onRender: e => latest.current.onRender?.(e),
       onZoom: z => latest.current.onZoom?.(z),
       onBrush: b => latest.current.onBrush?.(b),
+      onDrill: path => latest.current.onDrill?.(path),
       tooltipFormat: (tip, e) => latest.current.tooltipFormat?.(tip, e) ?? null
     })
     plot.current = p
@@ -62,7 +63,7 @@ export const SuperPlot = forwardRef<Plot | null, SuperPlotProps>(function SuperP
     plot.current?.setSpec(spec)
   }, [spec])
 
-  const { theme, locale, width, height, animate, tooltip, hidden, renderer, canvasAbove, webglAbove, interactive, camera, plugins, dataTable, sync, toolbar } = options
+  const { theme, locale, width, height, animate, tooltip, hidden, renderer, canvasAbove, webglAbove, interactive, camera, plugins, dataTable, sync, toolbar, navigator, drill, announce, printLight } = options
   // Inline `sync={{ key: 'a' }}` or `toolbar={['png']}` is a new object every render: compare by value.
   const syncKey = JSON.stringify(sync ?? null)
   const toolbarKey = JSON.stringify(toolbar ?? null)
@@ -71,9 +72,9 @@ export const SuperPlot = forwardRef<Plot | null, SuperPlotProps>(function SuperP
       first.current = false
       return
     }
-    plot.current?.setOptions({ theme, locale, width, height, animate, tooltip, renderer, canvasAbove, webglAbove, interactive, dataTable, sync, toolbar, ...(plugins ? { plugins } : {}), ...(hidden ? { hidden } : {}), ...(camera ? { camera } : {}) })
+    plot.current?.setOptions({ theme, locale, width, height, animate, tooltip, renderer, canvasAbove, webglAbove, interactive, dataTable, sync, toolbar, navigator, drill, announce, printLight, ...(plugins ? { plugins } : {}), ...(hidden ? { hidden } : {}), ...(camera ? { camera } : {}) })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [theme, locale, width, height, animate, tooltip, hidden, renderer, canvasAbove, webglAbove, interactive, camera, plugins, dataTable, syncKey, toolbarKey])
+  }, [theme, locale, width, height, animate, tooltip, hidden, renderer, canvasAbove, webglAbove, interactive, camera, plugins, dataTable, syncKey, toolbarKey, navigator, drill, announce, printLight])
 
   return <div ref={host} className={className} style={style} />
 })
