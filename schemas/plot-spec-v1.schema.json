@@ -2082,6 +2082,774 @@
       }
     },
     {
+      "title": "Waterfall chart",
+      "description": "Shows how a starting value becomes a final one through signed steps: each change floats from the running total, totals stand on the axis. Explaining a change between two totals (budget to actual, opening to closing balance, price bridges) through a few to ~30 named contributions. Use a bar chart for sizes that do not add up; use a line for a running total over many dates.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "data",
+        "x",
+        "y"
+      ],
+      "properties": {
+        "type": {
+          "const": "waterfall"
+        },
+        "version": {
+          "const": 1,
+          "description": "Spec format version. Only 1 exists; may be omitted."
+        },
+        "data": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 50000,
+          "items": {
+            "type": "object"
+          },
+          "description": "Tabular rows: an array of flat objects, one per observation. Numbers must be numbers (or plain numeric strings)."
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 120,
+          "description": "Chart title. State the takeaway or the subject, not \"Chart\"."
+        },
+        "subtitle": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "One line of context under the title: unit, period, filter."
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 1000,
+          "description": "Long description for screen readers and agents. Generated from the data when omitted."
+        },
+        "source": {
+          "type": "string",
+          "maxLength": 160,
+          "description": "Source line shown small under the chart."
+        },
+        "legend": {
+          "enum": [
+            "auto",
+            "top",
+            "bottom",
+            "right",
+            "none"
+          ],
+          "default": "auto",
+          "description": "Legend placement. `auto` hides it for a single series and picks a side from the available width."
+        },
+        "tooltip": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show a hover tooltip (web binding only)."
+        },
+        "format": {
+          "type": "string",
+          "pattern": "^(auto|compact|integer|percent|fixed:\\d{1,2}|currency:[A-Za-z]{3})$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+        },
+        "colors": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "description": "Series (or slice/category) name to CSS colour, e.g. {\"Revenue\":\"#2962FF\"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours."
+        },
+        "transform": {
+          "type": "array",
+          "maxItems": 10,
+          "items": {
+            "type": "object",
+            "minProperties": 1,
+            "maxProperties": 1,
+            "properties": {
+              "filter": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "timeUnit": {
+                "type": "object",
+                "required": [
+                  "field",
+                  "unit"
+                ]
+              },
+              "aggregate": {
+                "type": "object"
+              },
+              "sort": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "top": {
+                "type": "object",
+                "required": [
+                  "n",
+                  "by"
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+        },
+        "patterns": {
+          "type": "boolean",
+          "description": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
+        },
+        "xLabel": {
+          "type": "string",
+          "maxLength": 80,
+          "description": "Title of the horizontal axis."
+        },
+        "yLabel": {
+          "type": "string",
+          "maxLength": 80,
+          "description": "Title of the vertical axis (include the unit)."
+        },
+        "annotations": {
+          "type": "array",
+          "maxItems": 50,
+          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "axis",
+              "value"
+            ],
+            "properties": {
+              "axis": {
+                "enum": [
+                  "x",
+                  "y"
+                ]
+              },
+              "value": {
+                "type": [
+                  "number",
+                  "string"
+                ]
+              },
+              "to": {
+                "type": [
+                  "number",
+                  "string"
+                ]
+              },
+              "label": {
+                "type": "string",
+                "maxLength": 80
+              },
+              "tone": {
+                "enum": [
+                  "neutral",
+                  "positive",
+                  "negative",
+                  "warning",
+                  "info"
+                ]
+              }
+            }
+          }
+        },
+        "facet": {
+          "type": "string",
+          "description": "Split into small multiples: one panel per value of this column (at most 12), sharing axes, colours and one legend. (name of a column in data)"
+        },
+        "zoom": {
+          "enum": [
+            "none",
+            "x",
+            "xy"
+          ],
+          "description": "Default none. Let the viewer zoom and pan a continuous axis (web binding): Ctrl/⌘-scroll or pinch to zoom, drag to pan, double-click or 0 to reset. Scatter, line and area."
+        },
+        "brush": {
+          "enum": [
+            "none",
+            "x",
+            "xy"
+          ],
+          "description": "Default none. Let the viewer drag out a range to select (web binding). The selection comes back as a filter step, ready for `transform`. With `zoom` too, Shift-drag pans."
+        },
+        "x": {
+          "type": "string",
+          "description": "Column holding the step label. Steps are drawn in data order; repeated labels are summed. (name of a column in data)"
+        },
+        "y": {
+          "type": "string",
+          "description": "Numeric column with the signed change of each step. On a total row it may be empty (the bar shows the running total) or hold a reported balance. (name of a column in data)"
+        },
+        "total": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 500,
+              "items": {
+                "type": [
+                  "string",
+                  "number"
+                ]
+              }
+            }
+          ],
+          "description": "Marks the steps drawn as totals: a column of yes/no values (true, 1, \"yes\", \"total\", \"subtotal\" count as yes), or a list of step labels such as [\"Gross profit\", \"Net\"]. A total bar starts at 0 and shows the running total, or the row's own value when it has one. (column name, or a list of values)"
+        },
+        "start": {
+          "type": "number",
+          "description": "Running total before the first step. Default 0. For an opening balance you want drawn, use a first row marked as a total instead."
+        },
+        "labels": {
+          "type": "boolean",
+          "default": false,
+          "description": "Print each change (signed) and each total on its bar. The tooltip always has the change and the running total."
+        },
+        "connectors": {
+          "type": "boolean",
+          "default": true,
+          "description": "Draw a thin dashed line carrying the running total from each bar to the next."
+        },
+        "orientation": {
+          "enum": [
+            "vertical",
+            "horizontal"
+          ],
+          "default": "vertical",
+          "description": "Use `horizontal` for long step names; steps then run top to bottom."
+        },
+        "yDomain": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": [
+              "number",
+              "string",
+              "null"
+            ]
+          },
+          "description": "Fix the value axis range, e.g. [0, 500]. The default includes 0 so totals are drawn honestly."
+        }
+      }
+    },
+    {
+      "title": "Bullet chart",
+      "description": "Compares one value per measure with its target, against qualitative ranges (poor, fair, good): a compact replacement for a gauge. A few to ~15 KPIs, each with a target and optional thresholds, in little space. Use `scale: \"each\"` when the measures have different units. Use a bar chart when there is no target or range; use a stat tile for a single number.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "data",
+        "x",
+        "value"
+      ],
+      "properties": {
+        "type": {
+          "const": "bullet"
+        },
+        "version": {
+          "const": 1,
+          "description": "Spec format version. Only 1 exists; may be omitted."
+        },
+        "data": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 50000,
+          "items": {
+            "type": "object"
+          },
+          "description": "Tabular rows: an array of flat objects, one per observation. Numbers must be numbers (or plain numeric strings)."
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 120,
+          "description": "Chart title. State the takeaway or the subject, not \"Chart\"."
+        },
+        "subtitle": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "One line of context under the title: unit, period, filter."
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 1000,
+          "description": "Long description for screen readers and agents. Generated from the data when omitted."
+        },
+        "source": {
+          "type": "string",
+          "maxLength": 160,
+          "description": "Source line shown small under the chart."
+        },
+        "legend": {
+          "enum": [
+            "auto",
+            "top",
+            "bottom",
+            "right",
+            "none"
+          ],
+          "default": "auto",
+          "description": "Legend placement. `auto` hides it for a single series and picks a side from the available width."
+        },
+        "tooltip": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show a hover tooltip (web binding only)."
+        },
+        "format": {
+          "type": "string",
+          "pattern": "^(auto|compact|integer|percent|fixed:\\d{1,2}|currency:[A-Za-z]{3})$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+        },
+        "colors": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "description": "Series (or slice/category) name to CSS colour, e.g. {\"Revenue\":\"#2962FF\"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours."
+        },
+        "transform": {
+          "type": "array",
+          "maxItems": 10,
+          "items": {
+            "type": "object",
+            "minProperties": 1,
+            "maxProperties": 1,
+            "properties": {
+              "filter": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "timeUnit": {
+                "type": "object",
+                "required": [
+                  "field",
+                  "unit"
+                ]
+              },
+              "aggregate": {
+                "type": "object"
+              },
+              "sort": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "top": {
+                "type": "object",
+                "required": [
+                  "n",
+                  "by"
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+        },
+        "patterns": {
+          "type": "boolean",
+          "description": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
+        },
+        "xLabel": {
+          "type": "string",
+          "maxLength": 80,
+          "description": "Title of the horizontal axis."
+        },
+        "yLabel": {
+          "type": "string",
+          "maxLength": 80,
+          "description": "Title of the vertical axis (include the unit)."
+        },
+        "annotations": {
+          "type": "array",
+          "maxItems": 50,
+          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "axis",
+              "value"
+            ],
+            "properties": {
+              "axis": {
+                "enum": [
+                  "x",
+                  "y"
+                ]
+              },
+              "value": {
+                "type": [
+                  "number",
+                  "string"
+                ]
+              },
+              "to": {
+                "type": [
+                  "number",
+                  "string"
+                ]
+              },
+              "label": {
+                "type": "string",
+                "maxLength": 80
+              },
+              "tone": {
+                "enum": [
+                  "neutral",
+                  "positive",
+                  "negative",
+                  "warning",
+                  "info"
+                ]
+              }
+            }
+          }
+        },
+        "facet": {
+          "type": "string",
+          "description": "Split into small multiples: one panel per value of this column (at most 12), sharing axes, colours and one legend. (name of a column in data)"
+        },
+        "zoom": {
+          "enum": [
+            "none",
+            "x",
+            "xy"
+          ],
+          "description": "Default none. Let the viewer zoom and pan a continuous axis (web binding): Ctrl/⌘-scroll or pinch to zoom, drag to pan, double-click or 0 to reset. Scatter, line and area."
+        },
+        "brush": {
+          "enum": [
+            "none",
+            "x",
+            "xy"
+          ],
+          "description": "Default none. Let the viewer drag out a range to select (web binding). The selection comes back as a filter step, ready for `transform`. With `zoom` too, Shift-drag pans."
+        },
+        "x": {
+          "type": "string",
+          "description": "Column holding the name of each measure (one bullet per row, in data order). (name of a column in data)"
+        },
+        "value": {
+          "type": "string",
+          "description": "Numeric column with the actual value, drawn as the bar. (name of a column in data)"
+        },
+        "target": {
+          "type": "string",
+          "description": "Numeric column with the target, drawn as a tick across the bar. (name of a column in data)"
+        },
+        "ranges": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string"
+              }
+            }
+          ],
+          "description": "Columns holding the upper threshold of each qualitative range, worst first, e.g. [\"poor\", \"ok\", \"good\"]. Drawn as bands of one neutral tone, darkest for the first. (column name, or several for wide-form data)"
+        },
+        "orientation": {
+          "enum": [
+            "horizontal",
+            "vertical"
+          ],
+          "default": "horizontal",
+          "description": "`vertical` stands the bullets up as columns (shared scale only)."
+        },
+        "scale": {
+          "enum": [
+            "shared",
+            "each"
+          ],
+          "default": "shared",
+          "description": "`shared` puts every measure on one value axis (same unit); `each` gives every measure its own range and ticks (mixed units: revenue, margin, NPS)."
+        },
+        "yDomain": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": [
+              "number",
+              "string",
+              "null"
+            ]
+          },
+          "description": "Fix the shared value axis range. Ignored with `scale: \"each\"`."
+        }
+      }
+    },
+    {
+      "title": "Bump chart",
+      "description": "Shows how the rank of each series changes along an ordered x: rank 1 on top, one line per series, labelled at its end. Rankings over time or rounds (league tables, top products per month) for 3 to 8 series, when the order matters more than the gaps between values. Use a line chart when the values themselves matter.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "data",
+        "x"
+      ],
+      "properties": {
+        "type": {
+          "const": "bump"
+        },
+        "version": {
+          "const": 1,
+          "description": "Spec format version. Only 1 exists; may be omitted."
+        },
+        "data": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 50000,
+          "items": {
+            "type": "object"
+          },
+          "description": "Tabular rows: an array of flat objects, one per observation. Numbers must be numbers (or plain numeric strings)."
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 120,
+          "description": "Chart title. State the takeaway or the subject, not \"Chart\"."
+        },
+        "subtitle": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "One line of context under the title: unit, period, filter."
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 1000,
+          "description": "Long description for screen readers and agents. Generated from the data when omitted."
+        },
+        "source": {
+          "type": "string",
+          "maxLength": 160,
+          "description": "Source line shown small under the chart."
+        },
+        "legend": {
+          "enum": [
+            "auto",
+            "top",
+            "bottom",
+            "right",
+            "none"
+          ],
+          "default": "auto",
+          "description": "Legend placement. `auto` hides it for a single series and picks a side from the available width."
+        },
+        "tooltip": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show a hover tooltip (web binding only)."
+        },
+        "format": {
+          "type": "string",
+          "pattern": "^(auto|compact|integer|percent|fixed:\\d{1,2}|currency:[A-Za-z]{3})$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+        },
+        "colors": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "description": "Series (or slice/category) name to CSS colour, e.g. {\"Revenue\":\"#2962FF\"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours."
+        },
+        "transform": {
+          "type": "array",
+          "maxItems": 10,
+          "items": {
+            "type": "object",
+            "minProperties": 1,
+            "maxProperties": 1,
+            "properties": {
+              "filter": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "timeUnit": {
+                "type": "object",
+                "required": [
+                  "field",
+                  "unit"
+                ]
+              },
+              "aggregate": {
+                "type": "object"
+              },
+              "sort": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "top": {
+                "type": "object",
+                "required": [
+                  "n",
+                  "by"
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+        },
+        "patterns": {
+          "type": "boolean",
+          "description": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
+        },
+        "xLabel": {
+          "type": "string",
+          "maxLength": 80,
+          "description": "Title of the horizontal axis."
+        },
+        "yLabel": {
+          "type": "string",
+          "maxLength": 80,
+          "description": "Title of the vertical axis (include the unit)."
+        },
+        "annotations": {
+          "type": "array",
+          "maxItems": 50,
+          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "axis",
+              "value"
+            ],
+            "properties": {
+              "axis": {
+                "enum": [
+                  "x",
+                  "y"
+                ]
+              },
+              "value": {
+                "type": [
+                  "number",
+                  "string"
+                ]
+              },
+              "to": {
+                "type": [
+                  "number",
+                  "string"
+                ]
+              },
+              "label": {
+                "type": "string",
+                "maxLength": 80
+              },
+              "tone": {
+                "enum": [
+                  "neutral",
+                  "positive",
+                  "negative",
+                  "warning",
+                  "info"
+                ]
+              }
+            }
+          }
+        },
+        "facet": {
+          "type": "string",
+          "description": "Split into small multiples: one panel per value of this column (at most 12), sharing axes, colours and one legend. (name of a column in data)"
+        },
+        "zoom": {
+          "enum": [
+            "none",
+            "x",
+            "xy"
+          ],
+          "description": "Default none. Let the viewer zoom and pan a continuous axis (web binding): Ctrl/⌘-scroll or pinch to zoom, drag to pan, double-click or 0 to reset. Scatter, line and area."
+        },
+        "brush": {
+          "enum": [
+            "none",
+            "x",
+            "xy"
+          ],
+          "description": "Default none. Let the viewer drag out a range to select (web binding). The selection comes back as a filter step, ready for `transform`. With `zoom` too, Shift-drag pans."
+        },
+        "x": {
+          "type": "string",
+          "description": "Column for the ordered steps (rounds, years, dates). Numbers and dates are sorted; categories keep the data order. (name of a column in data)"
+        },
+        "series": {
+          "type": "string",
+          "description": "Column naming the series (long-form data). Not needed when `y` lists several columns. (name of a column in data)"
+        },
+        "rank": {
+          "type": "string",
+          "description": "Column holding a rank (1 is best) per series and x. Give this or `y`. (name of a column in data)"
+        },
+        "y": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string"
+              }
+            }
+          ],
+          "description": "Numeric column(s) to rank per x instead of a `rank` column; several columns give one series per column (wide-form data). (column name, or several for wide-form data)"
+        },
+        "rankBy": {
+          "enum": [
+            "desc",
+            "asc"
+          ],
+          "default": "desc",
+          "description": "With `y`: `desc` ranks the highest value 1, `asc` the lowest (times, positions). Ties keep the series order."
+        },
+        "curve": {
+          "enum": [
+            "smooth",
+            "linear"
+          ],
+          "default": "smooth",
+          "description": "`smooth` eases each line flat into every point; `linear` draws straight segments."
+        },
+        "labels": {
+          "type": "boolean",
+          "default": true,
+          "description": "Name each series at the end of its line (direct labels), so the reader does not need the legend."
+        }
+      }
+    },
+    {
       "title": "Radar chart",
       "description": "Compares a few items across several measures on spokes around a centre; each item is a closed shape. Comparing 1-4 items across 4-10 measures that share one scale (skills, product scorecards). The shape is easy to read, exact values are not: use a bar chart when precision matters, and avoid it for measures on different scales or for many items.",
       "type": "object",
@@ -2523,6 +3291,153 @@
         "value": {
           "type": "string",
           "description": "Numeric column giving the size of each flow. Rows with the same source and target are summed; zero and negative values are skipped. (name of a column in data)"
+        }
+      }
+    },
+    {
+      "title": "Funnel chart",
+      "description": "Shows how many remain at each stage of a process, as centred bars whose width is the value, labelled with the share of the first stage. An ordered process where each stage is a subset of the one before (visit, sign-up, purchase), 3 to ~10 stages. Use a bar chart when the stages are not nested; a funnel whose values rise misleads (Super Plot warns). One number on its own is a stat tile, not a chart.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "data",
+        "stage",
+        "value"
+      ],
+      "properties": {
+        "type": {
+          "const": "funnel"
+        },
+        "version": {
+          "const": 1,
+          "description": "Spec format version. Only 1 exists; may be omitted."
+        },
+        "data": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 50000,
+          "items": {
+            "type": "object"
+          },
+          "description": "Tabular rows: an array of flat objects, one per observation. Numbers must be numbers (or plain numeric strings)."
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 120,
+          "description": "Chart title. State the takeaway or the subject, not \"Chart\"."
+        },
+        "subtitle": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "One line of context under the title: unit, period, filter."
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 1000,
+          "description": "Long description for screen readers and agents. Generated from the data when omitted."
+        },
+        "source": {
+          "type": "string",
+          "maxLength": 160,
+          "description": "Source line shown small under the chart."
+        },
+        "legend": {
+          "enum": [
+            "auto",
+            "top",
+            "bottom",
+            "right",
+            "none"
+          ],
+          "default": "auto",
+          "description": "Legend placement. `auto` hides it for a single series and picks a side from the available width."
+        },
+        "tooltip": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show a hover tooltip (web binding only)."
+        },
+        "format": {
+          "type": "string",
+          "pattern": "^(auto|compact|integer|percent|fixed:\\d{1,2}|currency:[A-Za-z]{3})$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+        },
+        "colors": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "description": "Series (or slice/category) name to CSS colour, e.g. {\"Revenue\":\"#2962FF\"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours."
+        },
+        "transform": {
+          "type": "array",
+          "maxItems": 10,
+          "items": {
+            "type": "object",
+            "minProperties": 1,
+            "maxProperties": 1,
+            "properties": {
+              "filter": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "timeUnit": {
+                "type": "object",
+                "required": [
+                  "field",
+                  "unit"
+                ]
+              },
+              "aggregate": {
+                "type": "object"
+              },
+              "sort": {
+                "type": "object",
+                "required": [
+                  "field"
+                ]
+              },
+              "top": {
+                "type": "object",
+                "required": [
+                  "n",
+                  "by"
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+        },
+        "patterns": {
+          "type": "boolean",
+          "description": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
+        },
+        "stage": {
+          "type": "string",
+          "description": "Column holding the stage name. Stages are drawn top to bottom in data order; repeated names are summed. (name of a column in data)"
+        },
+        "value": {
+          "type": "string",
+          "description": "Numeric column with the count (or amount) at each stage. Negative values are skipped. (name of a column in data)"
+        },
+        "labels": {
+          "type": "boolean",
+          "default": true,
+          "description": "Print the value and the share of the first stage on (or beside) each bar. The tooltip also has the share of the stage before."
+        },
+        "connectors": {
+          "type": "boolean",
+          "default": true,
+          "description": "Shade the drop-off between consecutive bars. The bar widths alone carry the values; the shading only joins them."
+        },
+        "facet": {
+          "type": "string",
+          "description": "Split into small multiples: one panel per value of this column (at most 12), sharing axes, colours and one legend. (name of a column in data)"
         }
       }
     },

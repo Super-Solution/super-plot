@@ -226,7 +226,8 @@ function facet(def: ChartDef, spec: Record<string, any>, env: RenderEnv, width: 
     if (u) shared.xDomain = u
   }
   if ('yDomain' in fields && !spec.yDomain) {
-    const u = union(c => c.axes?.y)
+    // `yDomain` is the value axis, which a horizontal chart draws along x.
+    const u = union(c => (spec.orientation === 'horizontal' ? c.axes?.x : c.axes?.y))
     if (u) shared.yDomain = u
   }
   if (Object.keys(shared).length) ({ ctxs, local } = run(shared))

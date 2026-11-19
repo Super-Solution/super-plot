@@ -680,6 +680,241 @@ Colours a grid of cells by a number: one axis per category, darker means larger.
       "day": "Tue",
 ```
 
+## `waterfall` — Waterfall chart
+
+Shows how a starting value becomes a final one through signed steps: each change floats from the running total, totals stand on the axis.
+
+**Use when:** Explaining a change between two totals (budget to actual, opening to closing balance, price bridges) through a few to ~30 named contributions. Use a bar chart for sizes that do not add up; use a line for a running total over many dates.
+
+| Field | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `type` | string | yes |  | Chart type: waterfall. |
+| `version` | `1` |  |  | Spec format version. Only 1 exists; may be omitted. |
+| `data` | array of rows | yes |  | Tabular rows: an array of flat objects, one per observation. Numbers must be numbers (or plain numeric strings). |
+| `title` | string |  |  | Chart title. State the takeaway or the subject, not "Chart". |
+| `subtitle` | string |  |  | One line of context under the title: unit, period, filter. |
+| `description` | string |  |  | Long description for screen readers and agents. Generated from the data when omitted. |
+| `source` | string |  |  | Source line shown small under the chart. |
+| `legend` | `auto` \| `top` \| `bottom` \| `right` \| `none` |  | `"auto"` | Legend placement. `auto` hides it for a single series and picks a side from the available width. |
+| `tooltip` | boolean |  | `true` | Show a hover tooltip (web binding only). |
+| `format` | format string |  |  | Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE. |
+| `colors` | object |  |  | Series (or slice/category) name to CSS colour, e.g. {"Revenue":"#2962FF"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours. |
+| `transform` | array of steps |  |  | Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output. |
+| `patterns` | boolean |  |  | Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print. |
+| `xLabel` | string |  |  | Title of the horizontal axis. |
+| `yLabel` | string |  |  | Title of the vertical axis (include the unit). |
+| `annotations` | array |  |  | Reference marks: {axis:"y", value:100, label:"Target"} draws a line; add `to` for a band. |
+| `facet` | column name |  |  | Split into small multiples: one panel per value of this column (at most 12), sharing axes, colours and one legend. |
+| `zoom` | `none` \| `x` \| `xy` |  |  | Default none. Let the viewer zoom and pan a continuous axis (web binding): Ctrl/⌘-scroll or pinch to zoom, drag to pan, double-click or 0 to reset. Scatter, line and area. |
+| `brush` | `none` \| `x` \| `xy` |  |  | Default none. Let the viewer drag out a range to select (web binding). The selection comes back as a filter step, ready for `transform`. With `zoom` too, Shift-drag pans. |
+| `x` | column name | yes |  | Column holding the step label. Steps are drawn in data order; repeated labels are summed. |
+| `y` | column name | yes |  | Numeric column with the signed change of each step. On a total row it may be empty (the bar shows the running total) or hold a reported balance. |
+| `total` | column name or list of values |  |  | Marks the steps drawn as totals: a column of yes/no values (true, 1, "yes", "total", "subtotal" count as yes), or a list of step labels such as ["Gross profit", "Net"]. A total bar starts at 0 and shows the running total, or the row's own value when it has one. |
+| `start` | number |  |  | Running total before the first step. Default 0. For an opening balance you want drawn, use a first row marked as a total instead. |
+| `labels` | boolean |  | `false` | Print each change (signed) and each total on its bar. The tooltip always has the change and the running total. |
+| `connectors` | boolean |  | `true` | Draw a thin dashed line carrying the running total from each bar to the next. |
+| `orientation` | `vertical` \| `horizontal` |  | `"vertical"` | Use `horizontal` for long step names; steps then run top to bottom. |
+| `yDomain` | [min\|null, max\|null] |  |  | Fix the value axis range, e.g. [0, 500]. The default includes 0 so totals are drawn honestly. |
+
+```json
+{
+  "type": "waterfall",
+  "title": "From revenue to net income",
+  "subtitle": "USD millions, FY2026",
+  "x": "item",
+  "y": "amount",
+  "total": [
+    "Gross profit",
+    "Net income"
+  ],
+  "labels": true,
+  "yLabel": "USD m",
+  "data": [
+    {
+      "item": "Revenue",
+      "amount": 420
+    },
+    {
+      "item": "Cost of sales",
+      "amount": -168
+    },
+    {
+      "item": "Gross profit"
+    },
+    {
+      "item": "R&D",
+      "amount": -61
+    },
+    {
+      "item": "Sales & marketing",
+      "amount": -74
+    },
+    {
+      "item": "Other income",
+      "amount": 12
+    },
+    {
+      "item": "Tax",
+      "amount": -28
+    },
+```
+
+## `bullet` — Bullet chart
+
+Compares one value per measure with its target, against qualitative ranges (poor, fair, good): a compact replacement for a gauge.
+
+**Use when:** A few to ~15 KPIs, each with a target and optional thresholds, in little space. Use `scale: "each"` when the measures have different units. Use a bar chart when there is no target or range; use a stat tile for a single number.
+
+| Field | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `type` | string | yes |  | Chart type: bullet. |
+| `version` | `1` |  |  | Spec format version. Only 1 exists; may be omitted. |
+| `data` | array of rows | yes |  | Tabular rows: an array of flat objects, one per observation. Numbers must be numbers (or plain numeric strings). |
+| `title` | string |  |  | Chart title. State the takeaway or the subject, not "Chart". |
+| `subtitle` | string |  |  | One line of context under the title: unit, period, filter. |
+| `description` | string |  |  | Long description for screen readers and agents. Generated from the data when omitted. |
+| `source` | string |  |  | Source line shown small under the chart. |
+| `legend` | `auto` \| `top` \| `bottom` \| `right` \| `none` |  | `"auto"` | Legend placement. `auto` hides it for a single series and picks a side from the available width. |
+| `tooltip` | boolean |  | `true` | Show a hover tooltip (web binding only). |
+| `format` | format string |  |  | Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE. |
+| `colors` | object |  |  | Series (or slice/category) name to CSS colour, e.g. {"Revenue":"#2962FF"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours. |
+| `transform` | array of steps |  |  | Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output. |
+| `patterns` | boolean |  |  | Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print. |
+| `xLabel` | string |  |  | Title of the horizontal axis. |
+| `yLabel` | string |  |  | Title of the vertical axis (include the unit). |
+| `annotations` | array |  |  | Reference marks: {axis:"y", value:100, label:"Target"} draws a line; add `to` for a band. |
+| `facet` | column name |  |  | Split into small multiples: one panel per value of this column (at most 12), sharing axes, colours and one legend. |
+| `zoom` | `none` \| `x` \| `xy` |  |  | Default none. Let the viewer zoom and pan a continuous axis (web binding): Ctrl/⌘-scroll or pinch to zoom, drag to pan, double-click or 0 to reset. Scatter, line and area. |
+| `brush` | `none` \| `x` \| `xy` |  |  | Default none. Let the viewer drag out a range to select (web binding). The selection comes back as a filter step, ready for `transform`. With `zoom` too, Shift-drag pans. |
+| `x` | column name | yes |  | Column holding the name of each measure (one bullet per row, in data order). |
+| `value` | column name | yes |  | Numeric column with the actual value, drawn as the bar. |
+| `target` | column name |  |  | Numeric column with the target, drawn as a tick across the bar. |
+| `ranges` | column name or list of column names |  |  | Columns holding the upper threshold of each qualitative range, worst first, e.g. ["poor", "ok", "good"]. Drawn as bands of one neutral tone, darkest for the first. |
+| `orientation` | `horizontal` \| `vertical` |  | `"horizontal"` | `vertical` stands the bullets up as columns (shared scale only). |
+| `scale` | `shared` \| `each` |  | `"shared"` | `shared` puts every measure on one value axis (same unit); `each` gives every measure its own range and ticks (mixed units: revenue, margin, NPS). |
+| `yDomain` | [min\|null, max\|null] |  |  | Fix the shared value axis range. Ignored with `scale: "each"`. |
+
+```json
+{
+  "type": "bullet",
+  "title": "Q3 against plan",
+  "subtitle": "Each measure on its own scale",
+  "x": "kpi",
+  "value": "actual",
+  "target": "target",
+  "ranges": [
+    "poor",
+    "fair",
+    "good"
+  ],
+  "scale": "each",
+  "data": [
+    {
+      "kpi": "Revenue (USD k)",
+      "actual": 270,
+      "target": 250,
+      "poor": 150,
+      "fair": 225,
+      "good": 300
+    },
+    {
+      "kpi": "Profit (%)",
+      "actual": 22.5,
+      "target": 26,
+      "poor": 20,
+      "fair": 25,
+      "good": 30
+    },
+    {
+      "kpi": "New customers",
+      "actual": 1640,
+      "target": 2000,
+      "poor": 1400,
+      "fair": 2000,
+      "good": 2500
+    },
+    {
+      "kpi": "Satisfaction (1-5)",
+```
+
+## `bump` — Bump chart
+
+Shows how the rank of each series changes along an ordered x: rank 1 on top, one line per series, labelled at its end.
+
+**Use when:** Rankings over time or rounds (league tables, top products per month) for 3 to 8 series, when the order matters more than the gaps between values. Use a line chart when the values themselves matter.
+
+| Field | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `type` | string | yes |  | Chart type: bump. |
+| `version` | `1` |  |  | Spec format version. Only 1 exists; may be omitted. |
+| `data` | array of rows | yes |  | Tabular rows: an array of flat objects, one per observation. Numbers must be numbers (or plain numeric strings). |
+| `title` | string |  |  | Chart title. State the takeaway or the subject, not "Chart". |
+| `subtitle` | string |  |  | One line of context under the title: unit, period, filter. |
+| `description` | string |  |  | Long description for screen readers and agents. Generated from the data when omitted. |
+| `source` | string |  |  | Source line shown small under the chart. |
+| `legend` | `auto` \| `top` \| `bottom` \| `right` \| `none` |  | `"auto"` | Legend placement. `auto` hides it for a single series and picks a side from the available width. |
+| `tooltip` | boolean |  | `true` | Show a hover tooltip (web binding only). |
+| `format` | format string |  |  | Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE. |
+| `colors` | object |  |  | Series (or slice/category) name to CSS colour, e.g. {"Revenue":"#2962FF"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours. |
+| `transform` | array of steps |  |  | Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output. |
+| `patterns` | boolean |  |  | Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print. |
+| `xLabel` | string |  |  | Title of the horizontal axis. |
+| `yLabel` | string |  |  | Title of the vertical axis (include the unit). |
+| `annotations` | array |  |  | Reference marks: {axis:"y", value:100, label:"Target"} draws a line; add `to` for a band. |
+| `facet` | column name |  |  | Split into small multiples: one panel per value of this column (at most 12), sharing axes, colours and one legend. |
+| `zoom` | `none` \| `x` \| `xy` |  |  | Default none. Let the viewer zoom and pan a continuous axis (web binding): Ctrl/⌘-scroll or pinch to zoom, drag to pan, double-click or 0 to reset. Scatter, line and area. |
+| `brush` | `none` \| `x` \| `xy` |  |  | Default none. Let the viewer drag out a range to select (web binding). The selection comes back as a filter step, ready for `transform`. With `zoom` too, Shift-drag pans. |
+| `x` | column name | yes |  | Column for the ordered steps (rounds, years, dates). Numbers and dates are sorted; categories keep the data order. |
+| `series` | column name |  |  | Column naming the series (long-form data). Not needed when `y` lists several columns. |
+| `rank` | column name |  |  | Column holding a rank (1 is best) per series and x. Give this or `y`. |
+| `y` | column name or list of column names |  |  | Numeric column(s) to rank per x instead of a `rank` column; several columns give one series per column (wide-form data). |
+| `rankBy` | `desc` \| `asc` |  | `"desc"` | With `y`: `desc` ranks the highest value 1, `asc` the lowest (times, positions). Ties keep the series order. |
+| `curve` | `smooth` \| `linear` |  | `"smooth"` | `smooth` eases each line flat into every point; `linear` draws straight segments. |
+| `labels` | boolean |  | `true` | Name each series at the end of its line (direct labels), so the reader does not need the legend. |
+
+```json
+{
+  "type": "bump",
+  "title": "Most used languages",
+  "subtitle": "Rank by share of new repositories",
+  "x": "year",
+  "y": "share",
+  "series": "language",
+  "data": [
+    {
+      "year": 2022,
+      "language": "Python",
+      "share": 17
+    },
+    {
+      "year": 2023,
+      "language": "Python",
+      "share": 19
+    },
+    {
+      "year": 2024,
+      "language": "Python",
+      "share": 21
+    },
+    {
+      "year": 2025,
+      "language": "Python",
+      "share": 23
+    },
+    {
+      "year": 2026,
+      "language": "Python",
+      "share": 25
+    },
+    {
+      "year": 2022,
+      "language": "JavaScript",
+      "share": 21
+    },
+    {
+      "year": 2023,
+```
+
 ## `radar` — Radar chart
 
 Compares a few items across several measures on spokes around a centre; each item is a closed shape.
@@ -886,6 +1121,66 @@ Shows how a quantity flows between stages: bands between nodes, the band width i
       "sessions": 3600
     },
     {
+```
+
+## `funnel` — Funnel chart
+
+Shows how many remain at each stage of a process, as centred bars whose width is the value, labelled with the share of the first stage.
+
+**Use when:** An ordered process where each stage is a subset of the one before (visit, sign-up, purchase), 3 to ~10 stages. Use a bar chart when the stages are not nested; a funnel whose values rise misleads (Super Plot warns). One number on its own is a stat tile, not a chart.
+
+| Field | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `type` | string | yes |  | Chart type: funnel. |
+| `version` | `1` |  |  | Spec format version. Only 1 exists; may be omitted. |
+| `data` | array of rows | yes |  | Tabular rows: an array of flat objects, one per observation. Numbers must be numbers (or plain numeric strings). |
+| `title` | string |  |  | Chart title. State the takeaway or the subject, not "Chart". |
+| `subtitle` | string |  |  | One line of context under the title: unit, period, filter. |
+| `description` | string |  |  | Long description for screen readers and agents. Generated from the data when omitted. |
+| `source` | string |  |  | Source line shown small under the chart. |
+| `legend` | `auto` \| `top` \| `bottom` \| `right` \| `none` |  | `"auto"` | Legend placement. `auto` hides it for a single series and picks a side from the available width. |
+| `tooltip` | boolean |  | `true` | Show a hover tooltip (web binding only). |
+| `format` | format string |  |  | Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE. |
+| `colors` | object |  |  | Series (or slice/category) name to CSS colour, e.g. {"Revenue":"#2962FF"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours. |
+| `transform` | array of steps |  |  | Data steps run before the chart reads its columns, in order: filter, timeUnit, aggregate, sort, top. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output. |
+| `patterns` | boolean |  |  | Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print. |
+| `stage` | column name | yes |  | Column holding the stage name. Stages are drawn top to bottom in data order; repeated names are summed. |
+| `value` | column name | yes |  | Numeric column with the count (or amount) at each stage. Negative values are skipped. |
+| `labels` | boolean |  | `true` | Print the value and the share of the first stage on (or beside) each bar. The tooltip also has the share of the stage before. |
+| `connectors` | boolean |  | `true` | Shade the drop-off between consecutive bars. The bar widths alone carry the values; the shading only joins them. |
+| `facet` | column name |  |  | Split into small multiples: one panel per value of this column (at most 12), sharing axes, colours and one legend. |
+
+```json
+{
+  "type": "funnel",
+  "title": "Checkout funnel",
+  "subtitle": "Sessions, November 2026",
+  "stage": "step",
+  "value": "sessions",
+  "format": "integer",
+  "data": [
+    {
+      "step": "Visited product",
+      "sessions": 48200
+    },
+    {
+      "step": "Added to cart",
+      "sessions": 12650
+    },
+    {
+      "step": "Started checkout",
+      "sessions": 7410
+    },
+    {
+      "step": "Entered payment",
+      "sessions": 5120
+    },
+    {
+      "step": "Purchased",
+      "sessions": 4380
+    }
+  ]
+}
 ```
 
 ## `choropleth` — Choropleth map

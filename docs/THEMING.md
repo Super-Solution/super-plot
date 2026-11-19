@@ -16,6 +16,7 @@ Every colour in the output is `var(--sp-<token>, <fallback>)`, so one render can
 
 Tokens: `background surface text text-muted grid axis border positive negative warning info other seq-low seq-high div-low div-mid div-high land ocean nodata`,
 plus `series-1` to `series-8` and `font` (`--sp-font`, a font-family list). Set them on the plot, a parent, or `:root`.
+Waterfall bars use `positive` (increase), `negative` (decrease) and `text-muted` (total); bullet ranges are `text-muted` at three opacities and the target tick is `text`.
 
 ## 2. Theme object
 

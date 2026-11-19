@@ -84,7 +84,7 @@ export function validatePlot(input: unknown): ValidationResult {
       issues.push({ severity: 'error', code: 'unknown_field', path: key, message: `Unknown field "${key}" for a ${def.type} chart.`, hint: near ? `Did you mean "${near}"?` : `Allowed: ${Object.keys(fields).join(', ')}.` })
       continue
     }
-    if ((f.kind === 'column' || f.kind === 'columns') && !dataOk) continue
+    if ((f.kind === 'column' || f.kind === 'columns' || (f.kind === 'flag' && typeof value === 'string')) && !dataOk) continue
     const v = validateField(key, f, value, ctx)
     if (v !== undefined) out[key] = v
   }
