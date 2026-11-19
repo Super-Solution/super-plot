@@ -181,6 +181,18 @@ def _validate_field(name: str, d: dict[str, Any], value: Any, issues: list, colu
                 _add(issues, "error", "bad_type", f"{name}[{i}]", f"{name}[{i}] must be a string or a number, got {_show(v)}.")
                 return None
         return [js_string(v) for v in value]
+    if kind == "values":
+        # A list of data values (strings or numbers, compared as strings), e.g. a path of group names.
+        if not isinstance(value, list):
+            return bad("bad_type", f'{name} must be a list of values, e.g. ["Asia","Japan"], got {_show(value)}.')
+        most = d.get("max", LIMITS["maxCategories"])
+        if len(value) > most:
+            return bad("too_many", f"{name} lists {len(value)} values; at most {most}.")
+        for i, v in enumerate(value):
+            if not (isinstance(v, str) or is_finite_number(v)):
+                _add(issues, "error", "bad_type", f"{name}[{i}]", f"{name}[{i}] must be a string or a number, got {_show(v)}.")
+                return None
+        return [js_string(v) for v in value]
     # column / columns
     names = (value if isinstance(value, list) else [value]) if kind == "columns" else [value]
     if kind == "column" and not isinstance(value, str):

@@ -380,7 +380,7 @@ function makeSpec() {
     case 'waffle': spec.label = 'd'; spec.value = num(); if (chance(0.5)) spec.cells = pick([100, 50, 200, 400, 250, 55, 45, 410, 100.5, '100']); if (chance(0.5)) spec.sort = pick(['none', 'asc', 'desc', 'value']); break
     case 'beeswarm': spec.x = chance(0.9) ? num() : 'k'; if (chance(0.6)) spec.y = pick(['g', 'g', 'd']); if (chance(0.3)) spec.series = 'g'; if (chance(0.2)) spec.radius = pick([1, 4, 12, 0, 13]); break
     case 'heatmap': spec.x = 'd'; spec.y = 'e'; spec.value = num(); break
-    case 'treemap': spec.label = 'd'; spec.value = num(); if (chance(0.5)) spec.group = pick(['e', 'g', 'd']); break
+    case 'treemap': spec.label = 'd'; spec.value = num(); if (chance(0.5)) spec.group = pick(['e', 'g', 'g', 'd']); break
     case 'sankey': spec.from = 'd'; spec.to = 'e'; spec.value = num(); break
     case 'choropleth': case 'bubble-map': case 'column-map': case 'flow-map': mapFields(spec, type, data); break
   }
@@ -398,6 +398,13 @@ function makeSpec() {
   if (type === 'bar' && chance(0.3)) spec.line = pick([num, num, () => [num(), num()], () => 'd', () => [], () => ['a', 'nope'], () => 7])()
   if (type === 'bar' && chance(0.2)) spec.orientation = pick(['horizontal', 'vertical', 'sideways'])
   if (type === 'scatter' && chance(0.3)) spec.density = pick(['points', 'hex', 'auto', 'hexbin'])
+  // Drill-down: a path of group values, mostly ones the data has.
+  if (has('focus') && chance(type === 'treemap' || type === 'sunburst' ? 0.4 : 0.02)) {
+    const row = pick(data)
+    const levels = type === 'sunburst' ? (Array.isArray(spec.path) ? spec.path : [spec.path]) : [spec.group, spec.label]
+    const along = levels.map(l => (typeof l === 'string' && row[l] !== undefined && row[l] !== null ? row[l] : 'x'))
+    spec.focus = pick([() => along.slice(0, 1), () => along.slice(0, 1), () => along.slice(0, 2), () => along.slice(0, 2), () => along, () => [pick(['p', 'q', 'r', 'P', 'zz', 10])], () => [along[0], cat()], () => [], () => 'p', () => [null], () => [{}], () => ['p', true], () => rowsN(7, () => 'p'), () => [along[0], along[1], 'deeper']])()
+  }
   // Round 5: log axes, intervals and annotations (reference lines, bands, labelled points).
   for (const k of ['xScale', 'yScale']) if (has(k) && chance(0.2)) spec[k] = pick(['log', 'log', 'log', 'linear', 'ln'])
   if (has('yLower') && chance(0.2)) { const [l, u] = pick([['lw', 'hi'], ['lw', 'hi'], ['lw', 'hi'], ['hi', 'lw'], ['lw', undefined], [undefined, 'hi'], ['d', 'hi'], ['lw', 'nope']]); if (l) spec.yLower = l; if (u) spec.yUpper = u }

@@ -285,6 +285,29 @@ func validateField(name string, d fieldDef, value any, issues *[]Issue, columns 
 		return value
 	case "camera":
 		return validateCamera(name, value, issues)
+	case "values":
+		// A list of data values (strings or numbers, compared as strings), e.g. a path of group names.
+		list, isList := value.([]any)
+		if !isList {
+			return bad("bad_type", fmt.Sprintf(`%s must be a list of values, e.g. ["Asia","Japan"], got %s.`, name, show(value)))
+		}
+		most := data.Limits["maxCategories"]
+		if d.Max != nil {
+			most = int(*d.Max)
+		}
+		if len(list) > most {
+			return bad("too_many", fmt.Sprintf("%s lists %d values; at most %d.", name, len(list), most))
+		}
+		named := make([]any, len(list))
+		for i, v := range list {
+			f, isNum := v.(float64)
+			if _, isStr := v.(string); !isStr && !(isNum && isFinite(f)) {
+				add(issues, "error", "bad_type", fmt.Sprintf("%s[%d]", name, i), fmt.Sprintf("%s[%d] must be a string or a number, got %s.", name, i, show(v)))
+				return nil
+			}
+			named[i] = jsString(v)
+		}
+		return named
 	case "flag":
 		// A column of yes/no values, or a list of the marked values.
 		if s, isStr := value.(string); isStr {

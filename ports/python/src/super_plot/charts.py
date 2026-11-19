@@ -541,6 +541,54 @@ def _check_treemap(spec: Spec, rows: list[dict], issues: Issues) -> None:
         _issue(issues, "warning", "negative_slices", "value", f"{neg} zero or negative value(s) will be skipped; area cannot be negative.")
     if spec.get("group") and spec["group"] == spec["label"]:
         _issue(issues, "warning", "redundant_group", "group", "`group` is the same column as `label`.")
+    if spec.get("focus"):
+        if not spec.get("group"):
+            _issue(issues, "warning", "focus_not_found", "focus", "focus needs `group`: without it the treemap has one level and nothing to drill into; the whole treemap is drawn.", "Set `group` to the column the tiles are grouped by, or remove focus.")
+        else:
+            _check_focus(_tile_tree(_tiles({**spec, "data": rows})), spec["focus"], issues)
+
+
+def _tile_tree(ts: list[dict]) -> dict:
+    """The tiles as a two-level tree (group > label), for `focus`. Mirrors `treeOf`."""
+    root: dict = {"name": "", "path": [], "value": 0.0, "children": []}
+    groups: dict[str, dict] = {}
+    for t in ts:
+        root["value"] += t["value"]
+        g = groups.get(t["group"])
+        if g is None:
+            g = groups[t["group"]] = {"name": t["group"], "path": [t["group"]], "value": 0.0, "children": []}
+            root["children"].append(g)
+        g["value"] += t["value"]
+        g["children"].append({"name": t["label"], "path": [t["group"], t["label"]], "value": t["value"], "children": []})
+    return root
+
+
+def _focus_node(root: dict, focus: Any) -> dict | None:
+    """The node a `focus` path names: None without a path, or when it does not lead to a node with children."""
+    if not isinstance(focus, list) or not focus:
+        return None
+    node = root
+    for name in focus:
+        node = next((c for c in node["children"] if c["name"] == js_string(name)), None)
+        if node is None:
+            return None
+    return node if node["children"] else None
+
+
+def _check_focus(root: dict, focus: list, issues: Issues) -> None:
+    """A warning for a name that is not under its parent, or a path that ends on a leaf. Mirrors `checkFocus`."""
+    node = root
+    for i, raw in enumerate(focus):
+        name = js_string(raw)
+        nxt = next((c for c in node["children"] if c["name"] == name), None)
+        if nxt is None:
+            names = [c["name"] for c in node["children"]]
+            near = closest(name, names)
+            hint = f"{f'Did you mean {chr(34)}{near}{chr(34)}? ' if near else ''}The groups there: {', '.join(clip(n, 30) for n in names[:12])}." if names else None
+            return _issue(issues, "warning", "focus_not_found", f"focus[{i}]", f'There is no group "{clip(name, 60)}" at that level; the whole tree is drawn.', hint)
+        node = nxt
+    if not node["children"]:
+        _issue(issues, "warning", "focus_leaf", f"focus[{len(focus) - 1}]", f'"{clip(" > ".join(node["path"]), 80)}" has no groups under it, so there is nothing to drill into; the whole tree is drawn.', "Drop the last value to focus on its parent.")
 
 
 def _describe_treemap(spec: Spec) -> str:
@@ -556,6 +604,12 @@ def _describe_treemap(spec: Spec) -> str:
     if groups:
         gs = sorted(({"g": g, "v": total([x["value"] for x in ts if x["group"] == g])} for g in groups), key=lambda x: x["v"], reverse=True)
         t += f" Largest group: {clip(gs[0]['g'], 40)} ({format_percent(gs[0]['v'] / tot)})."
+        fn = _focus_node(_tile_tree(ts), spec.get("focus"))
+        if fn:
+            kids = fn["children"]
+            big = _stable_desc(kids, lambda c: c["value"])[0]
+            t += (f" Showing only {clip(fn['name'], 40)}: {len(kids)} tile{'s' if len(kids) > 1 else ''} totalling {f(fn['value'])} ({format_percent(fn['value'] / tot)} of the total),"
+                  f" largest {clip(big['name'], 40)} ({format_percent(big['value'] / fn['value'])}).")
     return t
 
 
@@ -1039,6 +1093,12 @@ def _check_sunburst(spec: Spec, rows: list[dict], issues: Issues) -> None:
             neg += 1
     if neg:
         _issue(issues, "warning", "negative_slices", "value", f"{neg} zero or negative value(s) will be skipped; a share cannot be negative.")
+    focus = spec.get("focus")
+    if focus:
+        if len(focus) >= len(levels):
+            _issue(issues, "warning", "focus_leaf", f"focus[{len(focus) - 1}]", f"focus names {len(focus)} level(s) and path has {len(levels)}: the last level has nothing under it to drill into; the whole tree is drawn.", f"Give at most {len(levels) - 1} value(s).")
+        else:
+            _check_focus(hierarchy(rows, levels, spec["value"]), focus, issues)
 
 
 def _describe_sunburst(spec: Spec) -> str:
@@ -1066,6 +1126,11 @@ def _describe_sunburst(spec: Spec) -> str:
          f" First level: {len(root['children'])} groups, largest {_fmt_list(top, 3)}.")
     if biggest is not None and len(biggest["path"]) > 1:
         t += f" Largest leaf: {clip(' > '.join(biggest['path']), 80)} ({f(biggest['value'])}, {pct(biggest['value'])})."
+    fn = _focus_node(root, spec.get("focus"))
+    if fn:
+        kids = [f"{clip(n['name'], 30)} ({format_percent(n['value'] / fn['value'] if fn['value'] else 0)})" for n in fn["children"][:3]]
+        t += (f" Showing only {clip(' > '.join(fn['path']), 80)}: {f(fn['value'])}, {pct(fn['value'])} of the total,"
+              f" in {len(fn['children'])} group{'s' if len(fn['children']) > 1 else ''}, largest {_fmt_list(kids, 3)}.")
     return t
 
 

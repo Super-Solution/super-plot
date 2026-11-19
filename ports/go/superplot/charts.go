@@ -1031,6 +1031,22 @@ func checkTreemap(s spec, rows []row, issues *[]Issue) {
 	if g := str(s, "group"); g != "" && g == str(s, "label") {
 		issue(issues, "warning", "redundant_group", "group", "`group` is the same column as `label`.")
 	}
+	if focus, _ := s["focus"].([]any); len(focus) > 0 {
+		if str(s, "group") == "" {
+			issue(issues, "warning", "focus_not_found", "focus", "focus needs `group`: without it the treemap has one level and nothing to drill into; the whole treemap is drawn.", "Set `group` to the column the tiles are grouped by, or remove focus.")
+		} else {
+			withRows := spec{}
+			for k, v := range s {
+				withRows[k] = v
+			}
+			list := make([]any, len(rows))
+			for i, r := range rows {
+				list[i] = r
+			}
+			withRows["data"] = list
+			checkFocus(tileTree(treemapTiles(withRows)), focus, issues)
+		}
+	}
 }
 
 func describeTreemap(s spec) string {
@@ -1077,6 +1093,10 @@ func describeTreemap(s spec) string {
 		}
 		sort.SliceStable(gs, func(i, j int) bool { return gs[i].v > gs[j].v })
 		t += fmt.Sprintf(" Largest group: %s (%s).", clip(gs[0].g, 40), FormatPercent(gs[0].v/tot, 1))
+		if fn := focusNode(tileTree(ts), s["focus"]); fn != nil {
+			big := stableDesc(fn.children, func(c *hnode) float64 { return c.value })[0]
+			t += fmt.Sprintf(" Showing only %s: %d tile%s totalling %s (%s of the total), largest %s (%s).", clip(fn.name, 40), len(fn.children), plural(len(fn.children), "", "s"), f(fn.value), FormatPercent(fn.value/tot, 1), clip(big.name, 40), FormatPercent(big.value/fn.value, 1))
+		}
 	}
 	return t
 }

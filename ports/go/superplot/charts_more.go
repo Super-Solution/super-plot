@@ -256,6 +256,76 @@ func hierarchy(rows []row, levels []string, value string) *hnode {
 	return root
 }
 
+// tileTree is the treemap's tiles as a two-level tree (group > label), for focus. Mirrors treeOf.
+func tileTree(ts []*tile) *hnode {
+	root := &hnode{index: map[string]*hnode{}}
+	for _, t := range ts {
+		root.value += t.value
+		g := root.index[t.group]
+		if g == nil {
+			g = &hnode{name: t.group, path: []string{t.group}}
+			root.index[t.group] = g
+			root.children = append(root.children, g)
+		}
+		g.value += t.value
+		g.children = append(g.children, &hnode{name: t.label, path: []string{t.group, t.label}, value: t.value})
+	}
+	return root
+}
+
+func childNamed(n *hnode, name string) *hnode {
+	for _, c := range n.children {
+		if c.name == name {
+			return c
+		}
+	}
+	return nil
+}
+
+// focusNode is the node a focus path names: nil without a path, or when it does not lead to a node with children.
+func focusNode(root *hnode, focus any) *hnode {
+	list, _ := focus.([]any)
+	if len(list) == 0 {
+		return nil
+	}
+	node := root
+	for _, name := range list {
+		if node = childNamed(node, jsString(name)); node == nil {
+			return nil
+		}
+	}
+	if len(node.children) == 0 {
+		return nil
+	}
+	return node
+}
+
+// checkFocus warns about a name that is not under its parent, or a path that ends on a leaf. Mirrors checkFocus.
+func checkFocus(root *hnode, focus []any, issues *[]Issue) {
+	node := root
+	for i, raw := range focus {
+		name := jsString(raw)
+		next := childNamed(node, name)
+		if next == nil {
+			var hint []string
+			if len(node.children) > 0 {
+				names := make([]string, len(node.children))
+				for j, c := range node.children {
+					names[j] = c.name
+				}
+				near, found := closest(name, names)
+				hint = []string{didYouMean(near, found) + "The groups there: " + strings.Join(clipAll(names[:min(12, len(names))], 30), ", ") + "."}
+			}
+			issue(issues, "warning", "focus_not_found", fmt.Sprintf("focus[%d]", i), fmt.Sprintf("There is no group %q at that level; the whole tree is drawn.", clip(name, 60)), hint...)
+			return
+		}
+		node = next
+	}
+	if len(node.children) == 0 {
+		issue(issues, "warning", "focus_leaf", fmt.Sprintf("focus[%d]", len(focus)-1), fmt.Sprintf("%q has no groups under it, so there is nothing to drill into; the whole tree is drawn.", clip(strings.Join(node.path, " > "), 80)), "Drop the last value to focus on its parent.")
+	}
+}
+
 func duplicateColumns(cols []string, field, what, hint string, issues *[]Issue) {
 	seen := map[string]bool{}
 	for i, c := range cols {
@@ -281,6 +351,13 @@ func checkSunburst(s spec, rows []row, issues *[]Issue) {
 	}
 	if neg > 0 {
 		issue(issues, "warning", "negative_slices", "value", fmt.Sprintf("%d zero or negative value(s) will be skipped; a share cannot be negative.", neg))
+	}
+	if focus, _ := s["focus"].([]any); len(focus) > 0 {
+		if len(focus) >= len(levels) {
+			issue(issues, "warning", "focus_leaf", fmt.Sprintf("focus[%d]", len(focus)-1), fmt.Sprintf("focus names %d level(s) and path has %d: the last level has nothing under it to drill into; the whole tree is drawn.", len(focus), len(levels)), fmt.Sprintf("Give at most %d value(s).", len(levels)-1))
+		} else {
+			checkFocus(hierarchy(rows, levels, value), focus, issues)
+		}
 	}
 }
 
@@ -321,6 +398,17 @@ func describeSunburst(s spec) string {
 	t := fmt.Sprintf("%s %d level%s (%s), %d leaves totalling %s. First level: %d groups, largest %s.", lead(s, "Sunburst"), len(levels), plural(len(levels), "", "s"), strings.Join(levels, " > "), leaves, f(root.value), len(root.children), fmtList(top, 3))
 	if biggest != nil && len(biggest.path) > 1 {
 		t += fmt.Sprintf(" Largest leaf: %s (%s, %s).", clip(strings.Join(biggest.path, " > "), 80), f(biggest.value), pct(biggest.value))
+	}
+	if fn := focusNode(root, s["focus"]); fn != nil {
+		var kids []string
+		for _, n := range fn.children[:min(3, len(fn.children))] {
+			share := 0.0
+			if fn.value != 0 {
+				share = n.value / fn.value
+			}
+			kids = append(kids, fmt.Sprintf("%s (%s)", clip(n.name, 30), FormatPercent(share, 1)))
+		}
+		t += fmt.Sprintf(" Showing only %s: %s, %s of the total, in %d group%s, largest %s.", clip(strings.Join(fn.path, " > "), 80), f(fn.value), pct(fn.value), len(fn.children), plural(len(fn.children), "", "s"), fmtList(kids, 3))
 	}
 	return t
 }

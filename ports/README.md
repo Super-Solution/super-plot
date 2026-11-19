@@ -16,7 +16,7 @@ A port is **the half of Super Plot a backend needs**:
 - `describe_plot` / `DescribePlot`: the plain-language reading of a chart (also its alt text), identical to the TypeScript text.
 - The shared numbers: ticks (linear and log), nice domains, quantiles, box statistics, histogram bins, kernel density (Silverman bandwidth, the curve, its peaks), LOESS, waffle cells, value formats (`compact`, `percent`, `currency:USD`...) and durations.
 
-All 27 chart types are covered, with every field of the spec: log axes, intervals (`yLower` / `yUpper`), reference lines and labelled points in `annotations`, `flag` fields (a yes/no column or a list of marked values), and the per-chart checks and descriptions.
+All 27 chart types are covered, with every field of the spec: log axes, intervals (`yLower` / `yUpper`), reference lines and labelled points in `annotations`, `flag` fields (a yes/no column or a list of marked values), `focus` paths on treemap and sunburst, and the per-chart checks and descriptions.
 
 **A port does not draw.** Drawing (the scene, SVG, canvas, hover) stays in the TypeScript packages. A Go or Python service validates and describes; the browser, or Node, draws. A native renderer in a second language is a separate, much larger piece of work: see `docs/OPEN-DECISIONS.md`.
 

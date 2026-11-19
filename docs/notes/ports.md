@@ -1,7 +1,7 @@
 # Round 5: the Go and Python ports
 
 For the lead to fold into DESIGN.md and `ports/README.md` (already updated). Both ports now cover everything the
-reference validates, transforms and describes as of the merge of wp7.
+reference validates, transforms and describes as of the merge of wp8 (timeline, stream graph, `focus`).
 
 ## What was ported
 
@@ -9,7 +9,7 @@ reference validates, transforms and describes as of the merge of wp7.
 |---|---|---|---|
 | Charts: violin, calendar, sunburst, parallel, waterfall, funnel, bullet, bump, waffle, beeswarm, timeline; box `points`; bar `mark: "lollipop"`; area `stack: "center"` | `charts/*.ts` | `charts.py` | `charts.go`, `charts_more.go` |
 | Log axes, intervals, `gaps`, LOESS trend | `charts/extras.ts`, `series.ts`, `scatter.ts`, `bar.ts` | `charts.py` | `charts.go` |
-| Field kinds: `flag`; `columns` with `min` / `max`; point annotations | `schema.ts` | `validate.py` | `validate.go` |
+| Field kinds: `flag`, `values` (`focus` on treemap and sunburst, with `focus_not_found` / `focus_leaf` and the "Showing only" sentence); `columns` with `min` / `max`; point annotations | `schema.ts` | `validate.py` | `validate.go` |
 | Transform steps `bin`, `window`, `fold` | `transform.ts` | `transform.py` | `transform.go` |
 | Statistics: `kde`, `silverman`, `densityPeaks`, `loess`, `logTicks`, `niceLogDomain`, `transformBinEdges`, `waffleCells`, `formatDuration` | `charts/violin.ts`, `util/loess.ts`, `scale.ts`, `util/bins.ts`, `charts/waffle.ts`, `util/time.ts` | `numeric.py`, `text.py` | `numeric.go`, `text.go` |
 | `exp`, `log`, `log10`, `cbrt`, `**` as the reference's engine computes them | V8 `ieee754.cc` | `_fdlibm.py` | `fdlibm.go` |
@@ -58,12 +58,12 @@ chart is compiled or rendered, not when a spec is validated; the ports' descript
 - 5,007 specs over all 27 chart types, picked evenly (about 185 each). Rows get the columns the new charts
   read (interval ends, ranks, a yes/no column, the two ends of a range), and each new type has its own fields,
   sound and wrong. Log axes, intervals, `gaps`, `mark`, `trend` and annotations of both forms are added where a
-  chart takes them (and now and then where it does not);
+  chart takes them (and now and then where it does not); `focus` paths are mostly taken from a row of the data;
 - transform pipelines with `bin`, `window` and `fold` next to the earlier steps, including steps wrong in every
   way the reference checks, and charts that read the column a step made (`key` / `value` after a fold, a running
   value after a window).
 
-About 36% of the specs are valid (26% before), so more descriptions and transformed rows are compared.
+About 35% of the specs are valid (26% before), so more descriptions and transformed rows are compared.
 
 No fault was found in the reference: every mismatch the fuzzer reported was the ports' (the minus zero above).
 
