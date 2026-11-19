@@ -4,12 +4,13 @@ import type { AxisInfo, Mark, Rect, Scene, SceneAxes, SeriesInfo } from './scene
 import { escapeXml, renderSvg, svgKey, type SvgOptions } from './svg.js'
 import { PlotSpecError, validatePlot } from './validate.js'
 import type { Issue, Row } from './schema.js'
-import { cssVar, resolveTheme, type RenderEnv, type Theme, type ThemeOption } from './theme.js'
+import { cssVar, resolveTheme, resolveVars, type RenderEnv, type Theme, type ThemeOption } from './theme.js'
 import { estimateWidth, fit, type Measure } from './util/text.js'
 import { clamp } from './util/num.js'
 import { distinct, xKey } from './data.js'
 import { fmtList, pointNotes } from './charts/shared.js'
 import type { Camera } from './geo/view.js'
+import { CVD_MIN_DISTANCE, indistinctPairs, type Vision } from './util/cvd.js'
 
 /**
  * A plugin sees every compiled scene before it is drawn and may return a changed one (add a mark, move a
@@ -95,6 +96,7 @@ export function compilePlot(input: unknown, options: RenderOptions = {}): Compil
     if (ctx.axes) axes = { ...ctx.axes, ...interaction(spec, def, ctx.axes, issues) }
   }
   if (spec.patterns === true) applyPatterns(marks, series)
+  else checkColorVision(spec, series, marks, issues)
 
   const title = typeof spec.title === 'string' && spec.title ? spec.title : def.name
   let description = typeof spec.description === 'string' && spec.description ? spec.description : def.describe(spec, { locale }) + pointNotes(spec)
@@ -138,6 +140,46 @@ function interaction(spec: Record<string, any>, def: ChartDef, axes: { x: AxisIn
   const brush = spec.brush as string | undefined
   if (brush === 'x' || brush === 'xy') out.brush = brush === 'xy' && axes.y.kind !== 'band' && axes.x.kind !== 'band' ? 'xy' : 'x'
   return out
+}
+
+// ---- colour vision ---------------------------------------------------------------------------
+
+const VISION_NAME: Record<Vision, string> = { normal: 'normal vision', protanopia: 'protanopia', deuteranopia: 'deuteranopia', tritanopia: 'tritanopia' }
+
+/**
+ * Warn (`colors_indistinct`) when two neighbouring series, in legend order, are closer than
+ * `CVD_MIN_DISTANCE` in OKLab x 100 under normal vision or simulated protanopia, deuteranopia or tritanopia
+ * (see `util/cvd.ts`). Only pairs with at least one colour from the spec's `colors` are checked: the theme is
+ * the host's choice, made once, and its `other` grey does sit close to some palette hues (see the notes), so
+ * checking theme-only pairs would warn on charts nobody coloured. Only series that draw a data mark or a
+ * legend entry count. Spec colours are read as written and skipped when they are `var(--x)` or a name the
+ * check cannot resolve; a theme colour next to one is read through its fallback (`var(--sp-series-2,
+ * #FF9800)` as #FF9800), so a host's CSS overrides are not seen. Not run with `patterns: true`: the textures
+ * then carry identity.
+ */
+function checkColorVision(spec: Record<string, any>, series: SeriesInfo[], marks: Mark[], issues: Issue[]): void {
+  if (series.length < 2) return
+  const drawn = new Set<string>()
+  for (const m of marks) if (m.series !== undefined && (m.role === 'data' || m.role === 'legend')) drawn.add(m.series)
+  const used = series.filter(s => drawn.has(s.key))
+  if (used.length < 2) return
+  const own = spec.colors as Record<string, string> | undefined
+  if (!own) return
+  const mine = new Set<number>()
+  const colors = used.map((s, i) => {
+    if (!(Object.hasOwn(own, s.key) && own[s.key] === s.color)) return resolveVars(s.color)
+    mine.add(i)
+    return /^var\(/i.test(s.color.trim()) ? null : s.color
+  })
+  if (!mine.size) return
+  const pairs = indistinctPairs(colors, CVD_MIN_DISTANCE, mine)
+  if (!pairs.length) return
+  const say = pairs.slice(0, 3).map(p => `"${used[p.index].label}" and "${used[p.index + 1].label}" (${p.min} under ${VISION_NAME[p.worst]}${p.worst === 'normal' ? '' : `, ${p.distances.normal} with normal vision`})`)
+  issues.push({
+    severity: 'warning', code: 'colors_indistinct', path: 'colors',
+    message: `Neighbouring series look alike: ${say.join('; ')}${pairs.length > 3 ? `; and ${pairs.length - 3} more pairs` : ''}. Distances are OKLab x 100; under ${CVD_MIN_DISTANCE} is hard to tell apart.`,
+    hint: 'Set `patterns: true`, render with the `accessible` theme, or pick colours that differ more in lightness.'
+  })
 }
 
 // ---- patterns ----------------------------------------------------------------------------------

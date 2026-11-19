@@ -120,6 +120,15 @@ export const gallery: { id: string; note: string; spec: Record<string, unknown> 
   { id: 'sankey', note: 'Flows between stages, loops refused', spec: by('sankey') },
   { id: 'funnel', note: 'Centred bars, share of the first stage; rising values are warned', spec: by('funnel') },
   { id: 'parallel', note: 'Each line is a row across four measures', spec: by('parallel') },
+  { id: 'waffle', note: 'Countable shares: 100 squares, largest remainder', spec: by('waffle') },
+  {
+    id: 'waffle-facet', note: 'One waffle per year, shared colours',
+    spec: {
+      type: 'waffle', title: 'Energy mix by year', subtitle: 'Share of generation', label: 'source', value: 'twh', facet: 'year', sort: 'none', legend: 'bottom',
+      data: [['2016', 'Fossil', 62], ['2016', 'Nuclear', 18], ['2016', 'Renewable', 20], ['2021', 'Fossil', 54], ['2021', 'Nuclear', 17], ['2021', 'Renewable', 29], ['2026', 'Fossil', 41], ['2026', 'Nuclear', 16], ['2026', 'Renewable', 43]].map(([year, source, twh]) => ({ year, source, twh }))
+    }
+  },
+  { id: 'beeswarm', note: 'Every value as a dot, one lane per group', spec: by('beeswarm') },
   { id: 'choropleth', note: 'Regions coloured by value (invented islands: Super Plot ships no boundaries)', spec: by('choropleth') },
   { id: 'bubble-map', note: 'Places sized by value, on imported land', spec: by('bubble-map') },
   { id: 'column-map', note: '3D columns on a globe: drag to turn', spec: by('column-map') },

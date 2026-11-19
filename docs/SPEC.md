@@ -1502,6 +1502,144 @@ Shows how many remain at each stage of a process, as centred bars whose width is
 }
 ```
 
+## `waffle` — Waffle chart
+
+Shows each category's share of a whole as a count of squares in a fixed grid (100 by default, so one square is 1%).
+
+**Use when:** Few (2-8) parts of one whole when readers should be able to count the share ("37 in 100"), or to compare several wholes with `facet`. Easier to read exactly than a pie. Not for many parts (use a bar or treemap), negative values, or tiny shares under one cell.
+
+| Field | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `type` | string | yes |  | Chart type: waffle. |
+| `version` | `1` |  |  | Spec format version. Only 1 exists; may be omitted. |
+| `data` | array of rows | yes |  | Tabular rows: an array of flat objects, one per observation. Numbers must be numbers (or plain numeric strings). |
+| `title` | string |  |  | Chart title. State the takeaway or the subject, not "Chart". |
+| `subtitle` | string |  |  | One line of context under the title: unit, period, filter. |
+| `description` | string |  |  | Long description for screen readers and agents. Generated from the data when omitted. |
+| `source` | string |  |  | Source line shown small under the chart. |
+| `legend` | `auto` \| `top` \| `bottom` \| `right` \| `none` |  | `"auto"` | Legend placement. `auto` hides it for a single series and picks a side from the available width. |
+| `tooltip` | boolean |  | `true` | Show a hover tooltip (web binding only). |
+| `format` | format string |  |  | Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE. |
+| `colors` | object |  |  | Series (or slice/category) name to CSS colour, e.g. {"Revenue":"#2962FF"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours. |
+| `transform` | array of steps |  |  | Data steps run before the chart reads its columns, in order (at most 10): filter, timeUnit, aggregate, sort, top, bin (round bins: start and end columns), window (running sum, mean, count, rank, pctChange, lag, lead, movingMean, per group, in a sort order) and fold (wide columns to key/value rows). No expressions. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output. |
+| `patterns` | boolean |  |  | Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print. |
+| `label` | column name | yes |  | Column naming each category (as on a pie). Rows with the same label are summed. |
+| `value` | column name | yes |  | Numeric column giving each category's size. Negatives are skipped. |
+| `cells` | integer |  | `100` | Number of squares, a multiple of 10 from 50 to 400. The grid is fixed by the count: 10 wide up to 100 (50 is 10 x 5), then 10 tall (200 is 20 x 10). Cells are shared out by largest remainder, so they always add up. |
+| `sort` | `none` \| `asc` \| `desc` |  | `"desc"` | Fill order. `desc` fills the biggest category first, in reading order; `none` keeps the data order. |
+| `facet` | column name |  |  | Split into small multiples: one panel per value of this column (at most 12), sharing axes, colours and one legend. |
+
+```json
+{
+  "type": "waffle",
+  "title": "How commuters get to work",
+  "subtitle": "Share of 2,400 survey answers; one square is 1%",
+  "label": "mode",
+  "value": "answers",
+  "format": "integer",
+  "data": [
+    {
+      "mode": "Transit",
+      "answers": 888
+    },
+    {
+      "mode": "Car",
+      "answers": 672
+    },
+    {
+      "mode": "Bicycle",
+      "answers": 408
+    },
+    {
+      "mode": "Walk",
+      "answers": 312
+    },
+    {
+      "mode": "Remote",
+      "answers": 120
+    }
+  ]
+}
+```
+
+## `beeswarm` — Beeswarm plot
+
+Places one dot per row along a number axis, pushed aside so no dot hides another; optional lanes per group.
+
+**Use when:** Showing every value of one measure (tens to about 2,000 rows) so readers see clusters, gaps and individual outliers, optionally compared across a few groups. Use a histogram, violin or box plot for more values or to read a summary; a scatter plot when there are two measures.
+
+| Field | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `type` | string | yes |  | Chart type: beeswarm. |
+| `version` | `1` |  |  | Spec format version. Only 1 exists; may be omitted. |
+| `data` | array of rows | yes |  | Tabular rows: an array of flat objects, one per observation. Numbers must be numbers (or plain numeric strings). |
+| `title` | string |  |  | Chart title. State the takeaway or the subject, not "Chart". |
+| `subtitle` | string |  |  | One line of context under the title: unit, period, filter. |
+| `description` | string |  |  | Long description for screen readers and agents. Generated from the data when omitted. |
+| `source` | string |  |  | Source line shown small under the chart. |
+| `legend` | `auto` \| `top` \| `bottom` \| `right` \| `none` |  | `"auto"` | Legend placement. `auto` hides it for a single series and picks a side from the available width. |
+| `tooltip` | boolean |  | `true` | Show a hover tooltip (web binding only). |
+| `format` | format string |  |  | Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE. |
+| `colors` | object |  |  | Series (or slice/category) name to CSS colour, e.g. {"Revenue":"#2962FF"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours. |
+| `transform` | array of steps |  |  | Data steps run before the chart reads its columns, in order (at most 10): filter, timeUnit, aggregate, sort, top, bin (round bins: start and end columns), window (running sum, mean, count, rank, pctChange, lag, lead, movingMean, per group, in a sort order) and fold (wide columns to key/value rows). No expressions. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output. |
+| `patterns` | boolean |  |  | Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print. |
+| `xLabel` | string |  |  | Title of the horizontal axis. |
+| `yLabel` | string |  |  | Title of the vertical axis (include the unit). |
+| `annotations` | array |  |  | Reference marks: {axis:"y", value:100, label:"Target"} draws a line; add `to` for a band. {x:"2026-03-01", y:120, label:"Launch"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date). |
+| `facet` | column name |  |  | Split into small multiples: one panel per value of this column (at most 12), sharing axes, colours and one legend. |
+| `zoom` | `none` \| `x` \| `xy` |  |  | Default none. Let the viewer zoom and pan a continuous axis (web binding): Ctrl/⌘-scroll or pinch to zoom, drag to pan, double-click or 0 to reset. Scatter, line and area. |
+| `brush` | `none` \| `x` \| `xy` |  |  | Default none. Let the viewer drag out a range to select (web binding). The selection comes back as a filter step, ready for `transform`. With `zoom` too, Shift-drag pans. |
+| `x` | column name | yes |  | Numeric column for the horizontal position: one dot per row. |
+| `y` | column name |  |  | Column that splits the dots into lanes, one swarm per value. Omit for a single swarm. |
+| `series` | column name |  |  | Column that colours dots by group (with a legend). |
+| `size` | column name |  |  | Numeric column mapped to dot area. |
+| `label` | column name |  |  | Column used as each dot's name in the tooltip. |
+| `radius` | number |  |  | Dot radius in px. Default 4.5, 3.5 past 300 dots, 2.5 past 1,000. Dots shrink (to 35% at most) when a lane is too short. |
+| `xDomain` | [min\|null, max\|null] |  |  | Fix the horizontal range. |
+
+```json
+{
+  "type": "beeswarm",
+  "title": "Response time by region",
+  "subtitle": "One dot per request sample, milliseconds",
+  "x": "ms",
+  "y": "region",
+  "series": "cache",
+  "label": "id",
+  "xLabel": "Response time (ms)",
+  "data": [
+    {
+      "id": "EU-1",
+      "region": "Europe",
+      "cache": "Hit",
+      "ms": 83
+    },
+    {
+      "id": "EU-2",
+      "region": "Europe",
+      "cache": "Hit",
+      "ms": 44
+    },
+    {
+      "id": "EU-3",
+      "region": "Europe",
+      "cache": "Miss",
+      "ms": 178
+    },
+    {
+      "id": "EU-4",
+      "region": "Europe",
+      "cache": "Hit",
+      "ms": 55
+    },
+    {
+      "id": "EU-5",
+      "region": "Europe",
+      "cache": "Hit",
+      "ms": 41
+    },
+```
+
 ## `choropleth` — Choropleth map
 
 Colours each region of a map by a number; raise regions by the value for a 3D view.

@@ -3872,6 +3872,302 @@
       ]
     },
     {
+      "type": "waffle",
+      "fields": [
+        {
+          "name": "type",
+          "kind": "string",
+          "required": true,
+          "desc": "Chart type: waffle."
+        },
+        {
+          "name": "version",
+          "kind": "version",
+          "desc": "Spec format version. Only 1 exists; may be omitted."
+        },
+        {
+          "name": "data",
+          "kind": "data",
+          "required": true,
+          "desc": "Tabular rows: an array of flat objects, one per observation. Numbers must be numbers (or plain numeric strings)."
+        },
+        {
+          "name": "title",
+          "kind": "string",
+          "max": 120,
+          "desc": "Chart title. State the takeaway or the subject, not \"Chart\"."
+        },
+        {
+          "name": "subtitle",
+          "kind": "string",
+          "max": 200,
+          "desc": "One line of context under the title: unit, period, filter."
+        },
+        {
+          "name": "description",
+          "kind": "string",
+          "max": 1000,
+          "desc": "Long description for screen readers and agents. Generated from the data when omitted."
+        },
+        {
+          "name": "source",
+          "kind": "string",
+          "max": 160,
+          "desc": "Source line shown small under the chart."
+        },
+        {
+          "name": "legend",
+          "kind": "enum",
+          "values": [
+            "auto",
+            "top",
+            "bottom",
+            "right",
+            "none"
+          ],
+          "default": "auto",
+          "desc": "Legend placement. `auto` hides it for a single series and picks a side from the available width."
+        },
+        {
+          "name": "tooltip",
+          "kind": "boolean",
+          "default": true,
+          "desc": "Show a hover tooltip (web binding only)."
+        },
+        {
+          "name": "format",
+          "kind": "format",
+          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+        },
+        {
+          "name": "colors",
+          "kind": "colors",
+          "desc": "Series (or slice/category) name to CSS colour, e.g. {\"Revenue\":\"#2962FF\"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours."
+        },
+        {
+          "name": "transform",
+          "kind": "transform",
+          "desc": "Data steps run before the chart reads its columns, in order (at most 10): filter, timeUnit, aggregate, sort, top, bin (round bins: start and end columns), window (running sum, mean, count, rank, pctChange, lag, lead, movingMean, per group, in a sort order) and fold (wide columns to key/value rows). No expressions. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+        },
+        {
+          "name": "patterns",
+          "kind": "boolean",
+          "desc": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
+        },
+        {
+          "name": "label",
+          "kind": "column",
+          "role": "any",
+          "required": true,
+          "desc": "Column naming each category (as on a pie). Rows with the same label are summed."
+        },
+        {
+          "name": "value",
+          "kind": "column",
+          "role": "number",
+          "required": true,
+          "desc": "Numeric column giving each category's size. Negatives are skipped."
+        },
+        {
+          "name": "cells",
+          "kind": "number",
+          "min": 50,
+          "max": 400,
+          "integer": true,
+          "default": 100,
+          "desc": "Number of squares, a multiple of 10 from 50 to 400. The grid is fixed by the count: 10 wide up to 100 (50 is 10 x 5), then 10 tall (200 is 20 x 10). Cells are shared out by largest remainder, so they always add up."
+        },
+        {
+          "name": "sort",
+          "kind": "enum",
+          "values": [
+            "none",
+            "asc",
+            "desc"
+          ],
+          "default": "desc",
+          "desc": "Fill order. `desc` fills the biggest category first, in reading order; `none` keeps the data order."
+        },
+        {
+          "name": "facet",
+          "kind": "column",
+          "role": "any",
+          "desc": "Split into small multiples: one panel per value of this column (at most 12), sharing axes, colours and one legend."
+        }
+      ]
+    },
+    {
+      "type": "beeswarm",
+      "fields": [
+        {
+          "name": "type",
+          "kind": "string",
+          "required": true,
+          "desc": "Chart type: beeswarm."
+        },
+        {
+          "name": "version",
+          "kind": "version",
+          "desc": "Spec format version. Only 1 exists; may be omitted."
+        },
+        {
+          "name": "data",
+          "kind": "data",
+          "required": true,
+          "desc": "Tabular rows: an array of flat objects, one per observation. Numbers must be numbers (or plain numeric strings)."
+        },
+        {
+          "name": "title",
+          "kind": "string",
+          "max": 120,
+          "desc": "Chart title. State the takeaway or the subject, not \"Chart\"."
+        },
+        {
+          "name": "subtitle",
+          "kind": "string",
+          "max": 200,
+          "desc": "One line of context under the title: unit, period, filter."
+        },
+        {
+          "name": "description",
+          "kind": "string",
+          "max": 1000,
+          "desc": "Long description for screen readers and agents. Generated from the data when omitted."
+        },
+        {
+          "name": "source",
+          "kind": "string",
+          "max": 160,
+          "desc": "Source line shown small under the chart."
+        },
+        {
+          "name": "legend",
+          "kind": "enum",
+          "values": [
+            "auto",
+            "top",
+            "bottom",
+            "right",
+            "none"
+          ],
+          "default": "auto",
+          "desc": "Legend placement. `auto` hides it for a single series and picks a side from the available width."
+        },
+        {
+          "name": "tooltip",
+          "kind": "boolean",
+          "default": true,
+          "desc": "Show a hover tooltip (web binding only)."
+        },
+        {
+          "name": "format",
+          "kind": "format",
+          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+        },
+        {
+          "name": "colors",
+          "kind": "colors",
+          "desc": "Series (or slice/category) name to CSS colour, e.g. {\"Revenue\":\"#2962FF\"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours."
+        },
+        {
+          "name": "transform",
+          "kind": "transform",
+          "desc": "Data steps run before the chart reads its columns, in order (at most 10): filter, timeUnit, aggregate, sort, top, bin (round bins: start and end columns), window (running sum, mean, count, rank, pctChange, lag, lead, movingMean, per group, in a sort order) and fold (wide columns to key/value rows). No expressions. E.g. [{\"timeUnit\":{\"field\":\"date\",\"unit\":\"month\",\"as\":\"month\"}},{\"aggregate\":{\"groupBy\":[\"month\"],\"fields\":{\"revenue\":\"mean\"}}}]. Column fields then refer to the output."
+        },
+        {
+          "name": "patterns",
+          "kind": "boolean",
+          "desc": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
+        },
+        {
+          "name": "xLabel",
+          "kind": "string",
+          "max": 80,
+          "desc": "Title of the horizontal axis."
+        },
+        {
+          "name": "yLabel",
+          "kind": "string",
+          "max": 80,
+          "desc": "Title of the vertical axis (include the unit)."
+        },
+        {
+          "name": "annotations",
+          "kind": "annotations",
+          "desc": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date)."
+        },
+        {
+          "name": "facet",
+          "kind": "column",
+          "role": "any",
+          "desc": "Split into small multiples: one panel per value of this column (at most 12), sharing axes, colours and one legend."
+        },
+        {
+          "name": "zoom",
+          "kind": "enum",
+          "values": [
+            "none",
+            "x",
+            "xy"
+          ],
+          "desc": "Default none. Let the viewer zoom and pan a continuous axis (web binding): Ctrl/⌘-scroll or pinch to zoom, drag to pan, double-click or 0 to reset. Scatter, line and area."
+        },
+        {
+          "name": "brush",
+          "kind": "enum",
+          "values": [
+            "none",
+            "x",
+            "xy"
+          ],
+          "desc": "Default none. Let the viewer drag out a range to select (web binding). The selection comes back as a filter step, ready for `transform`. With `zoom` too, Shift-drag pans."
+        },
+        {
+          "name": "x",
+          "kind": "column",
+          "role": "number",
+          "required": true,
+          "desc": "Numeric column for the horizontal position: one dot per row."
+        },
+        {
+          "name": "y",
+          "kind": "column",
+          "role": "any",
+          "desc": "Column that splits the dots into lanes, one swarm per value. Omit for a single swarm."
+        },
+        {
+          "name": "series",
+          "kind": "column",
+          "role": "any",
+          "desc": "Column that colours dots by group (with a legend)."
+        },
+        {
+          "name": "size",
+          "kind": "column",
+          "role": "number",
+          "desc": "Numeric column mapped to dot area."
+        },
+        {
+          "name": "label",
+          "kind": "column",
+          "role": "any",
+          "desc": "Column used as each dot's name in the tooltip."
+        },
+        {
+          "name": "radius",
+          "kind": "number",
+          "min": 1,
+          "max": 12,
+          "desc": "Dot radius in px. Default 4.5, 3.5 past 300 dots, 2.5 past 1,000. Dots shrink (to 35% at most) when a lane is too short."
+        },
+        {
+          "name": "xDomain",
+          "kind": "domain",
+          "desc": "Fix the horizontal range."
+        }
+      ]
+    },
+    {
       "type": "choropleth",
       "fields": [
         {

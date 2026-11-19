@@ -169,6 +169,24 @@ Four more chart types, each one spec like the others (`/charts` exports `waterfa
 - Parallel coordinates draw at most 2,000 lines: past that one row in every k is drawn (a `lines_sampled` warning gives k), while each axis still spans every row. Rows missing a value in any dimension are skipped (`incomplete_rows`).
 - `facet` works on violin (as on box). Calendar, sunburst and parallel have no axes to share and refuse `facet` as an unknown field, like heatmap, pie and treemap. `patterns` textures the sunburst by first-level branch; on box, violin, calendar and parallel there is nothing to tell apart by texture, so it is ignored with a `patterns_unsupported` warning.
 
+### Colour-vision check
+
+When a spec sets `colors`, compiling checks each pair of neighbouring series (legend order) that involves one of those colours. If the two are closer than 8 (OKLab distance x 100) with normal vision or under simulated protanopia, deuteranopia or tritanopia (Machado 2009, full severity), the result carries a `colors_indistinct` warning on path `colors` that names the pair and the worst simulation; the chart still draws. Fix it with `patterns: true` (which turns the check off, since textures then carry identity), the `accessible` theme, or colours that differ more in lightness. Colours the check cannot read (`var(--x)`, uncommon names) are skipped; pairs of theme colours alone are not checked. The maths is exported for your own palettes:
+
+```ts
+import { indistinctPairs, cvdDistances, parseColor } from '@supersolutions/super-plot-core/base'
+indistinctPairs(['#d62728', '#2ca02c'])   // [{ index: 0, worst: 'deuteranopia', min: 3.9, distances: { normal: 33.8, ... } }]
+```
+
+## Waffle and beeswarm
+
+```ts
+{ type: 'waffle', label: 'mode', value: 'answers', cells: 100 }           // 10 x 10; each square is 1%
+{ type: 'beeswarm', x: 'ms', y: 'region', series: 'cache', label: 'id' } // one dot per row, one lane per region
+```
+
+A waffle shares `cells` (50 to 400, a multiple of 10) out by largest remainder, so the squares always add up; `waffleCells(values, cells)` gives the same counts. Categories past 8 merge into "Other" with a warning, as on a pie. A beeswarm places dots in value order at the smallest offset that does not overlap (`dodge(xs, radii)` is the exported layout); past 2,000 dots it draws an evenly spaced sample and says so (`too_many_points`), and a lane too short for its swarm shrinks the dots, then warns (`swarm_overflow`). Both work with `facet`; beeswarm also with `zoom` and `brush` on x.
+
 ## Agents and MCP
 
 ```ts

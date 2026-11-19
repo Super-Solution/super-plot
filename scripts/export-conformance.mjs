@@ -8,7 +8,7 @@ import { join, dirname } from 'node:path'
 
 const root = new URL('..', import.meta.url).pathname
 const core = await import(pathToFileURL(join(root, 'packages/core/dist/index.js')).href)
-const { linearTicks, niceDomain, quantile, boxStats, binEdges, binCounts, kde, silverman, densityPeaks, validatePlot, describePlot, chartCatalog, getChart, chartTypes, COMMON_FIELDS, CARTESIAN_FIELDS, LIMITS } = core
+const { linearTicks, niceDomain, quantile, boxStats, binEdges, binCounts, waffleCells, kde, silverman, densityPeaks, validatePlot, describePlot, chartCatalog, getChart, chartTypes, COMMON_FIELDS, CARTESIAN_FIELDS, LIMITS } = core
 const { registerGeography, unregisterGeography, getGeography, matchRegion, GeographyError, GEO_LIMITS, CAMERA_LIMITS } = core
 
 const r = v => (typeof v === 'number' ? Math.round(v * 1e9) / 1e9 : v)
@@ -49,6 +49,8 @@ const loessCases = [
   { xs: Array.from({ length: 25 }, (_, i) => i * 0.4), ys: Array.from({ length: 25 }, (_, i) => Math.sin(i * 0.4) * 10), bandwidth: 0.2, grid: 12 }
 ].map(c => ({ in: c, out: loess(c.xs, c.ys, c.bandwidth, c.grid) }))
 const binStepCases = [{ values: [0, 13], maxbins: 10 }, { values: [1, 2, 2, 3, 9], maxbins: 4 }, { values: [0.1, 0.66], maxbins: 3 }, { values: [5, 5], maxbins: 10 }, { values: [0, 97], maxbins: 10, step: 7 }].map(c => ({ in: c, out: transformBinEdges(c.values, c.maxbins, c.step) }))
+// Largest-remainder apportionment of waffle cells: ties in the remainder go to the earlier value.
+const waffle = [[[1, 1, 1], 100], [[0.4, 0.4, 99.2], 100], [[2, 1, 1], 50], [[5, 0, -3, 2], 100], [[0, 0], 100], [[13, 29, 7, 51, 3, 3, 3], 230], [[1e-9, 1], 400]].map(([values, cells]) => ({ in: { values, cells }, out: waffleCells(values, cells) }))
 
 const withoutData = spec => { const { data, ...rest } = spec; return rest }
 
@@ -446,6 +448,13 @@ const VALIDATION = [
   ['bump: rank and y, bad ranks, repeats, rankBy unused', { type: 'bump', x: 'x', rank: 'r', y: 'r', series: 's', rankBy: 'asc', patterns: true, data: [{ x: 1, s: 'p', r: 1 }, { x: 1, s: 'p', r: 2 }, { x: 1, s: 'q', r: 0 }, { x: 2, s: 'q', r: 1 }] }],
   ['bump: one series, one step', { type: 'bump', x: 'x', y: 'v', data: [{ x: 1, v: 1 }] }],
   ['bump: too many series', { type: 'bump', x: 'x', y: 'v', series: 's', data: rowsOf(20, i => ({ x: 1 + (i % 2), s: `s${i >> 1}`, v: i })) }],
+  ['waffle: ok', { type: 'waffle', label: 'a', value: 'b', cells: 200, data: B }],
+  ['waffle: cells not a multiple of 10', { type: 'waffle', label: 'a', value: 'b', cells: 125, data: B }],
+  ['waffle: cells out of range', { type: 'waffle', label: 'a', value: 'b', cells: 1000, data: B }],
+  ['waffle: nothing positive', { type: 'waffle', label: 'a', value: 'b', data: [{ a: 'x', b: 0 }, { a: 'y', b: -1 }] }],
+  ['beeswarm: ok with lanes', { type: 'beeswarm', x: 'b', y: 'a', data: B }],
+  ['beeswarm: x not numeric', { type: 'beeswarm', x: 'a', data: B }],
+  ['beeswarm: radius out of range', { type: 'beeswarm', x: 'b', radius: 0.5, data: B }],
   ...FEATURE_VALIDATION,
   ...MAP_VALIDATION
 ].map(([name, spec]) => {
@@ -546,6 +555,10 @@ const describeCases = [
   D('line: after a transform', { type: 'line', x: 'm', y: 'v', title: 'Monthly mean', transform: [{ timeUnit: { field: 'd', unit: 'month', as: 'm' } }, { aggregate: { groupBy: ['m'], fields: { v: 'mean' } } }], data: dates(12, i => ({ v: i * 1.5 })) }),
   D('pie: after a filter and an aggregate', { type: 'pie', label: 'k', value: 'n', transform: [{ filter: { field: 'v', gte: 2 } }, { aggregate: { groupBy: ['k'], count: 'n' } }], data: [{ k: 'a', v: 1 }, { k: 'a', v: 2 }, { k: 'b', v: 3 }, { k: 'a', v: 4 }, { k: 'c', v: 0 }] }),
   D('bar: a transform that leaves nothing', { type: 'bar', x: 'k', y: 'v', transform: [{ filter: { field: 'v', gt: 100 } }], data: [{ k: 'a', v: 1 }] }),
+  D('waffle: largest remainder, Other past eight', { type: 'waffle', label: 'k', value: 'v', format: 'integer', data: rowsOf(10, i => ({ k: `c${i}`, v: 10 + i })) }),
+  D('waffle: 400 cells, data order', { type: 'waffle', label: 'k', value: 'v', cells: 400, sort: 'none', data: [{ k: 'a', v: 1 }, { k: 'b', v: 2 }, { k: 'a', v: 1 }, { k: 'c', v: -4 }] }),
+  D('beeswarm: one swarm', { type: 'beeswarm', x: 'v', title: 'Latency', data: [5, 1, 9, 3, 3, 7].map(v => ({ v })) }),
+  D('beeswarm: lanes', { type: 'beeswarm', x: 'v', y: 'g', format: 'fixed:1', data: [['a', 1], ['b', 2.5], ['a', 4], ['b', 'x'], ['c', 8]].map(([g, v]) => ({ g, v })) }),
   D('flow-map: by regions', { type: 'flow-map', geo: G3, from: 'a', to: 'b', value: 'n', series: 'a', data: [...FL, { a: ' N ', b: 'S', n: 5 }] })
 ]
 
@@ -761,6 +774,7 @@ const doc = rows({
   logNiceDomain: logNiceCases,
   loess: loessCases,
   binStep: binStepCases,
+  waffleCells: waffle,
   chartExamples: examples,
   brokenSpecs: broken,
   geographies: GEOGRAPHIES,
