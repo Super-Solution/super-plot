@@ -17,8 +17,8 @@ export interface SvgOptions {
 const ESC: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }
 export const escapeXml = (s: string): string => s.replace(/[&<>"']/g, c => ESC[c])
 
-/** FNV-1a, base 36: a short deterministic id for a string. */
-function hash(s: string): string {
+/** FNV-1a, base 36: a short deterministic id for a string (also the hydration key of server-rendered SVG). */
+export function svgKey(s: string): string {
   let h = 0x811c9dc5
   for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 0x01000193)
   return (h >>> 0).toString(36)
@@ -34,7 +34,7 @@ export function renderSvg(scene: Scene, options: SvgOptions = {}): string {
   const font = rv(options.font ?? 'system-ui, sans-serif')
   // Clip ids hash their own path, so several standalone SVGs on one page never borrow each other's clip.
   const clipIds = scene.clips ? Object.keys(scene.clips) : []
-  const clipRef = new Map(clipIds.map(k => [k, `${id}-c${hash(scene.clips![k])}`]))
+  const clipRef = new Map(clipIds.map(k => [k, `${id}-c${svgKey(scene.clips![k])}`]))
   const used = [...new Set(scene.marks.flatMap(m => (m.pattern === undefined ? [] : [m.pattern])))]
   const ink = escapeXml(rv(scene.background))
   const patterns = used.map(p => {

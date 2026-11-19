@@ -20,5 +20,7 @@ An invalid spec shows a readable error panel (path, code, hint) instead of an em
 <super-plot theme="auto" spec='{"type":"donut","label":"source","value":"n","data":[...]}'></super-plot>
 ```
 
-Events: `plot-select` (detail: datum, series, tip) and `plot-issues` (detail: issues). Works in Vue, Svelte and Angular as is.
+Events: `plot-select` (detail: datum, series, tip), `plot-issues` (detail: issues), `plot-hover`, `plot-render`, `plot-zoom`, `plot-brush`, `plot-camera`. Set `spec` and `options` as properties (objects) or `spec`, `theme`, `locale`, `renderer`, `toolbar`, `sync` as attributes. Works in Vue, Svelte and Angular as is (examples in `docs/INTEGRATION.md`).
+
+Opt-in extras: `sync` (linked hover, zoom and brush across charts), `tooltipFormat`, `toolbar` (PNG, SVG, CSV, data table, reset, sound), `toCsv()`, `sonify()`, and hydration of `renderToSvg(spec, { hydrate: true })` markup.
 Browser only: the constructor touches the DOM. On the server use `renderToSvg` from core.

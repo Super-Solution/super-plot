@@ -5,7 +5,8 @@ import { parseRgb, rasterDots, type DotRun } from './stamp.js'
 /** What the canvas view needs from the plot that owns it. */
 export interface CanvasOwner {
   tipEnabled(): boolean
-  showTip(tip: Tip, x: number, y: number): void
+  /** Show `tip` at client coordinates; `mark` is what it belongs to (for `tooltipFormat`). */
+  showTip(tip: Tip, x: number, y: number, mark?: Mark): void
   placeTip(x: number, y: number): void
   hideTip(): void
   activate(mark: Mark): void
@@ -269,7 +270,7 @@ export class CanvasLayer {
       this.owner.hovered(mark && mark.legendKey === undefined ? mark : null)
     }
     if (mark?.tip && this.owner.tipEnabled()) {
-      if (this.hovered === i) this.owner.showTip(mark.tip, e.clientX, e.clientY)
+      if (this.hovered === i) this.owner.showTip(mark.tip, e.clientX, e.clientY, mark)
       this.owner.placeTip(e.clientX, e.clientY)
     } else this.owner.hideTip()
   }
@@ -279,6 +280,9 @@ export class CanvasLayer {
     this.clearHover()
     this.owner.hideTip()
   }
+
+  /** Read `text` out through this view's live region. */
+  announce(text: string): void { this.live.textContent = text }
 
   /** The mark the keyboard is on, if any. */
   focusedMark(): Mark | null {
@@ -350,19 +354,38 @@ export class CanvasLayer {
   }
 
   private focusMark(i: number): void {
+    const m = this.scene!.marks[i]
+    this.paintMark(i, () => {
+      this.owner.hovered(m)
+      if (m.tip) this.live.textContent = tipText(m.tip)
+    })
+  }
+
+  /**
+   * Show mark `i` as hovered (outline, guide, tooltip) without telling the owner: what a synchronised plot
+   * shows for a value hovered in another one. -1 clears it.
+   */
+  showMark(i: number): void {
+    if (!this.scene || i < 0 || i >= this.scene.marks.length) {
+      this.clearHover()
+      this.owner.hideTip()
+      return
+    }
+    this.paintMark(i)
+  }
+
+  private paintMark(i: number, before?: () => void): void {
     const s = this.scene!
     const m = s.marks[i]
     this.clearHover()
     this.hovered = i
     drawHover(this.octx as unknown as Canvas2D, s, i, { resolve: this.resolve, Path2D: this.base.ownerDocument.defaultView?.Path2D as unknown as Path2DCtor | undefined, paths: this.paths })
-    this.owner.hovered(m)
-    if (!m.tip) return
-    this.live.textContent = tipText(m.tip)
-    const c = markCenter(m)
+    before?.()
+    const c = m.guide ? { x: m.guide.x1, y: m.focus?.[0]?.y ?? (m.guide.y1 + m.guide.y2) / 2 } : markCenter(m)
+    if (!m.tip || !c || !this.owner.tipEnabled()) return this.owner.hideTip()
     const r = this.base.getBoundingClientRect()
-    if (!c || !this.owner.tipEnabled()) return
     const x = r.left + (c.x * r.width) / s.width, y = r.top + (c.y * r.height) / s.height
-    this.owner.showTip(m.tip, x, y)
+    this.owner.showTip(m.tip, x, y, m)
   }
 
   /** Stamp a run of dots as pixels (see `rasterDots`); false hands it back to path drawing. */

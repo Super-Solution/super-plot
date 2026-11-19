@@ -1,13 +1,42 @@
 import {
-  compilePlot, renderSvg, resolveTheme, estimateWidth, defaultHeight, dataMarkCount, makeView, dragCamera, zoomCamera, clampCamera, plotTable,
-  type Camera, type Issue, type Mark, type Measure, type PlotPlugin, type RenderOptions, type Scene, type Tip, type ViewParams
+  compilePlot, renderSvg, resolveTheme, estimateWidth, defaultHeight, dataMarkCount, makeView, dragCamera, zoomCamera, clampCamera, plotTable, plotCsv, svgKey,
+  type AxisInfo, type Camera, type Issue, type Mark, type Measure, type PlotPlugin, type RenderOptions, type Scene, type Tip, type ViewParams
 } from '@supersolutions/super-plot-core/base'
 import { CanvasLayer, markCenter } from './canvas.js'
 import type * as Gl from './gl/index.js'
 import { AxisControl, type BrushSelection, type ZoomRange } from './interact.js'
+import { audioContextOf, idleController, playNotes, sonifyNotes, type SonifyController, type SonifyOptions } from './sound.js'
 import { ensureStyles } from './styles.js'
+import { groupOf, joinGroup, leaveGroup, syncConf, syncTarget, xValueOf, type SyncConf, type SyncOptions, type SyncValue } from './sync.js'
 
 export type { AxisPick, AxisRange, BrushSelection, ZoomRange } from './interact.js'
+export type { SyncOptions } from './sync.js'
+export type { Note, SonifyController, SonifyOptions, SonifyPlan } from './sound.js'
+
+/** What a tooltip shows: a title and label/value rows (the mark's `tip`). */
+export type TipContent = Tip
+
+/** Toolbar buttons, in the order given. */
+export type ToolbarItem = 'png' | 'svg' | 'csv' | 'table' | 'reset' | 'sound'
+const TOOLBAR_ITEMS: readonly ToolbarItem[] = ['png', 'svg', 'csv', 'table', 'reset', 'sound']
+/** What `toolbar: true` shows ('reset' only on a chart that can zoom). */
+const TOOLBAR_DEFAULT: readonly ToolbarItem[] = ['png', 'svg', 'csv', 'table', 'reset']
+const TOOLBAR_LABELS: Record<ToolbarItem, [text: string, name: string]> = {
+  png: ['PNG', 'Download PNG'],
+  svg: ['SVG', 'Download SVG'],
+  csv: ['CSV', 'Download CSV'],
+  table: ['Table', 'Data table'],
+  reset: ['Reset', 'Reset zoom'],
+  sound: ['Sound', 'Play as sound']
+}
+
+/** A download name from a chart title: no path or control characters, at most 80 characters, `chart` when empty. */
+export function fileNameOf(title: unknown, ext: string): string {
+  const base = typeof title === 'string'
+    ? title.normalize('NFKC').replace(/[\u0000-\u001f\u007f<>:"/\\|?*]+/g, ' ').trim().replace(/\s+/g, '-').slice(0, 80).replace(/^[.-]+|[.-]+$/g, '')
+    : ''
+  return `${base || 'chart'}.${ext}`
+}
 
 export interface SelectEvent {
   /** What the mark carries: the category, series and value (or the bin, slice, cell). */
@@ -76,6 +105,24 @@ export interface SuperPlotOptions extends Omit<RenderOptions, 'hidden' | 'measur
    * screen readers only, `'visible'` for everyone. Default false.
    */
   dataTable?: boolean | 'visible'
+  /**
+   * Link plots that share a key (a page-level group): hovering an x value shows the guide and tooltip at the
+   * nearest x in the others, zooming x zooms theirs, and with `brush: true` brushing mirrors the x range. A
+   * string is the key with hover and zoom on and brush off. Plots whose x axis is of another kind are skipped.
+   */
+  sync?: string | SyncOptions
+  /**
+   * Replace the tooltip's content: a string is shown as text (never parsed as HTML), a Node is inserted as is
+   * (you built it, you own what is in it), null or undefined keeps the default. Used for pointer and keyboard
+   * tooltips, on SVG and canvas. A function that throws falls back to the default (and reports a warning once).
+   */
+  tooltipFormat?: (tip: TipContent, e: SelectEvent) => string | Node | null | undefined
+  /**
+   * A row of buttons in the chart's top right corner, shown on hover, keyboard focus and touch screens, never
+   * printed: `true` for PNG, SVG, CSV, the data table and (on a chart with `zoom`) reset; or a list to choose
+   * and order them, `'sound'` included. Default false.
+   */
+  toolbar?: boolean | readonly ToolbarItem[]
 }
 
 let uid = 0
@@ -147,6 +194,19 @@ export class SuperPlot {
   /** `appendRows` keeps its own copy of the rows, so the caller's array is never changed. */
   private rows: unknown[] | null = null
   private appendRaf = 0
+  private sync: SyncConf | null = null
+  private bar: HTMLDivElement | null = null
+  private barKey = ''
+  /** The toolbar's table button: null follows `dataTable`, true shows the table, false hides it from sight. */
+  private tableShown: boolean | null = null
+  /** Announcements (sonify) on the SVG renderer, created on first use; the canvas view has its own. */
+  private live: HTMLDivElement | null = null
+  private sound: SonifyController | null = null
+  private warned = new Set<string>()
+  /** Server-rendered SVG found in the host, adopted by the first render if it matches. */
+  private ssr: Element | null = null
+  /** This plot adopted server markup: it measures text the way the server did, so later draws line up with it. */
+  private hydrated = false
 
   constructor(readonly host: HTMLElement, spec: unknown, private options: SuperPlotOptions = {}) {
     const doc = host.ownerDocument
@@ -158,6 +218,12 @@ export class SuperPlot {
     this.tip = doc.createElement('div')
     this.tip.className = 'sp-tip'
     this.tip.setAttribute('role', 'tooltip')
+    // Server markup from `renderToSvg(spec, { hydrate: true })`, taken out until the first render decides.
+    const ssr = [...host.children].find(c => c.localName === 'svg' && c.hasAttribute('data-sp-key'))
+    if (ssr) {
+      this.ssr = ssr
+      ssr.remove()
+    }
     this.host.appendChild(this.root)
     this.root.addEventListener('pointerover', this.onOver)
     this.root.addEventListener('pointermove', this.onMove)
@@ -176,7 +242,11 @@ export class SuperPlot {
       scene: () => this.scene,
       redraw: () => this.schedule(false),
       zoomChanged: z => this.options.onZoom?.(z),
-      brushChanged: b => this.options.onBrush?.(b),
+      brushChanged: b => {
+        this.options.onBrush?.(b)
+        this.shareBrush(b)
+      },
+      viewChanged: () => this.shareZoom(),
       focusPoint: t => this.focusPoint(t),
       hideTip: () => this.hideTip()
     })
@@ -188,6 +258,7 @@ export class SuperPlot {
       this.mq = doc.defaultView?.matchMedia?.('(prefers-color-scheme: dark)') ?? null
       this.mq?.addEventListener?.('change', this.onScheme)
     }
+    this.joinSync()
     this.render(true)
   }
 
@@ -238,6 +309,8 @@ export class SuperPlot {
     if (patch.hidden) this.hidden = new Set(patch.hidden)
     // Only a camera that really changed resets the viewer's (an inline object re-sent by a framework does not).
     if (patch.camera && JSON.stringify(patch.camera) !== JSON.stringify(prevCamera)) this.cam = null
+    if ('sync' in patch) this.joinSync()
+    if ('dataTable' in patch) this.tableShown = null
     this.render(false)
   }
 
@@ -311,9 +384,77 @@ export class SuperPlot {
     }
   }
 
+  /** CSV of the data the chart shows (after `transform`, every row): see `plotCsv` in core. */
+  toCsv(): string {
+    const csv = plotCsv(this.spec)
+    if (csv === null) throw new Error('Nothing to export: the spec is invalid.')
+    return csv
+  }
+
+  /**
+   * Play the first visible series as sound (Web Audio): one short note per value in x order, higher values
+   * higher. Start and end are announced to screen readers. A second call stops the first one and starts again;
+   * `dispose()` stops it. Without Web Audio (or with nothing to play) it returns a controller that did nothing
+   * and reports a warning through `onIssues`.
+   */
+  sonify(options: SonifyOptions = {}): SonifyController {
+    this.sound?.stop()
+    this.syncCamera()
+    const scene = this.scene
+    const Ctor = audioContextOf(this.host.ownerDocument.defaultView)
+    if (!Ctor) {
+      this.warn('sonify_unavailable', 'This browser has no Web Audio (AudioContext), so sonify() played nothing.')
+      return idleController()
+    }
+    const plan = scene ? sonifyNotes(scene, options) : null
+    if (!scene || !plan || !plan.notes.length) {
+      this.warn('sonify_empty', 'sonify() found no values to play.', scene ? undefined : 'Fix the spec first.')
+      return idleController()
+    }
+    const what = `${scene.title}${plan.series ? `, ${plan.series}` : ''}`
+    let ctl: SonifyController
+    try {
+      ctl = playNotes(Ctor, plan, options.volume ?? 0.25, finished => {
+        if (this.sound === ctl) this.sound = null
+        this.syncBar()
+        if (!this.disposed) this.announce(finished ? `Finished playing ${scene.title}.` : 'Stopped playing.')
+      })
+    } catch (e) {
+      this.warn('sonify_unavailable', `Web Audio failed to start: ${e instanceof Error ? e.message : String(e)}.`)
+      return idleController()
+    }
+    this.sound = ctl
+    this.announce(`Playing ${what}: ${plan.notes.length} notes, ${plan.notes.length > 1 ? 'left to right, ' : ''}higher pitch for higher values.`)
+    this.syncBar()
+    return ctl
+  }
+
+  /** Say something to screen readers: through the canvas view's live region, or this plot's own. */
+  private announce(text: string): void {
+    if (this.layer) return this.layer.announce(text)
+    if (!this.live) {
+      this.live = this.host.ownerDocument.createElement('div')
+      this.live.className = 'sp-live'
+      this.live.setAttribute('aria-live', 'polite')
+      this.root.appendChild(this.live)
+    }
+    this.live.textContent = text
+  }
+
+  /** Report a warning through `onIssues`, once per code for this plot. */
+  private warn(code: string, message: string, hint?: string): void {
+    if (this.warned.has(code)) return
+    this.warned.add(code)
+    this.issues = [...this.issues, { severity: 'warning', code, path: '', message, ...(hint ? { hint } : {}) }]
+    this.options.onIssues?.(this.issues)
+  }
+
   /** Stop observing, remove the DOM and listeners. Safe to call twice. */
   dispose(): void {
     if (this.disposed) return
+    this.sound?.stop()
+    this.sound = null
+    this.leaveSync()
     this.disposed = true
     cancelAnimationFrame(this.raf)
     cancelAnimationFrame(this.appendRaf)
@@ -391,24 +532,28 @@ export class SuperPlot {
     } else this.root.style.height = ''
     const camera = this.cam ?? o.camera
     const view = this.axis.view
-    const result = compilePlot(this.spec, { ...o, width, height, hidden: this.hidden, measure: this.measure, prefersDark: this.prefersDark(), ...(camera ? { camera } : {}), ...(view ? { view } : {}) })
+    // Hydrating (or hydrated): measure text with the estimator the server used, or the markup cannot match.
+    const measure = this.ssr || this.hydrated ? estimateWidth : this.measure
+    const result = compilePlot(this.spec, { ...o, width, height, hidden: this.hidden, measure, prefersDark: this.prefersDark(), ...(camera ? { camera } : {}), ...(view ? { view } : {}) })
     this.glMoved = false
     this.hideTip()
     this.overlay = null
     this.highlighted = null
     this.hoverMark = null
     if (!result.ok) {
+      this.ssr = null
       this.layer?.dispose()
       this.layer = null
       this.scene = null
       this.issues = result.issues
-      this.root.replaceChildren()
+      this.controls?.remove()
+      this.controls = null
+      this.setupToolbar(null, null)
       const err = this.host.ownerDocument.createElement('div')
       err.className = 'sp-error'
       err.setAttribute('role', 'alert')
       err.textContent = result.issues.filter(i => i.severity === 'error').map(i => `${i.path || 'spec'}: ${i.message}${i.hint ? ` ${i.hint}` : ''}`).join('\n')
-      this.root.appendChild(err)
-      this.root.appendChild(this.tip)
+      this.mount(err)
       this.axis.afterRender()
       this.syncTable()
       o.onIssues?.(result.issues)
@@ -424,11 +569,17 @@ export class SuperPlot {
     const autoGl = (o.renderer ?? 'auto') === 'auto' && (marks > (o.webglAbove ?? 20000) || isDeepMap(result.scene) || (!!result.scene.geo && !!this.layer?.hasGl))
     const wantGl = !this.glOff && (o.renderer === 'webgl' || (autoGl && this.hardwareGl()))
     const wantCanvas = o.renderer === 'canvas' || o.renderer === 'webgl' || wantGl || (o.renderer !== 'svg' && marks > (o.canvasAbove ?? 4000))
+    if (this.ssr && wantCanvas) {
+      // Server markup is SVG; this plot draws on canvas, with the real text measure.
+      this.ssr = null
+      return this.render(enter)
+    }
     this.setupMap(result.scene, theme)
+    this.setupToolbar(result.scene, theme)
     if (wantCanvas) {
       this.layer ??= CanvasLayer.create(this.host.ownerDocument, {
         tipEnabled: () => this.tipEnabled(),
-        showTip: (t, x, y) => this.showTip(t, x, y),
+        showTip: (t, x, y, m) => this.showTip(t, x, y, m),
         placeTip: (x, y) => this.placeTip(x, y),
         hideTip: () => this.hideTip(),
         activate: m => this.activateMark(m),
@@ -442,8 +593,7 @@ export class SuperPlot {
         const cs = this.host.ownerDocument.defaultView?.getComputedStyle(this.root)
         this.layer.draw(result.scene, font, name => cs?.getPropertyValue(name))
         // Keep the canvas element in place when it is already there: moving it would drop keyboard focus.
-        if (this.layer.el.parentNode !== this.root || this.tip.parentNode !== this.root) this.root.replaceChildren(this.layer.el, this.tip)
-        if (this.controls) this.root.appendChild(this.controls)
+        this.mount(this.layer.el)
         this.root.setAttribute('data-renderer', this.layer.renderer)
         this.afterDraw(result.scene, started, changed || enter, { ctx: this.layer.drawingContext() })
         return
@@ -452,11 +602,23 @@ export class SuperPlot {
     this.layer?.dispose()
     this.layer = null
     this.root.setAttribute('data-renderer', 'svg')
+    if (this.ssr) {
+      const el = this.ssr
+      this.ssr = null
+      const id = el.getAttribute('data-sp-id') ?? ''
+      // The same bytes this plot would draw (same spec, size, theme, locale, plugins): keep the server's nodes.
+      if (id && svgKey(renderSvg(result.scene, { interactive: true, idPrefix: id, font })) === el.getAttribute('data-sp-key')) {
+        this.hydrated = true
+        this.mount(el)
+        this.afterDraw(result.scene, started, true, { svg: el as SVGSVGElement })
+        return
+      }
+      return this.render(enter)
+    }
     const svg = renderSvg(result.scene, { interactive: true, idPrefix: this.id, font })
     const tpl = this.host.ownerDocument.createElement('template')
     tpl.innerHTML = svg
-    this.root.replaceChildren(tpl.content, this.tip)
-    if (this.controls) this.root.appendChild(this.controls)
+    this.mount(tpl.content)
     if (enter && !this.drag && o.animate !== false) {
       this.root.classList.add('sp-enter')
       clearTimeout(this.enterTimer)
@@ -480,13 +642,207 @@ export class SuperPlot {
       }
     }
     this.syncTable()
+    this.syncBar()
     if (report) o.onIssues?.(this.issues)
     o.onRender?.({ renderer, ms: performance.now() - started, scene })
   }
 
+  /**
+   * Put the drawing first and keep the tooltip, live region, map controls and toolbar where they are: moving
+   * a focused button out and back in would drop keyboard focus.
+   */
+  private mount(drawing: Node): void {
+    const keep: Node[] = [this.tip]
+    // One live region per chart: the canvas view brings its own.
+    if (this.live && !this.layer) keep.push(this.live)
+    if (this.controls) keep.push(this.controls)
+    if (this.bar) keep.push(this.bar)
+    for (const c of [...this.root.childNodes]) if (c !== drawing && !keep.includes(c)) c.remove()
+    if (drawing.parentNode !== this.root) this.root.prepend(drawing)
+    for (const k of keep) if (k.parentNode !== this.root) this.root.appendChild(k)
+  }
+
+  // ---- toolbar -----------------------------------------------------------------------------
+
+  private toolbarItems(scene: Scene | null): ToolbarItem[] {
+    const t = this.options.toolbar
+    if (!scene || !t) return []
+    const list = t === true ? TOOLBAR_DEFAULT : Array.isArray(t) ? t : []
+    const out: ToolbarItem[] = []
+    for (const k of list) if (TOOLBAR_ITEMS.includes(k) && !out.includes(k) && (k !== 'reset' || scene.axes?.zoom)) out.push(k)
+    return out
+  }
+
+  /** The `toolbar` option: real buttons, rebuilt only when the list changes (so focus stays on them). */
+  private setupToolbar(scene: Scene | null, theme: ReturnType<typeof resolveTheme> | null): void {
+    const items = this.toolbarItems(scene)
+    if (!items.length) {
+      this.bar?.remove()
+      this.bar = null
+      this.barKey = ''
+      this.root.removeAttribute('data-toolbar')
+      return
+    }
+    const key = items.join(',')
+    if (!this.bar || this.barKey !== key) {
+      const doc = this.host.ownerDocument
+      const box = this.bar ?? doc.createElement('div')
+      box.className = 'sp-bar'
+      box.setAttribute('role', 'toolbar')
+      box.setAttribute('aria-label', 'Chart tools')
+      box.replaceChildren(...items.map(k => {
+        const b = doc.createElement('button')
+        b.type = 'button'
+        b.dataset.tool = k
+        const [text, name] = TOOLBAR_LABELS[k]
+        b.textContent = text
+        b.setAttribute('aria-label', name)
+        b.title = name
+        b.addEventListener('click', e => { e.stopPropagation(); this.runTool(k) })
+        return b
+      }))
+      this.bar = box
+      this.barKey = key
+    }
+    this.root.setAttribute('data-toolbar', '')
+    if (theme) for (const b of this.bar.querySelectorAll<HTMLButtonElement>('button')) {
+      b.style.background = `var(--sp-surface, ${theme.colors.surface})`
+      b.style.color = `var(--sp-text, ${theme.colors.text})`
+      b.style.borderColor = `var(--sp-border, ${theme.colors.border})`
+    }
+  }
+
+  /** Button states: pressed table and sound, reset only active while zoomed. */
+  private syncBar(): void {
+    const bar = this.bar
+    if (!bar) return
+    const table = bar.querySelector<HTMLButtonElement>('[data-tool="table"]')
+    table?.setAttribute('aria-pressed', String(this.tableWant() === 'visible'))
+    const sound = bar.querySelector<HTMLButtonElement>('[data-tool="sound"]')
+    sound?.setAttribute('aria-pressed', String(!!this.sound?.playing))
+    const reset = bar.querySelector<HTMLButtonElement>('[data-tool="reset"]')
+    // aria-disabled, not disabled: a disabled button would drop the keyboard focus the viewer just put on it.
+    reset?.setAttribute('aria-disabled', String(!this.axis.view))
+  }
+
+  private runTool(k: ToolbarItem): void {
+    if (this.disposed || !this.scene) return
+    const spec = this.spec as { title?: unknown } | null
+    const title = typeof spec?.title === 'string' && spec.title ? spec.title : this.scene.title
+    const fail = (e: unknown): void => this.warn('export_failed', `The ${k.toUpperCase()} export failed: ${e instanceof Error ? e.message : String(e)}.`)
+    try {
+      switch (k) {
+        case 'svg': return this.download(fileNameOf(title, 'svg'), new Blob([this.toSvg()], { type: 'image/svg+xml;charset=utf-8' }))
+        case 'csv': return this.download(fileNameOf(title, 'csv'), new Blob([this.toCsv()], { type: 'text/csv;charset=utf-8' }))
+        case 'png': { this.toPng().then(b => this.download(fileNameOf(title, 'png'), b), fail); return }
+        case 'table': {
+          this.tableShown = this.tableWant() !== 'visible'
+          this.syncTable()
+          return this.syncBar()
+        }
+        case 'reset': return this.axis.resetByViewer()
+        case 'sound': {
+          if (this.sound?.playing) this.sound.stop()
+          else this.sonify()
+          return this.syncBar()
+        }
+      }
+    } catch (e) {
+      fail(e)
+    }
+  }
+
+  private download(name: string, blob: Blob): void {
+    const doc = this.host.ownerDocument
+    const url = URL.createObjectURL(blob)
+    const a = doc.createElement('a')
+    a.href = url
+    a.download = name
+    a.rel = 'noopener'
+    a.style.display = 'none'
+    doc.body.appendChild(a)
+    a.click()
+    a.remove()
+    setTimeout(() => URL.revokeObjectURL(url), 1000)
+  }
+
+  // ---- sync --------------------------------------------------------------------------------
+
+  private joinSync(): void {
+    const next = syncConf(this.options.sync)
+    if (this.sync && this.sync.key !== next?.key) leaveGroup(this.sync.key, this)
+    this.sync = next
+    if (next) joinGroup(next.key, this)
+  }
+
+  private leaveSync(): void {
+    if (this.sync) leaveGroup(this.sync.key, this)
+    this.sync = null
+  }
+
+  /** The other plots in this plot's group that take part in `kind`. */
+  private peers(kind: 'hover' | 'zoom' | 'brush'): SuperPlot[] {
+    const s = this.sync
+    if (!s || !s[kind]) return []
+    return groupOf<SuperPlot>(s.key).filter(p => p !== this && !p.disposed && p.sync?.[kind] === true)
+  }
+
+  /** Another plot in the group hovered `v` (null: nothing). Shown here without reporting it, so nothing echoes back. */
+  private followHover(v: SyncValue | null): void {
+    const scene = this.scene
+    const i = v && scene ? syncTarget(scene, v) : -1
+    if (this.layer) return this.layer.showMark(i)
+    this.clearGuide()
+    this.clearHighlight()
+    const m = i >= 0 ? scene!.marks[i] : null
+    if (!m) return this.hideTip()
+    if (m.guide) this.showGuide(m)
+    else if (m.series !== undefined) this.highlight(m.series)
+    if (!m.tip || !this.tipEnabled()) return this.hideTip()
+    const c = m.guide ? { x: m.guide.x1, y: m.focus?.[0]?.y ?? (m.guide.y1 + m.guide.y2) / 2 } : markCenter(m)
+    const r = this.root.getBoundingClientRect()
+    const k = r.width > 0 ? r.width / scene!.width : 1
+    if (c) this.showTip(m.tip, r.left + c.x * k, r.top + c.y * k, m)
+  }
+
+  private shareZoom(): void {
+    const peers = this.peers('zoom')
+    const a = this.scene?.axes
+    if (!peers.length || !a || a.x.kind === 'band' || this.scene!.panels) return
+    const x = this.axis.view?.x ?? null
+    for (const p of peers) p.followZoom(a.x.kind, x)
+  }
+
+  private followZoom(kind: AxisInfo['kind'], x: [number, number] | null): void {
+    const a = this.scene?.axes
+    if (!a?.zoom || a.x.kind !== kind || this.scene!.panels) return
+    this.axis.setXView(x)
+  }
+
+  private shareBrush(sel: BrushSelection | null): void {
+    const peers = this.peers('brush')
+    const a = this.scene?.axes
+    if (!peers.length || !a) return
+    const x = sel?.x ? ('oneOf' in sel.x ? sel.x.oneOf : sel.x.range) : null
+    for (const p of peers) p.followBrush(a.x.kind, x)
+  }
+
+  private followBrush(kind: AxisInfo['kind'], x: unknown[] | null): void {
+    const a = this.scene?.axes
+    if (!a?.brush || a.x.kind !== kind || this.scene!.panels) return
+    this.axis.setBrush(x ? { x } : null)
+  }
+
   /** The `dataTable` option: rebuilt when the spec changes, not on every resize. */
+  /** What the table shows: the toolbar's choice, else the `dataTable` option. */
+  private tableWant(): boolean | 'visible' {
+    const o = this.options.dataTable ?? false
+    if (this.tableShown === null) return o
+    return this.tableShown ? 'visible' : o === 'visible' ? true : o
+  }
+
   private syncTable(): void {
-    const want = this.options.dataTable
+    const want = this.tableWant()
     if (!want) {
       this.table?.remove()
       this.table = null
@@ -548,6 +904,10 @@ export class SuperPlot {
     if (m === this.hoverMark) return
     this.hoverMark = m
     this.options.onHover?.(m ? { datum: m.datum, series: m.series, tip: m.tip } : null)
+    const peers = this.peers('hover')
+    if (!peers.length) return
+    const v = m ? xValueOf(this.scene, m) : null
+    for (const p of peers) p.followHover(v)
   }
 
   /** A WebGL layer for this plot, or null (not loaded yet, unavailable, or a software GPU under `auto`). */
@@ -627,7 +987,7 @@ export class SuperPlot {
     if (!m || !mark) return this.clearHighlight()
     if (mark.series !== undefined && mark.role !== 'hit') this.highlight(mark.series)
     else if (mark.role === 'hit') this.showGuide(mark)
-    if (mark.tip && this.tipEnabled()) this.showTip(mark.tip, e.clientX, e.clientY)
+    if (mark.tip && this.tipEnabled()) this.showTip(mark.tip, e.clientX, e.clientY, mark)
   }
 
   private onMove = (e: PointerEvent): void => {
@@ -652,7 +1012,7 @@ export class SuperPlot {
     if (mark) this.hovered(mark)
     if (!m || !mark?.tip || !this.tipEnabled()) return
     const r = m.el.getBoundingClientRect()
-    this.showTip(mark.tip, r.left + r.width / 2, r.top)
+    this.showTip(mark.tip, r.left + r.width / 2, r.top, mark)
     if (mark.series !== undefined) this.highlight(mark.series)
   }
 
@@ -737,7 +1097,21 @@ export class SuperPlot {
     this.overlay?.replaceChildren()
   }
 
-  private showTip(tip: Tip, x: number, y: number): void {
+  /** `tooltipFormat`'s content for a tip, or null for the default. */
+  private customTip(tip: Tip, mark?: Mark | null): string | Node | null {
+    const f = this.options.tooltipFormat
+    if (!f) return null
+    try {
+      const r = f(tip, { datum: mark?.datum, series: mark?.series, tip })
+      if (typeof r === 'string') return r
+      return r && typeof (r as Node).nodeType === 'number' ? r : null
+    } catch (e) {
+      this.warn('tooltip_format_error', `tooltipFormat threw: ${e instanceof Error ? e.message : String(e)}. The default tooltip was shown.`)
+      return null
+    }
+  }
+
+  private showTip(tip: Tip, x: number, y: number, mark?: Mark | null): void {
     const doc = this.host.ownerDocument
     const theme = resolveTheme(this.options.theme, this.prefersDark())
     const t = this.tip
@@ -746,6 +1120,16 @@ export class SuperPlot {
     t.style.borderColor = `var(--sp-border, ${theme.colors.border})`
     t.style.fontFamily = `var(--sp-font, ${theme.font})`
     t.replaceChildren()
+    const custom = this.customTip(tip, mark)
+    if (custom !== null) {
+      t.setAttribute('data-custom', '')
+      // A string is text, never markup: it cannot inject anything.
+      if (typeof custom === 'string') t.textContent = custom
+      else t.appendChild(custom)
+      t.setAttribute('data-show', '')
+      return this.placeTip(x, y)
+    }
+    t.removeAttribute('data-custom')
     if (tip.title) {
       const b = doc.createElement('b')
       b.textContent = tip.title
@@ -891,7 +1275,7 @@ export class SuperPlot {
   private onDown = (e: PointerEvent): void => {
     if (!this.interactiveMap()) return
     if (e.pointerType === 'mouse' && e.button !== 0) return
-    if ((e.target as Element | null)?.closest?.('.sp-ctl, .sp-cv-lk, [data-lk]')) return
+    if ((e.target as Element | null)?.closest?.('.sp-ctl, .sp-bar, .sp-cv-lk, [data-lk]')) return
     // No pointer capture yet: a click that never becomes a drag must still reach the mark under it.
     this.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY })
     if (this.pointers.size === 1) this.drag = { moved: false, turn: e.shiftKey }

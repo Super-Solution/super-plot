@@ -65,6 +65,15 @@ button { font: inherit; border: 1px solid var(--line); background: #fff; border-
       <div class="card"><div id="plugin" class="plot"></div><p class="out"><label><input type="checkbox" id="table-toggle"> Show the data table</label></p></div>
     </div>
   </section>
+
+  <section>
+    <h2>Synchronised charts, toolbar, custom tooltips, sound</h2>
+    <p><code>sync: "ops"</code> links hover and zoom (hover one chart: the other follows; zoom one: both zoom). <code>toolbar</code> adds PNG, SVG, CSV, the data table, reset and sound; <code>tooltipFormat</code> writes the tooltip text. Hover or focus a chart to see its toolbar.</p>
+    <div class="grid">
+      <div class="card"><div id="sync-a" class="plot"></div></div>
+      <div class="card"><div id="sync-b" class="plot"></div></div>
+    </div>
+  </section>
 </main>
 <script type="module" src="./main.js"></script>
 </body>

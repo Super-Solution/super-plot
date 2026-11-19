@@ -183,6 +183,8 @@ export interface AxisOwner {
   redraw(): void
   zoomChanged(z: ZoomRange | null): void
   brushChanged(sel: BrushSelection | null): void
+  /** The viewer changed the view (zoom, pan, reset), as it happens; not called for `setZoom` from code. */
+  viewChanged?(): void
   /** Centre of the mark the keyboard is on (or that `target` is), in scene pixels. */
   focusPoint(target?: EventTarget | null): { x: number; y: number } | null
   hideTip(): void
@@ -379,6 +381,25 @@ export class AxisControl {
     if (wide(v.x, h?.x, a?.x) && (!v.y || wide(v.y, h?.y, a?.y))) this.view = null
     else this.view = v
     this.owner.redraw()
+    this.owner.viewChanged?.()
+  }
+
+  /** Back to the full range, as the viewer asked (a reset button): fires `zoomChanged`. */
+  resetByViewer(): void {
+    if (!this.view) return
+    this.view = null
+    this.owner.redraw()
+    this.owner.viewChanged?.()
+    this.zoomSoon(0)
+  }
+
+  /** Set only the x range (data units), keeping any y zoom: what a synchronised plot receives. Does not notify. */
+  setXView(x: [number, number] | null): void {
+    const y = this.view?.y
+    const next = x || y ? { ...(x ? { x: [...x] as [number, number] } : {}), ...(y ? { y } : {}) } : null
+    if (JSON.stringify(next) === JSON.stringify(this.view)) return
+    this.view = next
+    this.owner.redraw()
   }
 
   private zoomSoon(ms = 250): void {
@@ -389,7 +410,7 @@ export class AxisControl {
   private onDown = (e: PointerEvent): void => {
     const a = this.axes()
     if (!a || (e.pointerType === 'mouse' && e.button !== 0)) return
-    if ((e.target as Element | null)?.closest?.('.sp-ctl, .sp-cv-lk, [data-lk], .sp-table')) return
+    if ((e.target as Element | null)?.closest?.('.sp-ctl, .sp-bar, .sp-cv-lk, [data-lk], .sp-table')) return
     const p = this.toScene(e)
     if (!p) return
     this.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY })
@@ -475,7 +496,7 @@ export class AxisControl {
   /** A click that was not a drag clears the brush (it still selects the mark under it). */
   private onClick = (e: MouseEvent): void => {
     if (!this.live || this.dragging() || !this.brush) return
-    if ((e.target as Element | null)?.closest?.('.sp-ctl, .sp-cv-lk, [data-lk], .sp-table')) return
+    if ((e.target as Element | null)?.closest?.('.sp-ctl, .sp-bar, .sp-cv-lk, [data-lk], .sp-table')) return
     this.setBrush(null, true)
   }
 
@@ -495,9 +516,7 @@ export class AxisControl {
     const a = this.axes()
     const p = this.toScene(e)
     if (!a?.zoom || !this.view || !p || !this.inPlot(p, a)) return
-    this.view = null
-    this.owner.redraw()
-    this.zoomSoon(0)
+    this.resetByViewer()
   }
 
   private onKey = (e: KeyboardEvent): void => {
@@ -511,7 +530,7 @@ export class AxisControl {
       switch (e.key) {
         case '+': case '=': e.preventDefault(); this.zoomAt(a, centre, 1.25); return this.zoomSoon()
         case '-': case '_': e.preventDefault(); this.zoomAt(a, centre, 1 / 1.25); return this.zoomSoon()
-        case '0': if (!this.view) return; e.preventDefault(); this.view = null; this.owner.redraw(); return this.zoomSoon(0)
+        case '0': if (!this.view) return; e.preventDefault(); return this.resetByViewer()
       }
       if (e.shiftKey && (e.key === 'ArrowLeft' || e.key === 'ArrowRight' || (a.zoom === 'xy' && (e.key === 'ArrowUp' || e.key === 'ArrowDown')))) {
         e.preventDefault()

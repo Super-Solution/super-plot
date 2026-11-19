@@ -61,6 +61,61 @@ transform: [
 ```
 
 Window ops: `sum`, `mean`, `count` (cumulative), `rank` (1, 2, 2, 4), `pctChange`, `lag`, `lead`, `movingMean` (`frame` rows, default 3). The table of steps with their keys is generated in [SPEC.md](SPEC.md#transform-steps); the Go and Python ports will be checked against the new `transformCases` in `conformance/plot.v1.json`.
+## Synchronised charts
+
+Plots that share a `sync` key form a group on the page (like uPlot's `cursor.sync`, ECharts `connect`, Highcharts synchronized charts):
+
+```ts
+new SuperPlot(a, revenueSpec, { sync: 'q3' })                                        // hover and zoom
+new SuperPlot(b, usersSpec, { sync: { key: 'q3', brush: true } })                    // also mirror the brush
+new SuperPlot(c, costSpec, { sync: { key: 'q3', hover: true, zoom: false } })        // hover only
+```
+
+- A string is the key with `hover` and `zoom` on and `brush` off; in the object form `hover` and `zoom` default to true, `brush` to false. A plot takes part in a kind only when both it and the plot the viewer is using have it on.
+- **Hover** (pointer or keyboard): the others show their guide and tooltip at the nearest x (a line chart's column, else the nearest data mark). The value travels as data (epoch ms on a time axis, numbers on a linear one, the category on a band axis), so charts of different sizes and ranges line up. A plot whose x axis is of another kind, that does not show the value, is faceted, is a map, or has categories on y (horizontal bars) is skipped quietly. Field names are not compared: putting charts in one group is the declaration that their x axes mean the same thing.
+- **Zoom**: zooming or panning x (wheel, pinch, drag, keyboard, double-click or toolbar reset) sets the same x range on the others whose spec has `zoom`; their y zoom stays. **Brush**: the brushed x range (or categories) is drawn on the others whose spec has `brush`.
+- Only the plot the viewer used fires `onHover`, `onZoom` and `onBrush`; the others are updated as if by `setZoom` / `setBrush`, which fire nothing, so nothing echoes back. Code-driven `setZoom` / `setBrush` are not shared either.
+- The group lives in the module (nothing on `window`); `dispose()` and `setOptions({ sync })` leave it. Linking through `onBrush` filters (above) still works for charts that should *filter* rather than mirror each other.
+
+## Custom tooltips
+
+```ts
+new SuperPlot(el, spec, { tooltipFormat: (tip, e) => `${e.series}: ${(e.datum as { value: number }).value} USD` })
+```
+
+`tip` is the default content (`{ title, rows: [{ label, value, color }] }`), `e` what `onSelect` would get (`datum`, `series`, `tip`). A string is shown as text (`textContent`, never parsed as HTML, line breaks kept); a `Node` is inserted as is (you built it, so you are responsible for what is in it); `null` or `undefined` keeps the default. It applies to pointer and keyboard tooltips and to synced ones, on SVG and canvas. A function that throws falls back to the default and reports `tooltip_format_error` once. The canvas view's screen-reader announcement keeps the plain default reading.
+
+## Export: CSV and the toolbar
+
+`plotCsv(spec, { maxRows?, separator? })` (core) returns the rows `plotTable` reads (after `transform`, every row by default) as RFC 4180 CSV with a header and CRLF line ends. Text that a spreadsheet would run as a formula (starting with `=`, `+`, `-`, `@`, a tab or a carriage return) gets a leading `'`; number values, negative ones included, are written as numbers. `plot.toCsv()` and `<super-plot>.toCsv()` do the same for what is on screen (appended rows included; hidden series are still in the table, as in `plotTable`).
+
+`toolbar: true` adds a row of real buttons in the chart's top right corner: PNG, SVG, CSV, Table (toggles the visible data table) and, when the spec has `zoom`, Reset. A list chooses and orders them: `toolbar: ['csv', 'sound']`. The buttons have accessible names, work from the keyboard, show a focus ring, follow the theme, appear on hover, keyboard focus and touch screens, and are never printed. Downloads are named after the spec's title (`"Revenue: Q3/Q4"` -> `Revenue-Q3-Q4.csv`). Default `false`: existing charts do not change. A failed export reports `export_failed`.
+
+## Sonification
+
+```ts
+const sound = plot.sonify({ duration: 6, volume: 0.3 })   // also the toolbar's 'sound' button
+sound.stop(); await sound.done
+```
+
+The first visible series is played left to right as short sine notes (Web Audio), higher values higher (220 to 880 Hz by default, `minFrequency` / `maxFrequency`), with start and end announced in a live region. A second call stops the first and starts again; `dispose()` stops it. Without Web Audio it returns a controller that did nothing and reports `sonify_unavailable` through `onIssues`; nothing to play is `sonify_empty`. The mapping is the pure `sonifyNotes(scene, options)` (exported), which returns the notes with their time, length, frequency, value and label, so it can be tested or played by your own synthesiser.
+
+## Server rendering and hydration
+
+```ts
+// server
+const html = `<div id="chart" style="width:600px">${renderToSvg(spec, { width: 600, hydrate: true })}</div>`
+// browser
+new SuperPlot(document.getElementById('chart')!, spec)
+```
+
+"Hydration" here means exactly this: `renderToSvg(spec, { hydrate: true })` writes the same markup the browser binding would draw (hover hooks, `var(--sp-*)` colours) and stamps it with `data-sp-key`, a hash of that markup, and `data-sp-id`, its id prefix (derived from the content, or `idPrefix`). When a `SuperPlot` is created on a host whose child is such an `<svg>`, its first draw compiles the spec as usual, serialises it with that id prefix and compares hashes. If they are equal, it keeps the server's nodes (no flash, no layout shift, no entrance animation) and attaches hover, tooltips, keyboard, legend toggling, zoom and brush to them. If they differ (another width or height, theme, dark mode under `theme: 'auto'`, locale, hidden series, plugins, or a chart that will be drawn on canvas), it draws as usual and the server markup is removed. Plain `renderToSvg` output (no `hydrate`) is never adopted and is left where it is.
+
+To match, the server must draw at the size the browser will measure: the host's width, and either the host's CSS height or no height on either side (both then use `defaultHeight`). A hydrated plot measures text with the same estimator as the server for its whole life, so later redraws do not move labels; a server that passes its own `measure` will not match and is redrawn. React's `<SuperPlot>` still renders an empty container on the server (hydration is for the web binding and `<super-plot>`).
+
+## High contrast
+
+Under `forced-colors: active` (Windows high contrast) the chart keeps its own colours and background, like an image (`forced-color-adjust: none` on the SVG and canvas), while everything around it uses system colours: focus rings and the brush in `Highlight`, the tooltip in `Canvas` / `CanvasText`, toolbar and map buttons in `ButtonFace` / `ButtonText`. Series identity therefore still comes from the palette, the legend labels and, with `patterns: true`, textures. Under `prefers-contrast: more` focus rings and the brush are thicker and dimmed series fainter.
 
 ## Live data
 
@@ -169,7 +224,31 @@ Regenerate the data with `npm run conformance`; `npm run test:ports` and `npm ru
 
 ## Framework notes
 
-- React: `<SuperPlot spec onSelect onIssues onHiddenChange onHover onRender onZoom onBrush plugins dataTable />`; the ref is the `SuperPlot` instance (`appendRows`, `setZoom`, `setBrush`, `toPng`).
+- React: `<SuperPlot spec onSelect onIssues onHiddenChange onHover onRender onZoom onBrush plugins dataTable sync toolbar tooltipFormat />`; the ref is the `SuperPlot` instance (`appendRows`, `setZoom`, `setBrush`, `toPng`, `toCsv`, `sonify`). `sync` and `toolbar` may be inline objects or arrays (compared by value); `tooltipFormat` and the callbacks always call the latest function without a redraw.
 - shadcn/ui: `theme="shadcn"` reads the project's `--chart-1..5` and surface tokens; nothing to configure.
-- Vue, Svelte, Angular, plain HTML: `<super-plot>`; set `spec` as a property (object) or attribute (JSON string).
-- Next.js and SSR: render `renderToSvg` on the server for a static chart, or mount `<SuperPlot>` on the client (the server renders an empty div).
+- Plain HTML: `<super-plot spec='{"type":"bar",...}' theme="auto" toolbar sync="sales">`. Attributes: `spec` (JSON), `theme`, `locale`, `renderer`, `toolbar` (present for the default buttons, a comma list such as `"png,csv,sound"`, or `"false"`), `sync` (a key). Properties: `spec` and `options` (any `SuperPlotOptions` as an object, callbacks included; an attribute wins over the same key). Methods: `appendRows`, `setZoom`, `getZoom`, `setBrush`, `getBrush`, `toSvg`, `toPng`, `toCsv`, `sonify`, and `instance` for the rest.
+- Next.js and SSR: render `renderToSvg` on the server for a static chart, or mount `<SuperPlot>` on the client (the server renders an empty div). For the web binding see "Server rendering and hydration".
+
+### Vue, Svelte and Angular
+
+There are no separate bindings for these (see `OPEN-DECISIONS.md`): they use `<super-plot>`, and all three pass objects to a custom element as properties. Register the element once before the app mounts: `import { defineSuperPlot } from '@supersolutions/super-plot-web/element'; defineSuperPlot()`. Properties set before that are taken over when the element upgrades.
+
+Vue 3 (tell the compiler the tag is a custom element: `app.config.compilerOptions.isCustomElement = tag => tag === 'super-plot'`, or `vue({ template: { compilerOptions: { isCustomElement } } })` in Vite):
+
+```vue
+<super-plot :spec.prop="spec" :options.prop="{ toolbar: true, sync: 'sales' }" @plot-select="e => pick(e.detail)" style="height: 320px" />
+```
+
+Svelte 5 (an element property exists, so Svelte sets it as one; listen with an attribute or `addEventListener`):
+
+```svelte
+<super-plot spec={spec} options={{ toolbar: true, sync: 'sales' }} onplot-select={e => pick(e.detail)} style="height: 320px"></super-plot>
+```
+
+Angular (`schemas: [CUSTOM_ELEMENTS_SCHEMA]` on the component or module; `[x]` binds properties):
+
+```html
+<super-plot [spec]="spec" [options]="{ toolbar: true, sync: 'sales' }" (plot-select)="pick($event.detail)" style="display:block;height:320px"></super-plot>
+```
+
+Events carry their payload in `event.detail`. `tests/web/element.test.ts` checks the element the way these frameworks drive it (properties, before and after definition, and the events).
