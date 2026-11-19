@@ -200,6 +200,10 @@ export function resolveVars(css: string): string {
 export interface RenderEnv {
   theme: Theme
   locale: string
+  /** IANA time zone for time axes and dates (validated by `compilePlot`). Default `UTC`. */
+  timeZone?: string
+  /** UI strings with the host's overrides applied (see `DEFAULT_STRINGS`). Default English. */
+  strings?: import('./strings.js').UiStrings
   measure: Measure
   /** Maps: the viewer's camera, over the spec's. */
   camera?: Partial<import('./geo/view.js').Camera>

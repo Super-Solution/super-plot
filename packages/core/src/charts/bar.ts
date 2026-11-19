@@ -197,7 +197,7 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
           })
       if (stack !== 'none' && visible.length > 1) {
         const visTotal = visible.reduce((q, kk) => q + (row?.get(kk) ?? 0), 0)
-        tipRows.push({ label: 'Total', value: fmt(visTotal), color: undefined as unknown as string })
+        tipRows.push({ label: c.t('total'), value: fmt(visTotal), color: undefined as unknown as string })
       }
       const common = {
         role: 'data' as const,

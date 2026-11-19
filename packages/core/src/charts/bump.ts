@@ -125,7 +125,7 @@ function compile(c: ChartCtx): { series: SeriesInfo[] } {
   const ranks = Array.from({ length: m.maxRank }, (_, i) => String(i + 1))
   const yScale = bandScale(ranks, 0)
   const xAxis = bandAxis(xScale, Object.fromEntries(m.xs.map(k => [k, clip(k, 60)])), s.xLabel, c.locale)
-  const yAxis = bandAxis(yScale, Object.fromEntries(ranks.map(k => [k, k])), s.yLabel ?? 'Rank', c.locale)
+  const yAxis = bandAxis(yScale, Object.fromEntries(ranks.map(k => [k, k])), s.yLabel ?? c.t('rank'), c.locale)
   const plot = layoutCartesian(c, { ...area, w: Math.max(40, area.w - reserve) }, xAxis, yAxis)
   drawAnnotations(c, plot, xAxis, yAxis)
   const stepY = plot.h / m.maxRank
@@ -164,14 +164,14 @@ function compile(c: ChartCtx): { series: SeriesInfo[] } {
       run.push([px, py])
       last = { px, py }
       const value = m.values?.get(k)?.get(p.x)
-      const move = prev === undefined ? '' : prev === p.rank ? 'no change' : prev > p.rank ? `up ${r2(prev - p.rank)}` : `down ${r2(p.rank - prev)}`
+      const move = prev === undefined ? '' : prev === p.rank ? c.t('noChange') : prev > p.rank ? c.t('rankUp', { n: r2(prev - p.rank) }) : c.t('rankDown', { n: r2(p.rank - prev) })
       const tipRows: Tip['rows'] = [{ label, value: `#${r2(p.rank)}`, color }]
-      if (value !== undefined) tipRows.push({ label: yName ?? 'Value', value: fmt(value) })
-      if (move) tipRows.push({ label: 'Since the step before', value: move })
+      if (value !== undefined) tipRows.push({ label: yName ?? c.t('value'), value: fmt(value) })
+      if (move) tipRows.push({ label: c.t('sinceStepBefore'), value: move })
       dots.push({
         type: 'circle', role: 'data', series: k, cx: px, cy: py, r, fill: color, stroke: c.c('background'), strokeWidth: 2, anim: 'fade',
         tip: { title: xTitle(p.x), rows: tipRows },
-        aria: `${label}, ${xTitle(p.x)}: rank ${r2(p.rank)}${value !== undefined ? `, ${fmt(value)}` : ''}${move ? `, ${move}` : ''}`,
+        aria: `${label}, ${xTitle(p.x)}: ${c.t('rankAria', { rank: r2(p.rank) })}${value !== undefined ? `, ${fmt(value)}` : ''}${move ? `, ${move}` : ''}`,
         datum: { x: p.x, series: k, rank: p.rank, ...(value !== undefined ? { value } : {}) }
       })
       prev = p.rank

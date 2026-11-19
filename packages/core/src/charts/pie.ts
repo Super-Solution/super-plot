@@ -39,7 +39,8 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
   const s = c.spec
   const { all, shown, order, skipped } = slices(s, c.hidden)
   if (skipped) c.warn('negative_slices', 'data', `${skipped} negative value(s) were skipped; a pie cannot show negatives.`)
-  const series = c.makeSeries(all.map(a => a.key)).map(si => {
+  // The merged slice keeps the key "Other" (colours, legend toggles, datum); only its label is translated.
+  const series = c.makeSeries(all.map(a => a.key), Object.fromEntries(all.filter(a => a.other).map(a => [a.key, c.t('other')]))).map(si => {
     const slice = all.find(a => a.key === si.key)!
     // Colour follows the entity (position in the data), not its rank after sorting.
     const idx = slice.other ? -1 : order.indexOf(si.key)
@@ -60,8 +61,8 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
     const mid = a + sweep / 2
     c.marks.push({
       type: 'path', role: 'data', series: sl.key, d: arc(cx, cy, r0, R, a, a + sweep), fill: info.color, stroke: c.c('background'), strokeWidth: c.theme.gap, anim: 'fade',
-      tip: { title: clip(sl.key, 60), rows: [{ label: s.value, value: c.format(sl.value), color: info.color }, { label: 'Share', value: pct(sl.value) }] },
-      aria: `${sl.key}: ${c.format(sl.value)} (${pct(sl.value)})`, datum: { label: sl.key, value: sl.value }
+      tip: { title: info.label, rows: [{ label: s.value, value: c.format(sl.value), color: info.color }, { label: c.t('share'), value: pct(sl.value) }] },
+      aria: `${info.label}: ${c.format(sl.value)} (${pct(sl.value)})`, datum: { label: sl.key, value: sl.value }
     })
     if (s.labels !== false) {
       const rm = r0 > 0 ? (R + r0) / 2 : R * 0.62
@@ -79,7 +80,7 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
   if (r0 > 36 && total > 0) {
     const big = c.compact ? 18 : 24
     c.marks.push(c.text(cx, cy - 2, s.centerLabel ? clip(s.centerLabel, 24) : c.format(total), { role: 'label', anchor: 'middle', baseline: 'alphabetic', size: big, weight: 600, fill: c.c('text') }))
-    if (!s.centerLabel) c.marks.push(c.text(cx, cy + c.size + 4, 'Total', { role: 'label', anchor: 'middle', baseline: 'alphabetic', fill: c.c('text-muted') }))
+    if (!s.centerLabel) c.marks.push(c.text(cx, cy + c.size + 4, c.t('total'), { role: 'label', anchor: 'middle', baseline: 'alphabetic', fill: c.c('text-muted') }))
   }
   return { series }
 }

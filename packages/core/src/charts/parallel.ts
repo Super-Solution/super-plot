@@ -83,7 +83,7 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
     const key = grouped ? xKey(row[s.series]) : undefined
     if (key !== undefined && c.hidden.has(key)) continue
     const d = values.map((v, i) => `${i ? 'L' : 'M'}${r2(xs[i])} ${r2(scales[i].at(v))}`).join('')
-    const title = key !== undefined ? clip(key, 60) : `Row ${index + 1}`
+    const title = key !== undefined ? clip(key, 60) : c.t('rowName', { n: index + 1 })
     const stroke = key !== undefined ? colorOf.get(key)! : single
     c.marks.push({
       type: 'path', role: 'data', series: key, d, fill: 'none', stroke, strokeWidth: 1.25, opacity, anim: 'fade',

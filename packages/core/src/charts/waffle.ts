@@ -78,7 +78,8 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
   if (skipped) c.warn('negative_slices', 'data', `${skipped} negative value(s) were skipped; a waffle cannot show negatives.`)
   if (merged) c.warn('many_categories', 'label', `${merged + LIMITS.maxSeries - 1} categories is more than ${LIMITS.maxSeries} distinct colours; the ${merged} smallest were merged into "Other".`, 'Filter or group with `transform` first, or use a bar chart to compare many categories.')
   const colors = s.colors as Record<string, string> | undefined
-  const series = c.makeSeries(all.map(p => p.key)).map(si => {
+  // The merged part keeps the key "Other" (colours, toggles, datum); only its label is translated.
+  const series = c.makeSeries(all.map(p => p.key), Object.fromEntries(all.filter(a => a.other).map(a => [a.key, c.t('other')]))).map(si => {
     const p = all.find(a => a.key === si.key)!
     // Colour follows the entity (position in the data), not its rank after sorting, as on a pie.
     return { ...si, color: p.other ? (colors?.Other ?? c.c('other')) : c.seriesColor(si.key, order.indexOf(si.key)) }

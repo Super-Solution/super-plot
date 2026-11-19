@@ -559,7 +559,10 @@ const describeCases = [
   D('waffle: 400 cells, data order', { type: 'waffle', label: 'k', value: 'v', cells: 400, sort: 'none', data: [{ k: 'a', v: 1 }, { k: 'b', v: 2 }, { k: 'a', v: 1 }, { k: 'c', v: -4 }] }),
   D('beeswarm: one swarm', { type: 'beeswarm', x: 'v', title: 'Latency', data: [5, 1, 9, 3, 3, 7].map(v => ({ v })) }),
   D('beeswarm: lanes', { type: 'beeswarm', x: 'v', y: 'g', format: 'fixed:1', data: [['a', 1], ['b', 2.5], ['a', 4], ['b', 'x'], ['c', 8]].map(([g, v]) => ({ g, v })) }),
-  D('flow-map: by regions', { type: 'flow-map', geo: G3, from: 'a', to: 'b', value: 'n', series: 'a', data: [...FL, { a: ' N ', b: 'S', n: 5 }] })
+  D('flow-map: by regions', { type: 'flow-map', geo: G3, from: 'a', to: 'b', value: 'n', series: 'a', data: [...FL, { a: ' N ', b: 'S', n: 5 }] }),
+  D('area: stream graph (stack center)', { type: 'area', x: 'x', y: ['a', 'b'], stack: 'center', xType: 'linear', data: [{ x: 1, a: 1, b: 2 }, { x: 2, a: 3, b: 1 }] }),
+  D('timeline: numbers, a reversed and a missing range, overlap', { type: 'timeline', y: 'k', start: 's', end: 'e', format: 'fixed:1', data: [{ k: 'A', s: 0, e: 4.5 }, { k: 'A', s: 3, e: 6 }, { k: 'B', s: 9, e: 2 }, { k: 'C', s: 1, e: null }] }),
+  D('timeline: times of day, series and labels', { type: 'timeline', y: 'k', start: 's', end: 'e', series: 'g', label: 'n', title: 'Shifts', data: [{ k: 'Ana', g: 'P', n: 'Night', s: '2026-03-07T22:00:00Z', e: '2026-03-08T06:00:00Z' }, { k: 'Ben', g: 'Q', n: 'Day', s: '2026-03-08T06:00:00Z', e: '2026-03-09T08:30:00Z' }] })
 ]
 
 const { MIN_TIME, MAX_TIME } = core

@@ -7227,6 +7227,94 @@
       "describe": "Bump chart \"Most used languages\". Ranks of 6 series (Python, JavaScript, TypeScript, Java, Go and 1 more) over 5 steps from 2022 to 2026, ranked by share, highest first. At 2026: 1. Python, 2. TypeScript, 3. JavaScript, 4. Rust, 5. Go. Biggest climb: TypeScript, from 4 to 2. Biggest fall: Java, from 3 to 6."
     },
     {
+      "type": "timeline",
+      "spec": {
+        "type": "timeline",
+        "title": "Release 4.2 plan",
+        "subtitle": "Work by team, March to May 2026",
+        "y": "task",
+        "start": "from",
+        "end": "to",
+        "series": "team",
+        "annotations": [
+          {
+            "axis": "x",
+            "value": "2026-04-06",
+            "label": "Today",
+            "tone": "warning"
+          }
+        ],
+        "data": [
+          {
+            "task": "Research",
+            "team": "Design",
+            "from": "2026-03-02",
+            "to": "2026-03-20"
+          },
+          {
+            "task": "Wireframes",
+            "team": "Design",
+            "from": "2026-03-16",
+            "to": "2026-04-03"
+          },
+          {
+            "task": "API",
+            "team": "Backend",
+            "from": "2026-03-23",
+            "to": "2026-04-24"
+          },
+          {
+            "task": "Web app",
+            "team": "Frontend",
+            "from": "2026-04-06",
+            "to": "2026-05-08"
+          },
+          {
+            "task": "Load tests",
+            "team": "Backend",
+            "from": "2026-04-27",
+            "to": "2026-05-08"
+          },
+          {
+            "task": "Docs",
+            "team": "Frontend",
+            "from": "2026-04-20",
+            "to": "2026-05-15"
+          },
+          {
+            "task": "Launch",
+            "team": "Design",
+            "from": "2026-05-15",
+            "to": "2026-05-19"
+          }
+        ]
+      },
+      "valid": true,
+      "issueCodes": [],
+      "normalized": {
+        "type": "timeline",
+        "title": "Release 4.2 plan",
+        "subtitle": "Work by team, March to May 2026",
+        "y": "task",
+        "start": "from",
+        "end": "to",
+        "series": "team",
+        "annotations": [
+          {
+            "axis": "x",
+            "value": "2026-04-06",
+            "label": "Today",
+            "tone": "warning"
+          }
+        ],
+        "legend": "auto",
+        "tooltip": true,
+        "labels": false,
+        "xType": "auto"
+      },
+      "describe": "Timeline \"Release 4.2 plan\". 7 ranges in 7 lanes (Research, Wireframes, API, Web app, Load tests and 2 more), coloured by team (Design, Backend, Frontend), from Mar 2, 2026 to May 19, 2026. First: Research at Mar 2, 2026. Last to end: Launch at May 19, 2026. Longest: API (32 d)."
+    },
+    {
       "type": "radar",
       "spec": {
         "type": "radar",
@@ -72696,6 +72784,101 @@
         ]
       },
       "describe": "Flow map. 3 flows weighted by n. Total 12. Largest: N to S (5).",
+      "issueCodes": []
+    },
+    {
+      "name": "area: stream graph (stack center)",
+      "spec": {
+        "type": "area",
+        "x": "x",
+        "y": [
+          "a",
+          "b"
+        ],
+        "stack": "center",
+        "xType": "linear",
+        "data": [
+          {
+            "x": 1,
+            "a": 1,
+            "b": 2
+          },
+          {
+            "x": 2,
+            "a": 3,
+            "b": 1
+          }
+        ]
+      },
+      "describe": "Stream graph. 2 series (a, b) over a numeric x axis. a: from 1 at 1 to 3 at 2 (200.0%); peak 3 at 2, low 1 at 1. b: from 2 at 1 to 1 at 2 (-50.0%); peak 2 at 1, low 1 at 2. The layers are stacked around a centre line, so the vertical axis has no zero; the thickness of each layer is its value.",
+      "issueCodes": []
+    },
+    {
+      "name": "timeline: numbers, a reversed and a missing range, overlap",
+      "spec": {
+        "type": "timeline",
+        "y": "k",
+        "start": "s",
+        "end": "e",
+        "format": "fixed:1",
+        "data": [
+          {
+            "k": "A",
+            "s": 0,
+            "e": 4.5
+          },
+          {
+            "k": "A",
+            "s": 3,
+            "e": 6
+          },
+          {
+            "k": "B",
+            "s": 9,
+            "e": 2
+          },
+          {
+            "k": "C",
+            "s": 1,
+            "e": null
+          }
+        ]
+      },
+      "describe": "Timeline. 3 ranges in 2 lanes (A, B), from 0.0 to 9.0. First: A at 0.0. Last to end: B at 9.0. Longest: B (7.0). Ranges overlap in 1 lane.",
+      "issueCodes": [
+        "missing_range",
+        "range_reversed",
+        "overlapping_ranges"
+      ]
+    },
+    {
+      "name": "timeline: times of day, series and labels",
+      "spec": {
+        "type": "timeline",
+        "y": "k",
+        "start": "s",
+        "end": "e",
+        "series": "g",
+        "label": "n",
+        "title": "Shifts",
+        "data": [
+          {
+            "k": "Ana",
+            "g": "P",
+            "n": "Night",
+            "s": "2026-03-07T22:00:00Z",
+            "e": "2026-03-08T06:00:00Z"
+          },
+          {
+            "k": "Ben",
+            "g": "Q",
+            "n": "Day",
+            "s": "2026-03-08T06:00:00Z",
+            "e": "2026-03-09T08:30:00Z"
+          }
+        ]
+      },
+      "describe": "Timeline \"Shifts\". 2 ranges in 2 lanes (Ana, Ben), coloured by g (P, Q), from Mar 7, 2026, 22:00 to Mar 9, 2026, 08:30. First: Night at Mar 7, 2026, 22:00. Last to end: Day at Mar 9, 2026, 08:30. Longest: Day (1 d 3 h).",
       "issueCodes": []
     }
   ]
