@@ -22,6 +22,8 @@ export interface HierarchyNode {
   /** Sum of the rows under this node (its children may add up to less: rows that stop early). */
   value: number
   children: HierarchyNode[]
+  /** The merged remainder ("Other"). */
+  other?: true
 }
 
 /**
@@ -61,7 +63,7 @@ export function hierarchy(rows: Row[], levels: string[], value: string): { root:
     if (n.children.length > MAX_CHILDREN) {
       const rest = n.children.splice(MAX_CHILDREN - 1)
       merged += rest.length
-      n.children.push({ name: 'Other', path: [...n.path, 'Other'], value: rest.reduce((q, c) => q + c.value, 0), children: [] })
+      n.children.push({ name: 'Other', path: [...n.path, 'Other'], value: rest.reduce((q, c) => q + c.value, 0), children: [], other: true })
     }
     n.children.forEach(tidy)
   }
@@ -77,6 +79,15 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
   const s = c.spec
   const levels = levelsOf(s)
   const { root, merged } = hierarchy(s.data, levels, s.value)
+  // The merged remainder is shown in the host's language (the tree is this compile's own copy).
+  const rename = (n: HierarchyNode): void => {
+    if (n.other) {
+      n.name = c.t('other')
+      n.path = [...n.path.slice(0, -1), n.name]
+    }
+    n.children.forEach(rename)
+  }
+  rename(root)
   if (merged) c.warn('many_children', 'path', `${merged} small groups were merged into "Other" (at most ${MAX_CHILDREN} per parent).`, 'Filter or aggregate with `transform` to show them.')
   const firsts = root.children.map(n => n.name)
   const series = c.makeSeries(firsts)
@@ -119,11 +130,11 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
     const shareParent = parent ? n.value / parent : 0
     const shareTotal = total ? n.value / total : 0
     const name = n.path.join(' / ')
-    const rows = [{ label: String(s.value), value: fmt(n.value), color: fill }, ...(d > 1 ? [{ label: 'Share of parent', value: pct(shareParent) }] : []), { label: 'Share of total', value: pct(shareTotal) }]
+    const rows = [{ label: String(s.value), value: fmt(n.value), color: fill }, ...(d > 1 ? [{ label: c.t('shareOfParent'), value: pct(shareParent) }] : []), { label: c.t('shareOfTotal'), value: pct(shareTotal) }]
     c.marks.push({
       type: 'path', role: 'data', series: key, d: arc(cx, cy, r0, r1, a0, a1), fill, stroke: c.c('background'), strokeWidth: 1, anim: 'fade',
       tip: { title: clip(name, 80), rows },
-      aria: `${n.path.join(' > ')}: ${fmt(n.value)}${d > 1 ? `, ${pct(shareParent)} of ${n.path[n.path.length - 2]}` : ''}, ${pct(shareTotal)} of the total`,
+      aria: `${n.path.join(' > ')}: ${fmt(n.value)}${d > 1 ? `, ${c.t('shareOfParentAria', { share: pct(shareParent), parent: n.path[n.path.length - 2] })}` : ''}, ${c.t('shareOfTotalAria', { share: pct(shareTotal) })}`,
       datum: { path: n.path, value: n.value, depth: d },
       ...(n.children.length ? { drill: n.path } : {})
     })
@@ -173,7 +184,7 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
     const big = c.compact ? 14 : 18
     if (c.measure(t, big, 600) < hole * 1.8) {
       c.marks.push(c.text(cx, cy - 1, t, { role: 'label', anchor: 'middle', baseline: 'alphabetic', size: big, weight: 600, fill: c.c('text') }))
-      c.marks.push(c.text(cx, cy + c.size + 2, focus ? fit(focus.name, hole * 1.7, c.size, c.env.measure) : 'Total', { role: 'label', anchor: 'middle', baseline: 'alphabetic', fill: c.c('text-muted') }))
+      c.marks.push(c.text(cx, cy + c.size + 2, focus ? fit(focus.name, hole * 1.7, c.size, c.env.measure) : c.t('total'), { role: 'label', anchor: 'middle', baseline: 'alphabetic', fill: c.c('text-muted') }))
     }
   }
   return { series }

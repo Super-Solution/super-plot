@@ -17,10 +17,13 @@ import { waterfall } from './charts/waterfall.js'
 import { funnel } from './charts/funnel.js'
 import { bullet } from './charts/bullet.js'
 import { bump } from './charts/bump.js'
+import { waffle } from './charts/waffle.js'
+import { beeswarm } from './charts/beeswarm.js'
+import { timeline } from './charts/timeline.js'
 import { bubbleMap, choropleth, columnMap, flowMap } from './charts/maps.js'
 import type { ChartDef } from './registry.js'
 
-export { bar, line, areaChart as area, scatter, pie, donut, histogram, box, violin, heatmap, calendar, waterfall, bullet, bump, radar, treemap, sunburst, sankey, parallel, funnel, choropleth, bubbleMap, columnMap, flowMap }
+export { bar, line, areaChart as area, scatter, pie, donut, histogram, box, violin, heatmap, calendar, waterfall, bullet, bump, timeline, radar, treemap, sunburst, sankey, parallel, funnel, waffle, beeswarm, choropleth, bubbleMap, columnMap, flowMap }
 
 /** All of them, in catalogue order. */
-export const allCharts: readonly ChartDef[] = [bar, line, areaChart, scatter, pie, donut, histogram, box, violin, heatmap, calendar, waterfall, bullet, bump, radar, treemap, sunburst, sankey, parallel, funnel, choropleth, bubbleMap, columnMap, flowMap]
+export const allCharts: readonly ChartDef[] = [bar, line, areaChart, scatter, pie, donut, histogram, box, violin, heatmap, calendar, waterfall, bullet, bump, timeline, radar, treemap, sunburst, sankey, parallel, funnel, waffle, beeswarm, choropleth, bubbleMap, columnMap, flowMap]

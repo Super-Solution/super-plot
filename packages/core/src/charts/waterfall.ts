@@ -14,7 +14,6 @@ const MAX_BAR = 56
 /** Increase, decrease and total bars: their own legend entries and theme tokens (up, down, neutral). */
 export const WATERFALL_KINDS = ['increase', 'decrease', 'total'] as const
 export type WaterfallKind = (typeof WATERFALL_KINDS)[number]
-const LABEL: Record<WaterfallKind, string> = { increase: 'Increase', decrease: 'Decrease', total: 'Total' }
 const TOKEN: Record<WaterfallKind, string> = { increase: 'positive', decrease: 'negative', total: 'text-muted' }
 
 export interface WaterfallStep {
@@ -90,6 +89,8 @@ function compile(c: ChartCtx): { series: SeriesInfo[] } {
   const { steps } = waterfallModel(s)
   const present = WATERFALL_KINDS.filter(k => steps.some(st => st.kind === k))
   const colors = (s.colors ?? {}) as Record<string, string>
+  // Keys stay increase / decrease / total (colours, toggles, datum); the labels are UI strings.
+  const LABEL: Record<WaterfallKind, string> = { increase: c.t('increase'), decrease: c.t('decrease'), total: c.t('total') }
   const series: SeriesInfo[] = present.map(k => ({ key: k, label: LABEL[k], color: colors[k] ?? c.c(TOKEN[k]), hidden: c.hidden.has(k) }))
   const colorOf = (k: WaterfallKind): string => colors[k] ?? c.c(TOKEN[k])
   const horizontal = s.orientation === 'horizontal'
@@ -148,9 +149,9 @@ function compile(c: ChartCtx): { series: SeriesInfo[] } {
     const p1 = P(st.to)
     const len = Math.max(1, Math.abs(p1 - p0))
     const tipRows = st.kind === 'total'
-      ? [{ label: 'Total', value: fmt(st.running), color }, ...(st.computed !== undefined ? [{ label: 'Sum of the steps before', value: fmt(st.computed) }] : [])]
-      : [{ label: LABEL[st.kind], value: signed(st.change), color }, { label: 'Running total', value: fmt(st.running) }]
-    const aria = st.kind === 'total' ? `${st.key}: total ${fmt(st.running)}` : `${st.key}: ${st.kind} of ${fmt(Math.abs(st.change))}, running total ${fmt(st.running)}`
+      ? [{ label: LABEL.total, value: fmt(st.running), color }, ...(st.computed !== undefined ? [{ label: c.t('sumOfStepsBefore'), value: fmt(st.computed) }] : [])]
+      : [{ label: LABEL[st.kind], value: signed(st.change), color }, { label: c.t('runningTotal'), value: fmt(st.running) }]
+    const aria = st.kind === 'total' ? c.t('totalAria', { name: st.key, value: fmt(st.running) }) : c.t(st.kind === 'increase' ? 'increaseAria' : 'decreaseAria', { name: st.key, value: fmt(Math.abs(st.change)), total: fmt(st.running) })
     const datum = st.kind === 'total' ? { x: st.key, kind: st.kind, total: st.running } : { x: st.key, kind: st.kind, change: st.change, total: st.running }
     const up = st.to >= st.from
     const r = Math.min(radius, len / 2)

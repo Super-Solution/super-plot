@@ -5,6 +5,7 @@ import { cssVar, resolveVars, seriesVar } from './theme.js'
 import { fit, clip } from './util/text.js'
 import { parseHex } from './util/color.js'
 import { valueFormatter } from './util/format.js'
+import { DEFAULT_STRINGS, fillString, type UiStringKey } from './strings.js'
 
 export interface FrameOptions {
   series: SeriesInfo[]
@@ -55,6 +56,13 @@ export class ChartCtx<S extends Record<string, any> = Record<string, any>> {
 
   get theme() { return this.env.theme }
   get locale() { return this.env.locale }
+  /** IANA time zone for dates on this chart (`UTC` unless the render options name another). */
+  get timeZone(): string { return this.env.timeZone ?? 'UTC' }
+
+  /** A UI string (the host's override or the English default) with `{name}` placeholders filled in. */
+  t(key: UiStringKey, vars?: Record<string, string | number>): string {
+    return fillString(this.env.strings?.[key] ?? DEFAULT_STRINGS[key], vars)
+  }
 
   /** `var(--sp-token, value)` paint for a theme token. */
   c(token: string): string { return cssVar(this.env.theme, token) }
@@ -177,6 +185,6 @@ export class ChartCtx<S extends Record<string, any> = Record<string, any>> {
     this.marks.push(this.text(x + 16, cy, fit(s.label, maxText, this.size, this.env.measure), { role: 'legend', baseline: 'middle', fill: this.c('text'), opacity: dim, series: s.key }))
     if (trailing) this.marks.push(this.text(x + w, cy, trailing, { role: 'legend', baseline: 'middle', anchor: 'end', opacity: dim, series: s.key }))
     // Last, so it sits on top of the swatch and the label and the whole row is clickable.
-    this.marks.push({ type: 'rect', role: 'legend', x: x - 4, y, w: w + 8, h: rowH, fill: 'transparent', legendKey: s.key, series: s.key, aria: `${s.label}: toggle series` })
+    this.marks.push({ type: 'rect', role: 'legend', x: x - 4, y, w: w + 8, h: rowH, fill: 'transparent', legendKey: s.key, series: s.key, aria: this.t('legendToggle', { label: s.label }) })
   }
 }

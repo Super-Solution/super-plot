@@ -116,7 +116,6 @@ function placeOf(spec: Spec, geo: Geography | null, r: R, lat = 'lat', lng = 'ln
   return null
 }
 
-const DISPUTED_NOTE = { label: 'Note', value: 'Marked disputed in the source data' }
 
 function colorbar(c: ChartCtx, x: number, y: number, w: number, lo: number, hi: number, colorAt: (t: number) => string): void {
   const n = 32
@@ -241,7 +240,7 @@ function choroplethCompile(c: ChartCtx): { series: SeriesInfo[] } {
     if (!v) return { polygons: g.polygons, bbox: g.bbox, center: g.center, fill: nodata, stroke: border, strokeWidth: 0.6, height: 0, ...(disputed ? { dashed: true } : {}) }
     const muted = g.disputed && s.disputed === 'muted'
     const fill = muted ? T('nodata') : colorAt(tOf(v.value))
-    const tip: Tip = { title: clip(g.name, 60), rows: [{ label: String(s.value), value: fmt(v.value), color: fill }, ...(disputed ? [DISPUTED_NOTE] : [])] }
+    const tip: Tip = { title: clip(g.name, 60), rows: [{ label: String(s.value), value: fmt(v.value), color: fill }, ...(disputed ? [{ label: c.t('note'), value: c.t('disputed') }] : [])] }
     const t = Math.max(0, Math.min(1, hi === lo ? 1 : (v.value - lo) / (hi - lo)))
     return {
       polygons: g.polygons, bbox: g.bbox, center: g.center, fill, stroke: border, strokeWidth: 0.6, height: extrude ? 0.02 + 0.3 * t : 0,
@@ -350,7 +349,7 @@ function bubbleCompile(c: ChartCtx): { series: SeriesInfo[] } {
     const rows = [
       ...(s.size && p.size !== null ? [{ label: String(s.size), value: fmt(p.size) }] : []),
       ...(s.series ? [{ label: String(s.series), value: clip(p.s, 40), color: color(p) }] : []),
-      { label: 'Lat, lng', value: `${p.lat.toFixed(2)}, ${p.lng.toFixed(2)}` }
+      { label: c.t('latLng'), value: `${p.lat.toFixed(2)}, ${p.lng.toFixed(2)}` }
     ]
     return {
       lng: p.lng, lat: p.lat, r: radius(p), fill: color(p), stroke: dense ? '' : c.c('background'), opacity: p.size !== null ? 0.72 : dense ? 0.6 : 0.85,

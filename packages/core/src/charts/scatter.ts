@@ -4,7 +4,7 @@ import type { Mark, Rect } from '../scene.js'
 import { tokenValue } from '../theme.js'
 import { mix } from '../util/color.js'
 import { linearScale, logScale, niceLinear, niceLog, type LinearScale } from '../scale.js'
-import { drawAnnotations, layoutCartesian, valueAxis } from '../cartesian.js'
+import { drawAnnotations, layoutCartesian, valueAxis, warnZoneDates } from '../cartesian.js'
 import { distinct } from '../data.js'
 import { correlation, extent, linearFit, toNumber } from '../util/num.js'
 import { formatTime, hasTimeOfDay, toTime } from '../util/time.js'
@@ -63,7 +63,7 @@ function hexbin(c: ChartCtx, pts: P[], xs: LinearScale, ys: LinearScale, plot: R
     const x0 = xs.invert(cx - dx / 2), x1 = xs.invert(cx + dx / 2)
     const y0 = ys.invert(cy + R), y1 = ys.invert(cy - R)
     const fill = color(b.n)
-    c.marks.push({ type: 'path', role: 'data', d, fill, clip: 'plot', anim: 'fade', tip: { title: `${count.format(b.n)} ${b.n === 1 ? 'point' : 'points'}`, rows: [{ label: String(c.spec.x), value: `${fmt(x0)} – ${fmt(x1)}` }, { label: String(c.spec.y), value: `${fmt(y0)} – ${fmt(y1)}` }] }, aria: `${count.format(b.n)} points near ${c.spec.x} ${fmt((x0 + x1) / 2)}, ${c.spec.y} ${fmt((y0 + y1) / 2)}`, datum: { count: b.n, x: [x0, x1], y: [y0, y1] } })
+    c.marks.push({ type: 'path', role: 'data', d, fill, clip: 'plot', anim: 'fade', tip: { title: c.t(b.n === 1 ? 'pointCountOne' : 'pointCount', { n: count.format(b.n) }), rows: [{ label: String(c.spec.x), value: `${fmt(x0)} – ${fmt(x1)}` }, { label: String(c.spec.y), value: `${fmt(y0)} – ${fmt(y1)}` }] }, aria: c.t('binNearAria', { n: count.format(b.n), x: String(c.spec.x), xValue: fmt((x0 + x1) / 2), y: String(c.spec.y), yValue: fmt((y0 + y1) / 2) }), datum: { count: b.n, x: [x0, x1], y: [y0, y1] } })
   }
   if (rampW) {
     const x = plot.x + plot.w + 22
@@ -73,7 +73,7 @@ function hexbin(c: ChartCtx, pts: P[], xs: LinearScale, ys: LinearScale, plot: R
     for (let i = 0; i < n; i++) c.marks.push({ type: 'rect', role: 'legend', x, y: y0 + (h / n) * i, w: 12, h: h / n + 0.5, fill: mix(high, low, i / (n - 1)) })
     c.marks.push(c.text(x + 18, y0 + 4, count.format(max), { role: 'legend', baseline: 'middle', size: c.size - 1 }))
     c.marks.push(c.text(x + 18, y0 + h - 4, '1', { role: 'legend', baseline: 'middle', size: c.size - 1 }))
-    c.marks.push(c.text(x, y0 - 8, 'Points', { role: 'legend', size: c.size - 1 }))
+    c.marks.push(c.text(x, y0 - 8, c.t('points'), { role: 'legend', size: c.size - 1 }))
   }
   if (groups > 1) c.warn('density_merges_series', 'density', `Hexagons count all ${groups} groups together; colour shows density, not group.`, 'Facet by the group column to compare densities per group.')
 }
@@ -147,9 +147,10 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
   const baseR = n > 20000 ? 2 : n > 8000 ? 2.5 : dense ? 3.5 : 5
   const radius = (p: P): number => (p.size === null || !sz ? baseR : sz[0] === sz[1] ? 9 : 4 + 14 * Math.sqrt((p.size - sz[0]) / (sz[1] - sz[0])))
   const fmt = c.format
-  const intraday = kind === 'time' && hasTimeOfDay(show.map(p => p.x))
+  if (kind === 'time') warnZoneDates(c, show.map(p => p.x), 'x')
+  const intraday = kind === 'time' && hasTimeOfDay(show.map(p => p.x), c.timeZone)
   const xnf = new Intl.NumberFormat(c.locale, { maximumFractionDigits: 4 })
-  const xfmt = (v: number): string => (kind === 'time' ? formatTime(v, intraday ? 'datetime' : 'full', c.locale) : xnf.format(v))
+  const xfmt = (v: number): string => (kind === 'time' ? formatTime(v, intraday ? 'datetime' : 'full', c.locale, c.timeZone) : xnf.format(v))
   // A trend that runs past a fixed range is cut at the plot's edge.
   const clipTrend = !!(xd && (xd[0] !== null || xd[1] !== null))
   if (clipTrend) c.clips.plot = `M${plot.x} ${plot.y}h${plot.w}v${plot.h}h${-plot.w}Z`

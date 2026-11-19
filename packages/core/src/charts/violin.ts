@@ -157,9 +157,9 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
     const w = (v: number): number => (top > 0 ? (half * densityAt(d, v)) / top : 0)
     const tip = {
       title: clip(k, 60),
-      rows: [['Max', st.max], ['Q3', st.q3], ['Median', st.median], ['Q1', st.q1], ['Min', st.min]].map(([label, v]) => ({ label: label as string, value: fmt(v as number) })).concat([{ label: 'n', value: String(st.n) }, { label: 'Bandwidth', value: fmt(d.bandwidth) }])
+      rows: ([['max', st.max], ['q3', st.q3], ['median', st.median], ['q1', st.q1], ['min', st.min]] as const).map(([key, v]) => ({ label: c.t(key), value: fmt(v) })).concat([{ label: c.t('n'), value: String(st.n) }, { label: c.t('bandwidth'), value: fmt(d.bandwidth) }])
     }
-    const aria = `${k}: ${st.n} values, median ${fmt(st.median)}, Q1 ${fmt(st.q1)}, Q3 ${fmt(st.q3)}, range ${fmt(st.min)} to ${fmt(st.max)}`
+    const aria = c.t('violinAria', { name: k, n: st.n, median: fmt(st.median), q1: fmt(st.q1), q3: fmt(st.q3), min: fmt(st.min), max: fmt(st.max) })
     const datum = { group: k, ...st, bandwidth: d.bandwidth }
     if (d.grid.length === 1) {
       // Every value is the same: a point mass, drawn as a bar across the violin's width.

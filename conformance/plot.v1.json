@@ -2967,6 +2967,119 @@
       ]
     }
   ],
+  "waffleCells": [
+    {
+      "in": {
+        "values": [
+          1,
+          1,
+          1
+        ],
+        "cells": 100
+      },
+      "out": [
+        34,
+        33,
+        33
+      ]
+    },
+    {
+      "in": {
+        "values": [
+          0.4,
+          0.4,
+          99.2
+        ],
+        "cells": 100
+      },
+      "out": [
+        1,
+        0,
+        99
+      ]
+    },
+    {
+      "in": {
+        "values": [
+          2,
+          1,
+          1
+        ],
+        "cells": 50
+      },
+      "out": [
+        25,
+        13,
+        12
+      ]
+    },
+    {
+      "in": {
+        "values": [
+          5,
+          0,
+          -3,
+          2
+        ],
+        "cells": 100
+      },
+      "out": [
+        71,
+        0,
+        0,
+        29
+      ]
+    },
+    {
+      "in": {
+        "values": [
+          0,
+          0
+        ],
+        "cells": 100
+      },
+      "out": [
+        0,
+        0
+      ]
+    },
+    {
+      "in": {
+        "values": [
+          13,
+          29,
+          7,
+          51,
+          3,
+          3,
+          3
+        ],
+        "cells": 230
+      },
+      "out": [
+        28,
+        61,
+        15,
+        108,
+        6,
+        6,
+        6
+      ]
+    },
+    {
+      "in": {
+        "values": [
+          1e-9,
+          1
+        ],
+        "cells": 400
+      },
+      "out": [
+        0,
+        400
+      ]
+    }
+  ],
   "chartExamples": [
     {
       "type": "bar",
@@ -7114,6 +7227,94 @@
       "describe": "Bump chart \"Most used languages\". Ranks of 6 series (Python, JavaScript, TypeScript, Java, Go and 1 more) over 5 steps from 2022 to 2026, ranked by share, highest first. At 2026: 1. Python, 2. TypeScript, 3. JavaScript, 4. Rust, 5. Go. Biggest climb: TypeScript, from 4 to 2. Biggest fall: Java, from 3 to 6."
     },
     {
+      "type": "timeline",
+      "spec": {
+        "type": "timeline",
+        "title": "Release 4.2 plan",
+        "subtitle": "Work by team, March to May 2026",
+        "y": "task",
+        "start": "from",
+        "end": "to",
+        "series": "team",
+        "annotations": [
+          {
+            "axis": "x",
+            "value": "2026-04-06",
+            "label": "Today",
+            "tone": "warning"
+          }
+        ],
+        "data": [
+          {
+            "task": "Research",
+            "team": "Design",
+            "from": "2026-03-02",
+            "to": "2026-03-20"
+          },
+          {
+            "task": "Wireframes",
+            "team": "Design",
+            "from": "2026-03-16",
+            "to": "2026-04-03"
+          },
+          {
+            "task": "API",
+            "team": "Backend",
+            "from": "2026-03-23",
+            "to": "2026-04-24"
+          },
+          {
+            "task": "Web app",
+            "team": "Frontend",
+            "from": "2026-04-06",
+            "to": "2026-05-08"
+          },
+          {
+            "task": "Load tests",
+            "team": "Backend",
+            "from": "2026-04-27",
+            "to": "2026-05-08"
+          },
+          {
+            "task": "Docs",
+            "team": "Frontend",
+            "from": "2026-04-20",
+            "to": "2026-05-15"
+          },
+          {
+            "task": "Launch",
+            "team": "Design",
+            "from": "2026-05-15",
+            "to": "2026-05-19"
+          }
+        ]
+      },
+      "valid": true,
+      "issueCodes": [],
+      "normalized": {
+        "type": "timeline",
+        "title": "Release 4.2 plan",
+        "subtitle": "Work by team, March to May 2026",
+        "y": "task",
+        "start": "from",
+        "end": "to",
+        "series": "team",
+        "annotations": [
+          {
+            "axis": "x",
+            "value": "2026-04-06",
+            "label": "Today",
+            "tone": "warning"
+          }
+        ],
+        "legend": "auto",
+        "tooltip": true,
+        "labels": false,
+        "xType": "auto"
+      },
+      "describe": "Timeline \"Release 4.2 plan\". 7 ranges in 7 lanes (Research, Wireframes, API, Web app, Load tests and 2 more), coloured by team (Design, Backend, Frontend), from Mar 2, 2026 to May 19, 2026. First: Research at Mar 2, 2026. Last to end: Launch at May 19, 2026. Longest: API (32 d)."
+    },
+    {
       "type": "radar",
       "spec": {
         "type": "radar",
@@ -7828,6 +8029,804 @@
         "connectors": true
       },
       "describe": "Funnel chart \"Checkout funnel\". 5 stages (Visited product, Added to cart, Started checkout, Entered payment, Purchased), from 48,200 at Visited product to 4,380 at Purchased: 9.1% of the first stage reach the last. Largest drop: Visited product to Added to cart, 26.2% continue."
+    },
+    {
+      "type": "waffle",
+      "spec": {
+        "type": "waffle",
+        "title": "How commuters get to work",
+        "subtitle": "Share of 2,400 survey answers; one square is 1%",
+        "label": "mode",
+        "value": "answers",
+        "format": "integer",
+        "data": [
+          {
+            "mode": "Transit",
+            "answers": 888
+          },
+          {
+            "mode": "Car",
+            "answers": 672
+          },
+          {
+            "mode": "Bicycle",
+            "answers": 408
+          },
+          {
+            "mode": "Walk",
+            "answers": 312
+          },
+          {
+            "mode": "Remote",
+            "answers": 120
+          }
+        ]
+      },
+      "valid": true,
+      "issueCodes": [],
+      "normalized": {
+        "type": "waffle",
+        "title": "How commuters get to work",
+        "subtitle": "Share of 2,400 survey answers; one square is 1%",
+        "label": "mode",
+        "value": "answers",
+        "format": "integer",
+        "legend": "auto",
+        "tooltip": true,
+        "cells": 100,
+        "sort": "desc"
+      },
+      "describe": "Waffle chart \"How commuters get to work\". 5 categories totalling 2,400, as 100 cells (10 by 10; one cell is 1%). Transit 37% (37 cells), Car 28% (28 cells), Bicycle 17% (17 cells), Walk 13% (13 cells), Remote 5% (5 cells)."
+    },
+    {
+      "type": "beeswarm",
+      "spec": {
+        "type": "beeswarm",
+        "title": "Response time by region",
+        "subtitle": "One dot per request sample, milliseconds",
+        "x": "ms",
+        "y": "region",
+        "series": "cache",
+        "label": "id",
+        "xLabel": "Response time (ms)",
+        "data": [
+          {
+            "id": "EU-1",
+            "region": "Europe",
+            "cache": "Hit",
+            "ms": 83
+          },
+          {
+            "id": "EU-2",
+            "region": "Europe",
+            "cache": "Hit",
+            "ms": 44
+          },
+          {
+            "id": "EU-3",
+            "region": "Europe",
+            "cache": "Miss",
+            "ms": 178
+          },
+          {
+            "id": "EU-4",
+            "region": "Europe",
+            "cache": "Hit",
+            "ms": 55
+          },
+          {
+            "id": "EU-5",
+            "region": "Europe",
+            "cache": "Hit",
+            "ms": 41
+          },
+          {
+            "id": "EU-6",
+            "region": "Europe",
+            "cache": "Miss",
+            "ms": 226
+          },
+          {
+            "id": "EU-7",
+            "region": "Europe",
+            "cache": "Hit",
+            "ms": 45
+          },
+          {
+            "id": "EU-8",
+            "region": "Europe",
+            "cache": "Hit",
+            "ms": 50
+          },
+          {
+            "id": "EU-9",
+            "region": "Europe",
+            "cache": "Miss",
+            "ms": 206
+          },
+          {
+            "id": "EU-10",
+            "region": "Europe",
+            "cache": "Hit",
+            "ms": 66
+          },
+          {
+            "id": "EU-11",
+            "region": "Europe",
+            "cache": "Hit",
+            "ms": 66
+          },
+          {
+            "id": "EU-12",
+            "region": "Europe",
+            "cache": "Miss",
+            "ms": 194
+          },
+          {
+            "id": "EU-13",
+            "region": "Europe",
+            "cache": "Hit",
+            "ms": 85
+          },
+          {
+            "id": "EU-14",
+            "region": "Europe",
+            "cache": "Hit",
+            "ms": 44
+          },
+          {
+            "id": "EU-15",
+            "region": "Europe",
+            "cache": "Miss",
+            "ms": 228
+          },
+          {
+            "id": "EU-16",
+            "region": "Europe",
+            "cache": "Hit",
+            "ms": 43
+          },
+          {
+            "id": "EU-17",
+            "region": "Europe",
+            "cache": "Hit",
+            "ms": 46
+          },
+          {
+            "id": "EU-18",
+            "region": "Europe",
+            "cache": "Miss",
+            "ms": 223
+          },
+          {
+            "id": "EU-19",
+            "region": "Europe",
+            "cache": "Hit",
+            "ms": 72
+          },
+          {
+            "id": "EU-20",
+            "region": "Europe",
+            "cache": "Hit",
+            "ms": 53
+          },
+          {
+            "id": "EU-21",
+            "region": "Europe",
+            "cache": "Miss",
+            "ms": 184
+          },
+          {
+            "id": "EU-22",
+            "region": "Europe",
+            "cache": "Hit",
+            "ms": 49
+          },
+          {
+            "id": "EU-23",
+            "region": "Europe",
+            "cache": "Hit",
+            "ms": 78
+          },
+          {
+            "id": "EU-24",
+            "region": "Europe",
+            "cache": "Miss",
+            "ms": 148
+          },
+          {
+            "id": "EU-25",
+            "region": "Europe",
+            "cache": "Hit",
+            "ms": 72
+          },
+          {
+            "id": "EU-26",
+            "region": "Europe",
+            "cache": "Hit",
+            "ms": 77
+          },
+          {
+            "id": "EU-27",
+            "region": "Europe",
+            "cache": "Miss",
+            "ms": 183
+          },
+          {
+            "id": "EU-28",
+            "region": "Europe",
+            "cache": "Hit",
+            "ms": 74
+          },
+          {
+            "id": "EU-29",
+            "region": "Europe",
+            "cache": "Hit",
+            "ms": 43
+          },
+          {
+            "id": "EU-30",
+            "region": "Europe",
+            "cache": "Miss",
+            "ms": 200
+          },
+          {
+            "id": "EU-31",
+            "region": "Europe",
+            "cache": "Hit",
+            "ms": 78
+          },
+          {
+            "id": "EU-32",
+            "region": "Europe",
+            "cache": "Hit",
+            "ms": 83
+          },
+          {
+            "id": "EU-33",
+            "region": "Europe",
+            "cache": "Miss",
+            "ms": 188
+          },
+          {
+            "id": "EU-34",
+            "region": "Europe",
+            "cache": "Hit",
+            "ms": 63
+          },
+          {
+            "id": "EU-35",
+            "region": "Europe",
+            "cache": "Hit",
+            "ms": 55
+          },
+          {
+            "id": "EU-36",
+            "region": "Europe",
+            "cache": "Miss",
+            "ms": 212
+          },
+          {
+            "id": "EU-37",
+            "region": "Europe",
+            "cache": "Hit",
+            "ms": 73
+          },
+          {
+            "id": "EU-38",
+            "region": "Europe",
+            "cache": "Hit",
+            "ms": 81
+          },
+          {
+            "id": "EU-39",
+            "region": "Europe",
+            "cache": "Miss",
+            "ms": 188
+          },
+          {
+            "id": "EU-40",
+            "region": "Europe",
+            "cache": "Hit",
+            "ms": 64
+          },
+          {
+            "id": "AM-1",
+            "region": "Americas",
+            "cache": "Hit",
+            "ms": 83
+          },
+          {
+            "id": "AM-2",
+            "region": "Americas",
+            "cache": "Hit",
+            "ms": 92
+          },
+          {
+            "id": "AM-3",
+            "region": "Americas",
+            "cache": "Miss",
+            "ms": 222
+          },
+          {
+            "id": "AM-4",
+            "region": "Americas",
+            "cache": "Hit",
+            "ms": 85
+          },
+          {
+            "id": "AM-5",
+            "region": "Americas",
+            "cache": "Hit",
+            "ms": 81
+          },
+          {
+            "id": "AM-6",
+            "region": "Americas",
+            "cache": "Miss",
+            "ms": 183
+          },
+          {
+            "id": "AM-7",
+            "region": "Americas",
+            "cache": "Hit",
+            "ms": 72
+          },
+          {
+            "id": "AM-8",
+            "region": "Americas",
+            "cache": "Hit",
+            "ms": 66
+          },
+          {
+            "id": "AM-9",
+            "region": "Americas",
+            "cache": "Miss",
+            "ms": 242
+          },
+          {
+            "id": "AM-10",
+            "region": "Americas",
+            "cache": "Hit",
+            "ms": 71
+          },
+          {
+            "id": "AM-11",
+            "region": "Americas",
+            "cache": "Hit",
+            "ms": 59
+          },
+          {
+            "id": "AM-12",
+            "region": "Americas",
+            "cache": "Miss",
+            "ms": 185
+          },
+          {
+            "id": "AM-13",
+            "region": "Americas",
+            "cache": "Hit",
+            "ms": 93
+          },
+          {
+            "id": "AM-14",
+            "region": "Americas",
+            "cache": "Hit",
+            "ms": 95
+          },
+          {
+            "id": "AM-15",
+            "region": "Americas",
+            "cache": "Miss",
+            "ms": 217
+          },
+          {
+            "id": "AM-16",
+            "region": "Americas",
+            "cache": "Hit",
+            "ms": 88
+          },
+          {
+            "id": "AM-17",
+            "region": "Americas",
+            "cache": "Hit",
+            "ms": 95
+          },
+          {
+            "id": "AM-18",
+            "region": "Americas",
+            "cache": "Miss",
+            "ms": 255
+          },
+          {
+            "id": "AM-19",
+            "region": "Americas",
+            "cache": "Hit",
+            "ms": 62
+          },
+          {
+            "id": "AM-20",
+            "region": "Americas",
+            "cache": "Hit",
+            "ms": 79
+          },
+          {
+            "id": "AM-21",
+            "region": "Americas",
+            "cache": "Miss",
+            "ms": 259
+          },
+          {
+            "id": "AM-22",
+            "region": "Americas",
+            "cache": "Hit",
+            "ms": 67
+          },
+          {
+            "id": "AM-23",
+            "region": "Americas",
+            "cache": "Hit",
+            "ms": 76
+          },
+          {
+            "id": "AM-24",
+            "region": "Americas",
+            "cache": "Miss",
+            "ms": 221
+          },
+          {
+            "id": "AM-25",
+            "region": "Americas",
+            "cache": "Hit",
+            "ms": 54
+          },
+          {
+            "id": "AM-26",
+            "region": "Americas",
+            "cache": "Hit",
+            "ms": 83
+          },
+          {
+            "id": "AM-27",
+            "region": "Americas",
+            "cache": "Miss",
+            "ms": 226
+          },
+          {
+            "id": "AM-28",
+            "region": "Americas",
+            "cache": "Hit",
+            "ms": 74
+          },
+          {
+            "id": "AM-29",
+            "region": "Americas",
+            "cache": "Hit",
+            "ms": 54
+          },
+          {
+            "id": "AM-30",
+            "region": "Americas",
+            "cache": "Miss",
+            "ms": 216
+          },
+          {
+            "id": "AM-31",
+            "region": "Americas",
+            "cache": "Hit",
+            "ms": 68
+          },
+          {
+            "id": "AM-32",
+            "region": "Americas",
+            "cache": "Hit",
+            "ms": 80
+          },
+          {
+            "id": "AM-33",
+            "region": "Americas",
+            "cache": "Miss",
+            "ms": 178
+          },
+          {
+            "id": "AM-34",
+            "region": "Americas",
+            "cache": "Hit",
+            "ms": 66
+          },
+          {
+            "id": "AM-35",
+            "region": "Americas",
+            "cache": "Hit",
+            "ms": 67
+          },
+          {
+            "id": "AM-36",
+            "region": "Americas",
+            "cache": "Miss",
+            "ms": 218
+          },
+          {
+            "id": "AM-37",
+            "region": "Americas",
+            "cache": "Hit",
+            "ms": 54
+          },
+          {
+            "id": "AM-38",
+            "region": "Americas",
+            "cache": "Hit",
+            "ms": 96
+          },
+          {
+            "id": "AM-39",
+            "region": "Americas",
+            "cache": "Miss",
+            "ms": 195
+          },
+          {
+            "id": "AM-40",
+            "region": "Americas",
+            "cache": "Hit",
+            "ms": 62
+          },
+          {
+            "id": "AS-1",
+            "region": "Asia",
+            "cache": "Hit",
+            "ms": 71
+          },
+          {
+            "id": "AS-2",
+            "region": "Asia",
+            "cache": "Hit",
+            "ms": 104
+          },
+          {
+            "id": "AS-3",
+            "region": "Asia",
+            "cache": "Miss",
+            "ms": 242
+          },
+          {
+            "id": "AS-4",
+            "region": "Asia",
+            "cache": "Hit",
+            "ms": 73
+          },
+          {
+            "id": "AS-5",
+            "region": "Asia",
+            "cache": "Hit",
+            "ms": 83
+          },
+          {
+            "id": "AS-6",
+            "region": "Asia",
+            "cache": "Miss",
+            "ms": 206
+          },
+          {
+            "id": "AS-7",
+            "region": "Asia",
+            "cache": "Hit",
+            "ms": 91
+          },
+          {
+            "id": "AS-8",
+            "region": "Asia",
+            "cache": "Hit",
+            "ms": 86
+          },
+          {
+            "id": "AS-9",
+            "region": "Asia",
+            "cache": "Miss",
+            "ms": 204
+          },
+          {
+            "id": "AS-10",
+            "region": "Asia",
+            "cache": "Hit",
+            "ms": 99
+          },
+          {
+            "id": "AS-11",
+            "region": "Asia",
+            "cache": "Hit",
+            "ms": 100
+          },
+          {
+            "id": "AS-12",
+            "region": "Asia",
+            "cache": "Miss",
+            "ms": 251
+          },
+          {
+            "id": "AS-13",
+            "region": "Asia",
+            "cache": "Hit",
+            "ms": 90
+          },
+          {
+            "id": "AS-14",
+            "region": "Asia",
+            "cache": "Hit",
+            "ms": 88
+          },
+          {
+            "id": "AS-15",
+            "region": "Asia",
+            "cache": "Miss",
+            "ms": 220
+          },
+          {
+            "id": "AS-16",
+            "region": "Asia",
+            "cache": "Hit",
+            "ms": 66
+          },
+          {
+            "id": "AS-17",
+            "region": "Asia",
+            "cache": "Hit",
+            "ms": 87
+          },
+          {
+            "id": "AS-18",
+            "region": "Asia",
+            "cache": "Miss",
+            "ms": 243
+          },
+          {
+            "id": "AS-19",
+            "region": "Asia",
+            "cache": "Hit",
+            "ms": 98
+          },
+          {
+            "id": "AS-20",
+            "region": "Asia",
+            "cache": "Hit",
+            "ms": 87
+          },
+          {
+            "id": "AS-21",
+            "region": "Asia",
+            "cache": "Miss",
+            "ms": 269
+          },
+          {
+            "id": "AS-22",
+            "region": "Asia",
+            "cache": "Hit",
+            "ms": 81
+          },
+          {
+            "id": "AS-23",
+            "region": "Asia",
+            "cache": "Hit",
+            "ms": 104
+          },
+          {
+            "id": "AS-24",
+            "region": "Asia",
+            "cache": "Miss",
+            "ms": 200
+          },
+          {
+            "id": "AS-25",
+            "region": "Asia",
+            "cache": "Hit",
+            "ms": 91
+          },
+          {
+            "id": "AS-26",
+            "region": "Asia",
+            "cache": "Hit",
+            "ms": 75
+          },
+          {
+            "id": "AS-27",
+            "region": "Asia",
+            "cache": "Miss",
+            "ms": 264
+          },
+          {
+            "id": "AS-28",
+            "region": "Asia",
+            "cache": "Hit",
+            "ms": 94
+          },
+          {
+            "id": "AS-29",
+            "region": "Asia",
+            "cache": "Hit",
+            "ms": 86
+          },
+          {
+            "id": "AS-30",
+            "region": "Asia",
+            "cache": "Miss",
+            "ms": 266
+          },
+          {
+            "id": "AS-31",
+            "region": "Asia",
+            "cache": "Hit",
+            "ms": 88
+          },
+          {
+            "id": "AS-32",
+            "region": "Asia",
+            "cache": "Hit",
+            "ms": 107
+          },
+          {
+            "id": "AS-33",
+            "region": "Asia",
+            "cache": "Miss",
+            "ms": 267
+          },
+          {
+            "id": "AS-34",
+            "region": "Asia",
+            "cache": "Hit",
+            "ms": 106
+          },
+          {
+            "id": "AS-35",
+            "region": "Asia",
+            "cache": "Hit",
+            "ms": 100
+          },
+          {
+            "id": "AS-36",
+            "region": "Asia",
+            "cache": "Miss",
+            "ms": 215
+          },
+          {
+            "id": "AS-37",
+            "region": "Asia",
+            "cache": "Hit",
+            "ms": 75
+          },
+          {
+            "id": "AS-38",
+            "region": "Asia",
+            "cache": "Hit",
+            "ms": 83
+          },
+          {
+            "id": "AS-39",
+            "region": "Asia",
+            "cache": "Miss",
+            "ms": 232
+          },
+          {
+            "id": "AS-40",
+            "region": "Asia",
+            "cache": "Hit",
+            "ms": 70
+          }
+        ]
+      },
+      "valid": true,
+      "issueCodes": [],
+      "normalized": {
+        "type": "beeswarm",
+        "title": "Response time by region",
+        "subtitle": "One dot per request sample, milliseconds",
+        "x": "ms",
+        "y": "region",
+        "series": "cache",
+        "label": "id",
+        "xLabel": "Response time (ms)",
+        "legend": "auto",
+        "tooltip": true
+      },
+      "describe": "Beeswarm plot \"Response time by region\". 120 values of ms, one dot each, in 3 groups by region (Europe, Americas, Asia). Overall median 87, range 41 to 269. Europe: 40 values, median 75.5, range 41 to 228. Americas: 40 values, median 84, range 54 to 259. Asia: 40 values, median 98.5, range 66 to 269."
     },
     {
       "type": "choropleth",
@@ -33795,6 +34794,199 @@
         "curve": "smooth",
         "labels": true
       }
+    },
+    {
+      "name": "waffle: ok",
+      "spec": {
+        "type": "waffle",
+        "label": "a",
+        "value": "b",
+        "cells": 200,
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "b": 2
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "waffle",
+        "label": "a",
+        "value": "b",
+        "cells": 200,
+        "legend": "auto",
+        "tooltip": true,
+        "sort": "desc"
+      }
+    },
+    {
+      "name": "waffle: cells not a multiple of 10",
+      "spec": {
+        "type": "waffle",
+        "label": "a",
+        "value": "b",
+        "cells": 125,
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "b": 2
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "bad_value",
+          "path": "cells"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "waffle: cells out of range",
+      "spec": {
+        "type": "waffle",
+        "label": "a",
+        "value": "b",
+        "cells": 1000,
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "b": 2
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "out_of_range",
+          "path": "cells"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "waffle: nothing positive",
+      "spec": {
+        "type": "waffle",
+        "label": "a",
+        "value": "b",
+        "data": [
+          {
+            "a": "x",
+            "b": 0
+          },
+          {
+            "a": "y",
+            "b": -1
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "no_positive_values",
+          "path": "value"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "beeswarm: ok with lanes",
+      "spec": {
+        "type": "beeswarm",
+        "x": "b",
+        "y": "a",
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "b": 2
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "beeswarm",
+        "x": "b",
+        "y": "a",
+        "legend": "auto",
+        "tooltip": true
+      }
+    },
+    {
+      "name": "beeswarm: x not numeric",
+      "spec": {
+        "type": "beeswarm",
+        "x": "a",
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "b": 2
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "not_numeric",
+          "path": "x"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "beeswarm: radius out of range",
+      "spec": {
+        "type": "beeswarm",
+        "x": "b",
+        "radius": 0.5,
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "b": 2
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "out_of_range",
+          "path": "radius"
+        }
+      ],
+      "normalized": null
     },
     {
       "name": "patterns: on",
@@ -71678,6 +72870,154 @@
       ]
     },
     {
+      "name": "waffle: largest remainder, Other past eight",
+      "spec": {
+        "type": "waffle",
+        "label": "k",
+        "value": "v",
+        "format": "integer",
+        "data": [
+          {
+            "k": "c0",
+            "v": 10
+          },
+          {
+            "k": "c1",
+            "v": 11
+          },
+          {
+            "k": "c2",
+            "v": 12
+          },
+          {
+            "k": "c3",
+            "v": 13
+          },
+          {
+            "k": "c4",
+            "v": 14
+          },
+          {
+            "k": "c5",
+            "v": 15
+          },
+          {
+            "k": "c6",
+            "v": 16
+          },
+          {
+            "k": "c7",
+            "v": 17
+          },
+          {
+            "k": "c8",
+            "v": 18
+          },
+          {
+            "k": "c9",
+            "v": 19
+          }
+        ]
+      },
+      "describe": "Waffle chart. 8 categories totalling 145, as 100 cells (10 by 10; one cell is 1%). Other 22.8% (23 cells), c9 13.1% (13 cells), c8 12.4% (12 cells), c7 11.7% (12 cells), c6 11% (11 cells) and 3 more.",
+      "issueCodes": []
+    },
+    {
+      "name": "waffle: 400 cells, data order",
+      "spec": {
+        "type": "waffle",
+        "label": "k",
+        "value": "v",
+        "cells": 400,
+        "sort": "none",
+        "data": [
+          {
+            "k": "a",
+            "v": 1
+          },
+          {
+            "k": "b",
+            "v": 2
+          },
+          {
+            "k": "a",
+            "v": 1
+          },
+          {
+            "k": "c",
+            "v": -4
+          }
+        ]
+      },
+      "describe": "Waffle chart. 2 categories totalling 4, as 400 cells (40 by 10; one cell is 0.25%). a 50% (200 cells), b 50% (200 cells).",
+      "issueCodes": []
+    },
+    {
+      "name": "beeswarm: one swarm",
+      "spec": {
+        "type": "beeswarm",
+        "x": "v",
+        "title": "Latency",
+        "data": [
+          {
+            "v": 5
+          },
+          {
+            "v": 1
+          },
+          {
+            "v": 9
+          },
+          {
+            "v": 3
+          },
+          {
+            "v": 3
+          },
+          {
+            "v": 7
+          }
+        ]
+      },
+      "describe": "Beeswarm plot \"Latency\". 6 values of v, one dot each. Overall median 4, range 1 to 9.",
+      "issueCodes": []
+    },
+    {
+      "name": "beeswarm: lanes",
+      "spec": {
+        "type": "beeswarm",
+        "x": "v",
+        "y": "g",
+        "format": "fixed:1",
+        "data": [
+          {
+            "g": "a",
+            "v": 1
+          },
+          {
+            "g": "b",
+            "v": 2.5
+          },
+          {
+            "g": "a",
+            "v": 4
+          },
+          {
+            "g": "b",
+            "v": "x"
+          },
+          {
+            "g": "c",
+            "v": 8
+          }
+        ]
+      },
+      "describe": "Beeswarm plot. 4 values of v, one dot each, in 3 groups by g (a, b, c). Overall median 3.3, range 1.0 to 8.0. a: 2 values, median 2.5, range 1.0 to 4.0. b: 1 value, median 2.5, range 2.5 to 2.5. c: 1 value, median 8.0, range 8.0 to 8.0.",
+      "issueCodes": [
+        "some_not_numeric"
+      ]
+    },
+    {
       "name": "flow-map: by regions",
       "spec": {
         "type": "flow-map",
@@ -71811,6 +73151,101 @@
         ]
       },
       "describe": "Flow map. 3 flows weighted by n. Total 12. Largest: N to S (5).",
+      "issueCodes": []
+    },
+    {
+      "name": "area: stream graph (stack center)",
+      "spec": {
+        "type": "area",
+        "x": "x",
+        "y": [
+          "a",
+          "b"
+        ],
+        "stack": "center",
+        "xType": "linear",
+        "data": [
+          {
+            "x": 1,
+            "a": 1,
+            "b": 2
+          },
+          {
+            "x": 2,
+            "a": 3,
+            "b": 1
+          }
+        ]
+      },
+      "describe": "Stream graph. 2 series (a, b) over a numeric x axis. a: from 1 at 1 to 3 at 2 (200.0%); peak 3 at 2, low 1 at 1. b: from 2 at 1 to 1 at 2 (-50.0%); peak 2 at 1, low 1 at 2. The layers are stacked around a centre line, so the vertical axis has no zero; the thickness of each layer is its value.",
+      "issueCodes": []
+    },
+    {
+      "name": "timeline: numbers, a reversed and a missing range, overlap",
+      "spec": {
+        "type": "timeline",
+        "y": "k",
+        "start": "s",
+        "end": "e",
+        "format": "fixed:1",
+        "data": [
+          {
+            "k": "A",
+            "s": 0,
+            "e": 4.5
+          },
+          {
+            "k": "A",
+            "s": 3,
+            "e": 6
+          },
+          {
+            "k": "B",
+            "s": 9,
+            "e": 2
+          },
+          {
+            "k": "C",
+            "s": 1,
+            "e": null
+          }
+        ]
+      },
+      "describe": "Timeline. 3 ranges in 2 lanes (A, B), from 0.0 to 9.0. First: A at 0.0. Last to end: B at 9.0. Longest: B (7.0). Ranges overlap in 1 lane.",
+      "issueCodes": [
+        "missing_range",
+        "range_reversed",
+        "overlapping_ranges"
+      ]
+    },
+    {
+      "name": "timeline: times of day, series and labels",
+      "spec": {
+        "type": "timeline",
+        "y": "k",
+        "start": "s",
+        "end": "e",
+        "series": "g",
+        "label": "n",
+        "title": "Shifts",
+        "data": [
+          {
+            "k": "Ana",
+            "g": "P",
+            "n": "Night",
+            "s": "2026-03-07T22:00:00Z",
+            "e": "2026-03-08T06:00:00Z"
+          },
+          {
+            "k": "Ben",
+            "g": "Q",
+            "n": "Day",
+            "s": "2026-03-08T06:00:00Z",
+            "e": "2026-03-09T08:30:00Z"
+          }
+        ]
+      },
+      "describe": "Timeline \"Shifts\". 2 ranges in 2 lanes (Ana, Ben), coloured by g (P, Q), from Mar 7, 2026, 22:00 to Mar 9, 2026, 08:30. First: Night at Mar 7, 2026, 22:00. Last to end: Day at Mar 9, 2026, 08:30. Longest: Day (1 d 3 h).",
       "issueCodes": []
     }
   ]

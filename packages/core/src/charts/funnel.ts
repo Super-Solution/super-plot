@@ -90,13 +90,13 @@ function compile(c: ChartCtx): { series: SeriesInfo[] } {
     }
     const rowsTip = [
       { label: series[0].label, value: fmt(st.value), color },
-      { label: 'Of the first stage', value: pct(st.ofFirst) },
-      ...(i ? [{ label: 'Of the stage before', value: pct(st.ofPrevious) }] : [])
+      { label: c.t('ofFirstStage'), value: pct(st.ofFirst) },
+      ...(i ? [{ label: c.t('ofStageBefore'), value: pct(st.ofPrevious) }] : [])
     ]
     marks.push({
       type: 'rect', role: 'data', series: key, x: mid - bw / 2, y: top, w: bw, h, r: Math.min(c.theme.barRadius, h / 2, bw / 2), fill: color, anim: 'x',
       tip: { title: clip(st.key, 60), rows: rowsTip },
-      aria: `${st.key}: ${fmt(st.value)}, ${pct(st.ofFirst)} of the first stage${i ? `, ${pct(st.ofPrevious)} of the stage before` : ''}`,
+      aria: `${st.key}: ${fmt(st.value)}, ${c.t('ofFirstStageAria', { share: pct(st.ofFirst) })}${i ? `, ${c.t('ofStageBeforeAria', { share: pct(st.ofPrevious) })}` : ''}`,
       datum: { stage: st.key, value: st.value, ofFirst: st.ofFirst, ofPrevious: st.ofPrevious }
     })
     if (s.labels !== false) {

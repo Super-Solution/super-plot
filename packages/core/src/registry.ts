@@ -27,8 +27,11 @@ export interface ChartDef {
   check?(spec: Record<string, unknown>, ctx: ValidateCtx): void
   /** Lay out and draw. Push marks onto `ctx.marks`; return the series for the legend. */
   compile(ctx: ChartCtx): { series: SeriesInfo[] }
-  /** Plain-language summary of what the data shows (alt text, agent-readable). */
-  describe(spec: Record<string, any>, env: Pick<RenderEnv, 'locale'>): string
+  /**
+   * Plain-language summary of what the data shows (alt text, agent-readable). Always English; dates are formatted
+   * in `env.timeZone` (default UTC) so the text matches the drawing.
+   */
+  describe(spec: Record<string, any>, env: Pick<RenderEnv, 'locale' | 'timeZone'>): string
 }
 
 const defs = new Map<string, ChartDef>()

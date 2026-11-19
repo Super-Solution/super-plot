@@ -42,6 +42,7 @@ export const gallery: { id: string; note: string; spec: Record<string, unknown> 
     }
   },
   { id: 'area', note: 'Stacked areas over a numeric axis', spec: by('area') },
+  { id: 'area-stream', note: 'Stream graph (stack: "center"): layers centred, so the value axis has no zero and no ticks', spec: { ...by('area'), title: 'Energy mix as a stream', stack: 'center' } },
   { id: 'scatter', note: 'Groups, bubble size and per-group trend', spec: by('scatter') },
   {
     id: 'scatter-log', note: 'Log axes, error bars and a LOESS trend',
@@ -109,6 +110,14 @@ export const gallery: { id: string; note: string; spec: Record<string, unknown> 
     }
   },
   { id: 'bump', note: 'Ranks over time, labelled at the line ends', spec: by('bump') },
+  { id: 'timeline', note: 'Gantt-style plan: one lane per task, colour by team, a "today" line', spec: by('timeline') },
+  {
+    id: 'timeline-hours', note: 'Shifts over one night: dates with times, durations printed on the bars',
+    spec: {
+      type: 'timeline', title: 'On-call shifts', subtitle: 'Times in UTC; durations on the bars', y: 'person', start: 'from', end: 'to', series: 'rota', labels: true,
+      data: [['Ana', 'Primary', '2026-03-07T22:00:00Z', '2026-03-08T06:00:00Z'], ['Ben', 'Primary', '2026-03-08T06:00:00Z', '2026-03-08T14:30:00Z'], ['Chen', 'Primary', '2026-03-08T14:30:00Z', '2026-03-08T22:00:00Z'], ['Dev', 'Backup', '2026-03-07T22:00:00Z', '2026-03-08T10:00:00Z'], ['Eli', 'Backup', '2026-03-08T10:00:00Z', '2026-03-08T22:00:00Z']].map(([person, rota, from, to]) => ({ person, rota, from, to }))
+    }
+  },
   { id: 'calendar', note: 'One cell per day; days without data stay empty', spec: by('calendar') },
   { id: 'radar', note: 'A few items across shared measures', spec: by('radar') },
   { id: 'treemap', note: 'Area is the value; groups get a colour', spec: by('treemap') },
@@ -120,6 +129,15 @@ export const gallery: { id: string; note: string; spec: Record<string, unknown> 
   { id: 'sankey', note: 'Flows between stages, loops refused', spec: by('sankey') },
   { id: 'funnel', note: 'Centred bars, share of the first stage; rising values are warned', spec: by('funnel') },
   { id: 'parallel', note: 'Each line is a row across four measures', spec: by('parallel') },
+  { id: 'waffle', note: 'Countable shares: 100 squares, largest remainder', spec: by('waffle') },
+  {
+    id: 'waffle-facet', note: 'One waffle per year, shared colours',
+    spec: {
+      type: 'waffle', title: 'Energy mix by year', subtitle: 'Share of generation', label: 'source', value: 'twh', facet: 'year', sort: 'none', legend: 'bottom',
+      data: [['2016', 'Fossil', 62], ['2016', 'Nuclear', 18], ['2016', 'Renewable', 20], ['2021', 'Fossil', 54], ['2021', 'Nuclear', 17], ['2021', 'Renewable', 29], ['2026', 'Fossil', 41], ['2026', 'Nuclear', 16], ['2026', 'Renewable', 43]].map(([year, source, twh]) => ({ year, source, twh }))
+    }
+  },
+  { id: 'beeswarm', note: 'Every value as a dot, one lane per group', spec: by('beeswarm') },
   { id: 'choropleth', note: 'Regions coloured by value (invented islands: Super Plot ships no boundaries)', spec: by('choropleth') },
   { id: 'bubble-map', note: 'Places sized by value, on imported land', spec: by('bubble-map') },
   { id: 'column-map', note: '3D columns on a globe: drag to turn', spec: by('column-map') },
