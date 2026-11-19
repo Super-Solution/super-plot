@@ -28,10 +28,18 @@ export interface Axis {
  * return the plot rectangle. `x` is the bottom axis, `y` the left axis; either may be a band
  * (categories) or continuous.
  */
-export function layoutCartesian(c: ChartCtx, area: Rect, x: Axis, y: Axis): Rect {
+export interface CartesianExtras {
+  /** A second value axis on the right (`yRight`): tick labels right of the plot, no gridlines of its own. */
+  right?: Axis
+  /** Colour of the left (`left`) and right (`right`) axis titles and tick labels, when an axis takes its series' colour. */
+  ink?: { left?: string; right?: string }
+}
+
+export function layoutCartesian(c: ChartCtx, area: Rect, x: Axis, y: Axis, extras: CartesianExtras = {}): Rect {
   const size = c.size
   const labelPad = 8
   const titleH = (a: Axis): number => (a.title ? size + 8 : 0)
+  const right = extras.right
 
   // Pass 1: left margin from y labels, using a provisional height.
   const provH = Math.max(40, area.h - 48)
@@ -45,8 +53,11 @@ export function layoutCartesian(c: ChartCtx, area: Rect, x: Axis, y: Axis): Rect
   const provW = Math.max(40, area.x + area.w - left - 12)
   const xTicks0 = x.ticks(provW)
   const lastHalf = x.scale.kind === 'band' ? 0 : c.measure(xTicks0[xTicks0.length - 1]?.label ?? '') / 2
-  const rightPad = Math.max(10, Math.ceil(lastHalf) + 2)
+  const rightLabelW = right ? Math.max(0, ...right.ticks(provH).map(t => c.measure(t.label))) : 0
+  const rightPad = Math.max(10, Math.ceil(lastHalf) + 2, right ? labelPad + rightLabelW + (right.title ? size + 8 : 0) + 4 : 0)
   const plotW = Math.max(40, area.x + area.w - left - rightPad)
+  // The range first: a broken axis thins the tick labels next to its gap by their pixel distance.
+  x.scale.range = [left, left + plotW]
   const xTicks = x.ticks(plotW)
   const xl = xLabelLayout(c, x, xTicks, plotW)
   const bottomH = xl.height + labelPad + titleH(x)
@@ -54,13 +65,18 @@ export function layoutCartesian(c: ChartCtx, area: Rect, x: Axis, y: Axis): Rect
 
   x.scale.range = [plot.x, plot.x + plot.w]
   y.scale.range = y.scale.kind === 'band' ? [plot.y, plot.y + plot.h] : [plot.y + plot.h, plot.y]
-  const info = (a: Axis, field: unknown): AxisInfo => {
+  if (right) right.scale.range = [plot.y + plot.h, plot.y]
+  const info = (a: Axis, field: unknown, ink?: string): AxisInfo => {
     const s = a.scale
     const f = typeof field === 'string' ? { field } : {}
     if (s.kind === 'band') return { kind: 'band', domain: [...(s as BandScale).domain], range: [...s.range] as [number, number], ...f }
-    return { kind: s.kind, domain: [...(s as LinearScale).domain] as [number, number], range: [...s.range] as [number, number], ...f, ...((s as LinearScale).log ? { scale: 'log' as const } : {}) }
+    const br = (s as LinearScale & { breaks?: [number, number] }).breaks
+    return { kind: s.kind, domain: [...(s as LinearScale).domain] as [number, number], range: [...s.range] as [number, number], ...f, ...((s as LinearScale).log ? { scale: 'log' as const } : {}), ...(br ? { breaks: [...br] as [number, number] } : {}), ...(ink ? { ink } : {}) }
   }
-  c.axes = { plot: { ...plot }, x: info(x, c.axisFields?.x ?? c.spec.x), y: info(y, c.axisFields?.y ?? (typeof c.spec.y === 'string' ? c.spec.y : undefined)) }
+  const ink = extras.ink ?? {}
+  // A horizontal chart draws its value axis along x: a break there is on the x axis.
+  c.axes = { plot: { ...plot }, x: info(x, c.axisFields?.x ?? c.spec.x), y: info(y, c.axisFields?.y ?? (typeof c.spec.y === 'string' ? c.spec.y : undefined), right ? ink.left : undefined) }
+  if (right) c.axes.y2 = info(right, c.axisFields?.y2, ink.right)
   const yTicks = y.ticks(plot.h)
 
   const grid = c.c('grid')
@@ -77,6 +93,11 @@ export function layoutCartesian(c: ChartCtx, area: Rect, x: Axis, y: Axis): Rect
   }
   c.marks.push({ type: 'line', role: 'axis', x1: plot.x, x2: plot.x + plot.w, y1: plot.y + plot.h, y2: plot.y + plot.h, stroke: axis })
   if (y.scale.kind === 'band') c.marks.push({ type: 'line', role: 'axis', x1: plot.x, x2: plot.x, y1: plot.y, y2: plot.y + plot.h, stroke: axis })
+  // Two value axes: each gets its own axis line, in its series' colour when it has one, so labels tie to their side.
+  if (right) {
+    c.marks.push({ type: 'line', role: 'axis', x1: plot.x, x2: plot.x, y1: plot.y, y2: plot.y + plot.h, stroke: ink.left ?? axis })
+    c.marks.push({ type: 'line', role: 'axis', x1: plot.x + plot.w, x2: plot.x + plot.w, y1: plot.y, y2: plot.y + plot.h, stroke: ink.right ?? axis })
+  }
 
   xTicks.forEach((t, i) => {
     if (i % xl.stride !== 0) return
@@ -89,12 +110,18 @@ export function layoutCartesian(c: ChartCtx, area: Rect, x: Axis, y: Axis): Rect
     )
   })
   const maxYW = y.scale.kind === 'band' ? yLabelW : Infinity
+  const leftInk = right ? ink.left ?? muted : muted
   for (const t of yTicks) {
     const py = y.scale.at(t.key as never)
-    c.marks.push(c.text(plot.x - labelPad, py, fit(t.label, maxYW, size, c.env.measure), { anchor: 'end', baseline: 'middle', fill: muted }))
+    c.marks.push(c.text(plot.x - labelPad, py, fit(t.label, maxYW, size, c.env.measure), { anchor: 'end', baseline: 'middle', fill: leftInk }))
+  }
+  if (right) {
+    const rightInk = ink.right ?? muted
+    for (const t of right.ticks(plot.h)) c.marks.push(c.text(plot.x + plot.w + labelPad, right.scale.at(t.key as never), t.label, { anchor: 'start', baseline: 'middle', fill: rightInk }))
+    if (right.title) c.marks.push(c.text(area.x + area.w - size * 0.6, plot.y + plot.h / 2, right.title, { anchor: 'middle', baseline: 'middle', rotate: 90, fill: rightInk, weight: 500 }))
   }
   if (x.title) c.marks.push(c.text(plot.x + plot.w / 2, area.y + area.h - size, x.title, { anchor: 'middle', baseline: 'hanging', fill: muted, weight: 500 }))
-  if (y.title) c.marks.push(c.text(area.x + size * 0.6, plot.y + plot.h / 2, y.title, { anchor: 'middle', baseline: 'middle', rotate: -90, fill: muted, weight: 500 }))
+  if (y.title) c.marks.push(c.text(area.x + size * 0.6, plot.y + plot.h / 2, y.title, { anchor: 'middle', baseline: 'middle', rotate: -90, fill: leftInk, weight: 500 }))
   return plot
 }
 

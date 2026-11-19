@@ -69,7 +69,50 @@ transform: [
 ]
 ```
 
-Window ops: `sum`, `mean`, `count` (cumulative), `rank` (1, 2, 2, 4), `pctChange`, `lag`, `lead`, `movingMean` (`frame` rows, default 3). The table of steps with their keys is generated in [SPEC.md](SPEC.md#transform-steps); the Go and Python ports will be checked against the new `transformCases` in `conformance/plot.v1.json`.
+Window ops: `sum`, `mean`, `count` (cumulative), `rank` (1, 2, 2, 4), `pctChange`, `lag`, `lead`, `movingMean` (`frame` rows, default 3). A ninth step, `index`, rescales each group to a common base (see [below](#index-rescale-each-group-to-a-common-base)). The table of steps with their keys is generated in [SPEC.md](SPEC.md#transform-steps); the Go and Python ports will be checked against the new `transformCases` in `conformance/plot.v1.json`.
+## Two value axes, broken axes and indexed series (read the risks first)
+
+These three were refused in 0.4.0 and are built in round 6 because people ask for them. Each one can mislead; each is off unless the spec asks for it, says its risk as an issue the agent sees, and has a safer alternative named in that issue's `hint`.
+
+```ts
+// Safer first: index every series to 100 at its first month, then compare growth on one axis.
+{ type: 'line', x: 'month', y: 'revenue', series: 'region', yLabel: 'Index (Jan = 100)', data,
+  transform: [{ index: { field: 'revenue', groupBy: ['region'], sortBy: 'month' } }] }
+// A second value axis on the right (line, unstacked area, and lines over vertical bars).
+{ type: 'line', x: 'week', y: 'orders', yRight: 'conversion', formatRight: 'percent', yLabel: 'Orders', yRightLabel: 'Conversion rate', rightDomain: [0, 0.05], data }
+{ type: 'bar', x: 'month', y: 'revenue', yRight: 'margin', formatRight: 'percent', data }
+// A broken value axis: one outlier no longer flattens the rest.
+{ type: 'bar', x: 'service', y: 'requests', yBreak: [40, 900], labels: true, data }
+```
+
+### `yRight`: a second value axis
+
+**The risk, plainly:** two scales on one plot can be set so that any two series seem to cross, move together or diverge. Where the lines meet, how far apart they are and how steep each looks are choices of the two ranges, not facts in the data. Readers take a crossing as meaningful.
+
+- What protects the reader: validation always adds an `info` issue `dual_axis` (path `yRight`) that says this and suggests the alternatives. Each axis's title, tick labels and axis line take the colour of its series when it has exactly one (mixed towards the text colour until it reads at 4.5:1; neutral when an axis carries several series). The legend and the tooltip label say "Revenue (right axis)" (`strings.rightAxis`), so identity is never colour alone. Tooltips show each value in its own axis's format (`formatRight`, default `format`). The description names the series on each axis and their ranges in their units, and repeats the risk.
+- Ranges: the right axis is fitted to its series like the left (`rightDomain` fixes it). On bars both axes include zero by default, and whenever both do, the two zeros are lined up (the axis whose zero sits lower is extended downwards, never cut), so a value of zero means zero on both sides. Lines get no zero alignment; fix both ranges if they should match.
+- Where it works: `line`, `area` with `stack: "none"` (a stacked area refuses it: `dual_axis_refused`), and vertical `bar` (drawn as lines with points, like `line`; ignored with a `dual_axis_ignored` warning on horizontal and 100% stacked bars). Refused with a log `yScale` and together with `yBreak`. A column on both axes is `dual_axis_overlap`; `yRightLabel`, `rightDomain` or `formatRight` without `yRight` is a `right_axis_unused` warning. Reference lines and point annotations use the left axis.
+- Interaction: zoom and brush keep working along x. A `zoom: "xy"` or `brush: "xy"` is reduced to x with a `zoom_refused` / `brush_refused` warning, because a vertical range would mean different values on each side. `scene.axes.y2` carries the right axis (domain, pixel range, `field` when it is one column, `ink`) for custom renderers.
+- `facet`: every panel gets both axes; the right range is shared across panels like the left one, and the right title is drawn once at the right edge.
+- Safer alternatives: the `index` step below (growth on one axis), two charts with `sync` (levels, each with its own honest axis), or `line` over bars when both measures share a unit.
+
+### `yBreak`: a broken value axis
+
+**The risk, plainly:** a cut makes a large value look much closer to the small ones than it is: the bar that crosses the cut is drawn shorter than its value. A reader who misses the cut compares lengths that are no longer proportional.
+
+- What protects the reader: the cut is drawn as a gap in the background colour across the whole plot with a zigzag on each edge, crossing the axis and every bar or line that passes through it. Both sides keep the same pixels per unit; tick labels appear on both sides of the gap (labels too close to it are thinned). Tooltips, value labels, `aria` and the description give the real values. Validation always adds an `info` issue `axis_break` that states the hidden span.
+- Where it works: `bar` (grouped, vertical or horizontal, bars or lollipops) and `line`. Refused (`break_refused`, error) on stacked and 100% stacked bars (the cut would fall inside segments), with a log scale, and with `yRight`.
+- Refused as misleading (`break_misleading`, error): a break that contains zero on a bar chart, because bars start at zero and those that do not cross the break would lose their baseline. A break is meant to remove a span that is empty or that every bar crossing it crosses whole: keep it above every short bar (or below every negative one).
+- A value inside the cut is a `break_hides_values` warning with the count and the values; it is drawn at the edge of the cut with a dashed outline (bars) or a ring (points) over the gap, and its tooltip says "(inside the axis break, drawn at its edge)" (`strings.inBreak`). A break with no value beyond it is a `break_outside` warning and is removed from the normalised spec (nothing drawn).
+- Interaction: zoom and brush on the broken axis are refused (`zoom_refused`, `brush_refused`): a pixel in the gap has no single value. On a line chart, zoom and brush along x still work (the break stays where it is; it is not drawn when the zoomed range no longer reaches it). On horizontal bars the value axis is x, so a brush there is refused. `scene.axes.y.breaks` (or `x.breaks`) carries `[from, to]`.
+- Safer alternatives: `facet` by size class, a log `yScale` on a line or scatter, or sorted bars with `labels: true`.
+
+### `index`: rescale each group to a common base
+
+`{ index: { field, as?, groupBy?, sortBy?, base?: 100, at?: 'first' | <a sortBy value> } }` is a transform step (plain data, like the others). Each `groupBy` group is rescaled so its value at the base row equals `base`: v x base / baseValue. The base row is the first in `sortBy` order (`at: "first"`, the default; without `sortBy`, the data order) or the first row whose `sortBy` value equals `at` (numbers and dates compare by value, so `"2026-01-01"` matches `1767225600000`). The result goes to `as` (default: in place, so set `yLabel` to say it is an index).
+
+A group whose base value is 0, negative, missing or not a number, or that has no row at `at`, cannot be divided by: the whole group is dropped and one `index_group_dropped` warning lists each group and why. Other non-numbers in a kept group become null. Validation: `missing_required` (no `field`; `at` without `sortBy`), `no_such_column`, `not_numeric`, `bad_value` (`base` not a positive number), `bad_type` (`at`, `as`, `groupBy`), `unknown_field` with "did you mean". The Go and Python ports will be checked against the `index` cases in `conformance/plot.v1.json` (`transformCases`).
+
 ## Synchronised charts
 
 Plots that share a `sync` key form a group on the page (like uPlot's `cursor.sync`, ECharts `connect`, Highcharts synchronized charts):
@@ -233,7 +276,7 @@ renderToSvg(spec, { locale: 'de', timeZone: 'Europe/Berlin', strings: { other: '
 
 - **`locale`** already names months and weekdays through `Intl.DateTimeFormat` (`Mär`, `janv.`, `1月5日`) in ticks, tooltips, calendars and descriptions; `en` output is unchanged byte for byte.
 - **`timeZone`** (IANA name, default `UTC`) moves time-axis ticks to local boundaries (midnights, Mondays, first days of months and years; hour ticks on local hours, both 01:00 ticks of a fall-back night) and shows dates and times in that zone in ticks, tooltips, `aria`, the calendar's day assignment and the scene description (`describePlot(spec, { timeZone })` too). Across a daylight-saving change ticks stay on local boundaries. An unknown name is a `bad_time_zone` warning and UTC is used. Data are **instants**: ISO strings without an offset are read as UTC, as everywhere in Super Plot (and in the ports). So date-only data under another zone are midnights UTC that fall between the local day ticks; a `time_zone_dates` warning says so. Give instants with an offset (`2026-03-01T00:00-05:00`) or as timestamps, or keep UTC for calendar dates. Category axes made by `timeUnit` (UTC buckets) keep their UTC labels. The Go and Python ports describe in English and UTC; `timeZone` changes nothing in validation or conformance.
-- **`strings`** overrides the English text core writes into a scene: names it invents ("Other", the waterfall's "Increase", "Decrease", "Total"), tooltip row labels ("Share", "Median", "Running total", "Start", "Duration"), short phrases ("up to {value}", "{value} (missing)"), duration units and the `aria` templates of marks and legend entries ("{label}: toggle series"). `DEFAULT_STRINGS` (exported from core) is the full list of keys with their English text; `{name}` placeholders are filled in. Unknown keys (`unknown_string`, with a "did you mean"), non-strings (`bad_string`) and over-long values (`string_truncated`, 120 characters) warn and keep the English default. Series keys stay stable (the merged slice is still `Other` in `colors`, legend toggles and `datum`); only labels change. Descriptions stay English (the ports reproduce them word for word): set the spec's `description` for another language. Text from the spec (titles, column names, categories) is never translated.
+- **`strings`** overrides the English text core writes into a scene: names it invents ("Other", the waterfall's "Increase", "Decrease", "Total"), tooltip row labels ("Share", "Median", "Running total", "Start", "Duration"), short phrases ("up to {value}", "{value} (missing)", "{label} (right axis)", "{value} (inside the axis break, drawn at its edge)"), duration units and the `aria` templates of marks and legend entries ("{label}: toggle series"). `DEFAULT_STRINGS` (exported from core) is the full list of keys with their English text; `{name}` placeholders are filled in. Unknown keys (`unknown_string`, with a "did you mean"), non-strings (`bad_string`) and over-long values (`string_truncated`, 120 characters) warn and keep the English default. Series keys stay stable (the merged slice is still `Other` in `colors`, legend toggles and `datum`); only labels change. Descriptions stay English (the ports reproduce them word for word): set the spec's `description` for another language. Text from the spec (titles, column names, categories) is never translated.
 - **The web binding's own text** reads the same `strings` object, with the same English defaults in `DEFAULT_STRINGS` (one table; these keys come after core's). Core never writes them, so a static SVG is not affected. The keys:
 
   | Where | Keys (English default) |
@@ -256,6 +299,8 @@ import { plotTools, getPlotTool } from '@supersolutions/super-plot-core/tools'
 const tool = getPlotTool('plot_validate')!
 tool.run({ spec })        // { ok, issues: [{ code, path, message, hint, severity }] }
 ```
+
+`severity` is `error` (refused), `warning` (drawn, but something was changed or left out) or `info` (drawn as asked, with a note the agent should pass on: `dual_axis`, `axis_break`). Only errors make `ok` false.
 
 Tools: `plot_catalog` (which chart, which fields, an example), `plot_schema`, `plot_validate`, `plot_describe`, `plot_geographies` (the map boundaries the host registered; none ship), `plot_render_svg`.
 All have `authority: 'read'`, `inputSchema` (JSON Schema) and `run(args)`, so they can be wrapped by any MCP server or

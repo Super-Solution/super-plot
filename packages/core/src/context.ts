@@ -27,9 +27,9 @@ export class ChartCtx<S extends Record<string, any> = Record<string, any>> {
   /** Maps: the geography payload for 3D renderers. */
   geo: SceneGeo | undefined
   /** Set by `layoutCartesian`: the plot rectangle and scales (zoom, brush, facets). */
-  axes: { plot: Rect; x: AxisInfo; y: AxisInfo } | undefined
+  axes: { plot: Rect; x: AxisInfo; y: AxisInfo; y2?: AxisInfo } | undefined
   /** Data columns behind the x and y axes, when a chart's axes are not simply `spec.x` / `spec.y`. */
-  axisFields: { x?: string; y?: string } | undefined
+  axisFields: { x?: string; y?: string; y2?: string } | undefined
   readonly issues: Issue[]
   /** Series keys hidden by the viewer (legend toggles). */
   readonly hidden: Set<string>
@@ -73,6 +73,11 @@ export class ChartCtx<S extends Record<string, any> = Record<string, any>> {
 
   warn(code: string, path: string, message: string, hint?: string): void {
     this.issues.push({ severity: 'warning', code, path, message, ...(hint ? { hint } : {}) })
+  }
+
+  /** An `info` issue: the chart is drawn as asked, and this is what the reader should know about it. */
+  note(code: string, path: string, message: string, hint?: string): void {
+    this.issues.push({ severity: 'info', code, path, message, ...(hint ? { hint } : {}) })
   }
 
   /** Colour for a series: spec override first, then the palette by position. */

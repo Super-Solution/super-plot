@@ -105,6 +105,10 @@ export const DEFAULT_STRINGS = {
   noChange: 'no change',
   rankUp: 'up {n}',
   rankDown: 'down {n}',
+  /** Two value axes (`yRight`): the legend entry and tooltip label of a series on the right axis. */
+  rightAxis: '{label} (right axis)',
+  /** A broken axis (`yBreak`): a value inside the cut-out span, drawn at its edge (tooltip value and spoken label). */
+  inBreak: '{value} (inside the axis break, drawn at its edge)',
   /** Tooltip label of a value whose column has no single name. */
   value: 'Value',
 

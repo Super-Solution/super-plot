@@ -75,6 +75,28 @@ export const gallery: { id: string; note: string; spec: Record<string, unknown> 
     id: 'transform-window', note: 'fold and window steps: wide quarters to a running total per region',
     spec: { type: 'line', title: 'Cumulative revenue', subtitle: 'fold, then a running sum per region', x: 'quarter', y: 'total', series: 'region', data: [{ region: 'APAC', Q1: 120, Q2: 138, Q3: 151, Q4: 160 }, { region: 'EMEA', Q1: 98, Q2: 104, Q3: 99, Q4: 120 }], transform: [{ fold: { fields: ['Q1', 'Q2', 'Q3', 'Q4'], as: ['quarter', 'revenue'] } }, { window: { op: 'sum', field: 'revenue', as: 'total', groupBy: ['region'], sortBy: 'quarter' } }] }
   },
+  {
+    id: 'transform-index', note: 'index step: two regions of very different size, both start at 100, on one axis (the safer alternative to two axes)',
+    spec: {
+      type: 'line', title: 'Revenue growth by region', subtitle: 'Index, January = 100 (invented figures)', x: 'month', y: 'revenue', series: 'region', yLabel: 'Index (Jan = 100)',
+      data: [['Jan', 4200, 310], ['Feb', 4350, 335], ['Mar', 4310, 372], ['Apr', 4520, 401], ['May', 4610, 446], ['Jun', 4700, 480]].flatMap(([month, big, small]) => [{ month, region: 'Americas', revenue: big }, { month, region: 'LATAM', revenue: small }]),
+      transform: [{ index: { field: 'revenue', groupBy: ['region'] } }]
+    }
+  },
+  {
+    id: 'line-dual-axis', note: 'yRight: a second value axis, labelled in its series\' colour, "(right axis)" in the legend; validation adds a dual_axis note',
+    spec: {
+      type: 'line', title: 'Orders and conversion', subtitle: 'Weekly (invented figures)', x: 'week', y: 'orders', yRight: 'conversion', formatRight: 'percent', yLabel: 'Orders', yRightLabel: 'Conversion rate', rightDomain: [0, 0.05],
+      data: [['2026-09-07', 1180, 0.031], ['2026-09-14', 1240, 0.032], ['2026-09-21', 1225, 0.029], ['2026-09-28', 1310, 0.034], ['2026-10-05', 1390, 0.036], ['2026-10-12', 1360, 0.033], ['2026-10-19', 1450, 0.037], ['2026-10-26', 1520, 0.039]].map(([week, orders, conversion]) => ({ week, orders, conversion }))
+    }
+  },
+  {
+    id: 'bar-broken-axis', note: 'yBreak: one outlier cut short, with a zigzag gap, labels on both sides and real values in tooltips',
+    spec: {
+      type: 'bar', title: 'Requests by service', subtitle: 'Millions per day (invented figures); the axis is cut from 40 to 900', x: 'service', y: 'requests', yBreak: [40, 900], labels: true, yLabel: 'Requests (m)',
+      data: [['Search', 960], ['Auth', 31], ['Billing', 12], ['Media', 24], ['Mail', 18]].map(([service, requests]) => ({ service, requests }))
+    }
+  },
   { id: 'pie', note: 'Few parts of a whole', spec: by('pie') },
   { id: 'donut', note: 'Total in the hole', spec: by('donut') },
   { id: 'histogram', note: 'Distribution of one measure', spec: by('histogram') },

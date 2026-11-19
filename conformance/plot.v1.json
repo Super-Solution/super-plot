@@ -39035,6 +39035,1414 @@
       "normalized": null
     },
     {
+      "name": "yRight: a line on a right axis",
+      "spec": {
+        "type": "line",
+        "x": "d",
+        "y": "v",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ],
+        "yRight": "t",
+        "formatRight": "percent",
+        "yRightLabel": "Share",
+        "rightDomain": [
+          0,
+          10
+        ]
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "info",
+          "code": "dual_axis",
+          "path": "yRight"
+        }
+      ],
+      "normalized": {
+        "type": "line",
+        "x": "d",
+        "y": "v",
+        "yRight": "t",
+        "formatRight": "percent",
+        "yRightLabel": "Share",
+        "rightDomain": [
+          0,
+          10
+        ],
+        "legend": "auto",
+        "tooltip": true,
+        "xType": "auto",
+        "curve": "linear"
+      }
+    },
+    {
+      "name": "yRight: two columns on bars",
+      "spec": {
+        "type": "bar",
+        "x": "k",
+        "y": "v",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ],
+        "yRight": [
+          "t",
+          "w"
+        ]
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "some_not_numeric",
+          "path": "yRight[1]"
+        },
+        {
+          "severity": "info",
+          "code": "dual_axis",
+          "path": "yRight"
+        }
+      ],
+      "normalized": {
+        "type": "bar",
+        "x": "k",
+        "y": "v",
+        "yRight": [
+          "t",
+          "w"
+        ],
+        "legend": "auto",
+        "tooltip": true,
+        "stack": "none",
+        "orientation": "vertical",
+        "sort": "none",
+        "labels": false
+      }
+    },
+    {
+      "name": "yRight: on an unstacked area",
+      "spec": {
+        "type": "area",
+        "x": "d",
+        "y": "v",
+        "yRight": "t",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "info",
+          "code": "dual_axis",
+          "path": "yRight"
+        }
+      ],
+      "normalized": {
+        "type": "area",
+        "x": "d",
+        "y": "v",
+        "yRight": "t",
+        "legend": "auto",
+        "tooltip": true,
+        "xType": "auto",
+        "curve": "linear",
+        "stack": "none"
+      }
+    },
+    {
+      "name": "yRight: refused on a stacked area",
+      "spec": {
+        "type": "area",
+        "x": "d",
+        "y": "v",
+        "yRight": "t",
+        "stack": "stack",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "dual_axis_refused",
+          "path": "yRight"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "yRight: refused with a log y",
+      "spec": {
+        "type": "line",
+        "x": "d",
+        "y": "v",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ],
+        "yRight": "t",
+        "yScale": "log"
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "dual_axis_refused",
+          "path": "yRight"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "yRight: a column on both axes",
+      "spec": {
+        "type": "line",
+        "x": "d",
+        "y": [
+          "v",
+          "t"
+        ],
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ],
+        "yRight": [
+          "w",
+          "t"
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "some_not_numeric",
+          "path": "yRight[0]"
+        },
+        {
+          "severity": "error",
+          "code": "dual_axis_overlap",
+          "path": "yRight[1]"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "yRight: the same column as a bar line",
+      "spec": {
+        "type": "bar",
+        "x": "k",
+        "y": "v",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ],
+        "line": "t",
+        "yRight": "t"
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "dual_axis_overlap",
+          "path": "yRight"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "yRight: ignored on horizontal bars",
+      "spec": {
+        "type": "bar",
+        "x": "k",
+        "y": "v",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ],
+        "yRight": "t",
+        "orientation": "horizontal"
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "dual_axis_ignored",
+          "path": "yRight"
+        }
+      ],
+      "normalized": {
+        "type": "bar",
+        "x": "k",
+        "y": "v",
+        "yRight": "t",
+        "orientation": "horizontal",
+        "legend": "auto",
+        "tooltip": true,
+        "stack": "none",
+        "sort": "none",
+        "labels": false
+      }
+    },
+    {
+      "name": "yRight: ignored on 100% bars",
+      "spec": {
+        "type": "bar",
+        "x": "k",
+        "y": [
+          "v",
+          "t"
+        ],
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ],
+        "yRight": "t",
+        "stack": "normalize"
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "dual_axis_ignored",
+          "path": "yRight"
+        }
+      ],
+      "normalized": {
+        "type": "bar",
+        "x": "k",
+        "y": [
+          "v",
+          "t"
+        ],
+        "yRight": "t",
+        "stack": "normalize",
+        "legend": "auto",
+        "tooltip": true,
+        "orientation": "vertical",
+        "sort": "none",
+        "labels": false
+      }
+    },
+    {
+      "name": "yRight: no such column",
+      "spec": {
+        "type": "line",
+        "x": "d",
+        "y": "v",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ],
+        "yRight": "tt"
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "no_such_column",
+          "path": "yRight"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "yRight: right-axis fields without it",
+      "spec": {
+        "type": "line",
+        "x": "d",
+        "y": "v",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ],
+        "rightDomain": [
+          0,
+          1
+        ],
+        "formatRight": "percent",
+        "yRightLabel": "x"
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "right_axis_unused",
+          "path": "yRightLabel"
+        },
+        {
+          "severity": "warning",
+          "code": "right_axis_unused",
+          "path": "rightDomain"
+        },
+        {
+          "severity": "warning",
+          "code": "right_axis_unused",
+          "path": "formatRight"
+        }
+      ],
+      "normalized": {
+        "type": "line",
+        "x": "d",
+        "y": "v",
+        "rightDomain": [
+          0,
+          1
+        ],
+        "formatRight": "percent",
+        "yRightLabel": "x",
+        "legend": "auto",
+        "tooltip": true,
+        "xType": "auto",
+        "curve": "linear"
+      }
+    },
+    {
+      "name": "yRight: bad formatRight",
+      "spec": {
+        "type": "line",
+        "x": "d",
+        "y": "v",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ],
+        "yRight": "t",
+        "formatRight": "pct"
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "bad_format",
+          "path": "formatRight"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "yRight: zoom and brush on xy keep x",
+      "spec": {
+        "type": "line",
+        "x": "d",
+        "y": "v",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ],
+        "yRight": "t",
+        "zoom": "xy",
+        "brush": "xy"
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "info",
+          "code": "dual_axis",
+          "path": "yRight"
+        }
+      ],
+      "normalized": {
+        "type": "line",
+        "x": "d",
+        "y": "v",
+        "yRight": "t",
+        "zoom": "xy",
+        "brush": "xy",
+        "legend": "auto",
+        "tooltip": true,
+        "xType": "auto",
+        "curve": "linear"
+      }
+    },
+    {
+      "name": "yBreak: bars crossing it",
+      "spec": {
+        "type": "bar",
+        "x": "k",
+        "y": "n",
+        "data": [
+          {
+            "k": "a",
+            "n": 4
+          },
+          {
+            "k": "b",
+            "n": 8
+          },
+          {
+            "k": "c",
+            "n": 120
+          }
+        ],
+        "yBreak": [
+          10,
+          90
+        ]
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "info",
+          "code": "axis_break",
+          "path": "yBreak"
+        }
+      ],
+      "normalized": {
+        "type": "bar",
+        "x": "k",
+        "y": "n",
+        "yBreak": [
+          10,
+          90
+        ],
+        "legend": "auto",
+        "tooltip": true,
+        "stack": "none",
+        "orientation": "vertical",
+        "sort": "none",
+        "labels": false
+      }
+    },
+    {
+      "name": "yBreak: a value inside it",
+      "spec": {
+        "type": "bar",
+        "x": "k",
+        "y": "n",
+        "data": [
+          {
+            "k": "a",
+            "n": 4
+          },
+          {
+            "k": "b",
+            "n": 50
+          },
+          {
+            "k": "c",
+            "n": 120
+          },
+          {
+            "k": "c",
+            "n": 3
+          }
+        ],
+        "yBreak": [
+          10,
+          90
+        ]
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "break_hides_values",
+          "path": "yBreak"
+        },
+        {
+          "severity": "info",
+          "code": "axis_break",
+          "path": "yBreak"
+        }
+      ],
+      "normalized": {
+        "type": "bar",
+        "x": "k",
+        "y": "n",
+        "yBreak": [
+          10,
+          90
+        ],
+        "legend": "auto",
+        "tooltip": true,
+        "stack": "none",
+        "orientation": "vertical",
+        "sort": "none",
+        "labels": false
+      }
+    },
+    {
+      "name": "yBreak: cuts out zero",
+      "spec": {
+        "type": "bar",
+        "x": "k",
+        "y": "v",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ],
+        "yBreak": [
+          0,
+          5
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "break_misleading",
+          "path": "yBreak"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "yBreak: cuts out zero from below",
+      "spec": {
+        "type": "bar",
+        "x": "k",
+        "y": "n",
+        "data": [
+          {
+            "k": "a",
+            "n": -4
+          },
+          {
+            "k": "b",
+            "n": 80
+          }
+        ],
+        "yBreak": [
+          -5,
+          5
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "break_misleading",
+          "path": "yBreak"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "yBreak: below zero, for negative bars",
+      "spec": {
+        "type": "bar",
+        "x": "k",
+        "y": "n",
+        "data": [
+          {
+            "k": "a",
+            "n": -4
+          },
+          {
+            "k": "b",
+            "n": -120
+          }
+        ],
+        "yBreak": [
+          -90,
+          -10
+        ]
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "info",
+          "code": "axis_break",
+          "path": "yBreak"
+        }
+      ],
+      "normalized": {
+        "type": "bar",
+        "x": "k",
+        "y": "n",
+        "yBreak": [
+          -90,
+          -10
+        ],
+        "legend": "auto",
+        "tooltip": true,
+        "stack": "none",
+        "orientation": "vertical",
+        "sort": "none",
+        "labels": false
+      }
+    },
+    {
+      "name": "yBreak: nothing beyond it",
+      "spec": {
+        "type": "bar",
+        "x": "k",
+        "y": "v",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ],
+        "yBreak": [
+          10,
+          20
+        ]
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "break_outside",
+          "path": "yBreak"
+        }
+      ],
+      "normalized": {
+        "type": "bar",
+        "x": "k",
+        "y": "v",
+        "legend": "auto",
+        "tooltip": true,
+        "stack": "none",
+        "orientation": "vertical",
+        "sort": "none",
+        "labels": false
+      }
+    },
+    {
+      "name": "yBreak: an open end",
+      "spec": {
+        "type": "bar",
+        "x": "k",
+        "y": "v",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ],
+        "yBreak": [
+          4,
+          null
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "bad_value",
+          "path": "yBreak"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "yBreak: from after to",
+      "spec": {
+        "type": "bar",
+        "x": "k",
+        "y": "v",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ],
+        "yBreak": [
+          9,
+          4
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "bad_value",
+          "path": "yBreak"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "yBreak: refused on stacked bars",
+      "spec": {
+        "type": "bar",
+        "x": "k",
+        "y": [
+          "v",
+          "t"
+        ],
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ],
+        "stack": "stack",
+        "yBreak": [
+          6,
+          9
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "break_refused",
+          "path": "yBreak"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "yBreak: refused with a right axis",
+      "spec": {
+        "type": "bar",
+        "x": "k",
+        "y": "v",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ],
+        "yRight": "t",
+        "yBreak": [
+          4,
+          7
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "info",
+          "code": "dual_axis",
+          "path": "yRight"
+        },
+        {
+          "severity": "error",
+          "code": "break_refused",
+          "path": "yBreak"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "yBreak: horizontal bars",
+      "spec": {
+        "type": "bar",
+        "x": "k",
+        "y": "n",
+        "data": [
+          {
+            "k": "a",
+            "n": 4
+          },
+          {
+            "k": "c",
+            "n": 120
+          }
+        ],
+        "orientation": "horizontal",
+        "yBreak": [
+          10,
+          90
+        ]
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "info",
+          "code": "axis_break",
+          "path": "yBreak"
+        }
+      ],
+      "normalized": {
+        "type": "bar",
+        "x": "k",
+        "y": "n",
+        "orientation": "horizontal",
+        "yBreak": [
+          10,
+          90
+        ],
+        "legend": "auto",
+        "tooltip": true,
+        "stack": "none",
+        "sort": "none",
+        "labels": false
+      }
+    },
+    {
+      "name": "yBreak: a line with values on both sides",
+      "spec": {
+        "type": "line",
+        "x": "d",
+        "y": "n",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "n": 4
+          },
+          {
+            "d": "2026-01-12",
+            "n": 120
+          },
+          {
+            "d": "2026-01-19",
+            "n": 6
+          }
+        ],
+        "yBreak": [
+          10,
+          90
+        ]
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "info",
+          "code": "axis_break",
+          "path": "yBreak"
+        }
+      ],
+      "normalized": {
+        "type": "line",
+        "x": "d",
+        "y": "n",
+        "yBreak": [
+          10,
+          90
+        ],
+        "legend": "auto",
+        "tooltip": true,
+        "xType": "auto",
+        "curve": "linear"
+      }
+    },
+    {
+      "name": "yBreak: a line with nothing below it",
+      "spec": {
+        "type": "line",
+        "x": "d",
+        "y": "n",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "n": 4
+          },
+          {
+            "d": "2026-01-12",
+            "n": 120
+          }
+        ],
+        "yBreak": [
+          1,
+          2
+        ]
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "break_outside",
+          "path": "yBreak"
+        }
+      ],
+      "normalized": {
+        "type": "line",
+        "x": "d",
+        "y": "n",
+        "legend": "auto",
+        "tooltip": true,
+        "xType": "auto",
+        "curve": "linear"
+      }
+    },
+    {
+      "name": "yBreak: refused on a log line",
+      "spec": {
+        "type": "line",
+        "x": "d",
+        "y": "n",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "n": 4
+          },
+          {
+            "d": "2026-01-12",
+            "n": 120
+          }
+        ],
+        "yScale": "log",
+        "yBreak": [
+          10,
+          90
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "break_refused",
+          "path": "yBreak"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "yBreak: not on an area",
+      "spec": {
+        "type": "area",
+        "x": "d",
+        "y": "v",
+        "yBreak": [
+          4,
+          5
+        ],
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "unknown_field",
+          "path": "yBreak"
+        }
+      ],
+      "normalized": null
+    },
+    {
       "name": "map: unknown geography name",
       "spec": {
         "type": "choropleth",
@@ -60128,6 +61536,1902 @@
       "describe": "Line chart. 2 series (a, b) over a numeric x axis. a: from 17 at 0 to 40 at 20 (135.3%); peak 40 at 20, low 17 at 0. b: from 23 at 0 to 40 at 10 (73.9%); peak 40 at 10, low 23 at 0."
     },
     {
+      "name": "index: in place, first row of each group in date order",
+      "spec": {
+        "type": "bar",
+        "x": "date",
+        "y": "revenue",
+        "data": [
+          {
+            "date": "2026-01-05",
+            "region": "APAC",
+            "revenue": 120,
+            "units": 3
+          },
+          {
+            "date": "2026-01-19",
+            "region": "EMEA",
+            "revenue": 80,
+            "units": "2"
+          },
+          {
+            "date": "2026-02-02T10:30:00Z",
+            "region": "APAC",
+            "revenue": 60.5,
+            "units": null
+          },
+          {
+            "date": "2026-02-14",
+            "region": "EMEA",
+            "revenue": null,
+            "units": 5
+          },
+          {
+            "date": "2026-03-01",
+            "region": "LATAM",
+            "revenue": 40,
+            "units": 1
+          },
+          {
+            "date": 1775001600000,
+            "region": "APAC",
+            "revenue": "10",
+            "units": 2
+          }
+        ],
+        "transform": [
+          {
+            "index": {
+              "field": "revenue",
+              "groupBy": [
+                "region"
+              ],
+              "sortBy": "date"
+            }
+          }
+        ],
+        "series": "region"
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "bar",
+        "x": "date",
+        "y": "revenue",
+        "transform": [
+          {
+            "index": {
+              "field": "revenue",
+              "groupBy": [
+                "region"
+              ],
+              "sortBy": "date"
+            }
+          }
+        ],
+        "series": "region",
+        "legend": "auto",
+        "tooltip": true,
+        "stack": "none",
+        "orientation": "vertical",
+        "sort": "none",
+        "labels": false
+      },
+      "rows": [
+        {
+          "date": "2026-01-05",
+          "region": "APAC",
+          "revenue": 100,
+          "units": 3
+        },
+        {
+          "date": "2026-01-19",
+          "region": "EMEA",
+          "revenue": 100,
+          "units": "2"
+        },
+        {
+          "date": "2026-02-02T10:30:00Z",
+          "region": "APAC",
+          "revenue": 50.416666667,
+          "units": null
+        },
+        {
+          "date": "2026-02-14",
+          "region": "EMEA",
+          "revenue": null,
+          "units": 5
+        },
+        {
+          "date": "2026-03-01",
+          "region": "LATAM",
+          "revenue": 100,
+          "units": 1
+        },
+        {
+          "date": 1775001600000,
+          "region": "APAC",
+          "revenue": 8.333333333,
+          "units": 2
+        }
+      ],
+      "describe": "Bar chart. 6 categories, 3 series (APAC, EMEA, LATAM). Highest: 2026-01-05 (100). Lowest: 2026-02-14 (0). Total: 358.7."
+    },
+    {
+      "name": "index: no groups, data order, a ratio into a new column",
+      "spec": {
+        "type": "bar",
+        "x": "region",
+        "y": "ratio",
+        "data": [
+          {
+            "date": "2026-01-05",
+            "region": "APAC",
+            "revenue": 120,
+            "units": 3
+          },
+          {
+            "date": "2026-01-19",
+            "region": "EMEA",
+            "revenue": 80,
+            "units": "2"
+          },
+          {
+            "date": "2026-02-02T10:30:00Z",
+            "region": "APAC",
+            "revenue": 60.5,
+            "units": null
+          },
+          {
+            "date": "2026-02-14",
+            "region": "EMEA",
+            "revenue": null,
+            "units": 5
+          },
+          {
+            "date": "2026-03-01",
+            "region": "LATAM",
+            "revenue": 40,
+            "units": 1
+          },
+          {
+            "date": 1775001600000,
+            "region": "APAC",
+            "revenue": "10",
+            "units": 2
+          }
+        ],
+        "transform": [
+          {
+            "filter": {
+              "field": "revenue",
+              "valid": true
+            }
+          },
+          {
+            "index": {
+              "field": "revenue",
+              "as": "ratio",
+              "base": 1
+            }
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "bar",
+        "x": "region",
+        "y": "ratio",
+        "transform": [
+          {
+            "filter": {
+              "field": "revenue",
+              "valid": true
+            }
+          },
+          {
+            "index": {
+              "field": "revenue",
+              "as": "ratio",
+              "base": 1
+            }
+          }
+        ],
+        "legend": "auto",
+        "tooltip": true,
+        "stack": "none",
+        "orientation": "vertical",
+        "sort": "none",
+        "labels": false
+      },
+      "rows": [
+        {
+          "date": "2026-01-05",
+          "region": "APAC",
+          "revenue": 120,
+          "units": 3,
+          "ratio": 1
+        },
+        {
+          "date": "2026-01-19",
+          "region": "EMEA",
+          "revenue": 80,
+          "units": "2",
+          "ratio": 0.666666667
+        },
+        {
+          "date": "2026-02-02T10:30:00Z",
+          "region": "APAC",
+          "revenue": 60.5,
+          "units": null,
+          "ratio": 0.504166667
+        },
+        {
+          "date": "2026-03-01",
+          "region": "LATAM",
+          "revenue": 40,
+          "units": 1,
+          "ratio": 0.333333333
+        },
+        {
+          "date": 1775001600000,
+          "region": "APAC",
+          "revenue": "10",
+          "units": 2,
+          "ratio": 0.083333333
+        }
+      ],
+      "describe": "Bar chart. 3 categories. Highest: APAC (1.59). Lowest: LATAM (0.3333). Total: 2.59."
+    },
+    {
+      "name": "index: at a sortBy value (an ISO date against mixed date forms)",
+      "spec": {
+        "type": "line",
+        "x": "d",
+        "y": "i",
+        "series": "g",
+        "data": [
+          {
+            "d": "2026-01-01",
+            "g": "a",
+            "v": 50
+          },
+          {
+            "d": "2026-02-01",
+            "g": "a",
+            "v": 75
+          },
+          {
+            "d": 1769904000000,
+            "g": "b",
+            "v": 8
+          },
+          {
+            "d": "2026-01-01T00:00:00Z",
+            "g": "b",
+            "v": 4
+          },
+          {
+            "d": "2026-03-01",
+            "g": "b",
+            "v": "x"
+          }
+        ],
+        "transform": [
+          {
+            "index": {
+              "field": "v",
+              "as": "i",
+              "groupBy": [
+                "g"
+              ],
+              "sortBy": "d",
+              "at": "2026-01-01"
+            }
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "line",
+        "x": "d",
+        "y": "i",
+        "series": "g",
+        "transform": [
+          {
+            "index": {
+              "field": "v",
+              "as": "i",
+              "groupBy": [
+                "g"
+              ],
+              "sortBy": "d",
+              "at": "2026-01-01"
+            }
+          }
+        ],
+        "legend": "auto",
+        "tooltip": true,
+        "xType": "auto",
+        "curve": "linear"
+      },
+      "rows": [
+        {
+          "d": "2026-01-01",
+          "g": "a",
+          "v": 50,
+          "i": 100
+        },
+        {
+          "d": "2026-02-01",
+          "g": "a",
+          "v": 75,
+          "i": 150
+        },
+        {
+          "d": 1769904000000,
+          "g": "b",
+          "v": 8,
+          "i": 200
+        },
+        {
+          "d": "2026-01-01T00:00:00Z",
+          "g": "b",
+          "v": 4,
+          "i": 100
+        },
+        {
+          "d": "2026-03-01",
+          "g": "b",
+          "v": "x",
+          "i": null
+        }
+      ],
+      "describe": "Line chart. 2 series (a, b) over categories. a: from 100 at 2026-01-01 to 150 at 2026-02-01 (50.0%); peak 150 at 2026-02-01, low 100 at 2026-01-01. b: from 200 at 1769904000000 to 100 at 2026-01-01T00:00:00Z (-50.0%); peak 200 at 1769904000000, low 100 at 2026-01-01T00:00:00Z."
+    },
+    {
+      "name": "index: at a number",
+      "spec": {
+        "type": "line",
+        "x": "y",
+        "y": "v",
+        "series": "g",
+        "xType": "linear",
+        "data": [
+          {
+            "y": 2019,
+            "g": "a",
+            "v": 3
+          },
+          {
+            "y": 2020,
+            "g": "a",
+            "v": 6
+          },
+          {
+            "y": 2020,
+            "g": "b",
+            "v": 2
+          },
+          {
+            "y": 2021,
+            "g": "b",
+            "v": 1
+          }
+        ],
+        "transform": [
+          {
+            "index": {
+              "field": "v",
+              "groupBy": [
+                "g"
+              ],
+              "sortBy": "y",
+              "at": 2020
+            }
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "line",
+        "x": "y",
+        "y": "v",
+        "series": "g",
+        "xType": "linear",
+        "transform": [
+          {
+            "index": {
+              "field": "v",
+              "groupBy": [
+                "g"
+              ],
+              "sortBy": "y",
+              "at": 2020
+            }
+          }
+        ],
+        "legend": "auto",
+        "tooltip": true,
+        "curve": "linear"
+      },
+      "rows": [
+        {
+          "y": 2019,
+          "g": "a",
+          "v": 50
+        },
+        {
+          "y": 2020,
+          "g": "a",
+          "v": 100
+        },
+        {
+          "y": 2020,
+          "g": "b",
+          "v": 100
+        },
+        {
+          "y": 2021,
+          "g": "b",
+          "v": 50
+        }
+      ],
+      "describe": "Line chart. 2 series (a, b) over a numeric x axis. a: from 50 at 2019 to 100 at 2020 (100.0%); peak 100 at 2020, low 50 at 2019. b: from 100 at 2020 to 50 at 2021 (-50.0%); peak 100 at 2020, low 50 at 2021."
+    },
+    {
+      "name": "index: groups dropped (zero, missing, negative, text, no row at the base)",
+      "spec": {
+        "type": "line",
+        "x": "t",
+        "y": "v",
+        "series": "g",
+        "xType": "linear",
+        "data": [
+          {
+            "t": 1,
+            "g": "ok",
+            "v": 2
+          },
+          {
+            "t": 2,
+            "g": "ok",
+            "v": 3
+          },
+          {
+            "t": 1,
+            "g": "zero",
+            "v": 0
+          },
+          {
+            "t": 2,
+            "g": "zero",
+            "v": 4
+          },
+          {
+            "t": 1,
+            "g": "gap",
+            "v": null
+          },
+          {
+            "t": 2,
+            "g": "gap",
+            "v": 1
+          },
+          {
+            "t": 1,
+            "g": "neg",
+            "v": -2
+          },
+          {
+            "t": 1,
+            "g": "txt",
+            "v": "n/a"
+          },
+          {
+            "t": 2,
+            "g": "txt",
+            "v": 5
+          }
+        ],
+        "transform": [
+          {
+            "index": {
+              "field": "v",
+              "groupBy": [
+                "g"
+              ],
+              "sortBy": "t"
+            }
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "index_group_dropped",
+          "path": "transform[0].index.field"
+        }
+      ],
+      "normalized": {
+        "type": "line",
+        "x": "t",
+        "y": "v",
+        "series": "g",
+        "xType": "linear",
+        "transform": [
+          {
+            "index": {
+              "field": "v",
+              "groupBy": [
+                "g"
+              ],
+              "sortBy": "t"
+            }
+          }
+        ],
+        "legend": "auto",
+        "tooltip": true,
+        "curve": "linear"
+      },
+      "rows": [
+        {
+          "t": 1,
+          "g": "ok",
+          "v": 100
+        },
+        {
+          "t": 2,
+          "g": "ok",
+          "v": 150
+        }
+      ],
+      "describe": "Line chart. 1 series over a numeric x axis. ok: from 100 at 1 to 150 at 2 (50.0%); peak 150 at 2, low 100 at 1."
+    },
+    {
+      "name": "index: no row at the base value",
+      "spec": {
+        "type": "line",
+        "x": "t",
+        "y": "v",
+        "series": "g",
+        "xType": "linear",
+        "data": [
+          {
+            "t": 1,
+            "g": "a",
+            "v": 2
+          },
+          {
+            "t": 2,
+            "g": "a",
+            "v": 3
+          },
+          {
+            "t": 2,
+            "g": "b",
+            "v": 4
+          },
+          {
+            "t": 3,
+            "g": "b",
+            "v": 5
+          }
+        ],
+        "transform": [
+          {
+            "index": {
+              "field": "v",
+              "groupBy": [
+                "g"
+              ],
+              "sortBy": "t",
+              "at": 1
+            }
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "index_group_dropped",
+          "path": "transform[0].index.field"
+        }
+      ],
+      "normalized": {
+        "type": "line",
+        "x": "t",
+        "y": "v",
+        "series": "g",
+        "xType": "linear",
+        "transform": [
+          {
+            "index": {
+              "field": "v",
+              "groupBy": [
+                "g"
+              ],
+              "sortBy": "t",
+              "at": 1
+            }
+          }
+        ],
+        "legend": "auto",
+        "tooltip": true,
+        "curve": "linear"
+      },
+      "rows": [
+        {
+          "t": 1,
+          "g": "a",
+          "v": 100
+        },
+        {
+          "t": 2,
+          "g": "a",
+          "v": 150
+        }
+      ],
+      "describe": "Line chart. 1 series over a numeric x axis. a: from 100 at 1 to 150 at 2 (50.0%); peak 150 at 2, low 100 at 1."
+    },
+    {
+      "name": "index: every group dropped",
+      "spec": {
+        "type": "bar",
+        "x": "k",
+        "y": "v",
+        "data": [
+          {
+            "k": "b",
+            "v": 10
+          },
+          {
+            "k": "a",
+            "v": "9"
+          },
+          {
+            "k": null,
+            "v": null
+          },
+          {
+            "k": "B",
+            "v": "x"
+          },
+          {
+            "k": "😀",
+            "v": "2026-01-01"
+          },
+          {
+            "k": "～",
+            "v": -1
+          },
+          {
+            "v": 2.5
+          },
+          {
+            "k": "a",
+            "v": 10
+          },
+          {
+            "k": "",
+            "v": ""
+          },
+          {
+            "k": 7,
+            "v": true
+          }
+        ],
+        "transform": [
+          {
+            "index": {
+              "field": "v",
+              "groupBy": [
+                "k"
+              ],
+              "sortBy": "k",
+              "at": "zzz"
+            }
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "index_group_dropped",
+          "path": "transform[0].index.field"
+        },
+        {
+          "severity": "error",
+          "code": "empty_after_transform",
+          "path": "transform"
+        }
+      ],
+      "normalized": null,
+      "rows": null,
+      "describe": null
+    },
+    {
+      "name": "index: groups of mixed types, missing sort keys last",
+      "spec": {
+        "type": "bar",
+        "x": "k",
+        "y": "v",
+        "data": [
+          {
+            "k": "b",
+            "v": 10
+          },
+          {
+            "k": "a",
+            "v": "9"
+          },
+          {
+            "k": null,
+            "v": null
+          },
+          {
+            "k": "B",
+            "v": "x"
+          },
+          {
+            "k": "😀",
+            "v": "2026-01-01"
+          },
+          {
+            "k": "～",
+            "v": -1
+          },
+          {
+            "v": 2.5
+          },
+          {
+            "k": "a",
+            "v": 10
+          },
+          {
+            "k": "",
+            "v": ""
+          },
+          {
+            "k": 7,
+            "v": true
+          }
+        ],
+        "transform": [
+          {
+            "index": {
+              "field": "v",
+              "groupBy": [
+                "k"
+              ],
+              "sortBy": "v"
+            }
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "index_group_dropped",
+          "path": "transform[0].index.field"
+        }
+      ],
+      "normalized": {
+        "type": "bar",
+        "x": "k",
+        "y": "v",
+        "transform": [
+          {
+            "index": {
+              "field": "v",
+              "groupBy": [
+                "k"
+              ],
+              "sortBy": "v"
+            }
+          }
+        ],
+        "legend": "auto",
+        "tooltip": true,
+        "stack": "none",
+        "orientation": "vertical",
+        "sort": "none",
+        "labels": false
+      },
+      "rows": [
+        {
+          "k": "b",
+          "v": 100
+        },
+        {
+          "k": "a",
+          "v": 100
+        },
+        {
+          "k": null,
+          "v": null
+        },
+        {
+          "v": 100
+        },
+        {
+          "k": "a",
+          "v": 111.111111111
+        }
+      ],
+      "describe": "Bar chart. 3 categories. Highest: a (211.1). Lowest: b (100). Total: 411.1."
+    },
+    {
+      "name": "index: then a window over the index",
+      "spec": {
+        "type": "bar",
+        "x": "region",
+        "y": "i",
+        "data": [
+          {
+            "date": "2026-01-05",
+            "region": "APAC",
+            "revenue": 120,
+            "units": 3
+          },
+          {
+            "date": "2026-01-19",
+            "region": "EMEA",
+            "revenue": 80,
+            "units": "2"
+          },
+          {
+            "date": "2026-02-02T10:30:00Z",
+            "region": "APAC",
+            "revenue": 60.5,
+            "units": null
+          },
+          {
+            "date": "2026-02-14",
+            "region": "EMEA",
+            "revenue": null,
+            "units": 5
+          },
+          {
+            "date": "2026-03-01",
+            "region": "LATAM",
+            "revenue": 40,
+            "units": 1
+          },
+          {
+            "date": 1775001600000,
+            "region": "APAC",
+            "revenue": "10",
+            "units": 2
+          }
+        ],
+        "transform": [
+          {
+            "filter": {
+              "field": "revenue",
+              "valid": true
+            }
+          },
+          {
+            "index": {
+              "field": "revenue",
+              "as": "i",
+              "sortBy": "date"
+            }
+          },
+          {
+            "window": {
+              "op": "pctChange",
+              "field": "i",
+              "as": "p",
+              "sortBy": "date"
+            }
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "bar",
+        "x": "region",
+        "y": "i",
+        "transform": [
+          {
+            "filter": {
+              "field": "revenue",
+              "valid": true
+            }
+          },
+          {
+            "index": {
+              "field": "revenue",
+              "as": "i",
+              "sortBy": "date"
+            }
+          },
+          {
+            "window": {
+              "op": "pctChange",
+              "field": "i",
+              "as": "p",
+              "sortBy": "date"
+            }
+          }
+        ],
+        "legend": "auto",
+        "tooltip": true,
+        "stack": "none",
+        "orientation": "vertical",
+        "sort": "none",
+        "labels": false
+      },
+      "rows": [
+        {
+          "date": "2026-01-05",
+          "region": "APAC",
+          "revenue": 120,
+          "units": 3,
+          "i": 100,
+          "p": null
+        },
+        {
+          "date": "2026-01-19",
+          "region": "EMEA",
+          "revenue": 80,
+          "units": "2",
+          "i": 66.666666667,
+          "p": -0.333333333
+        },
+        {
+          "date": "2026-02-02T10:30:00Z",
+          "region": "APAC",
+          "revenue": 60.5,
+          "units": null,
+          "i": 50.416666667,
+          "p": -0.24375
+        },
+        {
+          "date": "2026-03-01",
+          "region": "LATAM",
+          "revenue": 40,
+          "units": 1,
+          "i": 33.333333333,
+          "p": -0.338842975
+        },
+        {
+          "date": 1775001600000,
+          "region": "APAC",
+          "revenue": "10",
+          "units": 2,
+          "i": 8.333333333,
+          "p": -0.75
+        }
+      ],
+      "describe": "Bar chart. 3 categories. Highest: APAC (158.8). Lowest: LATAM (33.33). Total: 258.8."
+    },
+    {
+      "name": "index: no field",
+      "spec": {
+        "type": "bar",
+        "x": "region",
+        "y": "revenue",
+        "data": [
+          {
+            "date": "2026-01-05",
+            "region": "APAC",
+            "revenue": 120,
+            "units": 3
+          },
+          {
+            "date": "2026-01-19",
+            "region": "EMEA",
+            "revenue": 80,
+            "units": "2"
+          },
+          {
+            "date": "2026-02-02T10:30:00Z",
+            "region": "APAC",
+            "revenue": 60.5,
+            "units": null
+          },
+          {
+            "date": "2026-02-14",
+            "region": "EMEA",
+            "revenue": null,
+            "units": 5
+          },
+          {
+            "date": "2026-03-01",
+            "region": "LATAM",
+            "revenue": 40,
+            "units": 1
+          },
+          {
+            "date": 1775001600000,
+            "region": "APAC",
+            "revenue": "10",
+            "units": 2
+          }
+        ],
+        "transform": [
+          {
+            "index": {
+              "groupBy": [
+                "region"
+              ]
+            }
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "missing_required",
+          "path": "transform[0].index.field"
+        }
+      ],
+      "normalized": null,
+      "rows": null,
+      "describe": null
+    },
+    {
+      "name": "index: no such field",
+      "spec": {
+        "type": "bar",
+        "x": "region",
+        "y": "revenue",
+        "data": [
+          {
+            "date": "2026-01-05",
+            "region": "APAC",
+            "revenue": 120,
+            "units": 3
+          },
+          {
+            "date": "2026-01-19",
+            "region": "EMEA",
+            "revenue": 80,
+            "units": "2"
+          },
+          {
+            "date": "2026-02-02T10:30:00Z",
+            "region": "APAC",
+            "revenue": 60.5,
+            "units": null
+          },
+          {
+            "date": "2026-02-14",
+            "region": "EMEA",
+            "revenue": null,
+            "units": 5
+          },
+          {
+            "date": "2026-03-01",
+            "region": "LATAM",
+            "revenue": 40,
+            "units": 1
+          },
+          {
+            "date": 1775001600000,
+            "region": "APAC",
+            "revenue": "10",
+            "units": 2
+          }
+        ],
+        "transform": [
+          {
+            "index": {
+              "field": "revenu"
+            }
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "no_such_column",
+          "path": "transform[0].index.field"
+        }
+      ],
+      "normalized": null,
+      "rows": null,
+      "describe": null
+    },
+    {
+      "name": "index: not numeric",
+      "spec": {
+        "type": "bar",
+        "x": "region",
+        "y": "revenue",
+        "data": [
+          {
+            "date": "2026-01-05",
+            "region": "APAC",
+            "revenue": 120,
+            "units": 3
+          },
+          {
+            "date": "2026-01-19",
+            "region": "EMEA",
+            "revenue": 80,
+            "units": "2"
+          },
+          {
+            "date": "2026-02-02T10:30:00Z",
+            "region": "APAC",
+            "revenue": 60.5,
+            "units": null
+          },
+          {
+            "date": "2026-02-14",
+            "region": "EMEA",
+            "revenue": null,
+            "units": 5
+          },
+          {
+            "date": "2026-03-01",
+            "region": "LATAM",
+            "revenue": 40,
+            "units": 1
+          },
+          {
+            "date": 1775001600000,
+            "region": "APAC",
+            "revenue": "10",
+            "units": 2
+          }
+        ],
+        "transform": [
+          {
+            "index": {
+              "field": "region"
+            }
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "not_numeric",
+          "path": "transform[0].index.field"
+        }
+      ],
+      "normalized": null,
+      "rows": null,
+      "describe": null
+    },
+    {
+      "name": "index: base zero",
+      "spec": {
+        "type": "bar",
+        "x": "region",
+        "y": "revenue",
+        "data": [
+          {
+            "date": "2026-01-05",
+            "region": "APAC",
+            "revenue": 120,
+            "units": 3
+          },
+          {
+            "date": "2026-01-19",
+            "region": "EMEA",
+            "revenue": 80,
+            "units": "2"
+          },
+          {
+            "date": "2026-02-02T10:30:00Z",
+            "region": "APAC",
+            "revenue": 60.5,
+            "units": null
+          },
+          {
+            "date": "2026-02-14",
+            "region": "EMEA",
+            "revenue": null,
+            "units": 5
+          },
+          {
+            "date": "2026-03-01",
+            "region": "LATAM",
+            "revenue": 40,
+            "units": 1
+          },
+          {
+            "date": 1775001600000,
+            "region": "APAC",
+            "revenue": "10",
+            "units": 2
+          }
+        ],
+        "transform": [
+          {
+            "index": {
+              "field": "revenue",
+              "base": 0
+            }
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "bad_value",
+          "path": "transform[0].index.base"
+        }
+      ],
+      "normalized": null,
+      "rows": null,
+      "describe": null
+    },
+    {
+      "name": "index: base negative",
+      "spec": {
+        "type": "bar",
+        "x": "region",
+        "y": "revenue",
+        "data": [
+          {
+            "date": "2026-01-05",
+            "region": "APAC",
+            "revenue": 120,
+            "units": 3
+          },
+          {
+            "date": "2026-01-19",
+            "region": "EMEA",
+            "revenue": 80,
+            "units": "2"
+          },
+          {
+            "date": "2026-02-02T10:30:00Z",
+            "region": "APAC",
+            "revenue": 60.5,
+            "units": null
+          },
+          {
+            "date": "2026-02-14",
+            "region": "EMEA",
+            "revenue": null,
+            "units": 5
+          },
+          {
+            "date": "2026-03-01",
+            "region": "LATAM",
+            "revenue": 40,
+            "units": 1
+          },
+          {
+            "date": 1775001600000,
+            "region": "APAC",
+            "revenue": "10",
+            "units": 2
+          }
+        ],
+        "transform": [
+          {
+            "index": {
+              "field": "revenue",
+              "base": -100
+            }
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "bad_value",
+          "path": "transform[0].index.base"
+        }
+      ],
+      "normalized": null,
+      "rows": null,
+      "describe": null
+    },
+    {
+      "name": "index: base not a number",
+      "spec": {
+        "type": "bar",
+        "x": "region",
+        "y": "revenue",
+        "data": [
+          {
+            "date": "2026-01-05",
+            "region": "APAC",
+            "revenue": 120,
+            "units": 3
+          },
+          {
+            "date": "2026-01-19",
+            "region": "EMEA",
+            "revenue": 80,
+            "units": "2"
+          },
+          {
+            "date": "2026-02-02T10:30:00Z",
+            "region": "APAC",
+            "revenue": 60.5,
+            "units": null
+          },
+          {
+            "date": "2026-02-14",
+            "region": "EMEA",
+            "revenue": null,
+            "units": 5
+          },
+          {
+            "date": "2026-03-01",
+            "region": "LATAM",
+            "revenue": 40,
+            "units": 1
+          },
+          {
+            "date": 1775001600000,
+            "region": "APAC",
+            "revenue": "10",
+            "units": 2
+          }
+        ],
+        "transform": [
+          {
+            "index": {
+              "field": "revenue",
+              "base": "100"
+            }
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "bad_value",
+          "path": "transform[0].index.base"
+        }
+      ],
+      "normalized": null,
+      "rows": null,
+      "describe": null
+    },
+    {
+      "name": "index: at without sortBy",
+      "spec": {
+        "type": "bar",
+        "x": "region",
+        "y": "revenue",
+        "data": [
+          {
+            "date": "2026-01-05",
+            "region": "APAC",
+            "revenue": 120,
+            "units": 3
+          },
+          {
+            "date": "2026-01-19",
+            "region": "EMEA",
+            "revenue": 80,
+            "units": "2"
+          },
+          {
+            "date": "2026-02-02T10:30:00Z",
+            "region": "APAC",
+            "revenue": 60.5,
+            "units": null
+          },
+          {
+            "date": "2026-02-14",
+            "region": "EMEA",
+            "revenue": null,
+            "units": 5
+          },
+          {
+            "date": "2026-03-01",
+            "region": "LATAM",
+            "revenue": 40,
+            "units": 1
+          },
+          {
+            "date": 1775001600000,
+            "region": "APAC",
+            "revenue": "10",
+            "units": 2
+          }
+        ],
+        "transform": [
+          {
+            "index": {
+              "field": "revenue",
+              "at": "2026-01-05"
+            }
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "missing_required",
+          "path": "transform[0].index.sortBy"
+        }
+      ],
+      "normalized": null,
+      "rows": null,
+      "describe": null
+    },
+    {
+      "name": "index: at is an object",
+      "spec": {
+        "type": "bar",
+        "x": "region",
+        "y": "revenue",
+        "data": [
+          {
+            "date": "2026-01-05",
+            "region": "APAC",
+            "revenue": 120,
+            "units": 3
+          },
+          {
+            "date": "2026-01-19",
+            "region": "EMEA",
+            "revenue": 80,
+            "units": "2"
+          },
+          {
+            "date": "2026-02-02T10:30:00Z",
+            "region": "APAC",
+            "revenue": 60.5,
+            "units": null
+          },
+          {
+            "date": "2026-02-14",
+            "region": "EMEA",
+            "revenue": null,
+            "units": 5
+          },
+          {
+            "date": "2026-03-01",
+            "region": "LATAM",
+            "revenue": 40,
+            "units": 1
+          },
+          {
+            "date": 1775001600000,
+            "region": "APAC",
+            "revenue": "10",
+            "units": 2
+          }
+        ],
+        "transform": [
+          {
+            "index": {
+              "field": "revenue",
+              "sortBy": "date",
+              "at": {
+                "v": 1
+              }
+            }
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "bad_type",
+          "path": "transform[0].index.at"
+        }
+      ],
+      "normalized": null,
+      "rows": null,
+      "describe": null
+    },
+    {
+      "name": "index: at is null",
+      "spec": {
+        "type": "bar",
+        "x": "region",
+        "y": "revenue",
+        "data": [
+          {
+            "date": "2026-01-05",
+            "region": "APAC",
+            "revenue": 120,
+            "units": 3
+          },
+          {
+            "date": "2026-01-19",
+            "region": "EMEA",
+            "revenue": 80,
+            "units": "2"
+          },
+          {
+            "date": "2026-02-02T10:30:00Z",
+            "region": "APAC",
+            "revenue": 60.5,
+            "units": null
+          },
+          {
+            "date": "2026-02-14",
+            "region": "EMEA",
+            "revenue": null,
+            "units": 5
+          },
+          {
+            "date": "2026-03-01",
+            "region": "LATAM",
+            "revenue": 40,
+            "units": 1
+          },
+          {
+            "date": 1775001600000,
+            "region": "APAC",
+            "revenue": "10",
+            "units": 2
+          }
+        ],
+        "transform": [
+          {
+            "index": {
+              "field": "revenue",
+              "sortBy": "date",
+              "at": null
+            }
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "bad_type",
+          "path": "transform[0].index.at"
+        }
+      ],
+      "normalized": null,
+      "rows": null,
+      "describe": null
+    },
+    {
+      "name": "index: no such sortBy",
+      "spec": {
+        "type": "bar",
+        "x": "region",
+        "y": "revenue",
+        "data": [
+          {
+            "date": "2026-01-05",
+            "region": "APAC",
+            "revenue": 120,
+            "units": 3
+          },
+          {
+            "date": "2026-01-19",
+            "region": "EMEA",
+            "revenue": 80,
+            "units": "2"
+          },
+          {
+            "date": "2026-02-02T10:30:00Z",
+            "region": "APAC",
+            "revenue": 60.5,
+            "units": null
+          },
+          {
+            "date": "2026-02-14",
+            "region": "EMEA",
+            "revenue": null,
+            "units": 5
+          },
+          {
+            "date": "2026-03-01",
+            "region": "LATAM",
+            "revenue": 40,
+            "units": 1
+          },
+          {
+            "date": 1775001600000,
+            "region": "APAC",
+            "revenue": "10",
+            "units": 2
+          }
+        ],
+        "transform": [
+          {
+            "index": {
+              "field": "revenue",
+              "sortBy": "when"
+            }
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "no_such_column",
+          "path": "transform[0].index.sortBy"
+        }
+      ],
+      "normalized": null,
+      "rows": null,
+      "describe": null
+    },
+    {
+      "name": "index: groupBy is a string",
+      "spec": {
+        "type": "bar",
+        "x": "region",
+        "y": "revenue",
+        "data": [
+          {
+            "date": "2026-01-05",
+            "region": "APAC",
+            "revenue": 120,
+            "units": 3
+          },
+          {
+            "date": "2026-01-19",
+            "region": "EMEA",
+            "revenue": 80,
+            "units": "2"
+          },
+          {
+            "date": "2026-02-02T10:30:00Z",
+            "region": "APAC",
+            "revenue": 60.5,
+            "units": null
+          },
+          {
+            "date": "2026-02-14",
+            "region": "EMEA",
+            "revenue": null,
+            "units": 5
+          },
+          {
+            "date": "2026-03-01",
+            "region": "LATAM",
+            "revenue": 40,
+            "units": 1
+          },
+          {
+            "date": 1775001600000,
+            "region": "APAC",
+            "revenue": "10",
+            "units": 2
+          }
+        ],
+        "transform": [
+          {
+            "index": {
+              "field": "revenue",
+              "groupBy": "region"
+            }
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "bad_type",
+          "path": "transform[0].index.groupBy"
+        }
+      ],
+      "normalized": null,
+      "rows": null,
+      "describe": null
+    },
+    {
+      "name": "index: no such group column",
+      "spec": {
+        "type": "bar",
+        "x": "region",
+        "y": "revenue",
+        "data": [
+          {
+            "date": "2026-01-05",
+            "region": "APAC",
+            "revenue": 120,
+            "units": 3
+          },
+          {
+            "date": "2026-01-19",
+            "region": "EMEA",
+            "revenue": 80,
+            "units": "2"
+          },
+          {
+            "date": "2026-02-02T10:30:00Z",
+            "region": "APAC",
+            "revenue": 60.5,
+            "units": null
+          },
+          {
+            "date": "2026-02-14",
+            "region": "EMEA",
+            "revenue": null,
+            "units": 5
+          },
+          {
+            "date": "2026-03-01",
+            "region": "LATAM",
+            "revenue": 40,
+            "units": 1
+          },
+          {
+            "date": 1775001600000,
+            "region": "APAC",
+            "revenue": "10",
+            "units": 2
+          }
+        ],
+        "transform": [
+          {
+            "index": {
+              "field": "revenue",
+              "groupBy": [
+                "regoin"
+              ]
+            }
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "no_such_column",
+          "path": "transform[0].index.groupBy[0]"
+        }
+      ],
+      "normalized": null,
+      "rows": null,
+      "describe": null
+    },
+    {
+      "name": "index: as is empty",
+      "spec": {
+        "type": "bar",
+        "x": "region",
+        "y": "revenue",
+        "data": [
+          {
+            "date": "2026-01-05",
+            "region": "APAC",
+            "revenue": 120,
+            "units": 3
+          },
+          {
+            "date": "2026-01-19",
+            "region": "EMEA",
+            "revenue": 80,
+            "units": "2"
+          },
+          {
+            "date": "2026-02-02T10:30:00Z",
+            "region": "APAC",
+            "revenue": 60.5,
+            "units": null
+          },
+          {
+            "date": "2026-02-14",
+            "region": "EMEA",
+            "revenue": null,
+            "units": 5
+          },
+          {
+            "date": "2026-03-01",
+            "region": "LATAM",
+            "revenue": 40,
+            "units": 1
+          },
+          {
+            "date": 1775001600000,
+            "region": "APAC",
+            "revenue": "10",
+            "units": 2
+          }
+        ],
+        "transform": [
+          {
+            "index": {
+              "field": "revenue",
+              "as": ""
+            }
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "bad_type",
+          "path": "transform[0].index.as"
+        }
+      ],
+      "normalized": null,
+      "rows": null,
+      "describe": null
+    },
+    {
+      "name": "index: unknown field in the step",
+      "spec": {
+        "type": "bar",
+        "x": "region",
+        "y": "revenue",
+        "data": [
+          {
+            "date": "2026-01-05",
+            "region": "APAC",
+            "revenue": 120,
+            "units": 3
+          },
+          {
+            "date": "2026-01-19",
+            "region": "EMEA",
+            "revenue": 80,
+            "units": "2"
+          },
+          {
+            "date": "2026-02-02T10:30:00Z",
+            "region": "APAC",
+            "revenue": 60.5,
+            "units": null
+          },
+          {
+            "date": "2026-02-14",
+            "region": "EMEA",
+            "revenue": null,
+            "units": 5
+          },
+          {
+            "date": "2026-03-01",
+            "region": "LATAM",
+            "revenue": 40,
+            "units": 1
+          },
+          {
+            "date": 1775001600000,
+            "region": "APAC",
+            "revenue": "10",
+            "units": 2
+          }
+        ],
+        "transform": [
+          {
+            "index": {
+              "field": "revenue",
+              "bse": 100
+            }
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "unknown_field",
+          "path": "transform[0].index.bse"
+        }
+      ],
+      "normalized": null,
+      "rows": null,
+      "describe": null
+    },
+    {
       "name": "no expression step",
       "spec": {
         "type": "bar",
@@ -73152,6 +76456,239 @@
       },
       "describe": "Flow map. 3 flows weighted by n. Total 12. Largest: N to S (5).",
       "issueCodes": []
+    },
+    {
+      "name": "line: a right axis, with its own format",
+      "spec": {
+        "type": "line",
+        "x": "d",
+        "y": [
+          "v",
+          "w"
+        ],
+        "yRight": "t",
+        "formatRight": "percent",
+        "yLabel": "Orders",
+        "yRightLabel": "Conversion",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "v": 10,
+            "w": 20,
+            "t": 0.1
+          },
+          {
+            "d": "2026-01-12",
+            "v": 11,
+            "w": 19,
+            "t": 0.12
+          },
+          {
+            "d": "2026-01-19",
+            "v": 12,
+            "w": 18,
+            "t": 0.14
+          },
+          {
+            "d": "2026-01-26",
+            "v": 13,
+            "w": 17,
+            "t": 0.16
+          }
+        ]
+      },
+      "describe": "Line chart. 3 series (v, w, t) over time. v: from 10 at Jan 5, 2026 to 13 at Jan 26, 2026 (30.0%); peak 13 at Jan 26, 2026, low 10 at Jan 5, 2026. w: from 20 at Jan 5, 2026 to 17 at Jan 26, 2026 (-15.0%); peak 20 at Jan 5, 2026, low 17 at Jan 26, 2026. t (right axis): from 10% at Jan 5, 2026 to 16% at Jan 26, 2026 (60.0%); peak 16% at Jan 26, 2026, low 10% at Jan 5, 2026. Two value axes with independent scales: the left axis (Orders) shows v, w (10 to 20); the right axis (Conversion) shows t (10% to 16%). Where the lines meet or how steep they look depends on the two chosen ranges, not on the data.",
+      "issueCodes": [
+        "dual_axis"
+      ]
+    },
+    {
+      "name": "area: a right axis",
+      "spec": {
+        "type": "area",
+        "x": "d",
+        "y": "v",
+        "yRight": "t",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "v": 0,
+            "t": 100
+          },
+          {
+            "d": "2026-01-12",
+            "v": 3,
+            "t": 99
+          },
+          {
+            "d": "2026-01-19",
+            "v": 6,
+            "t": 98
+          }
+        ]
+      },
+      "describe": "Area chart. 2 series (v, t) over time. v: from 0 at Jan 5, 2026 to 6 at Jan 19, 2026; peak 6 at Jan 19, 2026, low 0 at Jan 5, 2026. t (right axis): from 100 at Jan 5, 2026 to 98 at Jan 19, 2026 (-2.0%); peak 100 at Jan 5, 2026, low 98 at Jan 19, 2026. Two value axes with independent scales: the left axis shows v (0 to 6); the right axis shows t (98 to 100). Where the lines meet or how steep they look depends on the two chosen ranges, not on the data.",
+      "issueCodes": [
+        "dual_axis"
+      ]
+    },
+    {
+      "name": "bar: a line on a right axis",
+      "spec": {
+        "type": "bar",
+        "x": "k",
+        "y": "v",
+        "yRight": "r",
+        "formatRight": "fixed:1",
+        "yRightLabel": "Rate",
+        "data": [
+          {
+            "k": "a",
+            "v": 3,
+            "r": 0.5
+          },
+          {
+            "k": "b",
+            "v": 8,
+            "r": 2.25
+          },
+          {
+            "k": "a",
+            "v": 1,
+            "r": 1
+          }
+        ]
+      },
+      "describe": "Bar chart. 2 categories. Highest: b (8). Lowest: a (4). Total: 12. r (right axis, a line): from 1.5 at a to 2.3 at b; peak 2.3 at b, low 1.5 at a. Two value axes with independent scales: the left axis shows v (4 to 8); the right axis (Rate) shows r (1.5 to 2.3). Where a line meets the bars or how steep they look depends on the two chosen ranges, not on the data.",
+      "issueCodes": [
+        "dual_axis"
+      ]
+    },
+    {
+      "name": "bar: a broken axis",
+      "spec": {
+        "type": "bar",
+        "x": "k",
+        "y": "v",
+        "yBreak": [
+          10,
+          900
+        ],
+        "format": "integer",
+        "data": [
+          {
+            "k": "a",
+            "v": 3
+          },
+          {
+            "k": "b",
+            "v": 8
+          },
+          {
+            "k": "c",
+            "v": 950
+          }
+        ]
+      },
+      "describe": "Bar chart. 3 categories. Highest: c (950). Lowest: a (3). Total: 961. The value axis is broken: the span from 10 to 900 is cut out, so bars that cross it are drawn shorter than their value; the values given here are the real ones.",
+      "issueCodes": [
+        "axis_break"
+      ]
+    },
+    {
+      "name": "bar: a broken axis with a value inside the cut",
+      "spec": {
+        "type": "bar",
+        "x": "k",
+        "y": "v",
+        "yBreak": [
+          10,
+          900
+        ],
+        "data": [
+          {
+            "k": "a",
+            "v": 3
+          },
+          {
+            "k": "b",
+            "v": 80
+          },
+          {
+            "k": "c",
+            "v": 950
+          }
+        ]
+      },
+      "describe": "Bar chart. 3 categories. Highest: c (950). Lowest: a (3). Total: 1,033. The value axis is broken: the span from 10 to 900 is cut out, so bars that cross it are drawn shorter than their value; the values given here are the real ones. 1 value lies inside the cut and is drawn at its edge.",
+      "issueCodes": [
+        "break_hides_values",
+        "axis_break"
+      ]
+    },
+    {
+      "name": "line: a broken axis",
+      "spec": {
+        "type": "line",
+        "x": "d",
+        "y": "v",
+        "yBreak": [
+          20,
+          500
+        ],
+        "data": [
+          {
+            "d": "2026-01-05",
+            "v": 5
+          },
+          {
+            "d": "2026-01-12",
+            "v": 9
+          },
+          {
+            "d": "2026-01-19",
+            "v": 700
+          },
+          {
+            "d": "2026-01-26",
+            "v": 12
+          }
+        ]
+      },
+      "describe": "Line chart. 1 series over time. v: from 5 at Jan 5, 2026 to 12 at Jan 26, 2026 (140.0%); peak 700 at Jan 19, 2026, low 5 at Jan 5, 2026. The value axis is broken: the span from 20 to 500 is cut out, so changes across it look smaller than they are; the values given here are the real ones.",
+      "issueCodes": [
+        "axis_break"
+      ]
+    },
+    {
+      "name": "line: a break with nothing beyond it is dropped",
+      "spec": {
+        "type": "line",
+        "x": "d",
+        "y": "v",
+        "yBreak": [
+          20,
+          500
+        ],
+        "data": [
+          {
+            "d": "2026-01-05",
+            "v": 0
+          },
+          {
+            "d": "2026-01-12",
+            "v": 1
+          },
+          {
+            "d": "2026-01-19",
+            "v": 2
+          }
+        ]
+      },
+      "describe": "Line chart. 1 series over time. v: from 0 at Jan 5, 2026 to 2 at Jan 19, 2026; peak 2 at Jan 19, 2026, low 0 at Jan 5, 2026.",
+      "issueCodes": [
+        "break_outside"
+      ]
     },
     {
       "name": "area: stream graph (stack center)",

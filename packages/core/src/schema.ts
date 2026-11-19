@@ -47,7 +47,11 @@ export function setGeoResolver(fn: (value: unknown, issues: Issue[], path: strin
 }
 
 export interface Issue {
-  severity: 'error' | 'warning'
+  /**
+   * `error`: the spec is refused. `warning`: drawn, but something was changed or left out. `info`: drawn as asked;
+   * a note the agent or author should read (e.g. `dual_axis`, `axis_break`: the risk a choice carries).
+   */
+  severity: 'error' | 'warning' | 'info'
   /** Stable machine-readable code. */
   code: string
   /** JSON path into the spec, e.g. `y` or `annotations[1].axis`. */
@@ -71,7 +75,7 @@ export const COMMON_FIELDS: FieldMap = {
   tooltip: { kind: 'boolean', default: true, desc: 'Show a hover tooltip (web binding only).' },
   format: { kind: 'format', desc: 'Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE.' },
   colors: { kind: 'colors', desc: 'Series (or slice/category) name to CSS colour, e.g. {"Revenue":"#2962FF"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours.' },
-  transform: { kind: 'transform', desc: 'Data steps run before the chart reads its columns, in order (at most 10): filter, timeUnit, aggregate, sort, top, bin (round bins: start and end columns), window (running sum, mean, count, rank, pctChange, lag, lead, movingMean, per group, in a sort order) and fold (wide columns to key/value rows). No expressions. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output.' },
+  transform: { kind: 'transform', desc: 'Data steps run before the chart reads its columns, in order (at most 10): filter, timeUnit, aggregate, sort, top, bin (round bins: start and end columns), window (running sum, mean, count, rank, pctChange, lag, lead, movingMean, per group, in a sort order), fold (wide columns to key/value rows) and index (rescale each group so its value at a base point is 100). No expressions. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output.' },
   patterns: { kind: 'boolean', desc: 'Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print.' }
 }
 
@@ -321,7 +325,7 @@ export function fieldSchema(def: FieldDef): Record<string, unknown> {
     case 'format': return { type: 'string', pattern: '^(auto|compact|integer|percent|fixed:\\d{1,2}|currency:[A-Za-z]{3})$', description: d }
     case 'bins': return { oneOf: [{ const: 'auto' }, { type: 'integer', minimum: 1, maximum: 200 }], default: def.default ?? 'auto', description: d }
     case 'domain': return { type: 'array', minItems: 2, maxItems: 2, items: { type: ['number', 'string', 'null'] }, description: d }
-    case 'transform': return { type: 'array', maxItems: 10, items: { type: 'object', minProperties: 1, maxProperties: 1, properties: { filter: { type: 'object', required: ['field'] }, timeUnit: { type: 'object', required: ['field', 'unit'] }, aggregate: { type: 'object' }, sort: { type: 'object', required: ['field'] }, top: { type: 'object', required: ['n', 'by'] }, bin: { type: 'object', required: ['field'] }, window: { type: 'object', required: ['op', 'field', 'as'] }, fold: { type: 'object', required: ['fields'] } }, additionalProperties: false }, description: d }
+    case 'transform': return { type: 'array', maxItems: 10, items: { type: 'object', minProperties: 1, maxProperties: 1, properties: { filter: { type: 'object', required: ['field'] }, timeUnit: { type: 'object', required: ['field', 'unit'] }, aggregate: { type: 'object' }, sort: { type: 'object', required: ['field'] }, top: { type: 'object', required: ['n', 'by'] }, bin: { type: 'object', required: ['field'] }, window: { type: 'object', required: ['op', 'field', 'as'] }, fold: { type: 'object', required: ['fields'] }, index: { type: 'object', required: ['field'] } }, additionalProperties: false }, description: d }
     case 'colors': return { type: 'object', additionalProperties: { type: 'string', maxLength: 64 }, description: d }
     case 'annotations':
       return {

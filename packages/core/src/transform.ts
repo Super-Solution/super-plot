@@ -14,6 +14,7 @@
  *   { "bin":       { "field": "price", "maxbins": 10, "as": ["from", "to"] } }        round edges, as the histogram
  *   { "window":    { "op": "sum", "field": "revenue", "as": "running", "groupBy": ["region"], "sortBy": "date" } }
  *   { "fold":      { "fields": ["Q1", "Q2", "Q3"], "as": ["quarter", "revenue"] } }  wide to long
+ *   { "index":     { "field": "revenue", "groupBy": ["region"], "sortBy": "date" } }   first value of each group = 100
  *
  * There is deliberately no expression step (`calculate`): evaluating text from a spec is an injection risk, and
  * a second language to port to Go and Python bit for bit.
@@ -27,7 +28,7 @@ import { LIMITS } from './schema.js'
 
 /** At most this many steps. Ten covers every realistic pipeline (filter, fold, bin, aggregate, window, sort, top). */
 export const TRANSFORM_LIMIT = 10
-export const TRANSFORM_OPS = ['filter', 'timeUnit', 'aggregate', 'sort', 'top', 'bin', 'window', 'fold'] as const
+export const TRANSFORM_OPS = ['filter', 'timeUnit', 'aggregate', 'sort', 'top', 'bin', 'window', 'fold', 'index'] as const
 export const WINDOW_OPS = ['sum', 'mean', 'count', 'rank', 'pctChange', 'lag', 'lead', 'movingMean'] as const
 /** `bin` makes at most this many bins; `fold` folds at most this many columns. */
 export const BIN_LIMIT = 200
@@ -44,7 +45,8 @@ export const TRANSFORM_DOCS: Record<(typeof TRANSFORM_OPS)[number], { desc: stri
   top: { desc: 'The `n` rows (1 to 1000) with the largest `by`.', example: { top: { n: 10, by: 'revenue' } } },
   bin: { desc: 'Round bins of a numeric `field`, as the histogram makes them: adds start and end columns (`as`, default [field_start, field_end]; a non-number gets null). `step` sets the width; otherwise the histogram step for `maxbins` (default 10), made coarser until there are at most `maxbins` bins.', example: { bin: { field: 'price', maxbins: 10, as: ['from', 'to'] } } },
   window: { desc: 'Adds `as`: an op over each `groupBy` group walked in `sortBy` order (`order` asc or desc; no sortBy keeps the data order). sum, mean, count run cumulatively; rank is the standard competition rank of the sort key (1, 2, 2, 4; by `field` without sortBy); pctChange is (v - previous) / |previous|; lag and lead read the previous and next row; movingMean averages the last `frame` rows (default 3). Rows keep their order.', example: { window: { op: 'sum', field: 'revenue', as: 'running', groupBy: ['region'], sortBy: 'date' } } },
-  fold: { desc: 'Wide to long: each row becomes one row per column in `fields`, with the column name in `as[0]` and its value in `as[1]` (default key, value); the folded columns are dropped.', example: { fold: { fields: ['Q1', 'Q2', 'Q3'], as: ['quarter', 'revenue'] } } }
+  fold: { desc: 'Wide to long: each row becomes one row per column in `fields`, with the column name in `as[0]` and its value in `as[1]` (default key, value); the folded columns are dropped.', example: { fold: { fields: ['Q1', 'Q2', 'Q3'], as: ['quarter', 'revenue'] } } },
+  index: { desc: 'Rescale `field` (into `as`, default in place) so each `groupBy` group equals `base` (default 100) at its base row: v * base / baseValue. The base row is the first in `sortBy` order (`at: "first"`, the default; no sortBy keeps the data order) or the row whose `sortBy` value is `at`. A group whose base value is 0, negative, missing or not found is dropped with an `index_group_dropped` warning that lists it. Compares growth of series of different size on one axis, instead of two axes.', example: { index: { field: 'revenue', groupBy: ['region'], sortBy: 'month', base: 100 } } }
 }
 
 export const TRANSFORM_KEYS: Record<(typeof TRANSFORM_OPS)[number], readonly string[]> = {
@@ -55,7 +57,8 @@ export const TRANSFORM_KEYS: Record<(typeof TRANSFORM_OPS)[number], readonly str
   top: ['n', 'by'],
   bin: ['field', 'as', 'step', 'maxbins'],
   window: ['op', 'field', 'as', 'groupBy', 'sortBy', 'order', 'frame'],
-  fold: ['fields', 'as']
+  fold: ['fields', 'as'],
+  index: ['field', 'as', 'groupBy', 'sortBy', 'base', 'at']
 }
 
 type Scalar = string | number | boolean | null
@@ -79,6 +82,7 @@ export type TransformStep =
   | { bin: { field: string; as?: [string, string]; step?: number; maxbins?: number } }
   | { window: { op: (typeof WINDOW_OPS)[number]; field: string; as: string; groupBy?: string[]; sortBy?: string; order?: 'asc' | 'desc'; frame?: number } }
   | { fold: { fields: string[]; as?: [string, string] } }
+  | { index: { field: string; as?: string; groupBy?: string[]; sortBy?: string; base?: number; at?: 'first' | string | number } }
 
 const fmt = (v: unknown): string => {
   const s = JSON.stringify(v) ?? String(v)
@@ -300,6 +304,34 @@ export function applyTransform(value: unknown, rows: Row[], issues: Issue[], pat
         columns = new Set([...[...columns].filter(c => !drop.has(c)), k, v])
         break
       }
+      case 'index': {
+        const field = column('field')
+        if (field == null) return null
+        if (b.as !== undefined && !isName(b.as)) return err(`${bp}.as`, 'bad_type', `${bp}.as must be a column name of 1 to 64 characters.`)
+        const groupBy = b.groupBy ?? []
+        if (!Array.isArray(groupBy) || groupBy.length > 4 || !groupBy.every(g => typeof g === 'string')) return err(`${bp}.groupBy`, 'bad_type', `${bp}.groupBy must be an array of at most 4 column names.`)
+        for (const [gi, g] of (groupBy as string[]).entries()) {
+          if (!columns.has(g)) {
+            const near = closest(g, [...columns])
+            return err(`${bp}.groupBy[${gi}]`, 'no_such_column', `Column "${g}" does not exist at this step.`, `${near ? `Did you mean "${near}"? ` : ''}Columns here: ${[...columns].slice(0, 20).join(', ')}.`)
+          }
+        }
+        const sortBy = column('sortBy', false)
+        if (sortBy === null) return null
+        if (b.base !== undefined && (typeof b.base !== 'number' || !Number.isFinite(b.base) || b.base <= 0)) return err(`${bp}.base`, 'bad_value', `${bp}.base must be a positive number (the value every group starts from), got ${fmt(b.base)}.`, 'Use 100 for an index, or 1 for a ratio.')
+        const at = b.at === undefined ? 'first' : b.at
+        if (!(at === 'first' || (typeof at === 'string' && at.length <= LIMITS.maxString) || (typeof at === 'number' && Number.isFinite(at)))) return err(`${bp}.at`, 'bad_type', `${bp}.at must be "first" or a value of the sortBy column (a number, a date or a text), got ${fmt(at)}.`)
+        if (at !== 'first' && sortBy === undefined) return err(`${bp}.sortBy`, 'missing_required', `${bp}.at names a base value, so it needs "sortBy" (the column that value is looked up in).`, `E.g. {"index":{"field":"${field}","sortBy":"date","at":${JSON.stringify(at)}}}.`)
+        if (!cur.some(r => toNumber(r[field]) !== null)) return err(`${bp}.field`, 'not_numeric', `Column "${field}" has no numeric values to index.`, 'Index a numeric column, or convert the values to numbers first.')
+        const res = indexRows(cur, { field, as: (b.as as string | undefined) ?? field, groupBy: groupBy as string[], sortBy, base: (b.base as number | undefined) ?? 100, at: at as 'first' | string | number })
+        if (res.dropped.length) {
+          const list = res.dropped.slice(0, 10).map(d => `${d.group} (${d.why})`).join(', ')
+          issues.push({ severity: 'warning', code: 'index_group_dropped', path: `${bp}.field`, message: `${res.dropped.length} ${res.dropped.length === 1 ? 'group has' : 'groups have'} no usable base value and ${res.dropped.length === 1 ? 'was' : 'were'} dropped (a value cannot be divided by zero, a missing or a negative base): ${list}${res.dropped.length > 10 ? ` and ${res.dropped.length - 10} more` : ''}.`, hint: at === 'first' ? 'Filter out the leading zeros or gaps first, or pick a base with `at` where every group has a positive value.' : 'Pick an `at` value present in every group with a positive value, or filter those groups out first.' })
+        }
+        cur = res.rows
+        columns = new Set([...columns, (b.as as string | undefined) ?? field])
+        break
+      }
     }
   }
   return cur
@@ -509,4 +541,48 @@ function sameKey(a: unknown, b: unknown): boolean {
   const nb = ordinal(b)
   if (na !== null || nb !== null) return na === nb
   return String(a) === String(b)
+}
+
+interface IndexSpec { field: string; as: string; groupBy: string[]; sortBy?: string; base: number; at: 'first' | string | number }
+
+/**
+ * One index step. Rows are grouped by `groupBy` (as in window); each group's base row is the first row in `sortBy`
+ * order (the sort step's rule; no sortBy keeps the data order) when `at` is "first", otherwise the first row in that
+ * order whose `sortBy` value equals `at` (the same number or date, else the same text). With b the base row's value
+ * read as a number, every row of the group gets `as` = (v * base) / b, computed in that order (so 4400 against
+ * 4000 is exactly 110); a value that is not a
+ * number gives null. A group whose b is missing, not a number, 0 or negative, or that has no row at `at` is dropped
+ * whole, and named in `dropped` ("all rows" without groupBy, else its group values joined with " / ").
+ * Kept rows keep their input order.
+ */
+function indexRows(rows: Row[], w: IndexSpec): { rows: Row[]; dropped: { group: string; why: string }[] } {
+  const groups = new Map<string, number[]>()
+  rows.forEach((r, i) => {
+    const key = JSON.stringify(w.groupBy.map(g => (r[g] === undefined ? null : r[g])))
+    const g = groups.get(key)
+    if (g) g.push(i)
+    else groups.set(key, [i])
+  })
+  const result: unknown[] = new Array(rows.length).fill(null)
+  const keep = new Array<boolean>(rows.length).fill(true)
+  const dropped: { group: string; why: string }[] = []
+  for (const idx of groups.values()) {
+    const order = w.sortBy === undefined ? idx : sortOrder(idx.map(i => rows[i][w.sortBy!]), false).map(k => idx[k])
+    const baseRow = w.at === 'first' ? order[0] : order.find(i => sameKey(rows[i][w.sortBy!], w.at))
+    const b = baseRow === undefined ? null : toNumber(rows[baseRow][w.field])
+    const why = baseRow === undefined ? `no row at ${fmt(w.at)}` : b === null ? (isMissing(rows[baseRow][w.field]) ? 'base is missing' : 'base is not a number') : b === 0 ? 'base is 0' : b < 0 ? 'base is negative' : ''
+    if (why) {
+      const r = rows[idx[0]]
+      dropped.push({ group: w.groupBy.length ? `"${w.groupBy.map(g => (r[g] === undefined || r[g] === null ? 'null' : String(r[g]))).join(' / ')}"` : 'all rows', why })
+      for (const i of idx) keep[i] = false
+      continue
+    }
+    for (const i of idx) {
+      const v = toNumber(rows[i][w.field])
+      result[i] = v === null ? null : (v * w.base) / b!
+    }
+  }
+  const out: Row[] = []
+  rows.forEach((r, i) => { if (keep[i]) out.push({ ...r, [w.as]: result[i] }) })
+  return { rows: out, dropped }
 }

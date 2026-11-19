@@ -20,7 +20,7 @@ spec (JSON) -> validatePlot (transform runs here) -> chart.compile(ctx) -> plugi
 - The **scene** is a serializable list of marks (rect, path, circle, line, text) with roles and tooltips, plus `axes` (the plot
   rectangle and each axis's kind, domain, pixel range and column) and `panels` for small multiples. Renderers do not know about
   charts; the web binding maps pointer pixels back to data through `axes` for zoom, pan and brush.
-- **`transform`** turns raw rows into the rows the chart reads (filter, timeUnit, aggregate, sort, top, bin, window, fold; at most 10 steps; no expressions), inside
+- **`transform`** turns raw rows into the rows the chart reads (filter, timeUnit, aggregate, sort, top, bin, window, fold, index; at most 10 steps; no expressions), inside
   validation, so every later column check sees the output columns and an agent can send raw data plus "monthly average".
 
 ## The eight principles, and where they live
@@ -61,7 +61,7 @@ The competitor review of 2026-11-19 (`super-dev-docs/docs/60-reference/competiti
 | `facet` small multiples | Vega-Lite facet, Observable Plot `fx`/`fy` | Shared axes, colours and one legend; zoom and brush are refused with a warning rather than half-working |
 | `appendRows(rows, { max })` | uPlot streaming | Ring buffer, one draw per frame; zoom, brush and hidden series stay |
 | `density: "auto"` hexagons | Plotly `scattergl` / Highcharts Boost lesson | Announced with a warning code (`density_merges_series`), never silent; points stay points by default |
-| `line` over bars | Vega-Lite layers | One field on the bar chart, still one value axis (no dual axis, on purpose) |
+| `line` over bars | Vega-Lite layers | One field on the bar chart, on the same value axis (a second axis is the separate, opt-in `yRight`, round 6) |
 | Fast dot path: pixels stamped instead of 50,000 arc paths | Highcharts Boost lesson ("a fast mode must not drop features") | Same marks, hover, legend and keyboard; only the rasterisation changes |
 
 ### Round 5 (0.4.0): every competitor row decided
@@ -118,8 +118,8 @@ The rules held in every row: a capability is a spec field (checked, schema-docum
 
 - In core, text width is estimated; the web binding measures with canvas. Server SVG can differ from browser layout by a few pixels.
 - Time axes default to UTC; the `timeZone` render option moves ticks and labels to a local zone (DST-aware). Data are read as instants: an ISO string without an offset is UTC.
-- One value axis. There is no dual-axis chart on purpose; Super Chat cards with right-axis series are converted without them and say so.
-- No gauge (a stat tile or a one-row bullet reads better), no word cloud, no non-map 3D, no dual axis, no expression language: see [COMPETITIVE.md](COMPETITIVE.md) for each refusal and its reason.
+- A second value axis (`yRight`) and a broken axis (`yBreak`) exist since round 6, each with an `info` issue stating its risk every time (see INTEGRATION). Super Chat cards with right-axis series are still converted without them, with a note (`fromChatChartCard` was not changed).
+- No gauge (a stat tile or a one-row bullet reads better), no word cloud, no non-map 3D, no expression language: see [COMPETITIVE.md](COMPETITIVE.md) for each refusal and its reason.
 - Network graphs, chord diagrams, Arrow input and drawing in a worker are open, not refused (OPEN-DECISIONS).
 - Default palette: orange, yellow and cyan fall outside the lightness band the dataviz validator prefers. Kept to stay TradingView-aligned; values are in `PALETTE`. The `accessible` preset passes every validator check in light mode; three of its colours are under 3:1 contrast on white, so they lean on the legend and tooltips (identity is never colour alone).
 - Zoom and brush work on cartesian charts without `facet`. A category axis can be brushed, not zoomed. A brush's `filters` use the transform's range rule (from inclusive, to exclusive), so a row exactly on the right edge is left out.
