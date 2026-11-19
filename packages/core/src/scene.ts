@@ -28,6 +28,11 @@ export interface MarkBase {
   focus?: { x: number; y: number; color: string }[]
   /** Free-form payload handed to `onSelect`: the source row(s) of this mark. */
   datum?: unknown
+  /**
+   * Drill-down (treemap, sunburst): the `focus` path that activating this mark shows. On a data mark it is the
+   * group itself (go down); on a breadcrumb item (`role: 'label'`, a transparent rect) an ancestor (go up).
+   */
+  drill?: string[]
   /** Texture drawn over the fill (`patterns: true`): index into the pattern set, one per series. */
   pattern?: number
   opacity?: number

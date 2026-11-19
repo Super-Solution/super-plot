@@ -90,6 +90,22 @@ export function panDomain(a: AxisInfo, d: [number, number], dpx: number): [numbe
   return [back(a, t0 - shift), back(a, t1 - shift)]
 }
 
+/**
+ * Two fingers: the domain a pinch shows. The data value under the fingers' starting midpoint (`from`, in
+ * pixels, on axis `a` as it was when the pinch began, domain `d`) moves to their current midpoint (`to`) and
+ * the span shrinks by `factor` (> 1 is closer), so spreading the fingers zooms and moving them together pans.
+ * Works in log space on a log axis.
+ */
+export function pinchDomain(a: AxisInfo, d: [number, number], from: number, to: number, factor: number): [number, number] {
+  const [r0, r1] = a.range
+  if (r1 === r0 || !(factor > 0)) return d
+  const [t0, t1] = d.map(v => fwd(a, v))
+  const anchor = t0 + ((from - r0) / (r1 - r0)) * (t1 - t0)
+  const span = (t1 - t0) / factor
+  const n0 = anchor - ((to - r0) / (r1 - r0)) * span
+  return [back(a, n0), back(a, n0 + span)]
+}
+
 /** How much of the axis a domain spans, in the axis's linear space (log10 units on a log axis). */
 const span = (a: AxisInfo | undefined, d: [number, number]): number => (a?.scale === 'log' ? Math.log10(d[1]) - Math.log10(d[0]) : d[1] - d[0])
 
@@ -205,9 +221,11 @@ export class AxisControl {
   private overlay: HTMLDivElement
   private pointers = new Map<number, { x: number; y: number }>()
   private drag: { mode: 'brush' | 'pan'; x: number; y: number; moved: boolean; view: View; axes: SceneAxes } | null = null
-  private pinch: { dist: number; view: View; at: { x: number; y: number } } | null = null
+  private pinch: { dist: number; view: View; at: { x: number; y: number }; axes: SceneAxes } | null = null
   private justDragged = false
   private zoomTimer = 0
+  /** `viewX` changed the view and has not reported it yet. */
+  private viewPending = false
   private live = false
 
   constructor(private owner: AxisOwner) {
@@ -393,6 +411,28 @@ export class AxisControl {
     this.zoomSoon(0)
   }
 
+  /**
+   * The viewer set the x range from outside the plot (the navigator), keeping any y zoom: shared with a sync
+   * group like a pan, and reported through `zoomChanged` after `ms` (0: now; false: not yet, a drag goes on).
+   */
+  viewX(x: [number, number] | null, notify: number | false): void {
+    const y = this.view?.y
+    const before = JSON.stringify(this.view)
+    if (!x && !y) {
+      if (this.view) {
+        this.view = null
+        this.owner.redraw()
+        this.owner.viewChanged?.()
+      }
+    } else this.setView({ ...(x ? { x: [...x] as [number, number] } : {}), ...(y ? { y } : {}) })
+    // Report a change once, when the gesture ends (a key press that hit the end of the range reports nothing).
+    if (JSON.stringify(this.view) !== before) this.viewPending = true
+    if (notify !== false && this.viewPending) {
+      this.viewPending = false
+      this.zoomSoon(notify)
+    }
+  }
+
   /** Set only the x range (data units), keeping any y zoom: what a synchronised plot receives. Does not notify. */
   setXView(x: [number, number] | null): void {
     const y = this.view?.y
@@ -419,7 +459,8 @@ export class AxisControl {
       const mid = this.toScene({ clientX: (u.x + w.x) / 2, clientY: (u.y + w.y) / 2 })
       this.drag = null
       this.overlay.remove()
-      if (mid) this.pinch = { dist: Math.hypot(u.x - w.x, u.y - w.y), view: this.current(a), at: mid }
+      if (mid) this.pinch = { dist: Math.hypot(u.x - w.x, u.y - w.y), view: this.current(a), at: mid, axes: a }
+      this.owner.hideTip()
       return
     }
     if (this.pointers.size !== 1 || !this.inPlot(p, a)) return
@@ -435,7 +476,15 @@ export class AxisControl {
     if (this.pinch && this.pointers.size >= 2) {
       const [u, w] = [...this.pointers.values()]
       const d = Math.hypot(u.x - w.x, u.y - w.y)
-      if (this.pinch.dist > 4 && d > 4) this.zoomAt(a, this.pinch.at, d / this.pinch.dist, this.pinch.view, a)
+      const mid = this.toScene({ clientX: (u.x + w.x) / 2, clientY: (u.y + w.y) / 2 })
+      const g = this.pinch
+      if (g.dist > 4 && d > 4 && mid) {
+        // Against the axes as they were when the pinch began, so the point under the fingers does not drift.
+        const v: View = {}
+        if (g.view.x) v.x = pinchDomain(g.axes.x, g.view.x, g.at.x, mid.x, d / g.dist)
+        if (g.view.y) v.y = pinchDomain(g.axes.y, g.view.y, g.at.y, mid.y, d / g.dist)
+        this.setView(v)
+      }
       return
     }
     const g = this.drag

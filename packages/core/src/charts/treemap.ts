@@ -7,6 +7,8 @@ import { toNumber } from '../util/num.js'
 import { tokenValue } from '../theme.js'
 import { clip, fit } from '../util/text.js'
 import { fmtList, formatter, lead } from './shared.js'
+import { breadcrumb, checkFocus, focusField, focusNode } from './drill.js'
+import type { HierarchyNode } from './sunburst.js'
 
 const MAX_TILES = 150
 
@@ -26,6 +28,28 @@ function tiles(spec: Record<string, any>): Tile[] {
     else sums.set(k, { label, group, value: v })
   }
   return [...sums.values()]
+}
+
+/** The tiles as a two-level tree (group > label), for `focus`. Without `group` every tile is a leaf of the root. */
+function treeOf(ts: Tile[], grouped: boolean): HierarchyNode {
+  const root: HierarchyNode = { name: '', path: [], value: 0, children: [] }
+  const groups = new Map<string, HierarchyNode>()
+  for (const t of ts) {
+    root.value += t.value
+    let parent = root
+    if (grouped) {
+      let g = groups.get(t.group)
+      if (!g) {
+        g = { name: t.group, path: [t.group], value: 0, children: [] }
+        groups.set(t.group, g)
+        root.children.push(g)
+      }
+      g.value += t.value
+      parent = g
+    }
+    parent.children.push({ name: t.label, path: [...parent.path, t.label], value: t.value, children: [] })
+  }
+  return root
 }
 
 /** Squarified treemap (Bruls et al.): rows of items laid along the short side, keeping tiles near square. */
@@ -70,18 +94,22 @@ export function squarify<T extends { value: number }>(items: T[], box: Box): { i
 
 function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
   const s = c.spec
-  let all = tiles(s)
+  const raw = tiles(s)
+  const grouped = Boolean(s.group)
+  // Drill-down: one group's tiles fill the chart (before the tile limit, so none of them is merged away).
+  const focus = grouped ? focusNode(treeOf(raw, true), s.focus) : null
+  let all = focus ? raw.filter(t => t.group === focus.name) : raw
   if (all.length > MAX_TILES) {
     const keep = [...all].sort((a, b) => b.value - a.value)
     const rest = keep.slice(MAX_TILES - 1)
     all = [...keep.slice(0, MAX_TILES - 1), { label: c.t('other'), group: s.group ? c.t('other') : '', value: rest.reduce((q, t) => q + t.value, 0) }]
     c.warn('many_tiles', 'data', `More than ${MAX_TILES} tiles: the smallest were merged into "Other".`)
   }
-  const grouped = Boolean(s.group)
-  const groups = grouped ? distinct(all.map(t => t.group)) : []
+  // Colours come from the whole tree's groups, so a focused group keeps its colour.
+  const groups = grouped ? distinct(raw.map(t => t.group)) : []
   const series = grouped ? c.makeSeries(groups) : []
-  const live = all.filter(t => !grouped || !c.hidden.has(t.group))
-  const frame = c.frame({ series })
+  const live = all.filter(t => focus || !grouped || !c.hidden.has(t.group))
+  const frame = focus ? breadcrumb(c, c.frame({ series: [] }), focus.path) : c.frame({ series })
   const total = live.reduce((q, t) => q + t.value, 0)
   const bg = tokenValue(c.theme, 'background')
   const gap = c.theme.gap
@@ -98,7 +126,9 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
     c.marks.push({
       type: 'rect', role: 'data', series: grouped ? t.group : undefined, x: b.x + gap / 2, y: b.y + gap / 2, w, h, r: Math.min(3, w / 4, h / 4), fill, anim: 'fade',
       tip: { title: clip(t.label, 60), rows: [...(grouped ? [{ label: String(s.group), value: clip(t.group, 40) }] : []), { label: String(s.value), value: fmt(t.value), color: fill }, { label: c.t('share'), value: formatPercent(share, c.locale) }] },
-      aria: `${t.label}${grouped ? ` (${t.group})` : ''}: ${fmt(t.value)}, ${formatPercent(share, c.locale)}`, datum: { label: t.label, group: grouped ? t.group : undefined, value: t.value }
+      aria: `${t.label}${grouped ? ` (${t.group})` : ''}: ${fmt(t.value)}, ${formatPercent(share, c.locale)}`, datum: { label: t.label, group: grouped ? t.group : undefined, value: t.value },
+      // A tile stands for its group when drilling down.
+      ...(grouped && !focus ? { drill: [t.group] } : {})
     })
     const pad = 6
     if (s.labels !== false && w > 38 && h > c.size + 8) {
@@ -111,7 +141,7 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
   }
 
   if (grouped) {
-    const gs = groups.filter(g => !c.hidden.has(g)).map(g => ({ g, value: live.filter(t => t.group === g).reduce((q, t) => q + t.value, 0) }))
+    const gs = groups.filter(g => (focus ? g === focus.name : !c.hidden.has(g)) && live.some(t => t.group === g)).map(g => ({ g, value: live.filter(t => t.group === g).reduce((q, t) => q + t.value, 0) }))
     for (const { item, box } of squarify(gs, frame)) {
       const idx = groups.indexOf(item.g)
       const hex = c.seriesHex(item.g, idx)
@@ -140,7 +170,8 @@ export const treemap: ChartDef = {
     label: { kind: 'column', role: 'any', required: true, desc: 'Column naming each tile.' },
     value: { kind: 'column', role: 'number', required: true, desc: 'Numeric column giving each tile\'s area. Rows with the same group and label are summed; zero and negative values are skipped.' },
     group: { kind: 'column', role: 'any', desc: 'Optional column that groups tiles into coloured blocks (one level). Each group becomes a legend entry.' },
-    labels: { kind: 'boolean', default: true, desc: 'Print the name and value on tiles large enough.' }
+    labels: { kind: 'boolean', default: true, desc: 'Print the name and value on tiles large enough.' },
+    focus: focusField('needs `group`; one value, the group, e.g. ["Cloud"]')
   },
   example: {
     type: 'treemap', title: 'Revenue by product', subtitle: 'USD millions, grouped by line', label: 'product', value: 'revenue', group: 'line', format: 'compact',
@@ -155,6 +186,10 @@ export const treemap: ChartDef = {
     for (const r of ctx.rows) { const v = r[spec.value as string]; if (typeof v === 'number' && v <= 0) neg++ }
     if (neg) ctx.issues.push({ severity: 'warning', code: 'negative_slices', path: 'value', message: `${neg} zero or negative value(s) will be skipped; area cannot be negative.` })
     if (spec.group && spec.group === spec.label) ctx.issues.push({ severity: 'warning', code: 'redundant_group', path: 'group', message: '`group` is the same column as `label`.' })
+    if (Array.isArray(spec.focus) && spec.focus.length) {
+      if (!spec.group) ctx.issues.push({ severity: 'warning', code: 'focus_not_found', path: 'focus', message: 'focus needs `group`: without it the treemap has one level and nothing to drill into; the whole treemap is drawn.', hint: 'Set `group` to the column the tiles are grouped by, or remove focus.' })
+      else checkFocus(treeOf(tiles({ ...spec, data: ctx.rows }), true), spec.focus, ctx.issues)
+    }
   },
   compile,
   describe(spec, env) {
@@ -169,6 +204,11 @@ export const treemap: ChartDef = {
     if (groups.length) {
       const gs = groups.map(g => ({ g, v: ts.filter(x => x.group === g).reduce((q, x) => q + x.value, 0) })).sort((a, b) => b.v - a.v)
       t += ` Largest group: ${clip(gs[0].g, 40)} (${formatPercent(gs[0].v / total, env.locale)}).`
+      const fn = focusNode(treeOf(ts, true), spec.focus)
+      if (fn) {
+        const big = [...fn.children].sort((a, b) => b.value - a.value)[0]
+        t += ` Showing only ${clip(fn.name, 40)}: ${fn.children.length} tile${fn.children.length > 1 ? 's' : ''} totalling ${f(fn.value)} (${formatPercent(fn.value / total, env.locale)} of the total), largest ${clip(big.name, 40)} (${formatPercent(big.value / fn.value, env.locale)}).`
+      }
     }
     return t
   }

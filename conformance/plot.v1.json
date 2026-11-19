@@ -23654,6 +23654,309 @@
       "normalized": null
     },
     {
+      "name": "sunburst: focus ok, numbers as strings",
+      "spec": {
+        "type": "sunburst",
+        "path": [
+          "a",
+          "c"
+        ],
+        "value": "b",
+        "focus": [
+          1
+        ],
+        "data": [
+          {
+            "a": 1,
+            "c": "y",
+            "b": 1
+          },
+          {
+            "a": 1,
+            "c": "z",
+            "b": 2
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "sunburst",
+        "path": [
+          "a",
+          "c"
+        ],
+        "value": "b",
+        "focus": [
+          "1"
+        ],
+        "legend": "auto",
+        "tooltip": true,
+        "labels": true
+      }
+    },
+    {
+      "name": "sunburst: focus on a leaf",
+      "spec": {
+        "type": "sunburst",
+        "path": [
+          "a",
+          "c"
+        ],
+        "value": "b",
+        "focus": [
+          "x",
+          "y"
+        ],
+        "data": [
+          {
+            "a": "x",
+            "c": "y",
+            "b": 1
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "focus_leaf",
+          "path": "focus[1]"
+        }
+      ],
+      "normalized": {
+        "type": "sunburst",
+        "path": [
+          "a",
+          "c"
+        ],
+        "value": "b",
+        "focus": [
+          "x",
+          "y"
+        ],
+        "legend": "auto",
+        "tooltip": true,
+        "labels": true
+      }
+    },
+    {
+      "name": "sunburst: focus unknown name",
+      "spec": {
+        "type": "sunburst",
+        "path": [
+          "a",
+          "c"
+        ],
+        "value": "b",
+        "focus": [
+          "q"
+        ],
+        "data": [
+          {
+            "a": "x",
+            "c": "y",
+            "b": 1
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "focus_not_found",
+          "path": "focus[0]"
+        }
+      ],
+      "normalized": {
+        "type": "sunburst",
+        "path": [
+          "a",
+          "c"
+        ],
+        "value": "b",
+        "focus": [
+          "q"
+        ],
+        "legend": "auto",
+        "tooltip": true,
+        "labels": true
+      }
+    },
+    {
+      "name": "sunburst: focus not a list",
+      "spec": {
+        "type": "sunburst",
+        "path": [
+          "a",
+          "c"
+        ],
+        "value": "b",
+        "focus": "x",
+        "data": [
+          {
+            "a": "x",
+            "c": "y",
+            "b": 1
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "bad_type",
+          "path": "focus"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "sunburst: focus with an object",
+      "spec": {
+        "type": "sunburst",
+        "path": [
+          "a",
+          "c"
+        ],
+        "value": "b",
+        "focus": [
+          {}
+        ],
+        "data": [
+          {
+            "a": "x",
+            "c": "y",
+            "b": 1
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "bad_type",
+          "path": "focus[0]"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "treemap: focus on a group",
+      "spec": {
+        "type": "treemap",
+        "label": "k",
+        "value": "v",
+        "group": "g",
+        "focus": [
+          "G"
+        ],
+        "data": [
+          {
+            "k": "a",
+            "g": "G",
+            "v": 1
+          },
+          {
+            "k": "b",
+            "g": "H",
+            "v": 2
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "treemap",
+        "label": "k",
+        "value": "v",
+        "group": "g",
+        "focus": [
+          "G"
+        ],
+        "legend": "auto",
+        "tooltip": true,
+        "labels": true
+      }
+    },
+    {
+      "name": "treemap: focus without group",
+      "spec": {
+        "type": "treemap",
+        "label": "k",
+        "value": "v",
+        "focus": [
+          "G"
+        ],
+        "data": [
+          {
+            "k": "a",
+            "v": 1
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "focus_not_found",
+          "path": "focus"
+        }
+      ],
+      "normalized": {
+        "type": "treemap",
+        "label": "k",
+        "value": "v",
+        "focus": [
+          "G"
+        ],
+        "legend": "auto",
+        "tooltip": true,
+        "labels": true
+      }
+    },
+    {
+      "name": "treemap: focus on a tile",
+      "spec": {
+        "type": "treemap",
+        "label": "k",
+        "value": "v",
+        "group": "g",
+        "focus": [
+          "G",
+          "a"
+        ],
+        "data": [
+          {
+            "k": "a",
+            "g": "G",
+            "v": 1
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "focus_leaf",
+          "path": "focus[1]"
+        }
+      ],
+      "normalized": {
+        "type": "treemap",
+        "label": "k",
+        "value": "v",
+        "group": "g",
+        "focus": [
+          "G",
+          "a"
+        ],
+        "legend": "auto",
+        "tooltip": true,
+        "labels": true
+      }
+    },
+    {
       "name": "parallel: ok",
       "spec": {
         "type": "parallel",
@@ -71041,6 +71344,70 @@
         ]
       },
       "describe": "Sunburst. 1 level (a), 2 leaves totalling 4. First level: 2 groups, largest y (75%), x (25%).",
+      "issueCodes": []
+    },
+    {
+      "name": "sunburst: focused on a branch",
+      "spec": {
+        "type": "sunburst",
+        "path": [
+          "a",
+          "b"
+        ],
+        "value": "v",
+        "focus": [
+          "x"
+        ],
+        "data": [
+          {
+            "a": "x",
+            "b": "p",
+            "v": 3
+          },
+          {
+            "a": "x",
+            "b": "q",
+            "v": 1
+          },
+          {
+            "a": "y",
+            "b": "r",
+            "v": 2
+          }
+        ]
+      },
+      "describe": "Sunburst. 2 levels (a > b), 3 leaves totalling 6. First level: 2 groups, largest x (66.7%), y (33.3%). Largest leaf: x > p (3, 50%). Showing only x: 4, 66.7% of the total, in 2 groups, largest p (75%), q (25%).",
+      "issueCodes": []
+    },
+    {
+      "name": "treemap: focused on a group",
+      "spec": {
+        "type": "treemap",
+        "label": "k",
+        "value": "v",
+        "group": "g",
+        "focus": [
+          "G"
+        ],
+        "data": [
+          {
+            "k": "a",
+            "g": "G",
+            "v": 3
+          },
+          {
+            "k": "b",
+            "g": "G",
+            "v": 1
+          },
+          {
+            "k": "c",
+            "g": "H",
+            "v": 2
+          }
+        ]
+      },
+      "describe": "Treemap. 3 tiles totalling 6 in 2 groups (G, H). Largest: a (50%). Largest group: G (66.7%). Showing only G: 2 tiles totalling 4 (66.7% of the total), largest a (75%).",
       "issueCodes": []
     },
     {
