@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 SUPER SOLUTION LABS INC
 // Fails the build when a package breaks the layering, ships the wrong files, or does not run in plain Node.
 import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs'
 import { join } from 'node:path'

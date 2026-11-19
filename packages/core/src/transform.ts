@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 SUPER SOLUTION LABS INC
 /**
  * `transform`: a short list of data steps that run before the chart reads its columns, so an agent can send
  * raw rows and say "monthly average per region" in the spec instead of computing it. Steps are plain JSON

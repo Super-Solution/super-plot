@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 SUPER SOLUTION LABS INC
 import type { Scene } from '@supersolutions/super-plot-core/base'
 
 // What the plot needs from the navigator before its code (a chunk loaded on demand) is here: how much room

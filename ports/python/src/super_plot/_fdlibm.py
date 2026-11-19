@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 SUPER SOLUTION LABS INC
 """The elementary functions as the reference's JavaScript engine computes them.
 
 V8 does not call the C library for `Math.exp`, `Math.log`, `Math.log10`, `Math.cbrt` and `**`: it carries its own

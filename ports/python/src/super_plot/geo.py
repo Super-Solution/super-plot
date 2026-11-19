@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 SUPER SOLUTION LABS INC
 """Geographies: the region boundaries a map joins data to. Mirrors `packages/core/src/geo/geography.ts`.
 
 Super Plot ships no boundaries. The host imports the dataset it has chosen with `register_geography`, or a spec

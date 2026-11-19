@@ -11,8 +11,8 @@ what was built, what was refused and why ([docs/COMPETITIVE.md](docs/COMPETITIVE
 [docs/COMPETITORS-2026-11-19.md](docs/COMPETITORS-2026-11-19.md)): 12 more chart types, log scales, error bars and bands, point
 annotations, loess trends, bin/window/fold transforms, synced charts, a navigator, drill-down, an export toolbar and CSV, custom
 tooltips, sonification, server-rendered SVG that the browser adopts, a colour-blind check, time zones and translatable text.
-0.3.0 added transforms, zoom/brush, facets, live data and per-chart imports. Packages are `private` until the owner decides name and
-licence (see [docs/OPEN-DECISIONS.md](docs/OPEN-DECISIONS.md)).
+0.3.0 added transforms, zoom/brush, facets, live data and per-chart imports. Licensed under Apache-2.0 (see [LICENSE](LICENSE) and [NOTICE](NOTICE)), © SUPER SOLUTION LABS INC. Packages stay `private` (not
+published to npm or PyPI) until the owner decides to publish (see [docs/OPEN-DECISIONS.md](docs/OPEN-DECISIONS.md)).
 
 ```
 npm install
@@ -62,3 +62,7 @@ describe_plot(spec)          # 'Bar chart. 4 categories, 3 series ...'
 - [docs/INTEGRATION.md](docs/INTEGRATION.md): importing only what you use, events, zoom and brush, linked charts, live data, plugins, agents/MCP, Super Chat, Super Chart, other languages.
 - [docs/OPEN-DECISIONS.md](docs/OPEN-DECISIONS.md): what the owner still has to decide.
 - [AGENTS.md](AGENTS.md): where to change things (for coding agents).
+
+## Licence
+
+Apache License 2.0. Copyright 2026 SUPER SOLUTION LABS INC. See [LICENSE](LICENSE) and [NOTICE](NOTICE).

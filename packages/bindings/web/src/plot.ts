@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 SUPER SOLUTION LABS INC
 import {
   compilePlot, renderSvg, resolveTheme, estimateWidth, defaultHeight, dataMarkCount, clampCamera, plotTable, plotCsv, svgKey, cssVar,
   resolveStrings, fillString, type UiStringKey, type UiStrings,

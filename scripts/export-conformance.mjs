@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 SUPER SOLUTION LABS INC
 // Writes conformance/plot.v1.json: language-neutral cases another implementation (Go, Python, Rust, ...) must reproduce.
 //   node scripts/export-conformance.mjs           write
 //   node scripts/export-conformance.mjs --check   fail when the file is out of date

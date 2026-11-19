@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 SUPER SOLUTION LABS INC
 import { r2 } from '../util/num.js'
 
 export type Curve = 'linear' | 'smooth' | 'step'

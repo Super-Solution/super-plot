@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 SUPER SOLUTION LABS INC
 """Strict ISO 8601 parsing to epoch milliseconds (UTC). Mirrors `toTime` in the reference implementation."""
 from __future__ import annotations
 

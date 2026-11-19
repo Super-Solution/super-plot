@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 SUPER SOLUTION LABS INC
 // Differential fuzzing of the ports against the reference implementation.
 //   node ports/fuzz/generate.mjs <seed> <out.json>
 // Writes random numbers (formatting, ticks, bins, box statistics, timeUnit buckets, log ticks, kernel densities,

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 SUPER SOLUTION LABS INC
 import type { ChartDef } from '../registry.js'
 import type { ChartCtx } from '../context.js'
 import type { Mark } from '../scene.js'

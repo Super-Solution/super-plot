@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 SUPER SOLUTION LABS INC
 """Number and date text, English only.
 
 The reference implementation formats with `Intl`; here the same text is produced from first principles.

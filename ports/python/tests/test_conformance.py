@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 SUPER SOLUTION LABS INC
 """Runs the shared conformance data (conformance/plot.v1.json) against this implementation."""
 from __future__ import annotations
 

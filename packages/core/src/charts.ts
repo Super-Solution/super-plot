@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 SUPER SOLUTION LABS INC
 /** Every built-in chart type as a plain object. Import the ones you need and pass them to `registerChart`. */
 import { bar } from './charts/bar.js'
 import { areaChart, line } from './charts/series.js'

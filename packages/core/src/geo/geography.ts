@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 SUPER SOLUTION LABS INC
 /**
  * Geographies: region boundaries a map joins data to. Super Plot ships none. Boundaries are political
  * (who draws which line is a claim), so the host imports the dataset it has chosen, under its licence, with

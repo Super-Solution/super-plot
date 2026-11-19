@@ -3,7 +3,7 @@
   "version": "0.4.0",
   "description": "Mount Super Plot in the browser: resize, tooltip, hover, legend toggle, export; plus a <super-plot> web component.",
   "private": true,
-  "license": "UNLICENSED",
+  "license": "Apache-2.0",
   "type": "module",
   "engines": {
     "node": ">=22"
@@ -18,7 +18,9 @@
   ],
   "files": [
     "dist",
-    "README.md"
+    "README.md",
+    "LICENSE",
+    "NOTICE"
   ],
   "dependencies": {
     "@supersolutions/super-plot-core": "0.4.0",
@@ -51,5 +53,10 @@
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Super-Solution/super-plot.git",
+    "directory": "packages/bindings/web"
+  },
   "author": "SUPER SOLUTION LABS INC"
 }

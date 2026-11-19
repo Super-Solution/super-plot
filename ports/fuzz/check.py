@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 SUPER SOLUTION LABS INC
 """Compare the Python port with the reference on generated cases: python3 check.py <cases.json> (see generate.mjs)."""
 import json
 import math

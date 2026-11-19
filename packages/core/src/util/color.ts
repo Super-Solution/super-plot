@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 SUPER SOLUTION LABS INC
 /** Colour helpers. Only hex colours are interpolated; CSS-variable paints pass through untouched. */
 
 export interface RGB { r: number; g: number; b: number }

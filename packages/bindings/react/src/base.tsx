@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 SUPER SOLUTION LABS INC
 import { forwardRef, useEffect, useRef, type CSSProperties, type ForwardedRef } from 'react'
 import { SuperPlot as Plot, type SuperPlotOptions } from '@supersolutions/super-plot-web/base'
 

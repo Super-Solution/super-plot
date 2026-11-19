@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 SUPER SOLUTION LABS INC
 import type { Row } from './schema.js'
 import { toNumber } from './util/num.js'
 import { toTime } from './util/time.js'

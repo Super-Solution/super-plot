@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 SUPER SOLUTION LABS INC
 import type { Issue } from './schema.js'
 import type { AxisInfo, Mark, Rect, SceneGeo, SeriesInfo, TextMark } from './scene.js'
 import type { RenderEnv } from './theme.js'

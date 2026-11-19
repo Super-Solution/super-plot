@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 SUPER SOLUTION LABS INC
 import type { AxisInfo, FilterStep, Rect, Scene, SceneAxes } from '@supersolutions/super-plot-core/base'
 
 /** A continuous range on one axis. Time axes report ISO strings, number axes numbers. */

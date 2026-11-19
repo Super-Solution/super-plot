@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 SUPER SOLUTION LABS INC
 // Writes schemas/plot-spec-v1.schema.json and docs/SPEC.md from the chart registry, so neither can drift from the code.
 //   node scripts/export-spec.mjs           write
 //   node scripts/export-spec.mjs --check   fail when a file is out of date

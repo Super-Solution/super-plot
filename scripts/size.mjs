@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 SUPER SOLUTION LABS INC
 // Bundle cost of common imports (built packages, esbuild minify + gzip): node scripts/size.mjs. Run npm run build first.
 import { build } from 'esbuild'
 import { gzipSync } from 'node:zlib'

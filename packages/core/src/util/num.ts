@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 SUPER SOLUTION LABS INC
 /** Numeric helpers. Pure, no DOM. */
 
 export const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v)

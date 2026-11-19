@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 SUPER SOLUTION LABS INC
 // Measures compile, SVG string, SVG DOM mount, canvas draw, hover and bundle sizes.
 // Usage: node scripts/bench.mjs   (needs `npm run build` first). Prints JSON; numbers are medians.
 import { gzipSync, brotliCompressSync } from 'node:zlib'

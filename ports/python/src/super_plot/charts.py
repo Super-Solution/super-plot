@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 SUPER SOLUTION LABS INC
 """Per-chart rules the field definitions cannot express: cross-field checks and the plain-language description.
 
 Every function here mirrors one in the reference implementation (`packages/core/src/charts/*.ts`).

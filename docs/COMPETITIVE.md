@@ -120,7 +120,7 @@ Status marks: ✅ built · 🚧 built with a stated limit · ⛔ refused on purp
 | plugin / hook API | ✅ | `afterCompile`, `afterDraw`, events |
 | tree-shaking | ✅ | `/base` + `/charts` (round 4) |
 | JSON spec and schema for agents | ✅ | One field DSL drives validation, JSON Schema, SPEC.md, the catalog and the Go/Python ports |
-| licence | — | Owner's decision (OPEN-DECISIONS #1) |
+| licence | ✅ | Apache-2.0, © SUPER SOLUTION LABS INC (same as super-chat and super-protocol) |
 
 ## What was not copied, in one place
 

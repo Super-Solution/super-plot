@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 SUPER SOLUTION LABS INC
 /**
  * The scene is the contract between a chart and a renderer: a flat, ordered, serialisable list of
  * marks in pixel space. SVG string, DOM mount, canvas and tests all consume the same thing.

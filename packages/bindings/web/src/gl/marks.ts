@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 SUPER SOLUTION LABS INC
 /**
  * Draws a scene's data circles and rectangles with instanced WebGL2 quads: one draw call per run of marks of
  * the same kind, shapes cut by a signed distance in the fragment shader (anti-aliased edge, optional stroke,

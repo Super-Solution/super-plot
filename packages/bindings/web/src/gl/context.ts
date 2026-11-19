@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 SUPER SOLUTION LABS INC
 /**
  * WebGL2 plumbing shared by the 2D mark renderer and the 3D map renderer: program compilation, colour
  * parsing, and a page-wide budget of live contexts (browsers cap them at roughly 8-16 and silently drop the

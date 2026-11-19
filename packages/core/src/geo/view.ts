@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 SUPER SOLUTION LABS INC
 /**
  * Map projections and the camera. One description of "where is this longitude/latitude/altitude on screen"
  * serves the static renderers (SVG, canvas: through `project`) and the WebGL renderer (through the same

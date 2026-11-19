@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 SUPER SOLUTION LABS INC
 /** Stylesheet injected once per document. Colours come from the scene (CSS variables); this is behaviour only. */
 export const CSS = `
 .sp-root{position:relative;display:block;width:100%;height:100%;line-height:0;-webkit-tap-highlight-color:transparent}

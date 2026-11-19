@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 SUPER SOLUTION LABS INC
 import * as core from '@supersolutions/super-plot-core'
 import { SuperPlot } from './plot.js'
 import { defineSuperPlot } from './element.js'

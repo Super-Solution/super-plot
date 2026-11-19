@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 SUPER SOLUTION LABS INC
 /**
  * Canvas output for a scene. It takes any object shaped like a 2D context (a browser canvas, node-canvas,
  * skia-canvas) and does not touch the DOM itself, so it lives next to the SVG renderer. A scene with

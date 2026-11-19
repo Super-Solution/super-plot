@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 SUPER SOLUTION LABS INC
 import { clamp, extent, quantile, tickStep } from './num.js'
 
 /** Histogram binning, shared by the histogram chart and the `bin` transform step. Pure, no DOM. */

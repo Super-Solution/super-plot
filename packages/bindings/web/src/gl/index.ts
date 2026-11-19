@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 SUPER SOLUTION LABS INC
 /**
  * The WebGL2 layer of the canvas view: one context per plot that draws the marks a 2D canvas is slow at
  * (tens of thousands of dots, a map's geography in 3D) and leaves everything else (text, axes, legend) to the

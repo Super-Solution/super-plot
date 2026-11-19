@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 SUPER SOLUTION LABS INC
 import { clampCamera, dragCamera, makeView, zoomCamera, type Camera, type Scene, type Theme, type UiStringKey, type ViewParams } from '@supersolutions/super-plot-core/base'
 
 // Loaded on demand (its own chunk) the first time a plot draws a map: pages without maps do not pay for it.

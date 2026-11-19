@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 SUPER SOLUTION LABS INC
 // The single list of packages: build, check and release scripts all read this.
 export const VERSION = '0.4.0'
 export const packages = [

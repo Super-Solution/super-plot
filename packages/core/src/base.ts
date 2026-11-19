@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 SUPER SOLUTION LABS INC
 /**
  * Everything in core except the chart types: register the ones you use with `registerChart` (from
  * `@supersolutions/super-plot-core/charts`) and a bundler leaves the others out. The package root registers them all.

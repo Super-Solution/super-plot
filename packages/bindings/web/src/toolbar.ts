@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 SUPER SOLUTION LABS INC
 import type { Theme, UiStringKey } from '@supersolutions/super-plot-core/base'
 import type { ToolbarItem } from './plot.js'
 

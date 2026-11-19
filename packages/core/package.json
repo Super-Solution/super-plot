@@ -3,7 +3,7 @@
   "version": "0.4.0",
   "description": "Renderer-free statistical charts: spec validation, layout to a scene, SVG output, themes and agent tools. No DOM.",
   "private": true,
-  "license": "UNLICENSED",
+  "license": "Apache-2.0",
   "type": "module",
   "engines": {
     "node": ">=22"
@@ -16,7 +16,9 @@
   ],
   "files": [
     "dist",
-    "README.md"
+    "README.md",
+    "LICENSE",
+    "NOTICE"
   ],
   "exports": {
     ".": {
@@ -58,5 +60,10 @@
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Super-Solution/super-plot.git",
+    "directory": "packages/core"
+  },
   "author": "SUPER SOLUTION LABS INC"
 }

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 SUPER SOLUTION LABS INC
 /**
  * The WebGL2 map renderer: draws `scene.geo` (regions, raised regions, columns, arcs, points, the sea and
  * graticule) with a depth buffer, projecting longitude/latitude in the vertex shader with the same formulas

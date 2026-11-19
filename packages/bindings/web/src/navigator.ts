@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 SUPER SOLUTION LABS INC
 import type { AxisInfo, Scene, UiStringKey } from '@supersolutions/super-plot-core/base'
 import { invert, pixelOf } from './interact.js'
 import { NAV_HEIGHT } from './navigable.js'

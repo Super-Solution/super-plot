@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 SUPER SOLUTION LABS INC
 /**
  * Maps: data joined to region boundaries or placed by longitude/latitude, drawn flat or on a globe, with
  * optional heights (raised regions, columns, arcs). Super Plot ships no boundaries: `geo` names a geography

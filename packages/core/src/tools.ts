@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 SUPER SOLUTION LABS INC
 // The tools describe every chart type, so they register them all.
 import './index.js'
 import { chartCatalog, plotJsonSchema } from './catalog.js'

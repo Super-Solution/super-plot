@@ -15,9 +15,11 @@
 
 - **Super Chat card (long term).** The cleaner route is one generic card in `super-protocol`, `plot`, whose payload is `{ spec, alt }`: the spec is the contract, so a new chart type never changes the protocol, and the same card works for any renderer. Until it exists, `fromChatChartCard` converts today's built-in `chart` card. A per-chart card kind (`super-plot.chart`) would put a chart list into the protocol and is the less clean option. Adding the card changes a shared contract, so it needs the owner's go.
 
+- **Licence: Apache-2.0** (owner, 2026-11-19: "那就用 Apache 2.0 吧 ... 署名 公司那些全部都用跟其他庫一樣"): `LICENSE` and `NOTICE` at the root and in each package, `license: Apache-2.0` and `author: SUPER SOLUTION LABS INC` in every manifest, an SPDX header in every source file, the same as super-chat and super-protocol. Apache-2.0 has no "or-later" form, so the identifier is plain `Apache-2.0`.
+
 ## Open
 
-1. **Licence and publishing.** Packages are `private` with `UNLICENSED`; the Go module path and the Python distribution name are placeholders. Nothing is pushed or published.
+1. **Publishing.** Nothing is published to npm or PyPI yet; packages stay `private`. The Go module path follows the repository (`github.com/super-solution/super-plot/ports/go`); the Python distribution name `super-plot` is a placeholder.
 2. **A native renderer in Go or Python?** The ports validate, describe and compute; they do not draw. Drawing in a second language means porting the layout of all 28 chart types (about 3,500 lines of TypeScript, plus text measurement, which differs per language) and keeping pixels close, not identical. Worth it only if a backend must produce SVG or PNG without Node. The scene is already a flat JSON structure, so the cheaper alternative is to run the TypeScript renderer where Node is available.
 3. **Rust.** The Rust core is closed per strategy; a Rust port would be a separate decision and would check against the same conformance data.
 4. **Chat plugin package** like Super Chart's (follows the card decision).

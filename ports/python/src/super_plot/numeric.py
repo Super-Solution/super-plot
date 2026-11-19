@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 SUPER SOLUTION LABS INC
 """Numeric helpers: ticks, quantiles, box statistics, histogram bins. Pure, no dependencies."""
 from __future__ import annotations
 

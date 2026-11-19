@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 SUPER SOLUTION LABS INC
 /**
  * Textures for `patterns: true`: one per series, drawn over the fill in the surface colour so a series stays
  * recognisable without its hue (colour-vision deficiency, greyscale print). Each is an 8 x 8 px tile; the

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 SUPER SOLUTION LABS INC
 import type { Camera, Issue } from '@supersolutions/super-plot-core/base'
 import { SuperPlot, type BrushSelection, type SelectEvent, type SuperPlotOptions, type ToolbarItem, type ZoomRange } from './plot.js'
 import { idleController, type SonifyController, type SonifyOptions } from './sound.js'

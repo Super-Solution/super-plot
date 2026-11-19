@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 SUPER SOLUTION LABS INC
 /** LOESS smoothing for scatter trend lines. Pure, no DOM; the Go and Python ports reproduce it step by step. */
 
 /** Points on the evaluation grid. */

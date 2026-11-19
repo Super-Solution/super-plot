@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 SUPER SOLUTION LABS INC
 """Super Plot for Python: validate chart specs, describe them in words, and the shared statistics.
 
 This is the language-neutral half of Super Plot. Drawing stays in the TypeScript packages; a Python service

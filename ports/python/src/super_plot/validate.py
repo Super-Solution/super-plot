@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 SUPER SOLUTION LABS INC
 """Check a plot spec without drawing it.
 
 Every problem comes back at once, each with a stable `code`, a `path` and a `hint` that says how to fix it, so an

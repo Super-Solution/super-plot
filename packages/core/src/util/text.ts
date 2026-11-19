@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 SUPER SOLUTION LABS INC
 /** Text measurement without a DOM. An estimate, good to within a few percent for UI fonts. */
 
 export type Measure = (text: string, size: number, weight?: number) => number

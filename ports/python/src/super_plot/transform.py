@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 SUPER SOLUTION LABS INC
 """`transform`: a short list of data steps that run before the chart reads its columns.
 
 Mirrors `packages/core/src/transform.ts`. Steps are plain JSON and run in order; the output of each step is the

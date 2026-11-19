@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 SUPER SOLUTION LABS INC
 import { closest, toNumber } from './util/num.js'
 import { isSafeColor } from './util/color.js'
 import { isValueFormat } from './util/format.js'

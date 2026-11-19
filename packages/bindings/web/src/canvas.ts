@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 SUPER SOLUTION LABS INC
 import { buildHitIndex, drawHover, drawPatternTile, drawScene, resolveColor, type Camera, type Canvas2D, type HitIndex, type Mark, type Path2DCtor, type Scene, type Tip, type ViewParams } from '@supersolutions/super-plot-core/base'
 import type { GlView } from './gl/index.js'
 import { parseRgb, rasterDots, type DotRun } from './stamp.js'

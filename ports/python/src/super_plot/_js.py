@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 SUPER SOLUTION LABS INC
 """JavaScript semantics that the reference implementation relies on.
 
 Super Plot's reference implementation is TypeScript, and the conformance data was produced by it. A port is only

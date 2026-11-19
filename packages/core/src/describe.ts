@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 SUPER SOLUTION LABS INC
 import { getChart } from './registry.js'
 import { validatePlot } from './validate.js'
 import type { Issue } from './schema.js'

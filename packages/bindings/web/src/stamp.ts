@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 SUPER SOLUTION LABS INC
 /** A run of same-style dots, in scene pixels (what core's `drawScene` hands the `dots` hook). */
 export interface DotRun {
   cx: Float64Array

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 SUPER SOLUTION LABS INC
 /**
  * Static drawing of a map: turns `SceneGeo` (longitude/latitude items) into ordinary scene marks for the
  * SVG and canvas renderers. The WebGL renderer draws `scene.geo` directly and skips these marks.

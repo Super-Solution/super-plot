@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 SUPER SOLUTION LABS INC
 // Command fuzzcheck compares the Go port with the reference on generated cases (see ports/fuzz/generate.mjs).
 //
 //	go run ./cmd/fuzzcheck cases.json

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 SUPER SOLUTION LABS INC
 import type { Issue, FieldMap, ValidateCtx } from './schema.js'
 import { CARTESIAN_FIELDS, COMMON_FIELDS } from './schema.js'
 import type { ChartCtx } from './context.js'

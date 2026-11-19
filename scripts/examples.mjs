@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 SUPER SOLUTION LABS INC
 // Bundles the examples against the sources in this checkout (never published) and serves them.
 //   node scripts/examples.mjs          build + serve on http://localhost:5173/
 //   node scripts/examples.mjs --build  build only

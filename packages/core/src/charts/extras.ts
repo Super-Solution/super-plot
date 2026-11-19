@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 SUPER SOLUTION LABS INC
 import type { ValidateCtx } from '../schema.js'
 import type { FieldDef } from '../schema.js'
 import { toNumber } from '../util/num.js'

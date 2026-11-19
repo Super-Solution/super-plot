@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 SUPER SOLUTION LABS INC
 import { linearTicks, niceDomain, pow10 } from './util/num.js'
 import { timeTicks } from './util/time.js'
 

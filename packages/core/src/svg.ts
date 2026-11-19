@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 SUPER SOLUTION LABS INC
 import { resolveVars } from './theme.js'
 import type { Mark, Scene } from './scene.js'
 import { roundedRectPath } from './scene.js'

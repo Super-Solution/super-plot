@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 SUPER SOLUTION LABS INC
 """Tabular helpers shared by the chart descriptions: long-form observations, x-axis kind, distinct values."""
 from __future__ import annotations
 
