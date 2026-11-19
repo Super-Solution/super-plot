@@ -163,3 +163,8 @@ export function formatTime(t: number, level: TimeLevel, locale: string): string 
 
 /** True when any value carries a time of day, so tooltips should show it. */
 export const hasTimeOfDay = (values: number[]): boolean => values.some(v => v % DAY !== 0)
+
+/** Weekday name of a UTC time in a locale (`short`: "Mon", `long`: "Monday"). */
+export function formatWeekday(t: number, width: 'short' | 'long', locale: string): string {
+  return dtf(locale, width === 'short' ? 'wd' : 'WD', { weekday: width }).format(t)
+}

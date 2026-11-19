@@ -12,7 +12,8 @@ export type Row = Record<string, unknown>
  */
 export type FieldDef = { desc: string; required?: boolean } & (
   | { kind: 'column'; role: 'any' | 'number' | 'x' | 'lat' | 'lng' }
-  | { kind: 'columns'; role: 'number' }
+  /** `min` / `max`: how many columns the list may name (default 1 to any). */
+  | { kind: 'columns'; role: 'number' | 'any'; min?: number; max?: number }
   | { kind: 'enum'; values: readonly string[]; default?: string }
   | { kind: 'number'; min?: number; max?: number; integer?: boolean; default?: number }
   | { kind: 'boolean'; default?: boolean }
@@ -212,6 +213,8 @@ export function validateField(name: string, def: FieldDef, value: unknown, ctx: 
       if (def.kind === 'column' && typeof value !== 'string') return bad('bad_type', `${name} must be the name of a data column (a string), got ${fmt(value)}.`)
       if (def.kind === 'columns' && !names.every(v => typeof v === 'string') || names.length === 0) return bad('bad_type', `${name} must be a column name or a non-empty array of column names.`)
       const list = names as string[]
+      if (def.kind === 'columns' && def.min !== undefined && list.length < def.min) return bad('too_few_columns', `${name} needs at least ${def.min} columns, got ${list.length}.`, `List ${def.min} or more column names, e.g. ["a","b"].`)
+      if (def.kind === 'columns' && def.max !== undefined && list.length > def.max) return bad('too_many_columns', `${name} takes at most ${def.max} columns, got ${list.length}.`, 'Keep the most important ones, or split the chart.')
       let ok = true
       list.forEach((c, i) => {
         const path = Array.isArray(value) ? `${name}[${i}]` : name
@@ -279,7 +282,10 @@ export function fieldSchema(def: FieldDef): Record<string, unknown> {
     case 'geo': return { oneOf: [{ type: 'string', pattern: '^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$' }, { type: 'object', required: ['type'], properties: { type: { enum: ['FeatureCollection', 'Topology'] } } }], description: d }
     case 'camera': return { type: 'object', additionalProperties: false, properties: Object.fromEntries(CAMERA_KEYS.map(k => [k, { type: 'number', minimum: CAMERA_RANGE[k][0], maximum: CAMERA_RANGE[k][1] }])), description: d }
     case 'column': return { type: 'string', description: `${d} (name of a column in data)` }
-    case 'columns': return { oneOf: [{ type: 'string' }, { type: 'array', minItems: 1, items: { type: 'string' } }], description: `${d} (column name, or several for wide-form data)` }
+    case 'columns': {
+      const arr = { type: 'array', minItems: def.min ?? 1, ...(def.max !== undefined ? { maxItems: def.max } : {}), items: { type: 'string' } }
+      return (def.min ?? 1) <= 1 ? { oneOf: [{ type: 'string' }, arr], description: `${d} (column name, or several for wide-form data)` } : { ...arr, description: `${d} (list of column names)` }
+    }
   }
 }
 
@@ -288,7 +294,7 @@ export function fieldType(def: FieldDef): string {
   switch (def.kind) {
     case 'enum': return def.values.map(v => `\`${v}\``).join(' \\| ')
     case 'column': return 'column name'
-    case 'columns': return 'column name or list of column names'
+    case 'columns': return (def.min ?? 1) <= 1 ? 'column name or list of column names' : `list of ${def.min}${def.max !== undefined ? ` to ${def.max}` : ' or more'} column names`
     case 'number': return def.integer ? 'integer' : 'number'
     case 'bins': return '`auto` \\| integer'
     case 'domain': return '[min\\|null, max\\|null]'

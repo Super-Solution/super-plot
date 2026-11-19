@@ -1,6 +1,7 @@
 import type { ChartDef } from '../registry.js'
 import type { ChartCtx } from '../context.js'
 import type { Mark } from '../scene.js'
+import type { ValidateCtx } from '../schema.js'
 import { bandScale, linearScale, niceLinear } from '../scale.js'
 import { bandAxis, drawAnnotations, layoutCartesian, valueAxis } from '../cartesian.js'
 import { distinct } from '../data.js'
@@ -23,7 +24,52 @@ export function boxStats(values: number[]): BoxStats | null {
   return { n: v.length, min: v[0], q1, median: quantile(v, 0.5), q3, max: v[v.length - 1], mean: mean(v), lowWhisker: inside[0], highWhisker: inside[inside.length - 1], outliers: v.filter(x => x < lf || x > hf) }
 }
 
-function groups(spec: Record<string, any>): Map<string, number[]> {
+/**
+ * Deterministic jitter for `points: 'all'`: the golden-ratio (Weyl) sequence, frac(i x 0.6180339887498949) - 0.5,
+ * in [-0.5, 0.5). `i` is the observation's position within its group in row order. No randomness, so the same
+ * spec always gives the same scene, and neighbouring rows never land on top of each other.
+ */
+export const jitter = (i: number): number => ((i * 0.6180339887498949) % 1) - 0.5
+
+/** Which observations a box or violin draws as dots: `points` wins; else the older `outliers` boolean. */
+export function pointsMode(spec: Record<string, any>, fallback: 'outliers' | 'none' = 'outliers'): 'outliers' | 'all' | 'none' {
+  if (spec.points === 'all' || spec.points === 'outliers' || spec.points === 'none') return spec.points
+  if (spec.outliers === false) return 'none'
+  return fallback
+}
+
+/** Cross-field checks shared by box and violin. */
+export function checkPoints(spec: Record<string, any>, ctx: Pick<ValidateCtx, 'issues'>): void {
+  if (spec.points !== undefined && spec.outliers === false && spec.points !== 'none') {
+    ctx.issues.push({ severity: 'warning', code: 'outliers_ignored', path: 'outliers', message: '`outliers: false` is ignored because `points` is set.', hint: 'Use points: "none" to hide every dot, and drop `outliers`.' })
+  }
+  if (spec.points === 'all' && Array.isArray(spec.data) && spec.data.length > 5000) {
+    ctx.issues.push({ severity: 'warning', code: 'many_marks', path: 'points', message: `points: "all" draws ${spec.data.length} dots: fine in the browser (the web binding switches to canvas) but a heavy SVG file.`, hint: 'Use points: "outliers", or sample with `transform`.' })
+  }
+  if (spec.patterns === true) {
+    ctx.issues.push({ severity: 'warning', code: 'patterns_unsupported', path: 'patterns', message: `A ${spec.type} chart has no series to tell apart: every group is one shape on its own place on the axis, so patterns is ignored.` })
+  }
+}
+
+/** One dot per observation (`outliers` null) or per outlier; `spread(v)` is how far, in px either side of the centre, a dot may sit. */
+export function pointMarks(c: ChartCtx, o: { key: string; values: number[]; outliers: number[] | null; mid: number; at: (v: number) => number; horizontal: boolean; color: string; spread: (v: number) => number; column: string }): Mark[] {
+  const fmt = c.format
+  const out: Mark[] = []
+  if (o.outliers) {
+    for (const v of o.outliers) {
+      out.push({ type: 'circle', role: 'data', series: o.key, cx: o.horizontal ? o.at(v) : o.mid, cy: o.horizontal ? o.mid : o.at(v), r: 3.5, fill: c.c('background'), stroke: o.color, strokeWidth: 1.5, tip: { title: `${clip(o.key, 40)} outlier`, rows: [{ label: o.column, value: fmt(v) }] }, aria: `${o.key} outlier ${fmt(v)}`, datum: { group: o.key, value: v } })
+    }
+    return out
+  }
+  o.values.forEach((v, i) => {
+    const off = jitter(i) * 2 * o.spread(v)
+    const p = o.at(v)
+    out.push({ type: 'circle', role: 'data', series: o.key, cx: o.horizontal ? p : o.mid + off, cy: o.horizontal ? o.mid + off : p, r: 2.5, fill: o.color, opacity: 0.55, tip: { title: clip(o.key, 40), rows: [{ label: o.column, value: fmt(v) }] }, aria: `${o.key} ${fmt(v)}`, datum: { group: o.key, value: v } })
+  })
+  return out
+}
+
+export function groups(spec: Record<string, any>): Map<string, number[]> {
   const g = new Map<string, number[]>()
   for (const r of spec.data as Record<string, unknown>[]) {
     const v = toNumber(r[spec.y])
@@ -43,7 +89,8 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
   const stats = new Map(keys.map(k => [k, boxStats(g.get(k)!)!]))
   const horizontal = s.orientation === 'horizontal'
   if (horizontal) c.axisFields = { x: s.y, y: s.x }
-  const showOut = s.outliers !== false
+  const mode = pointsMode(s)
+  const showOut = mode !== 'none'
   let lo = Infinity
   let hi = -Infinity
   for (const st of stats.values()) {
@@ -82,11 +129,7 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
     out.push(seg(st.lowWhisker, st.lowWhisker, boxW * 0.25), seg(st.highWhisker, st.highWhisker, boxW * 0.25))
     out.push(rect(st.q1, st.q3, { fill: col, opacity: 0.22, stroke: col, strokeWidth: 1.5, r: 3, tip, aria: `${k}: median ${fmt(st.median)}, Q1 ${fmt(st.q1)}, Q3 ${fmt(st.q3)}`, anim: horizontal ? 'x' : 'y', datum: { group: k, ...st } }))
     out.push(seg(st.median, st.median, boxW / 2, c.theme.lineWidth + 0.5))
-    if (showOut) {
-      for (const v of st.outliers) {
-        out.push({ type: 'circle', role: 'data', series: k, cx: horizontal ? P(v) : mid, cy: horizontal ? mid : P(v), r: 3.5, fill: c.c('background'), stroke: col, strokeWidth: 1.5, tip: { title: `${clip(k, 40)} outlier`, rows: [{ label: String(s.y), value: fmt(v) }] }, aria: `${k} outlier ${fmt(v)}` })
-      }
-    }
+    if (showOut) out.push(...pointMarks(c, { key: k, values: g.get(k)!, outliers: mode === 'all' ? null : st.outliers, mid, at: P, horizontal, color: col, spread: () => boxW * 0.4, column: String(s.y) }))
   }
   c.marks.push(...out, ...hits)
   return { series: [] }
@@ -101,7 +144,8 @@ export const box: ChartDef = {
   fields: {
     x: { kind: 'column', role: 'any', desc: 'Column that defines the groups (one box each). Omit for a single box.' },
     y: { kind: 'column', role: 'number', required: true, desc: 'Numeric column whose distribution is summarised.' },
-    outliers: { kind: 'boolean', default: true, desc: 'Draw points beyond the whiskers (1.5 x IQR).' },
+    outliers: { kind: 'boolean', default: true, desc: 'Draw points beyond the whiskers (1.5 x IQR). Kept for older specs: `points` replaces it and wins when both are set.' },
+    points: { kind: 'enum', values: ['outliers', 'all', 'none'], desc: 'Which observations to draw as dots. `outliers` (the default, or `none` when `outliers` is false): only those beyond the whiskers. `all`: every value, as a small dot spread sideways by a fixed jitter (the same every time) over the box.' },
     orientation: { kind: 'enum', values: ['vertical', 'horizontal'], default: 'vertical', desc: '`horizontal` suits long group names.' },
     yDomain: { kind: 'domain', desc: 'Fix the value axis range.' }
   },
@@ -109,6 +153,7 @@ export const box: ChartDef = {
     type: 'box', title: 'Delivery time by carrier', subtitle: 'Days from dispatch to door', x: 'carrier', y: 'days', yLabel: 'Days',
     data: ['Aero', 'Bolt', 'Cargo'].flatMap((carrier, ci) => Array.from({ length: 30 }, (_, i) => ({ carrier, days: Math.round((2 + ci * 0.8 + ((Math.abs(Math.sin((i + 1) * (ci + 3.1) * 12.9898) * 43758.5453) % 1) * 3) ** (1 + ci * 0.15) + (i === 7 ? 6 + ci * 2 : 0)) * 10) / 10 })))
   },
+  check: checkPoints,
   compile,
   describe(spec, env) {
     const g = groups(spec)

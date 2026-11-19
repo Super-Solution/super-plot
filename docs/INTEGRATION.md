@@ -47,6 +47,23 @@ new SuperPlot(el, spec, { plugins: [{
 
 `patterns: true` in the spec adds a texture per series (bars, areas, slices, cells, legend swatches). `dataTable: true` puts a table of the data the chart shows (after `transform`) next to it for screen readers; `'visible'` shows it to everyone. `plotTable(spec)` in core returns the same table as data. On canvas the chart is one focusable element: the arrow keys step through marks, Home and End jump, Enter selects, and each step is announced.
 
+## Violin, calendar, sunburst and parallel coordinates
+
+```ts
+{ type: 'box', x: 'carrier', y: 'days', points: 'all' }                  // every value as a dot; 'outliers' (default) or 'none'
+{ type: 'violin', x: 'plan', y: 'minutes', inner: 'quartiles', points: 'all', bandwidth: 2 }
+{ type: 'calendar', x: 'date', value: 'commits', weekStart: 'sunday', domain: [0, 20] }
+{ type: 'sunburst', path: ['region', 'country', 'city'], value: 'sales' }
+{ type: 'parallel', dimensions: ['price', 'power', 'weight', 'range'], series: 'drive' }
+```
+
+- `points` on box and violin draws observations as dots. The jitter is fixed (the golden-ratio sequence by row order within a group), so the same spec always gives the same picture. On box, `points` replaces the older `outliers` boolean, which still works; when both are set `points` wins and a `outliers_ignored` warning says so.
+- The violin's density is a Gaussian kernel estimate over the observed range (it never draws past the smallest or largest value), bandwidth by Silverman's rule unless `bandwidth` is given. Each violin is as wide as the others at its densest point. The maths is exported for other code (`kde`, `silverman`, `densityPeaks` from core) and pinned in the conformance data (`density`).
+- Calendar days are UTC: an ISO date or a timestamp both land on their UTC day, and rows on one day are summed. Days without data are outlined empty cells, never the colour of zero. One row of panels per year, at most 5 (the most recent; a `too_many_years` warning says so).
+- Sunburst rows that stop early (an empty level) still count toward their parents and leave a gap outside them. More than 30 children under one parent: the smallest merge into "Other". The legend is the first level; hiding one gives its share of the circle back to the others. There is no click-to-zoom in core: drill down by filtering with `transform` (an `onSelect` handler gets the arc's `datum.path`).
+- Parallel coordinates draw at most 2,000 lines: past that one row in every k is drawn (a `lines_sampled` warning gives k), while each axis still spans every row. Rows missing a value in any dimension are skipped (`incomplete_rows`).
+- `facet` works on violin (as on box). Calendar, sunburst and parallel have no axes to share and refuse `facet` as an unknown field, like heatmap, pie and treemap. `patterns` textures the sunburst by first-level branch; on box, violin, calendar and parallel there is nothing to tell apart by texture, so it is ignored with a `patterns_unsupported` warning.
+
 ## Agents and MCP
 
 ```ts

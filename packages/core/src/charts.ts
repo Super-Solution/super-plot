@@ -5,6 +5,10 @@ import { scatter } from './charts/scatter.js'
 import { donut, pie } from './charts/pie.js'
 import { histogram } from './charts/histogram.js'
 import { box } from './charts/box.js'
+import { violin } from './charts/violin.js'
+import { calendar } from './charts/calendar.js'
+import { sunburst } from './charts/sunburst.js'
+import { parallel } from './charts/parallel.js'
 import { heatmap } from './charts/heatmap.js'
 import { radar } from './charts/radar.js'
 import { treemap } from './charts/treemap.js'
@@ -12,7 +16,7 @@ import { sankey } from './charts/sankey.js'
 import { bubbleMap, choropleth, columnMap, flowMap } from './charts/maps.js'
 import type { ChartDef } from './registry.js'
 
-export { bar, line, areaChart as area, scatter, pie, donut, histogram, box, heatmap, radar, treemap, sankey, choropleth, bubbleMap, columnMap, flowMap }
+export { bar, line, areaChart as area, scatter, pie, donut, histogram, box, violin, heatmap, calendar, radar, treemap, sunburst, sankey, parallel, choropleth, bubbleMap, columnMap, flowMap }
 
 /** All of them, in catalogue order. */
-export const allCharts: readonly ChartDef[] = [bar, line, areaChart, scatter, pie, donut, histogram, box, heatmap, radar, treemap, sankey, choropleth, bubbleMap, columnMap, flowMap]
+export const allCharts: readonly ChartDef[] = [bar, line, areaChart, scatter, pie, donut, histogram, box, violin, heatmap, calendar, radar, treemap, sunburst, sankey, parallel, choropleth, bubbleMap, columnMap, flowMap]

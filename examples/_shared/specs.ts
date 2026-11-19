@@ -54,14 +54,23 @@ export const gallery: { id: string; note: string; spec: Record<string, unknown> 
     }
   },
   { id: 'box', note: 'Spread per group with outliers', spec: by('box') },
+  { id: 'box-points', note: 'Every value as a dot, with a fixed jitter (points: "all")', spec: { ...by('box'), title: 'Delivery time by carrier, every parcel', points: 'all' } },
+  { id: 'violin', note: 'Density per group: the Team plan has two peaks', spec: by('violin') },
+  {
+    id: 'violin-quartiles', note: 'Horizontal, quartile lines and every value',
+    spec: { ...Object.fromEntries(Object.entries(by('violin')).filter(([k]) => k !== 'yLabel')), orientation: 'horizontal', inner: 'quartiles', points: 'all', xLabel: 'Minutes' }
+  },
   { id: 'heatmap', note: 'Two categorical dimensions', spec: by('heatmap') },
+  { id: 'calendar', note: 'One cell per day; days without data stay empty', spec: by('calendar') },
   { id: 'radar', note: 'A few items across shared measures', spec: by('radar') },
   { id: 'treemap', note: 'Area is the value; groups get a colour', spec: by('treemap') },
   {
     id: 'treemap-plain', note: 'No groups: shade by size',
     spec: { type: 'treemap', title: 'Largest cities', subtitle: 'Population, millions', label: 'city', value: 'pop', format: 'fixed:1', data: [['Tokyo', 37.4], ['Delhi', 31], ['Shanghai', 27.1], ['São Paulo', 22], ['Mexico City', 21.8], ['Cairo', 21.3], ['Mumbai', 20.4], ['Beijing', 20.4], ['Dhaka', 19.6], ['Osaka', 19.2], ['New York', 18.8], ['Karachi', 16.1], ['Taipei', 7.1]].map(([city, pop]) => ({ city, pop })) }
   },
+  { id: 'sunburst', note: 'A hierarchy as rings; hover for share of parent and total', spec: by('sunburst') },
   { id: 'sankey', note: 'Flows between stages, loops refused', spec: by('sankey') },
+  { id: 'parallel', note: 'Each line is a row across four measures', spec: by('parallel') },
   { id: 'choropleth', note: 'Regions coloured by value (invented islands: Super Plot ships no boundaries)', spec: by('choropleth') },
   { id: 'bubble-map', note: 'Places sized by value, on imported land', spec: by('bubble-map') },
   { id: 'column-map', note: '3D columns on a globe: drag to turn', spec: by('column-map') },

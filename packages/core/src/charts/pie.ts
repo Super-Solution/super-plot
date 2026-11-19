@@ -3,9 +3,9 @@ import type { ChartCtx } from '../context.js'
 import { distinct } from '../data.js'
 import { formatPercent } from '../util/format.js'
 import { inkOn } from '../util/color.js'
-import { toNumber, r2 } from '../util/num.js'
+import { toNumber } from '../util/num.js'
 import { clip } from '../util/text.js'
-import { formatter, lead, fmtList } from './shared.js'
+import { arc, formatter, lead, fmtList } from './shared.js'
 
 interface Slice { key: string; value: number; other?: boolean }
 
@@ -33,18 +33,6 @@ function slices(spec: Record<string, any>, hidden: Set<string> = new Set()): { a
     all = [...all.filter(s => keep.has(s.key)), { key: 'Other', value: rest.reduce((q, s) => q + s.value, 0), other: true }]
   }
   return { all, shown: all.filter(s => !hidden.has(s.key) && s.value > 0), order, skipped }
-}
-
-const arc = (cx: number, cy: number, r0: number, r1: number, a0: number, a1: number): string => {
-  const pt = (r: number, a: number): string => `${r2(cx + r * Math.cos(a))} ${r2(cy + r * Math.sin(a))}`
-  const large = a1 - a0 > Math.PI ? 1 : 0
-  if (a1 - a0 >= Math.PI * 2 - 1e-6) {
-    const m = a0 + Math.PI
-    const outer = `M${pt(r1, a0)}A${r1} ${r1} 0 1 1 ${pt(r1, m)}A${r1} ${r1} 0 1 1 ${pt(r1, a0)}`
-    return r0 > 0 ? `${outer}M${pt(r0, a0)}A${r0} ${r0} 0 1 0 ${pt(r0, m)}A${r0} ${r0} 0 1 0 ${pt(r0, a0)}Z` : outer + 'Z'
-  }
-  if (r0 <= 0) return `M${cx} ${cy}L${pt(r1, a0)}A${r1} ${r1} 0 ${large} 1 ${pt(r1, a1)}Z`
-  return `M${pt(r1, a0)}A${r1} ${r1} 0 ${large} 1 ${pt(r1, a1)}L${pt(r0, a1)}A${r0} ${r0} 0 ${large} 0 ${pt(r0, a0)}Z`
 }
 
 function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
