@@ -140,19 +140,41 @@ export function compilePlot(input: unknown, options: RenderOptions = {}): Compil
   return { ok: true, scene, issues, spec }
 }
 
-/** What the spec asks for and the axes can do: zoom needs continuous ranges the chart accepts, brush any axis. */
-function interaction(spec: Record<string, any>, def: ChartDef, axes: { x: AxisInfo; y: AxisInfo }, issues: Issue[]): Pick<SceneAxes, 'zoom' | 'brush'> {
+/**
+ * What the spec asks for and the axes can do: zoom needs continuous ranges the chart accepts, brush any axis. A
+ * second value axis or a broken axis cannot be zoomed or brushed (a pixel would mean two values, or none): that part
+ * of the request is refused with a `zoom_refused` / `brush_refused` warning and the rest is kept.
+ */
+function interaction(spec: Record<string, any>, def: ChartDef, axes: { x: AxisInfo; y: AxisInfo; y2?: AxisInfo }, issues: Issue[]): Pick<SceneAxes, 'zoom' | 'brush'> {
   const out: Pick<SceneAxes, 'zoom' | 'brush'> = {}
   const fields = fieldsOf(def)
+  const why = (a: AxisInfo, side: 'x' | 'y'): string | null => a.breaks ? `the ${side} axis is broken (yBreak)` : side === 'y' && axes.y2 ? 'there is a second value axis on the right (yRight), and a vertical range would mean different values on each side' : null
+  const refuse = (k: 'zoom' | 'brush', reason: string, kept: boolean): void => {
+    issues.push({ severity: 'warning', code: `${k}_refused`, path: k, message: `${k === 'zoom' ? 'Zoom' : 'Brush'} ${kept ? 'along y is' : 'is'} refused: ${reason}.${kept ? ` ${k === 'zoom' ? 'Zoom' : 'Brush'} works along x only.` : ''}`, hint: 'Drop the break or the right axis to zoom and brush every axis, or keep this one to x.' })
+  }
   const zoom = spec.zoom as string | undefined
   if (zoom === 'x' || zoom === 'xy') {
     const xOk = axes.x.kind !== 'band' && 'xDomain' in fields
     const yOk = axes.y.kind !== 'band' && 'yDomain' in fields
+    const xNo = why(axes.x, 'x')
+    const yNo = zoom === 'xy' && yOk ? why(axes.y, 'y') : null
     if (!xOk) issues.push({ severity: 'warning', code: 'zoom_unsupported', path: 'zoom', message: `A ${def.type} chart${axes.x.kind === 'band' ? ' with categories on x' : ''} cannot zoom; zoom was ignored.`, hint: 'Zoom works on scatter, line and area charts with a numeric or time x axis.' })
-    else out.zoom = zoom === 'xy' && yOk ? 'xy' : 'x'
+    else if (xNo) refuse('zoom', xNo, false)
+    else {
+      if (yNo) refuse('zoom', yNo, true)
+      out.zoom = zoom === 'xy' && yOk && !yNo ? 'xy' : 'x'
+    }
   }
   const brush = spec.brush as string | undefined
-  if (brush === 'x' || brush === 'xy') out.brush = brush === 'xy' && axes.y.kind !== 'band' && axes.x.kind !== 'band' ? 'xy' : 'x'
+  if (brush === 'x' || brush === 'xy') {
+    const xNo = why(axes.x, 'x')
+    const yNo = brush === 'xy' && axes.y.kind !== 'band' && axes.x.kind !== 'band' ? why(axes.y, 'y') : null
+    if (xNo) refuse('brush', xNo, false)
+    else {
+      if (yNo) refuse('brush', yNo, true)
+      out.brush = brush === 'xy' && axes.y.kind !== 'band' && axes.x.kind !== 'band' && !yNo ? 'xy' : 'x'
+    }
+  }
   return out
 }
 
@@ -231,7 +253,9 @@ function facet(def: ChartDef, spec: Record<string, any>, env: RenderEnv, width: 
   const size = top.size
   const xTitle = spec.xLabel ?? (def.type === 'scatter' ? spec.x : def.type === 'histogram' ? spec.value : undefined)
   const yTitle = spec.yLabel ?? (def.type === 'scatter' || def.type === 'box' || def.type === 'violin' ? spec.y : undefined)
-  const inner: Rect = { x: area.x + (yTitle ? size + 8 : 0), y: area.y, w: area.w - (yTitle ? size + 8 : 0), h: area.h - (xTitle ? size + 8 : 0) }
+  // The right axis's title, in its series' colour as the whole chart draws it.
+  const y2Title = whole.axes?.y2 && typeof spec.yRightLabel === 'string' && spec.yRightLabel ? spec.yRightLabel : undefined
+  const inner: Rect = { x: area.x + (yTitle ? size + 8 : 0), y: area.y, w: area.w - (yTitle ? size + 8 : 0) - (y2Title ? size + 8 : 0), h: area.h - (xTitle ? size + 8 : 0) }
   const n = keys.length
   const cols = clamp(Math.round(Math.sqrt((n * inner.w) / Math.max(1, inner.h) / 1.4)), 1, n)
   const nrows = Math.ceil(n / cols)
@@ -248,7 +272,7 @@ function facet(def: ChartDef, spec: Record<string, any>, env: RenderEnv, width: 
     ...spec,
     data: rows.filter(r => xKey(r[col]) === key),
     facet: undefined, title: undefined, subtitle: undefined, source: undefined, description: undefined,
-    legend: 'none', xLabel: '', yLabel: '', colors,
+    legend: 'none', xLabel: '', yLabel: '', yRightLabel: '', colors,
     ...extra
   })
   const place = (i: number): { x: number; y: number } => ({ x: inner.x + (i % cols) * (cw + gapX) - P, y: inner.y + Math.floor(i / cols) * (ch + gapY) + head - P })
@@ -286,6 +310,11 @@ function facet(def: ChartDef, spec: Record<string, any>, env: RenderEnv, width: 
     const u = union(c => (spec.orientation === 'horizontal' ? c.axes?.x : c.axes?.y))
     if (u) shared.yDomain = u
   }
+  // A second value axis (`yRight`) is shared across panels too, so each side compares between panels.
+  if ('rightDomain' in fields && spec.yRight !== undefined && !spec.rightDomain && ctxs.some(c => c.axes?.y2)) {
+    const u = union(c => c.axes?.y2)
+    if (u) shared.rightDomain = u
+  }
   if (Object.keys(shared).length) ({ ctxs, local } = run(shared))
   const seen = new Set(issues.map(i => `${i.code}|${i.path}`))
   for (const i of local) {
@@ -308,7 +337,8 @@ function facet(def: ChartDef, spec: Record<string, any>, env: RenderEnv, width: 
   })
   const muted = cssVar(theme, 'text-muted')
   if (xTitle) marks.push(top.text(inner.x + inner.w / 2, area.y + area.h - size, String(xTitle), { anchor: 'middle', baseline: 'hanging', fill: muted, weight: 500 }))
-  if (yTitle) marks.push(top.text(area.x + size * 0.6, inner.y + inner.h / 2, String(yTitle), { anchor: 'middle', baseline: 'middle', rotate: -90, fill: muted, weight: 500 }))
+  if (yTitle) marks.push(top.text(area.x + size * 0.6, inner.y + inner.h / 2, String(yTitle), { anchor: 'middle', baseline: 'middle', rotate: -90, fill: whole.axes?.y2 ? whole.axes.y.ink ?? muted : muted, weight: 500 }))
+  if (y2Title) marks.push(top.text(area.x + area.w - size * 0.6, inner.y + inner.h / 2, y2Title, { anchor: 'middle', baseline: 'middle', rotate: 90, fill: whole.axes?.y2?.ink ?? muted, weight: 500 }))
   return { marks, series, panels }
 }
 

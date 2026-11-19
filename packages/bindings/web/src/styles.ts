@@ -30,6 +30,7 @@ export const CSS = `
 .sp-dimmed{opacity:.28!important}
 .sp-legend[data-lk],.sp-m[data-lk]{cursor:pointer}
 .sp-data[tabindex],.sp-hit{cursor:default}
+.sp-m.sp-annotation{pointer-events:none}
 .sp-tip{position:absolute;z-index:10;left:0;top:0;pointer-events:none;opacity:0;transition:opacity .08s ease;font-size:12px;line-height:1.4;padding:8px 10px;border-radius:6px;border:1px solid;box-shadow:0 4px 16px rgba(0,0,0,.18);max-width:260px;white-space:nowrap}
 .sp-tip[data-show]{opacity:1}
 .sp-tip b{display:block;font-weight:600;margin-bottom:4px}

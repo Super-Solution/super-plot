@@ -102,12 +102,24 @@ export interface AxisInfo {
    * value, so pixel-to-data maps and zoom must work in log space.
    */
   scale?: 'log'
+  /**
+   * A broken value axis (`yBreak`): the data span [from, to] is cut out and both sides keep the same pixels per unit,
+   * with a fixed gap between them. Pixel-to-data maps must skip the gap; the web binding refuses zoom and brush on
+   * such an axis.
+   */
+  breaks?: [number, number]
+  /** The colour of this axis's title and tick labels when it takes its one series' colour (two value axes). */
+  ink?: string
 }
 
 export interface SceneAxes {
   plot: Rect
   x: AxisInfo
   y: AxisInfo
+  /**
+   * The second value axis on the right (`yRight`), in its own units. Zoom and brush act on `x` only when it exists.
+   */
+  y2?: AxisInfo
   /** What the spec allows the viewer to do (only where the axes support it). */
   zoom?: 'x' | 'xy'
   brush?: 'x' | 'xy'

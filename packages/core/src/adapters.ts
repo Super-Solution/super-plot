@@ -29,7 +29,8 @@ export interface Adapted {
 
 /**
  * super-chat `chart` card -> plot spec. One chart type per card (the first series' type wins, mixed
- * types are noted), one value axis (series on the right axis are left out, not silently rescaled).
+ * types are noted), one value axis (series on the right axis are left out with a note, not silently rescaled: the
+ * card's long-form points would need pivoting to wide columns for `yRight`).
  */
 export function fromChatChartCard(card: ChatChartCard): Adapted {
   const notes: string[] = []
@@ -39,7 +40,7 @@ export function fromChatChartCard(card: ChatChartCard): Adapted {
   const all = card.series ?? []
   if (!all.length) return { ok: false, notes: ['The card has no series.'] }
   const series = all.filter(s => s.axis !== 'right')
-  if (series.length < all.length) notes.push(`${all.length - series.length} series on the right axis were left out: Super Plot draws one value axis. Plot them as a second chart or index both to a common base.`)
+  if (series.length < all.length) notes.push(`${all.length - series.length} series on the right axis were left out: this adapter keeps one value axis. Plot them as a second chart, index both to a common base (the "index" transform step), or, knowing the risk, add them as "yRight" columns in wide-form data.`)
   if (!series.length) return { ok: false, notes }
   const type = series[0].type ?? 'line'
   if (series.some(s => (s.type ?? 'line') !== type)) notes.push(`Mixed series types: all drawn as "${type}".`)

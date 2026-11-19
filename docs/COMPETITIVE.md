@@ -49,7 +49,7 @@ Status marks: ✅ built · 🚧 built with a stated limit · ⛔ refused on purp
 | Capability | Super Plot | How, or why not |
 |---|---|---|
 | log scale | ✅ | `xScale`/`yScale: 'log'` on scatter and line; zoom and brush work in log space; refused on bar, area and histogram (`log_scale_refused`: a length must start at zero) |
-| dual y-axis | ⛔ | Two scales on one plot invite false correlations (dataviz non-negotiable). Combine with `line` over bars on one axis, or two synced charts (`sync`) |
+| dual y-axis | ✅ | Round 6, at the owner's request: `yRight` (+ `yRightLabel`, `rightDomain`, `formatRight`) on line, unstacked area and vertical bars. Two scales can still invent a correlation, so it is safe by default: an `info` issue `dual_axis` always says so and names the alternatives (`index` step, `sync`); axis labels take their series' colour (contrast-checked); the legend and tooltips say "(right axis)"; tooltips use each axis's format; on bars both axes include zero and the zeros line up; the description names each axis's series, unit and range; y-zoom and y-brush are refused with a warning; facets share both ranges |
 | error bars / bands | ✅ | `yLower`/`yUpper` (bands on line/area, bars on scatter and grouped bars), `xLower`/`xUpper` on scatter |
 | regression / loess | ✅ | `trend: 'linear' \| 'loess'`, `trendBandwidth`; exported `loess()` |
 | point annotations / callouts | ✅ | `annotations: [{ x, y, label }]`, kept inside the plot, read out in the description |
@@ -57,14 +57,14 @@ Status marks: ✅ built · 🚧 built with a stated limit · ⛔ refused on purp
 | layered marks | ✅ | `line` over bars (round 4); one value axis |
 | missing-data gaps | ✅ | `gaps: 'break' \| 'connect' \| 'zero'` |
 | lollipop | ✅ | bar `mark: 'lollipop'` |
-| broken axis | ⛔ | Hides magnitude; use a log scale or facets |
+| broken axis | ✅ | Round 6, at the owner's request: `yBreak: [from, to]` on grouped bars (vertical and horizontal) and lines. It still hides magnitude, so: an `info` issue `axis_break` always states the hidden span; a zigzag gap crosses the axis and every bar or line; ticks on both sides with the same units per pixel; real values in tooltips, labels and the description; a break containing a bar's zero baseline is refused (`break_misleading`); values inside the cut are a `break_hides_values` warning and are drawn marked at its edge; refused on log, stacked and two-axis charts; zoom and brush on the broken axis are refused |
 | label collision avoidance | 🚧 | Tick labels never collide (round 1); end labels on bump and direct labels are spaced; no general label solver |
 
 ## C. Data
 
 | Capability | Super Plot | How, or why not |
 |---|---|---|
-| declarative transforms | ✅ | `transform`: filter, timeUnit, aggregate, sort, top, **bin, window, fold**; every step validated with codes; ports reproduce them |
+| declarative transforms | ✅ | `transform`: filter, timeUnit, aggregate, sort, top, **bin, window, fold**, and (round 6) **index** (each group rescaled to 100 at its first or a chosen point, as Datawrapper's and Flourish's "index to 100"; groups with a zero, negative or missing base are dropped with a warning that names them); every step validated with codes; ports reproduce them (the `index` cases are in `transformCases`) |
 | expression / calculate language | ⛔ | No eval in a spec (security, P-security) and no second language to port to Go and Python; the agent computes columns upstream |
 | streaming append | ✅ | `appendRows(rows, { max })` ring buffer (round 4), with throttled screen-reader announcements |
 | decimation | ✅ | Lines keep min and max per pixel column (Chart.js's default algorithm); LTTB refused because it can drop extremes |
@@ -124,4 +124,4 @@ Status marks: ✅ built · 🚧 built with a stated limit · ⛔ refused on purp
 
 ## What was not copied, in one place
 
-Candlestick, non-map 3D, pictorial bars, dual axis, broken axis, an expression language, LTTB, input widgets, editor features (undo, drawing tools, context menus), voice and tactile export. Each has its reason above. Gauge, word cloud and animated data transitions, refused until round 5, are built in round 6 at the owner's request, safe by default and with the risks stated in their rows. Network-style charts, Arrow input and drawing in a worker are open, not refused.
+Candlestick, non-map 3D, pictorial bars, an expression language, LTTB, input widgets, editor features (undo, drawing tools, context menus), voice and tactile export. Each has its reason above. Gauge, word cloud, dual axes, broken axes and animated data transitions, refused until round 5, are built in round 6 at the owner's request, each safe by default and with its risk stated in its row (and, for the axes, as an `info` issue every time it is used; see [INTEGRATION.md](INTEGRATION.md#two-value-axes-broken-axes-and-indexed-series-read-the-risks-first)). The expression language stays refused: code in a spec is an injection risk, and it would need a second and third implementation in Go and Python, so columns are computed upstream. Network-style charts, Arrow input and drawing in a worker are open, not refused.

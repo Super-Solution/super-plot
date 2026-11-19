@@ -12,6 +12,9 @@ import { inkOn } from '../util/color.js'
 import { clip } from '../util/text.js'
 import { fmtList, formatter, lead, matrix } from './shared.js'
 import { intervalCheck, intervalFields, intervalText, refuseLog, zeroBaselineScale } from './extras.js'
+import { alignZero, axisInk, breakCheck, breakField, breakNote, brokenScale, drawBreak, dualCheck, dualFields, dualNote, rightCols } from './valueaxes.js'
+import { valueFormatter } from '../util/format.js'
+import type { LinearScale } from '../scale.js'
 
 const MAX_BAR = 48
 
@@ -33,33 +36,53 @@ function model(spec: Record<string, any>): Model {
   return { cats, keys, m }
 }
 
-/** Combo chart: columns drawn as lines over vertical bars, on the same value axis (never a second one). */
+/** Combo chart: columns drawn as lines over vertical bars, on the same value axis. */
 function lineCols(spec: Record<string, any>): string[] {
   if (spec.line === undefined || spec.orientation === 'horizontal' || spec.stack === 'normalize') return []
   return Array.isArray(spec.line) ? spec.line : [spec.line]
+}
+
+/** Lines on a second value axis (`yRight`): vertical bars that are not 100% stacked only. */
+function rightLineCols(spec: Record<string, any>): string[] {
+  if (spec.orientation === 'horizontal' || spec.stack === 'normalize') return []
+  return rightCols(spec)
+}
+
+/** Per category, the sum of a column (duplicates summed, like bars). */
+function colSums(spec: Record<string, any>, col: string): Map<string, number> {
+  const mm = new Map<string, number>()
+  for (const r of spec.data as Record<string, unknown>[]) {
+    const v = toNumber(r[col])
+    if (v === null) continue
+    const cat = xKey(r[spec.x])
+    mm.set(cat, (mm.get(cat) ?? 0) + v)
+  }
+  return mm
+}
+
+/** The numbers drawn on the left value axis: bars, lines and whisker ends, as the chart sums them. */
+function axisValues(spec: Record<string, any>): number[] {
+  const { m, keys } = model(spec)
+  const out: number[] = []
+  for (const row of m.values()) for (const k of keys) { const v = row.get(k); if (v !== undefined) out.push(v) }
+  for (const k of lineCols(spec).filter(k => !keys.includes(k))) out.push(...colSums(spec, k).values())
+  if (spec.yLower && spec.yUpper && (spec.stack ?? 'none') === 'none') for (const r of spec.data as Record<string, unknown>[]) for (const col of [spec.yLower, spec.yUpper]) { const n = toNumber(r[col]); if (n !== null) out.push(n) }
+  return out
 }
 
 function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
   const s = c.spec
   const { cats, keys, m } = model(s)
   const lines = lineCols(s).filter(k => !keys.includes(k))
-  const series = c.makeSeries([...keys, ...lines])
+  const rights = rightLineCols(s).filter(k => !keys.includes(k) && !lines.includes(k))
+  const series = c.makeSeries([...keys, ...lines, ...rights], Object.fromEntries(rights.map(k => [k, c.t('rightAxis', { label: clip(k, 44) })])))
   const visible = keys.filter(k => !c.hidden.has(k))
   const stack = (s.stack ?? 'none') as 'none' | 'stack' | 'normalize'
   const horizontal = s.orientation === 'horizontal'
   if (horizontal) c.axisFields = { x: typeof s.y === 'string' ? s.y : undefined, y: s.x }
   // Line values per category (duplicates summed, like bars).
   const lineVal = new Map<string, Map<string, number>>()
-  for (const k of lines) {
-    const mm = new Map<string, number>()
-    for (const r of s.data as Record<string, unknown>[]) {
-      const v = toNumber(r[k])
-      if (v === null) continue
-      const cat = xKey(r[s.x])
-      mm.set(cat, (mm.get(cat) ?? 0) + v)
-    }
-    lineVal.set(k, mm)
-  }
+  for (const k of [...lines, ...rights]) lineVal.set(k, colSums(s, k))
   const fmt = c.format
   const labelOf: Record<string, string> = Object.fromEntries(cats.map(k => [k, clip(k, 60)]))
   // Whiskers: grouped bars only (validation warns on stacks). Intervals per category and series, summed like values.
@@ -122,9 +145,39 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
     }
   }
   const override = s.yDomain as [number | null, number | null] | undefined
-  const valueScale = override && (override[0] !== null || override[1] !== null)
+  let valueScale: LinearScale & { breaks?: [number, number] } = override && (override[0] !== null || override[1] !== null)
     ? linearScale([override[0] ?? lo, override[1] ?? hi])
     : niceLinear(lo, hi, { zero: true })
+  // The right axis (lines): always includes zero, and its zero is lined up with the bars' zero.
+  let rScale: LinearScale | undefined
+  if (rights.length) {
+    const from = rights.some(k => !c.hidden.has(k)) ? rights.filter(k => !c.hidden.has(k)) : rights
+    let rlo = 0
+    let rhi = 0
+    for (const k of from) for (const v of lineVal.get(k)!.values()) {
+      rlo = Math.min(rlo, v)
+      rhi = Math.max(rhi, v)
+    }
+    const ro = s.rightDomain as [number | null, number | null] | undefined
+    rScale = ro && (ro[0] !== null || ro[1] !== null) ? linearScale([ro[0] ?? rlo, ro[1] ?? rhi]) : niceLinear(rlo, rhi, { zero: true })
+    const [a, b] = alignZero(valueScale.domain, rScale.domain)
+    valueScale = linearScale(a)
+    rScale = linearScale(b)
+  }
+  // A broken value axis (`yBreak`): grouped bars only; drawn when a value lies beyond it and it is inside the range.
+  const brk = stack === 'none' && !rights.length && Array.isArray(s.yBreak) ? (s.yBreak as [number, number]) : undefined
+  let broken = false
+  if (brk) {
+    const [d0, d1] = valueScale.domain
+    if (brk[0] > d0 && brk[1] < d1) {
+      valueScale = brokenScale([d0, d1], brk, horizontal ? 56 : c.size + 6)
+      broken = true
+    } else if (!c.hidden.size) c.warn('break_outside', 'yBreak', `yBreak [${brk[0]}, ${brk[1]}] is not inside the value axis range [${d0}, ${d1}]; it is not drawn.`, 'Widen yDomain, or move the break inside it.')
+  }
+  const inBreak = (v: number): boolean => broken && v > brk![0] && v < brk![1]
+  // The edge of the cut nearest zero, where a value inside it is drawn.
+  const breakEdge = (): number => valueScale.at(brk![0] > 0 ? brk![0] : brk![1])
+  const farEdge = (): number => valueScale.at(brk![0] > 0 ? brk![1] : brk![0])
   const vfmt = stack === 'normalize' ? 'percent' : s.format
   const catScale = bandScale(cats, 0.3)
 
@@ -133,7 +186,16 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
   const catTitle = horizontal ? s.yLabel : s.xLabel
   const va = valueAxis(c, valueScale, { title: valueTitle, vertical: !horizontal, format: vfmt })
   const ca = bandAxis(catScale, labelOf, catTitle, c.locale)
-  const plot = horizontal ? layoutCartesian(c, area, va, ca) : layoutCartesian(c, area, ca, va)
+  let extras = {}
+  if (rScale) {
+    c.axisFields = { ...(c.axisFields ?? {}), y2: rights.length === 1 ? rights[0] : undefined }
+    const ri = keys.length + lines.length
+    extras = {
+      right: valueAxis(c, rScale, { title: s.yRightLabel, vertical: true, format: s.formatRight ?? s.format, grid: false }),
+      ink: { ...(keys.length === 1 && !lines.length ? { left: axisInk(c, keys[0], 0, series[0].color) } : {}), ...(rights.length === 1 ? { right: axisInk(c, rights[0], ri, series[ri].color) } : {}) }
+    }
+  }
+  const plot = horizontal ? layoutCartesian(c, area, va, ca) : layoutCartesian(c, area, ca, va, extras)
   drawAnnotations(c, plot, horizontal ? va : ca, horizontal ? ca : va)
 
   const base = valueScale.at(Math.max(valueScale.domain[0], Math.min(0, valueScale.domain[1])))
@@ -153,6 +215,8 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
   const bars: Mark[] = []
   const whiskers: Mark[] = []
   const labels: Mark[] = []
+  // Drawn over the cut of a broken axis: what lies inside it.
+  const cut: Mark[] = []
   for (const cat of cats) {
     const row = m.get(cat)
     const start = catScale.start(cat) + (bw - groupW) / 2
@@ -181,6 +245,9 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
       }
       let p0 = valueScale.at(a)
       let p1 = valueScale.at(b)
+      const hidden = stack === 'none' && inBreak(v)
+      const pv = p1
+      if (hidden && !lollipop) p1 = breakEdge()
       if (stack !== 'none' && !first) p0 += (p1 > p0 ? 1 : -1) * gap
       const lenPx = Math.abs(p1 - p0)
       if (lenPx < 0.5 && v === 0) return
@@ -206,8 +273,8 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
         series: k,
         fill: color,
         anim: (v < 0 ? 'fade' : horizontal ? 'x' : 'y') as 'x' | 'y' | 'fade',
-        tip: { title: clip(cat, 60), rows: tipRows },
-        aria: `${cat}, ${series[si].label}: ${fmt(raw)}${iv ? ` (${intervalText(fmt, iv[0], iv[1])})` : ''}`,
+        tip: { title: clip(cat, 60), rows: hidden ? tipRows.map(t => ({ ...t, value: c.t('inBreak', { value: t.value }) })) : tipRows },
+        aria: `${cat}, ${series[si].label}: ${hidden ? c.t('inBreak', { value: fmt(raw) }) : fmt(raw)}${iv ? ` (${intervalText(fmt, iv[0], iv[1])})` : ''}`,
         datum: { x: cat, series: k, value: raw, ...(iv ? { lower: iv[0], upper: iv[1] } : {}) }
       }
       const mid = start + off + barW / 2
@@ -225,15 +292,25 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
         bars.push(horizontal
           ? { type: 'line', role: 'data', series: k, x1: p0, x2: p1, y1: mid, y2: mid, stroke: color, strokeWidth: 2, anim: 'x' }
           : { type: 'line', role: 'data', series: k, x1: mid, x2: mid, y1: p0, y2: p1, stroke: color, strokeWidth: 2, anim: 'y' })
-        bars.push({ type: 'circle', cx: horizontal ? p1 : mid, cy: horizontal ? mid : p1, r: dotR, stroke: c.c('background'), strokeWidth: 1.5, ...common, anim: 'fade' })
+        // A dot inside the cut is drawn hollow over it, so it is not hidden by the gap.
+        if (hidden) cut.push({ type: 'circle', cx: horizontal ? p1 : mid, cy: horizontal ? mid : p1, r: dotR, ...common, fill: c.c('background'), stroke: color, strokeWidth: 2, anim: 'fade' })
+        else bars.push({ type: 'circle', cx: horizontal ? p1 : mid, cy: horizontal ? mid : p1, r: dotR, stroke: c.c('background'), strokeWidth: 1.5, ...common, anim: 'fade' })
       } else if (horizontal) {
         const x = Math.min(p0, p1)
         const rr: [number, number, number, number] = outer ? (pos ? [0, r, r, 0] : [r, 0, 0, r]) : [0, 0, 0, 0]
-        bars.push({ type: 'rect', x, y: start + off, w: Math.max(1, lenPx), h: barW, r: rr, ...common })
+        bars.push({ type: 'rect', x, y: start + off, w: Math.max(1, Math.abs(p1 - p0)), h: barW, r: hidden ? [0, 0, 0, 0] : rr, ...common })
       } else {
         const y = Math.min(p0, p1)
         const rr: [number, number, number, number] = outer ? (pos ? [r, r, 0, 0] : [0, 0, r, r]) : [0, 0, 0, 0]
-        bars.push({ type: 'rect', x: start + off, y, w: barW, h: Math.max(1, lenPx), r: rr, ...common })
+        bars.push({ type: 'rect', x: start + off, y, w: barW, h: Math.max(1, Math.abs(p1 - p0)), r: hidden ? [0, 0, 0, 0] : rr, ...common })
+      }
+      // The part of a bar inside the cut: a dashed outline over the gap, from its edge to where the value falls.
+      if (hidden && !lollipop) {
+        const lo = Math.min(p1, pv)
+        const len = Math.max(1, Math.abs(pv - p1))
+        cut.push(horizontal
+          ? { type: 'rect', role: 'annotation', series: k, x: lo, y: start + off, w: len, h: barW, fill: 'none', stroke: color, strokeWidth: 1.25, anim: 'fade' }
+          : { type: 'rect', role: 'annotation', series: k, x: start + off, y: lo, w: barW, h: len, fill: 'none', stroke: color, strokeWidth: 1.25, anim: 'fade' })
       }
       if (s.labels) {
         const text = stack === 'normalize' ? formatPercent(catTotal ? Math.abs(raw) / catTotal : 0, c.locale, 0) : fmt(raw)
@@ -252,9 +329,10 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
               : c.text(mid, outer + (pos ? -5 : 13), text, { role: 'label', anchor: 'middle', size: c.size - 1, fill: c.c('text') }))
           } else if (horizontal) {
             const inside = !iv && lenPx > tw + 12
-            labels.push(c.text(inside ? end - (pos ? 6 : -6) : end + (pos ? 6 : -6), start + off + barW / 2, text, { role: 'label', baseline: 'middle', anchor: (pos === inside) ? 'end' : 'start', size: c.size - 1, fill: inside ? inkOn(hex) : c.c('text') }))
+            labels.push(c.text(inside ? end - (pos ? 6 : -6) : (hidden ? farEdge() : end) + (pos ? 6 : -6), start + off + barW / 2, text, { role: 'label', baseline: 'middle', anchor: (pos === inside) ? 'end' : 'start', size: c.size - 1, fill: inside ? inkOn(hex) : c.c('text') }))
           } else if (barW >= tw * 0.9 || visible.length === 1) {
-            labels.push(c.text(start + off + barW / 2, end + (pos ? -5 : 13), text, { role: 'label', anchor: 'middle', size: c.size - 1, fill: c.c('text') }))
+            // A bar that ends inside the cut gets its label past the far side of the gap, clear of the zigzags.
+            labels.push(c.text(start + off + barW / 2, (hidden ? farEdge() : end) + (pos ? -5 : 13), text, { role: 'label', anchor: 'middle', size: c.size - 1, fill: c.c('text') }))
           }
         } else if (lenPx >= (horizontal ? tw + 8 : c.size + 4) && barW >= (horizontal ? c.size : tw + 6)) {
           const mid = (p0 + p1) / 2
@@ -266,20 +344,27 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
     })
   }
   const overlay: Mark[] = []
-  lines.forEach((k, li) => {
+  const fmtR = valueFormatter(s.formatRight ?? s.format, c.locale)
+  ;[...lines, ...rights].forEach((k, li) => {
     if (c.hidden.has(k)) return
     const si = keys.length + li
     const color = series[si].color
+    const right = li >= lines.length
+    const sc = right ? rScale! : valueScale
+    const f = right ? fmtR : fmt
     const pts = cats.flatMap(cat => {
       const v = lineVal.get(k)!.get(cat)
-      return v === undefined ? [] : [{ cat, v, x: catScale.at(cat), y: valueScale.at(v) }]
+      return v === undefined ? [] : [{ cat, v, x: catScale.at(cat), y: sc.at(v) }]
     })
     if (pts.length > 1) overlay.push({ type: 'path', role: 'data', series: k, d: pts.map((p, i) => `${i ? 'L' : 'M'}${Math.round(p.x * 100) / 100} ${Math.round(p.y * 100) / 100}`).join(''), stroke: color, strokeWidth: c.theme.lineWidth, anim: 'draw' })
     for (const p of pts) {
-      overlay.push({ type: 'circle', role: 'data', series: k, cx: p.x, cy: p.y, r: 4, fill: color, stroke: c.c('background'), strokeWidth: 2, anim: 'fade', tip: { title: clip(p.cat, 60), rows: [{ label: series[si].label, value: fmt(p.v), color }] }, aria: `${p.cat}, ${series[si].label}: ${fmt(p.v)}`, datum: { x: p.cat, series: k, value: p.v } })
+      const hid = !right && inBreak(p.v)
+      const value = hid ? c.t('inBreak', { value: f(p.v) }) : f(p.v)
+      ;(hid ? cut : overlay).push({ type: 'circle', role: 'data', series: k, cx: p.x, cy: p.y, r: 4, fill: hid ? c.c('background') : color, stroke: hid ? color : c.c('background'), strokeWidth: 2, anim: 'fade', tip: { title: clip(p.cat, 60), rows: [{ label: series[si].label, value, color }] }, aria: `${p.cat}, ${series[si].label}: ${value}`, datum: { x: p.cat, series: k, value: p.v } })
     }
   })
-  c.marks.push(...bars, ...whiskers, ...labels, ...overlay)
+  if (broken) c.marks.push(...bars, ...whiskers, ...overlay, ...drawBreak(c, plot, valueScale, !horizontal), ...cut, ...labels)
+  else c.marks.push(...bars, ...whiskers, ...labels, ...overlay)
   void (plot satisfies Rect)
   return { series }
 }
@@ -305,7 +390,9 @@ export const bar: ChartDef = {
     orientation: { kind: 'enum', values: ['vertical', 'horizontal'], default: 'vertical', desc: 'Use `horizontal` for long category names or many categories.' },
     sort: { kind: 'enum', values: ['none', 'asc', 'desc'], default: 'none', desc: 'Order categories by their total. `none` keeps the data order (use it for ordered categories such as months).' },
     labels: { kind: 'boolean', default: false, desc: 'Print values on the bars. Keep off for dense charts; the tooltip carries the numbers.' },
-    line: { kind: 'columns', role: 'number', desc: 'Combo chart: numeric column(s) drawn as lines with points over vertical bars, on the same value axis (a target, an average). Ignored for horizontal and 100% stacked bars.' },
+    line: { kind: 'columns', role: 'number', desc: 'Combo chart: numeric column(s) drawn as lines with points over vertical bars, on the same value axis (a target, an average). Ignored for horizontal and 100% stacked bars. For a measure in other units, see `yRight`.' },
+    ...dualFields('as lines with points over vertical bars (not horizontal or 100% stacked bars)'),
+    yBreak: breakField('one very large bar does not flatten the rest; bars that cross the cut are drawn shorter than their value. Grouped bars only (vertical or horizontal); the cut may not contain zero, where bars start (`break_misleading`).'),
     yDomain: { kind: 'domain', desc: 'Fix the value axis range, e.g. [0, 100]. Bars should start at 0; only change it knowingly.' },
     mark: { kind: 'enum', values: ['bar', 'lollipop'], desc: 'Default bar. `lollipop` draws a thin stem from zero and a dot at the value instead of a filled bar: the same chart (sort, orientation, labels, grouped series side by side) with less ink, good for many categories. Not for stacks: falls back to bars with a warning.' },
     ...intervalFields('y', 'a whisker with caps across each bar (grouped bars only; stacked bars ignore it with a warning)'),
@@ -338,6 +425,10 @@ export const bar: ChartDef = {
     if (spec.line !== undefined && (spec.orientation === 'horizontal' || spec.stack === 'normalize')) {
       ctx.issues.push({ severity: 'warning', code: 'line_ignored', path: 'line', message: `\`line\` is ignored on ${spec.orientation === 'horizontal' ? 'horizontal' : '100% stacked'} bars.` })
     }
+    const ys = (Array.isArray(spec.y) ? spec.y : [spec.y]) as string[]
+    const lineList = spec.line === undefined ? [] : (Array.isArray(spec.line) ? spec.line : [spec.line]) as string[]
+    dualCheck(spec, ctx, { left: [...ys, ...lineList], ignored: spec.orientation === 'horizontal' ? 'on horizontal bars: their value axis runs along x.' : spec.stack === 'normalize' ? 'on 100% stacked bars: their axis is a share, not a quantity.' : undefined })
+    breakCheck(spec, ctx, { values: axisValues(spec), bars: true, refused: spec.stack === 'stack' || spec.stack === 'normalize' ? 'a stack adds its segments end to end, so a cut would fall inside segments and hide which ones.' : spec.yScale === 'log' ? 'bars refuse a log axis.' : rightLineCols(spec).length ? 'with a right axis, a break on the left one would make the two scales even harder to compare.' : undefined })
     refuseLog(spec, ctx, 'yScale', 'a bar\'s length must start at zero (the honest baseline), and a log axis has no zero.', 'Use a line or a scatter with yScale "log" for values spanning orders of magnitude, or keep bars and set format "compact".')
     const stacked = spec.stack === 'stack' || spec.stack === 'normalize'
     if (spec.mark === 'lollipop' && stacked) ctx.issues.push({ severity: 'warning', code: 'lollipop_stacked', path: 'mark', message: 'Lollipops cannot stack (the dots would hide each other); stacked bars are drawn instead.', hint: 'Set stack to "none" for side-by-side lollipops.' })
@@ -361,6 +452,22 @@ export const bar: ChartDef = {
     }
     const ls = lineCols(spec).filter(k => !keys.includes(k))
     if (ls.length) t += ` With ${ls.length === 1 ? 'a line' : 'lines'} for ${fmtList(ls)} on the same axis.`
+    const rs = rightLineCols(spec).filter(k => !keys.includes(k) && !ls.includes(k))
+    if (rs.length) {
+      const fR = valueFormatter(spec.formatRight ?? spec.format, env.locale)
+      for (const k of rs.slice(0, 2)) {
+        const vals = [...colSums(spec, k).entries()]
+        if (!vals.length) continue
+        const max = vals.reduce((a, b) => (b[1] > a[1] ? b : a))
+        const min = vals.reduce((a, b) => (b[1] < a[1] ? b : a))
+        t += ` ${clip(k, 40)} (right axis, a line): from ${fR(vals[0][1])} at ${clip(vals[0][0], 40)} to ${fR(vals[vals.length - 1][1])} at ${clip(vals[vals.length - 1][0], 40)}; peak ${fR(max[1])} at ${clip(max[0], 40)}, low ${fR(min[1])} at ${clip(min[0], 40)}.`
+      }
+      const leftVals: number[] = []
+      for (const row of m.values()) for (const v of row.values()) leftVals.push(v)
+      for (const k of ls) leftVals.push(...colSums(spec, k).values())
+      t += dualNote(spec, { keys: [...keys, ...ls], values: leftVals }, { keys: rs, values: rs.flatMap(k => [...colSums(spec, k).values()]) }, env.locale).replace('Where the lines meet', 'Where a line meets the bars')
+    }
+    if (spec.yBreak && (spec.stack ?? 'none') === 'none' && !rs.length) t += breakNote(spec, axisValues(spec), true, env.locale)
     if (spec.yLower && spec.yUpper && (spec.stack ?? 'none') === 'none') t += ` Whiskers show ${clip(String(spec.yLower), 40)} to ${clip(String(spec.yUpper), 40)}.`
     return t
   }

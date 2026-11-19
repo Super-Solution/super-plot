@@ -13,6 +13,8 @@ import { formatPercent } from '../util/format.js'
 import { areaPath, curvePath, decimate, runs, type Curve, type Pt } from './curve.js'
 import { fmtList, formatter, lead } from './shared.js'
 import { intervalCheck, intervalFields, intervalText, logDomain, logNonPositive, refuseLog, scaleField, zeroBaselineScale } from './extras.js'
+import { axisInk, breakCheck, breakField, breakNote, brokenScale, drawBreak, dualCheck, dualFields, dualNote, rightCols } from './valueaxes.js'
+import { valueFormatter } from '../util/format.js'
 
 interface Pnt { xv: number | string; px: number; y: number | null; y0?: number; y1?: number }
 
@@ -29,9 +31,16 @@ function compileSeries(c: ChartCtx, area: boolean): { series: ReturnType<ChartCt
   const s = c.spec
   const obs = observations(s.data, s.x, s.y, s.series)
   const kind = detectXKind(s.xType, obs.map(o => o.x))
-  const keys = distinct(obs.map(o => o.s))
-  const series = c.makeSeries(keys)
+  const keysL = distinct(obs.map(o => o.s))
+  // A second value axis (`yRight`, unstacked only; validation refuses the rest): one series per column.
+  const rights = (s.stack ?? 'none') === 'none' && s.yScale !== 'log' ? rightCols(s) : []
+  const obsR = rights.length ? observations(s.data, s.x, rights) : []
+  const keysR = distinct(obsR.map(o => o.s)).filter(k => !keysL.includes(k))
+  const rightSet = new Set(keysR)
+  const keys = [...keysL, ...keysR]
+  const series = c.makeSeries(keys, Object.fromEntries(keysR.map(k => [k, c.t('rightAxis', { label: clip(k, 44) })])))
   const visible = keys.filter(k => !c.hidden.has(k))
+  const visibleL = visible.filter(k => !rightSet.has(k))
   const logY = !area && s.yScale === 'log'
   const logX = !area && s.xScale === 'log' && kind === 'linear'
   const band = hasBand(s)
@@ -80,6 +89,11 @@ function compileSeries(c: ChartCtx, area: boolean): { series: ReturnType<ChartCt
       }
     }
   }
+  for (const o of obsR) {
+    const k = xKeyOf(o.x)
+    if (k === null || o.y === null || !rightSet.has(o.s)) continue
+    addTo(val, o.s, k, o.y)
+  }
   // `gaps: "zero"` draws a missing value as 0 (stacked areas always do).
   const valueAt = (k: string, x: number | string): number | undefined => val.get(k)?.get(x) ?? (gaps === 'zero' && !logY ? 0 : undefined)
 
@@ -112,12 +126,12 @@ function compileSeries(c: ChartCtx, area: boolean): { series: ReturnType<ChartCt
   let hi = -Infinity
   const inX = (x: number | string): boolean => !xFixed || ((xd![0] === null || (x as number) >= xd![0]) && (xd![1] === null || (x as number) <= xd![1]))
   if (stack === 'none') {
-    for (const k of visible) for (const m of [val, ...(band ? [lowV, highV] : [])]) for (const [x, v] of m.get(k) ?? []) {
+    for (const k of visibleL) for (const m of [val, ...(band ? [lowV, highV] : [])]) for (const [x, v] of m.get(k) ?? []) {
       if (!inX(x) || (logY && !(v > 0))) continue
       if (v < lo) lo = v
       if (v > hi) hi = v
     }
-    if (gaps === 'zero' && !logY && visible.some(k => xs.some(x => inX(x) && val.get(k)?.get(x) === undefined))) {
+    if (gaps === 'zero' && !logY && visibleL.some(k => xs.some(x => inX(x) && val.get(k)?.get(x) === undefined))) {
       lo = Math.min(lo, 0)
       hi = Math.max(hi, 0)
     }
@@ -138,7 +152,7 @@ function compileSeries(c: ChartCtx, area: boolean): { series: ReturnType<ChartCt
   }
   const override = s.yDomain as [number | null, number | null] | undefined
   const fixedY = !!override && (override[0] !== null || override[1] !== null)
-  const yScale = logY
+  let yScale: LinearScale & { breaks?: [number, number] } = logY
     ? (fixedY ? logScale([override![0] ?? (lo > 0 ? lo : 1), override![1] ?? (hi > 0 ? hi : 10)]) : niceLog(lo > 0 ? lo : 1, hi > 0 ? hi : 10))
     : fixedY
       ? linearScale([override![0] ?? lo, override![1] ?? hi])
@@ -146,6 +160,40 @@ function compileSeries(c: ChartCtx, area: boolean): { series: ReturnType<ChartCt
         ? linearScale([lo, hi])
         : niceLinear(lo, hi, { zero: area || (lo >= 0 && lo < hi * 0.5) })
   const yfmt = stack === 'normalize' ? 'percent' : s.format
+  // The right axis: fitted to its series like the left one (all of them when every one is hidden, so it stays put).
+  let rScale: LinearScale | undefined
+  if (keysR.length) {
+    const from = visible.some(k => rightSet.has(k)) ? keysR.filter(k => visible.includes(k)) : keysR
+    let rlo = Infinity
+    let rhi = -Infinity
+    for (const k of from) for (const [x, v] of val.get(k) ?? []) {
+      if (!inX(x)) continue
+      if (v < rlo) rlo = v
+      if (v > rhi) rhi = v
+    }
+    if (gaps === 'zero' && from.some(k => xs.some(x => inX(x) && val.get(k)?.get(x) === undefined))) {
+      rlo = Math.min(rlo, 0)
+      rhi = Math.max(rhi, 0)
+    }
+    if (!Number.isFinite(rlo)) {
+      rlo = 0
+      rhi = 1
+    }
+    const ro = s.rightDomain as [number | null, number | null] | undefined
+    rScale = ro && (ro[0] !== null || ro[1] !== null) ? linearScale([ro[0] ?? rlo, ro[1] ?? rhi]) : niceLinear(rlo, rhi, { zero: area || (rlo >= 0 && rlo < rhi * 0.5) })
+  }
+  // A broken axis (`yBreak`, lines only; validation removed it when no value lies beyond it): drawn when it sits
+  // inside the value range. A legend toggle or a zoomed x range can move the range off it: then it is simply not drawn.
+  const brk = !area && !logY && !keysR.length && Array.isArray(s.yBreak) ? (s.yBreak as [number, number]) : undefined
+  let broken = false
+  if (brk) {
+    const [d0, d1] = yScale.domain
+    if (brk[0] > d0 && brk[1] < d1) {
+      yScale = brokenScale([d0, d1], brk, c.size + 6)
+      broken = true
+    } else if (!c.hidden.size && !xFixed) c.warn('break_outside', 'yBreak', `yBreak [${brk[0]}, ${brk[1]}] is not inside the value axis range [${d0}, ${d1}]; it is not drawn.`, 'Widen yDomain, or move the break inside it.')
+  }
+  const inBreak = (v: number): boolean => broken && v > brk![0] && v < brk![1]
 
   // x scale.
   let xScale: LinearScale | ReturnType<typeof bandScale>
@@ -171,13 +219,26 @@ function compileSeries(c: ChartCtx, area: boolean): { series: ReturnType<ChartCt
   const yAxis: Axis = stack === 'center' ? { scale: yScale, title: s.yLabel, grid: false, ticks: () => [] } : valueAxis(c, yScale, { title: s.yLabel, vertical: true, format: yfmt })
 
   const frame = c.frame({ series, autoSide: 'top' })
-  const plot = layoutCartesian(c, frame, xAxis, yAxis)
+  let extras = {}
+  if (rScale) {
+    c.axisFields = { ...(c.axisFields ?? {}), y2: keysR.length === 1 ? keysR[0] : undefined }
+    const rightAxis = valueAxis(c, rScale, { title: s.yRightLabel, vertical: true, format: s.formatRight ?? s.format, grid: false })
+    const ink = {
+      ...(keysL.length === 1 ? { left: axisInk(c, keysL[0], 0, series[0].color) } : {}),
+      ...(keysR.length === 1 ? { right: axisInk(c, keysR[0], keysL.length, series[keysL.length].color) } : {})
+    }
+    extras = { right: rightAxis, ink }
+  }
+  const plot = layoutCartesian(c, frame, xAxis, yAxis, extras)
   drawAnnotations(c, plot, xAxis, yAxis)
   // Lines that run past a fixed range are cut at the plot's edge.
   const clipTo = xFixed || (override && (override[0] !== null || override[1] !== null)) ? 'plot' : undefined
   if (clipTo) c.clips.plot = `M${plot.x} ${plot.y}h${plot.w}v${plot.h}h${-plot.w}Z`
 
   const fmt = c.format
+  const fmtR = valueFormatter(s.formatRight ?? s.format, c.locale)
+  const fmtOf = (k: string): ((v: number) => string) => (rightSet.has(k) ? fmtR : fmt)
+  const scaleOf = (k: string): LinearScale => (rightSet.has(k) ? rScale! : yScale)
   if (kind === 'time') warnZoneDates(c, xs as number[], 'x')
   const intraday = kind === 'time' && hasTimeOfDay(xs as number[], c.timeZone)
   const xTitle = (x: number | string): string => (kind === 'time' ? formatTime(x as number, intraday ? 'datetime' : 'full', c.locale, c.timeZone) : kind === 'linear' ? new Intl.NumberFormat(c.locale, { maximumFractionDigits: 4 }).format(x as number) : clip(String(x), 60))
@@ -186,6 +247,7 @@ function compileSeries(c: ChartCtx, area: boolean): { series: ReturnType<ChartCt
   const marks: Mark[] = []
   const bands: Mark[] = []
   const hits: Mark[] = []
+  const cut: Mark[] = []
   const draw = [...visible]
   const yMin = yScale.domain[0]
   // Lines break at a missing value, unless `gaps: "connect"` joins over it.
@@ -206,16 +268,17 @@ function compileSeries(c: ChartCtx, area: boolean): { series: ReturnType<ChartCt
         bands.push({ type: 'path', role: 'data', series: k, d: run.length > 1 ? areaPath(top, bottom, curve) : `M${Math.round(run[0].px * 100) / 100} ${Math.round(run[0].y1 * 100) / 100}V${Math.round((run[0].y as number) * 100) / 100}`, fill: color, stroke: run.length > 1 ? undefined : color, strokeWidth: run.length > 1 ? undefined : 2, opacity: 0.14, anim: 'fade', ...(clipTo ? { clip: clipTo } : {}) })
       }
     }
+    const ks = scaleOf(k)
     const pts: Pnt[] = xs.map(x => {
       const v = valueAt(k, x)
       if (stack !== 'none') return { xv: x, px: px(x), y: yScale.at(upper.get(k)!.get(x) ?? 0), y0: yScale.at(lower.get(k)!.get(x) ?? 0), y1: yScale.at(upper.get(k)!.get(x) ?? 0) }
-      return { xv: x, px: px(x), y: v === undefined ? null : yScale.at(v) }
+      return { xv: x, px: px(x), y: v === undefined ? null : ks.at(v) }
     })
     const pr = stack !== 'none' ? runs(pts) : split(pts)
     for (const run of pr) {
       const top: Pt[] = decimate(run.map(p => [p.px, p.y as number] as Pt), plot.w)
       if (area) {
-        const bottom: Pt[] = decimate(run.map(p => [p.px, stack !== 'none' ? p.y0! : yScale.at(Math.max(yScale.domain[0], Math.min(0, yScale.domain[1])))] as Pt), plot.w)
+        const bottom: Pt[] = decimate(run.map(p => [p.px, stack !== 'none' ? p.y0! : ks.at(Math.max(ks.domain[0], Math.min(0, ks.domain[1])))] as Pt), plot.w)
         marks.push({ type: 'path', role: 'data', series: k, d: areaPath(top, bottom, curve), fill: color, opacity: 0.16, anim: 'fade', ...(clipTo ? { clip: clipTo } : {}) })
         // A stream graph's lowest layer floats too: outline its lower edge as well, or the shape reads lopsided.
         if (stack === 'center' && k === draw[0]) marks.push({ type: 'path', role: 'data', series: k, d: curvePath(bottom, curve), stroke: color, strokeWidth: c.theme.lineWidth, anim: 'draw', ...(clipTo ? { clip: clipTo } : {}) })
@@ -229,6 +292,12 @@ function compileSeries(c: ChartCtx, area: boolean): { series: ReturnType<ChartCt
     for (const p of show) {
       if (p.px < plot.x - 0.5 || p.px > plot.x + plot.w + 0.5 || p.y < plot.y - 0.5 || p.y > plot.y + plot.h + 0.5) continue
       marks.push({ type: 'circle', role: 'data', series: k, cx: p.px, cy: p.y, r: 4, fill: color, stroke: c.c('background'), strokeWidth: 2, anim: 'fade' })
+    }
+    // A value inside the cut of a broken axis sits in the gap: a dashed ring on top of the gap marks it.
+    if (broken) for (const x of xs) {
+      const v = val.get(k)?.get(x)
+      if (v === undefined || !inBreak(v)) continue
+      cut.push({ type: 'circle', role: 'annotation', series: k, cx: px(x), cy: yScale.at(v), r: 4, fill: c.c('background'), stroke: color, strokeWidth: 1.5, anim: 'fade' })
     }
   }
 
@@ -249,20 +318,21 @@ function compileSeries(c: ChartCtx, area: boolean): { series: ReturnType<ChartCt
       if (v === undefined) return stack === 'none' && gaps === 'zero' && !logY && val.has(k) ? [{ label: sv.label, value: c.t('missing', { value: fmt(0) }), color: sv.color }] : []
       const a = lowV.get(k)?.get(x)
       const b = highV.get(k)?.get(x)
-      const shown = stack === 'normalize' ? `${fmt(v)} (${formatPercent(totalAt.get(x) ? Math.max(0, v) / totalAt.get(x)! : 0, c.locale)})` : a !== undefined && b !== undefined ? `${fmt(v)} (${intervalText(fmt, a, b)})` : fmt(v)
-      return [{ label: sv.label, value: shown, color: sv.color }]
+      const f = fmtOf(k)
+      const shown = stack === 'normalize' ? `${f(v)} (${formatPercent(totalAt.get(x) ? Math.max(0, v) / totalAt.get(x)! : 0, c.locale)})` : a !== undefined && b !== undefined ? `${f(v)} (${intervalText(f, a, b)})` : f(v)
+      return [{ label: sv.label, value: inBreak(v) ? c.t('inBreak', { value: shown }) : shown, color: sv.color }]
     })
     if (!rows.length) return
     if (stack === 'center' && rows.length > 1) rows.push({ label: c.t('total'), value: fmt(totalAt.get(x) ?? 0) })
     const focus = visible.flatMap(k => {
       const v = stack === 'none' ? valueAt(k, x) : val.get(k)?.get(x)
       if (v === undefined) return []
-      const y = stack !== 'none' ? yScale.at(upper.get(k)!.get(x) ?? 0) : yScale.at(v)
+      const y = stack !== 'none' ? yScale.at(upper.get(k)!.get(x) ?? 0) : scaleOf(k).at(v)
       return [{ x: cx[i], y, color: series[keys.indexOf(k)].color }]
     })
     hits.push({ type: 'rect', role: 'hit', x: left, y: plot.y, w: Math.max(1, right - left), h: plot.h, fill: 'transparent', tip: { title: xTitle(x), rows }, guide: { x1: cx[i], y1: plot.y, x2: cx[i], y2: plot.y + plot.h }, focus, aria: `${xTitle(x)}: ${rows.map(r => `${r.label} ${r.value}`).join(', ')}`, datum: { x } })
   })
-  c.marks.push(...bands, ...marks, ...hits)
+  c.marks.push(...bands, ...marks, ...(broken ? drawBreak(c, plot, yScale, true) : []), ...cut, ...hits)
   return { series }
 }
 
@@ -270,12 +340,19 @@ function describeSeries(spec: Record<string, any>, env: { locale: string; timeZo
   const obs = observations(spec.data, spec.x, spec.y, spec.series)
   const kind = detectXKind(spec.xType, obs.map(o => o.x))
   const keys = distinct(obs.map(o => o.s))
-  const f = formatter(spec, env.locale)
+  const fL = formatter(spec, env.locale)
   const xk = (r: unknown): number | string | null => (kind === 'category' ? xKey(r) : kind === 'time' ? toTime(r) : toNumber(r))
   const label = (x: number | string): string => (kind === 'time' ? formatTime(x as number, 'full', env.locale, env.timeZone) : String(x))
-  let t = `${lead(spec, name)} ${keys.length} ${keys.length === 1 ? 'series' : 'series'}${keys.length > 1 ? ` (${fmtList(keys)})` : ''} over ${kind === 'category' ? 'categories' : kind === 'time' ? 'time' : 'a numeric x axis'}.`
-  for (const k of keys.slice(0, 4)) {
-    const pts = obs.filter(o => o.s === k && o.y !== null && xk(o.x) !== null && (spec.yScale !== 'log' || o.y > 0) && (spec.xScale !== 'log' || kind !== 'linear' || (xk(o.x) as number) > 0)).map(o => ({ x: xk(o.x)!, y: o.y! }))
+  const rights = (spec.stack ?? 'none') === 'none' && spec.yScale !== 'log' ? rightCols(spec) : []
+  const obsR = rights.length ? observations(spec.data, spec.x, rights) : []
+  const keysR = distinct(obsR.map(o => o.s)).filter(k => !keys.includes(k))
+  const all = [...keys, ...keysR]
+  let t = `${lead(spec, name)} ${all.length} ${all.length === 1 ? 'series' : 'series'}${all.length > 1 ? ` (${fmtList(all)})` : ''} over ${kind === 'category' ? 'categories' : kind === 'time' ? 'time' : 'a numeric x axis'}.`
+  const fR = valueFormatter(spec.formatRight ?? spec.format, env.locale)
+  const pick = (k: string, right: boolean): { x: number | string; y: number }[] => (right ? obsR : obs).filter(o => o.s === k && o.y !== null && xk(o.x) !== null && (spec.yScale !== 'log' || o.y > 0) && (spec.xScale !== 'log' || kind !== 'linear' || (xk(o.x) as number) > 0)).map(o => ({ x: xk(o.x)!, y: o.y! }))
+  for (const [k, right] of [...keys.slice(0, 4).map(k => [k, false] as const), ...keysR.slice(0, 2).map(k => [k, true] as const)]) {
+    const f = right ? fR : fL
+    const pts = pick(k, right)
     if (kind !== 'category') pts.sort((a, b) => (a.x as number) - (b.x as number))
     if (!pts.length) continue
     const first = pts[0]
@@ -283,9 +360,25 @@ function describeSeries(spec: Record<string, any>, env: { locale: string; timeZo
     const max = pts.reduce((a, b) => (b.y > a.y ? b : a))
     const min = pts.reduce((a, b) => (b.y < a.y ? b : a))
     const change = first.y !== 0 ? ` (${(((last.y - first.y) / Math.abs(first.y)) * 100).toFixed(1)}%)` : ''
-    t += ` ${clip(k, 40)}: from ${f(first.y)} at ${label(first.x)} to ${f(last.y)} at ${label(last.x)}${pts.length > 1 ? change : ''}; peak ${f(max.y)} at ${label(max.x)}, low ${f(min.y)} at ${label(min.x)}.`
+    t += ` ${clip(k, 40)}${right ? ' (right axis)' : ''}: from ${f(first.y)} at ${label(first.x)} to ${f(last.y)} at ${label(last.x)}${pts.length > 1 ? change : ''}; peak ${f(max.y)} at ${label(max.x)}, low ${f(min.y)} at ${label(min.x)}.`
   }
+  if (keysR.length) {
+    const vals = (o: typeof obs): number[] => o.filter(p => p.y !== null && xk(p.x) !== null).map(p => p.y!)
+    t += dualNote(spec, { keys, values: vals(obs) }, { keys: keysR, values: vals(obsR) }, env.locale)
+  }
+  if (spec.type === 'line' && spec.yBreak && spec.yScale !== 'log' && !keysR.length) t += breakNote(spec, lineValues(spec), false, env.locale)
   return t + seriesNotes(spec)
+}
+
+/** The numbers a line chart draws on its value axis: the y columns and the interval ends. */
+function lineValues(spec: Record<string, any>): number[] {
+  const cols = [...(Array.isArray(spec.y) ? spec.y : [spec.y]), ...(spec.yLower && spec.yUpper ? [spec.yLower, spec.yUpper] : [])] as string[]
+  const out: number[] = []
+  for (const r of spec.data as Record<string, unknown>[]) for (const col of cols) {
+    const n = toNumber(r[col])
+    if (n !== null) out.push(n)
+  }
+  return out
 }
 
 const SERIES_FIELDS: ChartDef['fields'] = {
@@ -296,12 +389,20 @@ const SERIES_FIELDS: ChartDef['fields'] = {
   xDomain: { kind: 'domain', desc: 'Fix the horizontal range of a numeric or time x axis (dates as ISO strings). Lines run to the edge and are cut there.' },
   yDomain: { kind: 'domain', desc: 'Fix the vertical range, e.g. [0, 100]. Lines may start anywhere; areas always include 0.' },
   curve: { kind: 'enum', values: ['linear', 'smooth', 'step'], default: 'linear', desc: '`smooth` is monotone (never overshoots the data); `step` holds each value until the next point.' },
+  ...dualFields('as lines'),
   gaps: { kind: 'enum', values: ['break', 'connect', 'zero'], desc: 'Default break. What a missing or null y does: `break` leaves a gap in the line, `connect` joins the points on either side, `zero` draws it as 0 (the tooltip says "missing"). Stacked areas always count a missing value as 0.' },
   ...intervalFields('y', 'a shaded band behind each line (one band per series; with long-form `series`, not with several `y` columns)')
 }
 
 const seriesCheck = (area: boolean): NonNullable<ChartDef['check']> => (spec, ctx) => {
   const multi = Array.isArray(spec.y) && spec.y.length > 1
+  const left = (Array.isArray(spec.y) ? spec.y : [spec.y]) as string[]
+  const stacked = (spec.stack ?? 'none') !== 'none'
+  dualCheck(spec, ctx, {
+    left,
+    refused: area && stacked ? 'a stacked area adds its series together, and a series on another scale cannot be part of that sum.' : !area && spec.yScale === 'log' ? 'the left axis is logarithmic; a log and a linear axis on one plot cannot be compared at all.' : undefined
+  })
+  if (!area) breakCheck(spec, ctx, { values: lineValues(spec), bars: false, refused: spec.yScale === 'log' ? 'a log axis already compresses large values; cutting a span out of it as well would hide by how much.' : rightCols(spec).length ? 'with a right axis, a break on the left one would make the two scales even harder to compare.' : undefined })
   if (multi && spec.series) {
     ctx.issues.push({ severity: 'warning', code: 'series_ignored', path: 'series', message: '`series` is ignored when `y` lists several columns.' })
   }
@@ -347,6 +448,7 @@ export const line: ChartDef = {
   fields: {
     ...SERIES_FIELDS,
     points: { kind: 'boolean', desc: 'Force markers on (`true`) or off (`false`). Default: markers when there are few points, otherwise only the last point.' },
+    yBreak: breakField('series of very different size share one axis; changes across the cut look smaller than they are.'),
     yScale: scaleField('y', 'growth, orders of magnitude'),
     xScale: { ...scaleField('x', 'sizes, frequencies'), desc: `${scaleField('x', 'sizes, frequencies').desc} Only for a numeric x; dates and categories are refused.` }
   },
