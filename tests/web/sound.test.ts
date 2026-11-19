@@ -138,6 +138,24 @@ describe('plot.sonify()', () => {
     expect(live.textContent).toBe('Finished playing Visits.')
   })
 
+  it('reads its announcements from the strings option', async () => {
+    vi.useFakeTimers()
+    ;(window as { AudioContext?: unknown }).AudioContext = FakeAudio
+    const strings = { soundPlaying: '{what} : {n} notes', soundPlayingOne: '{what} : une note', soundFinished: '{title} : fini.', soundStopped: 'Arrêté.' }
+    const p = new SuperPlot(host, line, { width: 600, height: 400, strings })
+    const live = (): string => host.querySelector('.sp-root > .sp-live')!.textContent ?? ''
+    const c = p.sonify()
+    expect(live()).toBe('Visits, y : 4 notes')
+    vi.advanceTimersByTime(2000)
+    await c.done
+    expect(live()).toBe('Visits : fini.')
+    p.setSpec({ ...line, data: line.data.slice(0, 1) })
+    p.sonify().stop()
+    expect(live()).toBe('Arrêté.')
+    p.sonify()
+    expect(live()).toBe('Visits, y : une note')
+  })
+
   it('a second call stops the first; dispose stops it', () => {
     ;(window as { AudioContext?: unknown }).AudioContext = FakeAudio
     const p = new SuperPlot(host, line, { width: 600, height: 400 })

@@ -32,6 +32,11 @@ describe('maps in the browser binding', () => {
     expect(root.hasAttribute('data-map')).toBe(true)
     expect(root.tabIndex).toBe(0)
     expect([...host.querySelectorAll('.sp-ctl button')].map(b => b.getAttribute('aria-label'))).toEqual(['Zoom in', 'Zoom out', 'Reset view'])
+    // The labels, role description and keyboard help come from the strings option.
+    p.setOptions({ strings: { mapZoomIn: 'Vergrößern', mapZoomOut: 'Verkleinern', mapReset: 'Ansicht zurücksetzen', mapRole: 'interaktive Karte', mapKeys: '{title}. Pfeiltasten verschieben.' } })
+    expect([...host.querySelectorAll('.sp-ctl button')].map(b => b.getAttribute('aria-label'))).toEqual(['Vergrößern', 'Verkleinern', 'Ansicht zurücksetzen'])
+    expect(root.getAttribute('aria-roledescription')).toBe('interaktive Karte')
+    expect(root.getAttribute('aria-label')).toBe(`${p.getScene()!.title}. Pfeiltasten verschieben.`)
     p.dispose()
   })
 

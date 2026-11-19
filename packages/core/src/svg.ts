@@ -67,9 +67,12 @@ function paint(attr: string, v: string | undefined, rv: (s: string) => string): 
   return v === undefined ? '' : ` ${attr}="${escapeXml(rv(v))}"`
 }
 
+/** A breadcrumb item (drill-down): a button in interactive SVG. */
+const crumb = (m: Mark): boolean => m.drill !== undefined && m.role === 'label' && m.type === 'rect' && m.tip === undefined
+
 function renderMark(m: Mark, i: number, interactive: boolean, rv: (s: string) => string, clip: string): string {
   const hooks = clip + (interactive
-    ? ` class="sp-m sp-${m.role}${m.anim ? ` sp-a-${m.anim}` : ''}" data-i="${i}"${m.series !== undefined ? ` data-s="${escapeXml(m.series)}"` : ''}${m.legendKey !== undefined ? ` data-lk="${escapeXml(m.legendKey)}"` : ''}${m.tip && m.role !== 'hit' && m.legendKey === undefined ? ' tabindex="0"' : ''}${m.legendKey !== undefined ? ` role="button" tabindex="0" aria-label="${escapeXml(m.aria ?? m.legendKey)}"` : m.aria ? ` role="img" aria-label="${escapeXml(m.aria)}"` : ''}`
+    ? ` class="sp-m sp-${m.role}${m.anim ? ` sp-a-${m.anim}` : ''}" data-i="${i}"${m.series !== undefined ? ` data-s="${escapeXml(m.series)}"` : ''}${m.legendKey !== undefined ? ` data-lk="${escapeXml(m.legendKey)}"` : ''}${m.tip && m.role !== 'hit' && m.legendKey === undefined ? ' tabindex="0"' : ''}${m.legendKey !== undefined ? ` role="button" tabindex="0" aria-label="${escapeXml(m.aria ?? m.legendKey)}"` : crumb(m) ? ` role="button" tabindex="0" aria-label="${escapeXml(m.aria ?? m.drill!.join(' > '))}"` : m.aria ? ` role="img" aria-label="${escapeXml(m.aria)}"` : ''}`
     : '')
   const op = m.opacity !== undefined && m.opacity !== 1 ? ` opacity="${n(m.opacity)}"` : ''
   switch (m.type) {

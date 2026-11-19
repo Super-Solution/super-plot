@@ -1274,6 +1274,7 @@ Shows parts of a whole as nested rectangles whose area is the value; an optional
 | `value` | column name | yes |  | Numeric column giving each tile's area. Rows with the same group and label are summed; zero and negative values are skipped. |
 | `group` | column name |  |  | Optional column that groups tiles into coloured blocks (one level). Each group becomes a legend entry. |
 | `labels` | boolean |  | `true` | Print the name and value on tiles large enough. |
+| `focus` | list of values |  |  | Drill-down: a path of group values from the top level down (needs `group`; one value, the group, e.g. ["Cloud"]) that draws only that subtree, with a breadcrumb line ("All › Asia › Japan") at the top. [] or omitted draws the whole tree. A path that does not name a group with children warns and draws the whole tree. The web binding changes it when the viewer clicks a group (option `drill`). |
 
 ```json
 {
@@ -1342,6 +1343,7 @@ Shows a hierarchy as rings: the first level in the middle ring, each level outsi
 | `path` | column name or list of column names | yes |  | Columns that form the hierarchy, outermost group first, e.g. ["region","country","city"] (1 to 6 levels). A row whose level is empty stops there and still counts toward its parents. |
 | `value` | column name | yes |  | Numeric column giving each row's size. Rows on the same path are summed; zero and negative values are skipped. |
 | `labels` | boolean |  | `true` | Print names on arcs large enough. |
+| `focus` | list of values |  |  | Drill-down: a path of group values from the top level down (one value per `path` level, e.g. ["Asia","Japan"]) that draws only that subtree, with a breadcrumb line ("All › Asia › Japan") at the top. [] or omitted draws the whole tree. A path that does not name a group with children warns and draws the whole tree. The web binding changes it when the viewer clicks a group (option `drill`). |
 
 ```json
 {

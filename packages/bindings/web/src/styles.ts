@@ -51,7 +51,25 @@ export const CSS = `
 .sp-bar button[aria-disabled="true"]{opacity:.45;cursor:default}
 .sp-root[data-toolbar] .sp-ctl{top:40px}
 .sp-tip[data-custom]{white-space:pre-line}
-@media print{.sp-bar,.sp-ctl,.sp-tip{display:none!important}}
+.sp-label[role="button"]{cursor:pointer}
+.sp-label[role="button"]:focus{outline:none}
+.sp-label[role="button"]:focus-visible{outline:2px solid var(--sp-info,#2962FF);outline-offset:1px}
+.sp-nav{position:relative;display:block;width:100%;height:44px;line-height:0;touch-action:none;-webkit-user-select:none;user-select:none}
+.sp-nav svg{position:absolute;left:0;top:0;width:100%;height:100%;display:block;overflow:visible}
+.sp-nav-shade{position:absolute;top:6px;height:32px;pointer-events:none;background:color-mix(in srgb,var(--sp-nav-face,#FFFFFF) 55%,transparent)}
+.sp-nav-win{position:absolute;top:6px;height:32px;box-sizing:border-box;border:1px solid var(--sp-nav-ink,#2962FF);border-radius:3px;background:color-mix(in srgb,var(--sp-nav-ink,#2962FF) 8%,transparent);cursor:grab}
+.sp-nav[data-drag="pan"] .sp-nav-win{cursor:grabbing}
+.sp-nav-h{position:absolute;z-index:1;top:10px;width:12px;height:24px;margin-left:-6px;cursor:ew-resize;display:flex;justify-content:center}
+.sp-nav-h::before{content:"";box-sizing:border-box;width:6px;height:100%;border-radius:3px;border:1px solid var(--sp-nav-ink,#2962FF);background:var(--sp-nav-face,#FFFFFF)}
+.sp-nav-win:focus,.sp-nav-h:focus{outline:none}
+.sp-nav-win:focus-visible,.sp-nav-h:focus-visible{outline:2px solid var(--sp-info,#2962FF);outline-offset:1px}
+@media (pointer:coarse){
+.sp-nav-h{width:24px;margin-left:-12px;top:6px;height:32px}
+.sp-root svg circle.sp-hit{r:12px}
+.sp-bar button{min-height:32px}
+.sp-ctl button{width:32px;height:32px}
+}
+@media print{.sp-bar,.sp-ctl,.sp-tip,.sp-nav-h{display:none!important}.sp-root,.sp-nav,.sp-table{break-inside:avoid}.sp-root{-webkit-print-color-adjust:exact;print-color-adjust:exact}.sp-nav-win{background:transparent}}
 .sp-error{line-height:1.5;font:12px ui-monospace,SFMono-Regular,Menlo,monospace;padding:12px;border:1px solid #F23645;border-radius:6px;color:#F23645;white-space:pre-wrap}
 @keyframes sp-y{from{transform:scaleY(0)}to{transform:none}}
 @keyframes sp-x{from{transform:scaleX(0)}to{transform:none}}
@@ -63,7 +81,11 @@ export const CSS = `
 .sp-enter .sp-a-draw{stroke-dasharray:1;stroke-dashoffset:1;animation:sp-draw .8s ease forwards}
 @media (prefers-reduced-motion:reduce){.sp-enter *{animation:none!important}.sp-bar,.sp-tip,.sp-data{transition:none}}
 @media (forced-colors:active){
-.sp-root svg,.sp-cv canvas{forced-color-adjust:none}
+.sp-root svg,.sp-cv canvas,.sp-nav svg{forced-color-adjust:none}
+.sp-nav-win{border-color:Highlight;background:transparent}
+.sp-nav-h::before{background:ButtonFace;border-color:ButtonText}
+.sp-nav-shade{background:transparent}
+.sp-nav-win:focus-visible,.sp-nav-h:focus-visible,.sp-label[role="button"]:focus-visible{outline:2px solid Highlight;outline-offset:2px}
 .sp-m:focus-visible,.sp-cv-lk:focus-visible,.sp-cv>canvas:first-child:focus-visible,.sp-root[data-axes]:focus-visible,.sp-root[data-map]:focus-visible,.sp-ctl button:focus-visible,.sp-bar button:focus-visible{outline:2px solid Highlight;outline-offset:2px}
 .sp-m.sp-data:focus-visible{stroke:Highlight;stroke-width:3px}
 .sp-root svg g[pointer-events] line{stroke:Highlight}

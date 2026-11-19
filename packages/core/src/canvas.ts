@@ -284,7 +284,7 @@ export function buildHitIndex(scene: Scene): HitIndex {
     }
   }
   scene.marks.forEach((m, i) => {
-    if (!(m.tip || m.legendKey !== undefined || m.role === 'hit')) return
+    if (!(m.tip || m.legendKey !== undefined || m.role === 'hit' || m.drill !== undefined)) return
     if (m.type === 'rect') add(i, m.x, m.y, m.x + m.w, m.y + m.h)
     else if (m.type === 'circle') add(i, m.cx - m.r - 3, m.cy - m.r - 3, m.cx + m.r + 3, m.cy + m.r + 3)
     else if (m.type === 'path') paths.push(i)

@@ -4727,6 +4727,17 @@
           "type": "boolean",
           "default": true,
           "description": "Print the name and value on tiles large enough."
+        },
+        "focus": {
+          "type": "array",
+          "maxItems": 6,
+          "items": {
+            "type": [
+              "string",
+              "number"
+            ]
+          },
+          "description": "Drill-down: a path of group values from the top level down (needs `group`; one value, the group, e.g. [\"Cloud\"]) that draws only that subtree, with a breadcrumb line (\"All › Asia › Japan\") at the top. [] or omitted draws the whole tree. A path that does not name a group with children warns and draws the whole tree. The web binding changes it when the viewer clicks a group (option `drill`)."
         }
       }
     },
@@ -4897,6 +4908,17 @@
           "type": "boolean",
           "default": true,
           "description": "Print names on arcs large enough."
+        },
+        "focus": {
+          "type": "array",
+          "maxItems": 6,
+          "items": {
+            "type": [
+              "string",
+              "number"
+            ]
+          },
+          "description": "Drill-down: a path of group values from the top level down (one value per `path` level, e.g. [\"Asia\",\"Japan\"]) that draws only that subtree, with a breadcrumb line (\"All › Asia › Japan\") at the top. [] or omitted draws the whole tree. A path that does not name a group with children warns and draws the whole tree. The web binding changes it when the viewer clicks a group (option `drill`)."
         }
       }
     },
