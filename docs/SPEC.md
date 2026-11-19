@@ -1721,6 +1721,148 @@ Places one dot per row along a number axis, pushed aside so no dot hides another
     },
 ```
 
+## `gauge` — Gauge
+
+Shows one value (or up to six, one per row) as the filled length of an arc between a minimum and a maximum, with an optional target tick and named status bands.
+
+**Use when:** A single headline value against a known range or capacity (utilisation, a score out of 100), on a dashboard where the arc shape is expected. A stat tile reads faster for a lone number, and a one-row `bullet` chart compares a value with a target and ranges more precisely in less space; use a `bullet` or `bar` chart to compare more than a few measures. Always give `max`: a derived one only says "the top of the data".
+
+| Field | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `type` | string | yes |  | Chart type: gauge. |
+| `version` | `1` |  |  | Spec format version. Only 1 exists; may be omitted. |
+| `data` | array of rows | yes |  | Tabular rows: an array of flat objects, one per observation. Numbers must be numbers (or plain numeric strings). |
+| `title` | string |  |  | Chart title. State the takeaway or the subject, not "Chart". |
+| `subtitle` | string |  |  | One line of context under the title: unit, period, filter. |
+| `description` | string |  |  | Long description for screen readers and agents. Generated from the data when omitted. |
+| `source` | string |  |  | Source line shown small under the chart. |
+| `legend` | `auto` \| `top` \| `bottom` \| `right` \| `none` |  | `"auto"` | Legend placement. `auto` hides it for a single series and picks a side from the available width. |
+| `tooltip` | boolean |  | `true` | Show a hover tooltip (web binding only). |
+| `format` | format string |  |  | Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE. |
+| `colors` | object |  |  | Series (or slice/category) name to CSS colour, e.g. {"Revenue":"#2962FF"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours. |
+| `transform` | array of steps |  |  | Data steps run before the chart reads its columns, in order (at most 10): filter, timeUnit, aggregate, sort, top, bin (round bins: start and end columns), window (running sum, mean, count, rank, pctChange, lag, lead, movingMean, per group, in a sort order) and fold (wide columns to key/value rows). No expressions. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output. |
+| `patterns` | boolean |  |  | Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print. |
+| `value` | column name | yes |  | Numeric column with the value of each gauge. A value outside `min`..`max` is clamped on the arc but printed as it is. |
+| `label` | column name |  |  | Column naming each gauge; required with more than one row (one gauge per row, at most 6, in data order). |
+| `min` | number |  | `0` | Start of the range: where every arc starts filling. |
+| `max` | number |  |  | End of the range: what a full arc means (100%, the capacity, the plan). Without it the top is rounded up from the largest value, with a `max_derived` warning. |
+| `target` | column name |  |  | Numeric column with a target, drawn as a tick across the arc. |
+| `bands` | list of 2 to 3 column names |  |  | Two or three columns holding the upper threshold of each status band, in order along the arc from `min`, e.g. ["critical","warning","good"]. Each band is named by its column (printed beside it) and coloured with the theme's negative, warning and positive tones per `bandOrder`. |
+| `bandOrder` | `worst-first` \| `best-first` |  | `"worst-first"` | `worst-first`: the first band is critical and the last good (higher is better); `best-first` for measures where lower is better (latency, load). |
+| `arc` | integer |  | `240` | Sweep of the arc in degrees, open at the bottom: 180 is a half circle. |
+
+```json
+{
+  "type": "gauge",
+  "title": "Cluster utilisation",
+  "subtitle": "Share of provisioned capacity in use, now",
+  "label": "resource",
+  "value": "used",
+  "target": "plan",
+  "bands": [
+    "good",
+    "busy",
+    "saturated"
+  ],
+  "bandOrder": "best-first",
+  "min": 0,
+  "max": 1,
+  "format": "percent",
+  "data": [
+    {
+      "resource": "CPU",
+      "used": 0.72,
+      "plan": 0.7,
+      "good": 0.6,
+      "busy": 0.85,
+      "saturated": 1
+    },
+    {
+      "resource": "Memory",
+      "used": 0.54,
+      "plan": 0.7,
+      "good": 0.6,
+      "busy": 0.85,
+      "saturated": 1
+    },
+    {
+      "resource": "Disk",
+      "used": 0.91,
+      "plan": 0.7,
+      "good": 0.6,
+      "busy": 0.85,
+      "saturated": 1
+```
+
+## `wordcloud` — Word cloud
+
+Shows words or short phrases sized by a value (a count, a weight), packed on a spiral with the largest in the middle.
+
+**Use when:** A first impression of which terms dominate a text or a set of tags, when the exact order matters less than the gist. Font size is a weak cue: long words look bigger than short ones of the same value and neighbours are hard to compare. To compare values, or for an audience that must read them, use a sorted horizontal bar chart (`type: "bar"`, `orientation: "horizontal"`, `sort: "desc"`).
+
+| Field | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `type` | string | yes |  | Chart type: wordcloud. |
+| `version` | `1` |  |  | Spec format version. Only 1 exists; may be omitted. |
+| `data` | array of rows | yes |  | Tabular rows: an array of flat objects, one per observation. Numbers must be numbers (or plain numeric strings). |
+| `title` | string |  |  | Chart title. State the takeaway or the subject, not "Chart". |
+| `subtitle` | string |  |  | One line of context under the title: unit, period, filter. |
+| `description` | string |  |  | Long description for screen readers and agents. Generated from the data when omitted. |
+| `source` | string |  |  | Source line shown small under the chart. |
+| `legend` | `auto` \| `top` \| `bottom` \| `right` \| `none` |  | `"auto"` | Legend placement. `auto` hides it for a single series and picks a side from the available width. |
+| `tooltip` | boolean |  | `true` | Show a hover tooltip (web binding only). |
+| `format` | format string |  |  | Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE. |
+| `colors` | object |  |  | Series (or slice/category) name to CSS colour, e.g. {"Revenue":"#2962FF"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours. |
+| `transform` | array of steps |  |  | Data steps run before the chart reads its columns, in order (at most 10): filter, timeUnit, aggregate, sort, top, bin (round bins: start and end columns), window (running sum, mean, count, rank, pctChange, lag, lead, movingMean, per group, in a sort order) and fold (wide columns to key/value rows). No expressions. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output. |
+| `patterns` | boolean |  |  | Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print. |
+| `text` | column name | yes |  | Column holding each word or short phrase. Rows with the same text are summed. |
+| `value` | column name | yes |  | Numeric column sizing each word (font size grows with its square root). Values at or below zero are left out. At most the 150 largest words are drawn. |
+| `series` | column name |  |  | Column naming a group per word (its first row decides): words are coloured by group with a legend. Without it, one hue darkens from small to large words. |
+| `rotate` | `none` \| `some` |  | `"none"` | `none` keeps every word horizontal (easiest to read); `some` turns every fourth word in value order a quarter turn, which packs tighter. |
+
+```json
+{
+  "type": "wordcloud",
+  "title": "What customers mention in reviews",
+  "subtitle": "Mentions per term, 1,200 reviews",
+  "text": "term",
+  "value": "mentions",
+  "format": "integer",
+  "data": [
+    {
+      "term": "delivery",
+      "mentions": 214
+    },
+    {
+      "term": "price",
+      "mentions": 188
+    },
+    {
+      "term": "quality",
+      "mentions": 161
+    },
+    {
+      "term": "support",
+      "mentions": 132
+    },
+    {
+      "term": "battery",
+      "mentions": 118
+    },
+    {
+      "term": "screen",
+      "mentions": 97
+    },
+    {
+      "term": "size",
+      "mentions": 84
+    },
+    {
+      "term": "setup",
+      "mentions": 71
+    },
+```
+
 ## `choropleth` — Choropleth map
 
 Colours each region of a map by a number; raise regions by the value for a 3D view.

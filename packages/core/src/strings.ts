@@ -67,6 +67,21 @@ export const DEFAULT_STRINGS = {
   aboveEveryRange: 'above every range',
   noValue: 'no {name}',
 
+  /** Gauge tooltips, centre notes and accessible names. */
+  fromTo: '{from} to {to}',
+  range: 'Range',
+  ofRange: 'Share of range',
+  band: 'Band',
+  aboveEveryBand: 'above every band',
+  inBandAria: 'in band {band}',
+  aboveMax: 'above the maximum ({max})',
+  belowMin: 'below the minimum ({min})',
+  gaugeAria: '{value}, {share} of {range}',
+
+  /** Word cloud tooltips and accessible names. */
+  rankOf: '{rank} of {n}',
+  wordAria: '{word}: {value}, rank {rank} of {n}',
+
   /** Funnel tooltips and accessible names. */
   ofFirstStage: 'Of the first stage',
   ofStageBefore: 'Of the stage before',

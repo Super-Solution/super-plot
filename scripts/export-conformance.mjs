@@ -51,6 +51,23 @@ const loessCases = [
   { xs: Array.from({ length: 25 }, (_, i) => i * 0.4), ys: Array.from({ length: 25 }, (_, i) => Math.sin(i * 0.4) * 10), bandwidth: 0.2, grid: 12 }
 ].map(c => ({ in: c, out: loess(c.xs, c.ys, c.bandwidth, c.grid) }))
 const binStepCases = [{ values: [0, 13], maxbins: 10 }, { values: [1, 2, 2, 3, 9], maxbins: 4 }, { values: [0.1, 0.66], maxbins: 3 }, { values: [5, 5], maxbins: 10 }, { values: [0, 97], maxbins: 10, step: 7 }].map(c => ({ in: c, out: transformBinEdges(c.values, c.maxbins, c.step) }))
+// Word cloud placement: integer spiral and boxes, so a port reproduces it exactly given the same text widths.
+// `widths[i]` is the measured width of `words[i]` (core's estimateWidth at weight 500, here); a port measures
+// with a lookup into it. The output is a box per word (top left, size, rotated) or null when it did not fit.
+const { cloudLayout, estimateWidth } = core
+const cloudWordsIn = [
+  { words: [['data', 48], ['chart', 40], ['axis', 33], ['legend', 28], ['tooltip', 24], ['scale', 20], ['tick', 17], ['grid', 14], ['label', 12], ['mark', 10], ['zoom', 10], ['brush', 10]], width: 320.6, height: 200, rotate: false },
+  { words: [['data', 48], ['chart', 40], ['axis', 33], ['legend', 28], ['tooltip', 24], ['scale', 20], ['tick', 17], ['grid', 14], ['label', 12], ['mark', 10], ['zoom', 10], ['brush', 10]], width: 320, height: 200, rotate: true },
+  { words: [['a very long phrase that does not fit', 30], ['short', 30], ['tiny', 10]], width: 180, height: 90, rotate: false },
+  { words: [['narrow', 22], ['tall', 22], ['box', 22], ['again', 22], ['more', 22], ['words', 22], ['fill', 22], ['it', 22]], width: 90, height: 260, rotate: false },
+  { words: [['x', 10]], width: 0, height: 0, rotate: false }
+]
+const cloudLayoutCases = cloudWordsIn.map(c => {
+  const words = c.words.map(([text, size], i) => ({ text, size, rotate: c.rotate && i % 4 === 3 }))
+  const widths = words.map(w => estimateWidth(w.text, w.size, 500))
+  const byWord = new Map(words.map((w, i) => [`${w.size}|${w.text}`, widths[i]]))
+  return { in: { words, widths, width: c.width, height: c.height }, out: cloudLayout(words, c.width, c.height, (text, size) => byWord.get(`${size}|${text}`)) }
+})
 // Largest-remainder apportionment of waffle cells: ties in the remainder go to the earlier value.
 const waffle = [[[1, 1, 1], 100], [[0.4, 0.4, 99.2], 100], [[2, 1, 1], 50], [[5, 0, -3, 2], 100], [[0, 0], 100], [[13, 29, 7, 51, 3, 3, 3], 230], [[1e-9, 1], 400]].map(([values, cells]) => ({ in: { values, cells }, out: waffleCells(values, cells) }))
 
@@ -465,6 +482,27 @@ const VALIDATION = [
   ['beeswarm: ok with lanes', { type: 'beeswarm', x: 'b', y: 'a', data: B }],
   ['beeswarm: x not numeric', { type: 'beeswarm', x: 'a', data: B }],
   ['beeswarm: radius out of range', { type: 'beeswarm', x: 'b', radius: 0.5, data: B }],
+  ['gauge: one value against a max', { type: 'gauge', value: 'b', max: 10, data: [B[0]] }],
+  ['gauge: several rows need a label', { type: 'gauge', value: 'b', max: 10, data: B }],
+  ['gauge: max derived from the data', { type: 'gauge', label: 'a', value: 'b', data: B }],
+  ['gauge: max at or below min', { type: 'gauge', label: 'a', value: 'b', min: 5, max: 5, data: B }],
+  ['gauge: nothing above min, no max', { type: 'gauge', label: 'a', value: 'b', min: 3, data: B }],
+  ['gauge: values outside the range', { type: 'gauge', label: 'a', value: 'b', min: 1.5, max: 1.8, target: 'b', data: B }],
+  ['gauge: bands, best first, unordered', { type: 'gauge', label: 'k', value: 'v', target: 't', bands: ['p', 'q', 'r'], bandOrder: 'best-first', max: 10, data: [{ k: 'x', v: 4, t: 5, p: 3, q: 2, r: 10 }, { k: 'y', v: 7, t: 5, p: 2, q: 6, r: 10 }] }],
+  ['gauge: one band column', { type: 'gauge', value: 'b', bands: ['b'], max: 10, data: [B[0]] }],
+  ['gauge: arc out of range', { type: 'gauge', value: 'b', arc: 360, max: 10, data: [B[0]] }],
+  ['gauge: bad band order', { type: 'gauge', value: 'b', bandOrder: 'worst', max: 10, data: [B[0]] }],
+  ['gauge: seven rows, a repeated label', { type: 'gauge', label: 'a', value: 'b', max: 10, data: [...rowsOf(7, i => ({ a: `g${i}`, b: i })), { a: 'g0', b: 1 }] }],
+  ['gauge: facet is refused', { type: 'gauge', value: 'b', max: 10, facet: 'a', data: [B[0]] }],
+  ['wordcloud: ok', { type: 'wordcloud', text: 'a', value: 'b', data: B }],
+  ['wordcloud: rotate and groups', { type: 'wordcloud', text: 'a', value: 'b', series: 'a', rotate: 'some', data: B }],
+  ['wordcloud: patterns do not apply', { type: 'wordcloud', text: 'a', value: 'b', patterns: true, data: B }],
+  ['wordcloud: bad rotate', { type: 'wordcloud', text: 'a', value: 'b', rotate: 'all', data: B }],
+  ['wordcloud: nothing positive', { type: 'wordcloud', text: 'a', value: 'b', data: [{ a: 'x', b: 0 }, { a: 'y', b: -1 }] }],
+  ['wordcloud: some not positive, repeated words', { type: 'wordcloud', text: 'a', value: 'b', data: [...B, { a: 'x', b: 4 }, { a: 'z', b: 0 }] }],
+  ['wordcloud: more than 150 words', { type: 'wordcloud', text: 'a', value: 'b', data: rowsOf(160, i => ({ a: `w${i}`, b: 160 - i })) }],
+  ['wordcloud: value not numeric', { type: 'wordcloud', text: 'b', value: 'a', data: B }],
+  ['wordcloud: facet is refused', { type: 'wordcloud', text: 'a', value: 'b', facet: 'a', data: B }],
   ...FEATURE_VALIDATION,
   ...MAP_VALIDATION
 ].map(([name, spec]) => {
@@ -533,6 +571,12 @@ const describeCases = [
   D('sunburst: focused on a branch', { type: 'sunburst', path: ['a', 'b'], value: 'v', focus: ['x'], data: [{ a: 'x', b: 'p', v: 3 }, { a: 'x', b: 'q', v: 1 }, { a: 'y', b: 'r', v: 2 }] }),
   D('treemap: focused on a group', { type: 'treemap', label: 'k', value: 'v', group: 'g', focus: ['G'], data: [{ k: 'a', g: 'G', v: 3 }, { k: 'b', g: 'G', v: 1 }, { k: 'c', g: 'H', v: 2 }] }),
   D('parallel: no groups, negative link', { type: 'parallel', dimensions: ['a', 'b', 'c'], format: 'fixed:1', data: rowsOf(6, i => ({ a: i, b: 10 - i * 2, c: (i * 3) % 4 })) }),
+  D('gauge: derived max, below min, no value', { type: 'gauge', label: 'k', value: 'v', target: 't', min: 2, format: 'fixed:1', data: [{ k: 'a', v: 7.25, t: 9 }, { k: 'b', v: 1 }, { k: 'c', v: null, t: 3 }] }),
+  D('gauge: bands, above every band and above max', { type: 'gauge', label: 'k', value: 'v', bands: ['lo', 'hi'], min: -10, max: 10, data: [{ k: 'a', v: -10, lo: 0, hi: 5 }, { k: 'b', v: 7, lo: 0, hi: 5 }, { k: 'c', v: 12, lo: 0, hi: 5 }] }),
+  D('gauge: seven rows (one not drawn)', { type: 'gauge', label: 'k', value: 'v', max: 1, format: 'percent', data: rowsOf(7, i => ({ k: `g${i}`, v: i / 8 })) }),
+  D('wordcloud: one word', { type: 'wordcloud', text: 'w', value: 'n', data: [{ w: 'solo', n: 3 }] }),
+  D('wordcloud: groups, sums, ties keep data order', { type: 'wordcloud', text: 'w', value: 'n', series: 'g', format: 'compact', data: [{ w: 'b', n: 2000, g: 'p' }, { w: 'a', n: 1500, g: 'q' }, { w: 'b', n: 500, g: 'q' }, { w: 'c', n: 2500, g: 'p' }, { w: ' d ', n: 2500 }, { w: 'e', n: 0 }] }),
+  D('wordcloud: more than 150 words', { type: 'wordcloud', text: 'w', value: 'n', data: rowsOf(170, i => ({ w: `w${i}`, n: 1 + (i % 13) })) }),
   D('explicit description wins', { type: 'bar', x: 'a', y: 'b', description: 'Written by hand.', data: B }),
   D('unicode and long labels', { type: 'bar', x: 'k', y: 'v', title: '營收 by 地區 😀', data: [{ k: '台灣'.repeat(30), v: 3 }, { k: 'B 😀', v: 1 }] }),
   D('does not validate', { type: 'bar', x: 'nope', y: 'b', data: B }),
@@ -790,6 +834,7 @@ const doc = rows({
   loess: loessCases,
   binStep: binStepCases,
   waffleCells: waffle,
+  cloudLayout: cloudLayoutCases,
   chartExamples: examples,
   brokenSpecs: broken,
   geographies: GEOGRAPHIES,

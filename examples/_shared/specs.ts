@@ -138,6 +138,19 @@ export const gallery: { id: string; note: string; spec: Record<string, unknown> 
     }
   },
   { id: 'beeswarm', note: 'Every value as a dot, one lane per group', spec: by('beeswarm') },
+  { id: 'gauge', note: 'Arc length is the share of the range; named status bands and a target tick', spec: by('gauge') },
+  {
+    id: 'gauge-single', note: 'One value against a known maximum; lower is better',
+    spec: { type: 'gauge', title: 'API latency, p95', subtitle: 'Milliseconds, last hour; budget 400 ms', value: 'p95', target: 'budget', bands: ['fast', 'acceptable', 'slow'], bandOrder: 'best-first', min: 0, max: 600, format: 'integer', data: [{ p95: 312, budget: 400, fast: 250, acceptable: 400, slow: 600 }] }
+  },
+  { id: 'wordcloud', note: 'Words sized by the square root of their count; the description lists the top values', spec: by('wordcloud') },
+  {
+    id: 'wordcloud-groups', note: 'Coloured by group, every fourth word turned',
+    spec: {
+      type: 'wordcloud', title: 'Tags on support tickets', subtitle: 'Tickets per tag, last 30 days', text: 'tag', value: 'tickets', series: 'area', rotate: 'some', format: 'integer',
+      data: [['login', 'Account', 182], ['password', 'Account', 141], ['invoice', 'Billing', 133], ['refund', 'Billing', 121], ['crash', 'App', 97], ['sync', 'App', 88], ['2FA', 'Account', 74], ['card', 'Billing', 66], ['slow', 'App', 61], ['export', 'App', 47], ['VAT', 'Billing', 39], ['email', 'Account', 35], ['offline', 'App', 28], ['plan', 'Billing', 22], ['dark mode', 'App', 17], ['profile', 'Account', 14], ['receipt', 'Billing', 11], ['widget', 'App', 9]].map(([tag, area, tickets]) => ({ tag, area, tickets }))
+    }
+  },
   { id: 'choropleth', note: 'Regions coloured by value (invented islands: Super Plot ships no boundaries)', spec: by('choropleth') },
   { id: 'bubble-map', note: 'Places sized by value, on imported land', spec: by('bubble-map') },
   { id: 'column-map', note: '3D columns on a globe: drag to turn', spec: by('column-map') },

@@ -37,10 +37,10 @@ Status marks: ✅ built · 🚧 built with a stated limit · ⛔ refused on purp
 | timeline / Gantt / range bar | Highcharts Gantt, amCharts, ApexCharts, Nivo | ✅ | `timeline` with `start`/`end`, dates or numbers |
 | stream graph | ECharts, Highcharts, Nivo, Vega-Lite (`stack: center`) | ✅ | `area` with `stack: 'center'`; the value axis shows no ticks because there is no zero |
 | choropleth, bubble, column and flow maps; globe | ECharts, Plotly, Highcharts Maps, amCharts, deck.gl | ✅ | Round 3 (no boundaries ship; neutral on disputed areas) |
-| gauge | ECharts, Highcharts, AG, ApexCharts, amCharts | ⛔ | One number reads better as a stat tile; one number against a target is a one-row `bullet` |
+| gauge | ECharts, Highcharts, AG, ApexCharts, amCharts | ✅ | Round 6 (refusal overruled by the owner): `gauge` with `value`, `label` (one gauge per row, at most 6), `min`, `max`, `target`, `bands` (2 or 3 threshold columns) and `bandOrder`, `arc`. Honesty: the filled arc's length is the share of `min`..`max` (no needle-only mode); a value outside the range is clamped on the arc and printed as it is (`value_outside_range`); a missing `max` is derived and warned (`max_derived`); bands are named in text, not by colour alone. The docs still point to a stat tile or a one-row `bullet` |
 | candlestick, indicators | ECharts, Plotly, Highcharts Stock, amCharts Stock, AG | ⛔ | Super Chart's job; never duplicated across Super libs |
 | network graph, chord, arc, venn, marimekko | ECharts, Highcharts, Nivo, amCharts, visx | ❓ | Force layouts are not deterministic without extra care and are hard to read; build if a use case asks (OPEN-DECISIONS) |
-| word cloud | Highcharts, visx, ECharts (third-party) | ⛔ | Word size by length and area misleads; a sorted bar chart says the same honestly |
+| word cloud | Highcharts, visx, ECharts (third-party) | ✅ | Round 6 (refusal overruled by the owner): `wordcloud` with `text`, `value`, `series`, `rotate: 'none' \| 'some'`; deterministic integer spiral (`cloudLayout`, port-reproducible). Honesty: font size by the square root of the value; the description lists the top words with their values in order, every word has `aria`, a tooltip and `datum`, the data table lists every word, dropped and floored words are warned (`words_dropped`, `sizes_floored`); the docs state that long words look bigger and point to a sorted bar chart |
 | 3D charts other than maps | Plotly, ECharts GL, Highcharts 3D | ⛔ | Perspective distorts comparison; 3D stays for maps, where depth carries geography |
 | pictorial bars | ECharts, Highcharts | ⛔ | Decoration over data; a waffle covers countable shares |
 
@@ -124,4 +124,4 @@ Status marks: ✅ built · 🚧 built with a stated limit · ⛔ refused on purp
 
 ## What was not copied, in one place
 
-Gauge, candlestick, word cloud, non-map 3D, pictorial bars, dual axis, broken axis, an expression language, animated data transitions, LTTB, input widgets, editor features (undo, drawing tools, context menus), voice and tactile export. Each has its reason above. Network-style charts, Arrow input and drawing in a worker are open, not refused.
+Candlestick, non-map 3D, pictorial bars, dual axis, broken axis, an expression language, animated data transitions, LTTB, input widgets, editor features (undo, drawing tools, context menus), voice and tactile export. Each has its reason above. Network-style charts, Arrow input and drawing in a worker are open, not refused.
