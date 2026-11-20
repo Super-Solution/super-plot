@@ -2,6 +2,12 @@
 
 All four npm packages (`@supersolutions/super-plot-core`, `-web`, `-react`, `-chat-plugin`) share one version.
 
+## Unreleased
+
+### Added
+
+- `splits` on line and area charts: series name to a list of x values at which only that series is cut (a series break), alongside `splitAt` which cuts every series.
+
 ## 0.2.0 (2026-11-20)
 
 ### Added
@@ -11,7 +17,6 @@ All four npm packages (`@supersolutions/super-plot-core`, `-web`, `-react`, `-ch
 - `widths` on line charts: series name to line width in px (0.5 to 8).
 - `curves` on line charts: series name to `linear`, `smooth` or `step`, overriding `curve` for that series.
 - `splitAt` on line and area charts: x values at which lines are cut, so nothing is drawn across a change of definition.
-- `splits` on line and area charts: series name to a list of x values at which only that series is cut (a series break), alongside `splitAt` which cuts every series.
 - `bare` on cartesian charts: marks only, no axes, labels, title or legend, so a chart can be a small trend in a table cell (a sparkline). A bare chart may be as small as 24 x 16 px.
 
 ## 0.1.0
