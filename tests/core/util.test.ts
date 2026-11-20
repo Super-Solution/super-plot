@@ -139,3 +139,18 @@ describe('pow10', () => {
     expect(pow10(-5)).toBe(0.00001)
   })
 })
+
+describe('currency digits', () => {
+  it('come from our own table, so every runtime shows the same decimals', async () => {
+    const { currencyDigits } = await import('../../packages/core/src/util/currency')
+    const { CURRENCY_CODES } = await import('../../packages/core/src/util/currency-codes')
+    expect(CURRENCY_CODES).toContain('USD')
+    expect(new Set(CURRENCY_CODES).size).toBe(CURRENCY_CODES.length)
+    expect([currencyDigits('JPY'), currencyDigits('usd'), currencyDigits('KWD'), currencyDigits('XYZ')]).toEqual([0, 2, 3, 2])
+    // CLDR changed these between Node 22 and Node 24; the table fixes them to 2.
+    expect(valueFormatter('currency:COP', 'en')(1.5)).toMatch(/^COP\s1\.50$/)
+    expect(valueFormatter('currency:JPY', 'en')(1.5)).toBe('¥1.5')
+    expect(valueFormatter('currency:KWD', 'en')(1.5)).toMatch(/^KWD\s1\.50$/)
+    expect(valueFormatter('currency:USD', 'en')(1234.5)).toBe('$1,235')
+  })
+})

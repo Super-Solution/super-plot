@@ -36,7 +36,7 @@ const densityIn = [
   { values: [7] }
 ]
 const density = densityIn.map(c => { const d = kde(c.values, c.bandwidth); return { in: c, out: { silverman: silverman(c.values), ...d, peaks: densityPeaks(d) } } })
-const { logTicks, niceLogDomain, loess, transformBinEdges } = core
+const { logTicks, niceLogDomain, loess, transformBinEdges, currencyDigits, CURRENCY_CODES } = core
 const logTickCases = [[1, 1e6, 5], [1, 1000, 8], [1, 100, 8], [0.01, 1, 9], [20, 80, 5], [3, 800, 4], [0.5, 2e9, 6], [1e-6, 1e-3, 3]].map(([a, b, n]) => ({ in: [a, b, n], out: logTicks(a, b, n) }))
 const logNiceCases = [[3, 800], [10, 10], [1, 1000], [0.02, 0.5], [7, 7.5]].map(([a, b]) => ({ in: [a, b], out: niceLogDomain(a, b) }))
 const loessXs = [5, 1, 3, 2, 4, 8, 6, 7, 9, 10]
@@ -576,7 +576,7 @@ const formats = []
 for (const format of FORMATS) {
   for (const value of FORMAT_VALUES) formats.push({ in: { format, value }, out: core.valueFormatter(format, 'en')(value) })
 }
-for (const code of Intl.supportedValuesOf('currency')) for (const value of [0, 1.5, 1234.5, -7]) formats.push({ in: { format: `currency:${code}`, value }, out: core.valueFormatter(`currency:${code}`, 'en')(value) })
+for (const code of CURRENCY_CODES) for (const value of [0, 1.5, 1234.5, -7]) formats.push({ in: { format: `currency:${code}`, value }, out: core.valueFormatter(`currency:${code}`, 'en')(value) })
 const percents = [0, 0.001, 0.0449, 0.045, 0.2, 0.255, 0.3333, 0.5, 0.999, 1, 1.5, -0.25].flatMap(ratio => [0, 1, 2].map(digits => ({ in: { ratio, digits }, out: core.formatPercent(ratio, 'en', digits) })))
 
 // Descriptions beyond the catalog examples: formats, time axes, merging, groups, stacking, edge cases.
@@ -970,11 +970,12 @@ const REF = [
 const refCases = REF.map(([name, spec, ref, hidden]) => ({ name, spec, ref, ...(hidden ? { hidden } : {}), out: resolveRef(spec, ref, { hidden }) }))
 const datePeriods = ['2026', '2024', '2026-02', '2024-02', '2026-03-15', '2026-03-15T10:30', '2026-03-15T10:30:05Z', '2026-03-15T10:30:05', '2026-13', '2026-02-30', 'March', '2026-03-15T10:30:05.250Z', '1999-12-31T23:59:59Z'].map(v => ({ in: v, out: datePeriod(v) }))
 
-// English currency symbols and default fraction digits, straight from Intl, so a port never guesses them.
-const currencies = Object.fromEntries(Intl.supportedValuesOf('currency').map(code => {
+// English currency symbols (from Intl) and fraction digits (from core's own table, the same on every runtime), so a
+// port never guesses them.
+const currencies = Object.fromEntries(CURRENCY_CODES.map(code => {
   const nf = new Intl.NumberFormat('en', { style: 'currency', currency: code })
   const symbol = nf.formatToParts(1).find(p => p.type === 'currency').value
-  return [code, { symbol, digits: nf.resolvedOptions().maximumFractionDigits }]
+  return [code, { symbol, digits: currencyDigits(code) }]
 }))
 
 const fields = {

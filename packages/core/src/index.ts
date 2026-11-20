@@ -14,6 +14,7 @@ registerCharts(allCharts)
 registerTransforms(allTransforms)
 
 export * from './base.js'
+export { CURRENCY_CODES } from './util/currency-codes.js'
 export * from './charts.js'
 export * from './transforms.js'
 export * from './canvas.js'

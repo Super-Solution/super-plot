@@ -174,7 +174,7 @@
     },
     "COP": {
       "symbol": "COP",
-      "digits": 0
+      "digits": 2
     },
     "CRC": {
       "symbol": "CRC",
@@ -286,11 +286,11 @@
     },
     "HUF": {
       "symbol": "HUF",
-      "digits": 0
+      "digits": 2
     },
     "IDR": {
       "symbol": "IDR",
-      "digits": 0
+      "digits": 2
     },
     "ILS": {
       "symbol": "₪",
@@ -486,7 +486,7 @@
     },
     "PKR": {
       "symbol": "PKR",
-      "digits": 0
+      "digits": 2
     },
     "PLN": {
       "symbol": "PLN",
@@ -506,7 +506,7 @@
     },
     "RSD": {
       "symbol": "RSD",
-      "digits": 2
+      "digits": 0
     },
     "RUB": {
       "symbol": "RUB",
