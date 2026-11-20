@@ -1219,6 +1219,11 @@
           "desc": "Series name to the x values at which only that series is cut, e.g. {\"Taiwan\":[\"2026-04-01\"]}: for a change of definition that hit one series and not the others. Same rules as `splitAt`, which cuts every series; the two add up."
         },
         {
+          "name": "notes",
+          "kind": "fieldMap",
+          "desc": "Series name to the name of a text column: that row's text is added to the series' tooltip line at its x (after the value), or stands in for it where the value is missing (a reason a figure is not given). Text is cut at 200 characters."
+        },
+        {
           "name": "gaps",
           "kind": "enum",
           "values": [
@@ -1536,6 +1541,11 @@
           "kind": "valuesMap",
           "max": 32,
           "desc": "Series name to the x values at which only that series is cut, e.g. {\"Taiwan\":[\"2026-04-01\"]}: for a change of definition that hit one series and not the others. Same rules as `splitAt`, which cuts every series; the two add up."
+        },
+        {
+          "name": "notes",
+          "kind": "fieldMap",
+          "desc": "Series name to the name of a text column: that row's text is added to the series' tooltip line at its x (after the value), or stands in for it where the value is missing (a reason a figure is not given). Text is cut at 200 characters."
         },
         {
           "name": "gaps",

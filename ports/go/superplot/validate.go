@@ -330,6 +330,20 @@ func validateField(name string, d fieldDef, value any, issues *[]Issue, columns 
 			add(issues, "error", "bad_enum", name+"."+k, fmt.Sprintf("%s.%s must be one of %s; got %s.", name, k, strings.Join(d.Values, ", "), show(m[k])), hint)
 		}
 		return out
+	case "fieldMap":
+		m, ok := value.(map[string]any)
+		if !ok {
+			return bad("bad_type", fmt.Sprintf(`%s must be an object of series name to the name of a data column, e.g. {"Revenue":"revenue_note"}.`, name))
+		}
+		out := map[string]any{}
+		for _, k := range sortedKeys(m) {
+			if v, isString := m[k].(string); isString && v != "" {
+				out[k] = v
+				continue
+			}
+			add(issues, "error", "bad_type", name+"."+k, fmt.Sprintf("%s.%s must be the name of a data column, got %s.", name, k, show(m[k])))
+		}
+		return out
 	case "valuesMap":
 		m, ok := value.(map[string]any)
 		if !ok {

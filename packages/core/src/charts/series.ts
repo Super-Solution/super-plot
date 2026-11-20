@@ -106,6 +106,21 @@ function compileSeries(c: ChartCtx, area: boolean): { series: ReturnType<ChartCt
     addTo(val, o.s, k, o.y)
     keep(o.s, k, o.row)
   }
+  // A note a row carries for a series (`notes`), by series and x: shown in the tooltip, where a missing value has no row of its own.
+  const noteAt = new Map<string, Map<number | string, string>>()
+  const noteCols = (s.notes ?? {}) as Record<string, string>
+  if (Object.keys(noteCols).length) {
+    for (const o of obs) {
+      const col = noteCols[o.s]
+      const raw = col === undefined ? undefined : o.row[col]
+      const text = typeof raw === 'string' ? raw.trim().slice(0, 200) : ''
+      const k = xKeyOf(o.x)
+      if (!text || k === null) continue
+      let m = noteAt.get(o.s)
+      if (!m) noteAt.set(o.s, (m = new Map()))
+      if (!m.has(k)) m.set(k, text)
+    }
+  }
   // `gaps: "zero"` draws a missing value as 0 (stacked areas always do).
   const valueAt = (k: string, x: number | string): number | undefined => val.get(k)?.get(x) ?? (gaps === 'zero' && !logY ? 0 : undefined)
 
@@ -357,12 +372,14 @@ function compileSeries(c: ChartCtx, area: boolean): { series: ReturnType<ChartCt
     const rows: Tip['rows'] = visible.flatMap(k => {
       const v = val.get(k)?.get(x)
       const sv = series[keys.indexOf(k)]
-      if (v === undefined) return stack === 'none' && gaps === 'zero' && !logY && val.has(k) ? [{ label: sv.label, value: c.t('missing', { value: fmt(0) }), color: sv.color }] : []
+      const note = noteAt.get(k)?.get(x)
+      if (v === undefined) return note ? [{ label: sv.label, value: note, color: sv.color }] : stack === 'none' && gaps === 'zero' && !logY && val.has(k) ? [{ label: sv.label, value: c.t('missing', { value: fmt(0) }), color: sv.color }] : []
       const a = lowV.get(k)?.get(x)
       const b = highV.get(k)?.get(x)
       const f = fmtOf(k)
       const shown = stack === 'normalize' ? `${f(v)} (${formatPercent(totalAt.get(x) ? Math.max(0, v) / totalAt.get(x)! : 0, c.locale)})` : a !== undefined && b !== undefined ? `${f(v)} (${intervalText(f, a, b)})` : f(v)
-      return [{ label: sv.label, value: inBreak(v) ? c.t('inBreak', { value: shown }) : shown, color: sv.color }]
+      const text = inBreak(v) ? c.t('inBreak', { value: shown }) : shown
+      return [{ label: sv.label, value: note ? `${text} (${note})` : text, color: sv.color }]
     })
     if (!rows.length) return
     if (stack === 'center' && rows.length > 1) rows.push({ label: c.t('total'), value: fmt(totalAt.get(x) ?? 0) })
@@ -434,6 +451,7 @@ const SERIES_FIELDS: ChartDef['fields'] = {
   ...dualFields('as lines'),
   splitAt: { kind: 'values', max: 32, desc: 'x values at which lines are cut: the point at or after each one starts a new piece, and nothing is drawn across the cut (a change of definition, a series break). Dates as ISO strings; for a category x axis the category that starts the new piece. Markers, tooltips and the legend are unchanged.' },
   splits: { kind: 'valuesMap', max: 32, desc: 'Series name to the x values at which only that series is cut, e.g. {"Taiwan":["2026-04-01"]}: for a change of definition that hit one series and not the others. Same rules as `splitAt`, which cuts every series; the two add up.' },
+  notes: { kind: 'fieldMap', desc: 'Series name to the name of a text column: that row\'s text is added to the series\' tooltip line at its x (after the value), or stands in for it where the value is missing (a reason a figure is not given). Text is cut at 200 characters.' },
   gaps: { kind: 'enum', values: ['break', 'connect', 'zero'], desc: 'Default break. What a missing or null y does: `break` leaves a gap in the line, `connect` joins the points on either side, `zero` draws it as 0 (the tooltip says "missing"). Stacked areas always count a missing value as 0.' },
   ...intervalFields('y', 'a shaded band behind each line (one band per series; with long-form `series`, not with several `y` columns)')
 }

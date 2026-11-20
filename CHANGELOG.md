@@ -2,6 +2,12 @@
 
 All four npm packages (`@supersolutions/super-plot-core`, `-web`, `-react`, `-chat-plugin`) share one version.
 
+## Unreleased
+
+### Added
+
+- `notes` on line and area charts: series name to the name of a text column. That row's text is added to the series' tooltip line at its x, or stands in for the value where it is missing (a reason a figure is not given).
+
 ## 0.3.0 (2026-11-20)
 
 ### Added
