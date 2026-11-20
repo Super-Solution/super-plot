@@ -190,6 +190,8 @@ const PRINT_LIGHT: Record<string, string> = { dark: 'light', 'accessible-dark': 
 const TOUCH_SLOP = 12
 /** `highlight`: the most marks outlined (the rest of a larger match is left dimmed). */
 const REF_MAX = 2000
+/** Above this many marks the outlines are thin and without a halo. */
+const REF_DENSE = 200
 const SVG_NS = 'http://www.w3.org/2000/svg'
 
 let uid = 0
@@ -1773,6 +1775,8 @@ export class SuperPlot {
     const halo = el('g', { class: 'sp-ref-h', fill: 'none', stroke: bg, 'stroke-linejoin': 'round' })
     const line = el('g', { class: 'sp-ref-o', fill: 'none', stroke: ink, 'stroke-linejoin': 'round' })
     const over = el('g', { fill: 'none' })
+    // Many small marks (a cluster of dots): a thin outline and no halo, so their own colour still shows.
+    const dense = mm.marks.length > REF_DENSE
     for (const i of mm.marks.slice(0, REF_MAX)) {
       const m = scene.marks[i]
       const shape = this.refShape(m, el)
@@ -1787,11 +1791,13 @@ export class SuperPlot {
         hole.setAttribute('stroke-width', String(sw + 8))
       } else hole.setAttribute('fill', 'black')
       mask.appendChild(hole)
-      const hl = shape.cloneNode() as SVGElement
-      hl.setAttribute('stroke-width', String(stroked ? sw + 8 : 5))
-      halo.appendChild(hl)
+      if (stroked || !dense) {
+        const hl = shape.cloneNode() as SVGElement
+        hl.setAttribute('stroke-width', String(stroked ? sw + 8 : 5))
+        halo.appendChild(hl)
+      }
       const ol = shape.cloneNode() as SVGElement
-      ol.setAttribute('stroke-width', String(stroked ? sw + 4 : 2))
+      ol.setAttribute('stroke-width', String(stroked ? sw + 4 : dense ? 1 : 2))
       line.appendChild(ol)
       if (stroked && 'stroke' in m && m.stroke) {
         const again = shape.cloneNode() as SVGElement

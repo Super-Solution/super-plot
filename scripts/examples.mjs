@@ -14,7 +14,7 @@ const root = fileURLToPath(new URL('..', import.meta.url))
 const out = join(root, 'examples/dist')
 rmSync(out, { recursive: true, force: true })
 const alias = sourceAliases(root)
-for (const [dir, entry] of [['gallery', 'main.ts'], ['react', 'main.tsx'], ['canvas', 'main.ts'], ['maps', 'main.ts'], ['features', 'main.ts']]) {
+for (const [dir, entry] of [['gallery', 'main.ts'], ['react', 'main.tsx'], ['canvas', 'main.ts'], ['maps', 'main.ts'], ['features', 'main.ts'], ['chat', 'main.ts']]) {
   mkdirSync(join(out, dir), { recursive: true })
   await build({ entryPoints: [join(root, 'examples', dir, entry)], outfile: join(out, dir, 'main.js'), bundle: true, format: 'esm', target: 'es2022', alias, jsx: 'automatic', logLevel: 'warning' })
   for (const f of ['index.html', 'gallery.css']) if (existsSync(join(root, 'examples', dir, f))) cpSync(join(root, 'examples', dir, f), join(out, dir, f))
