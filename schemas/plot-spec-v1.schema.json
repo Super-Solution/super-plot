@@ -911,6 +911,14 @@
           "type": "boolean",
           "description": "Force markers on (`true`) or off (`false`). Default: markers when there are few points, otherwise only the last point."
         },
+        "yReverse": {
+          "type": "boolean",
+          "description": "Default false. Draw the left value axis upside down, larger values lower: for a measure where less is better (a rank, a latency, a price paid). The tick labels still read top to bottom, smallest first; say so in the axis title."
+        },
+        "rightReverse": {
+          "type": "boolean",
+          "description": "Default false. Draw the right value axis upside down, like `yReverse`. Needs `yRight`."
+        },
         "yBreak": {
           "type": "array",
           "minItems": 2,

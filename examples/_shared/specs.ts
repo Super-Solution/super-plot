@@ -95,6 +95,10 @@ export const gallery: { id: string; note: string; spec: Record<string, unknown> 
     spec: {
       type: 'line', title: 'Revenue against plan', subtitle: 'Monthly, USD thousands (invented figures)', x: 'month', y: ['actual', 'plan'], format: 'compact', yLabel: 'Revenue', dashes: { plan: 'dashed' },
       data: [['2026-01-01', 118, 120], ['2026-02-01', 126, 128], ['2026-03-01', 121, 136], ['2026-04-01', 139, 144], ['2026-05-01', 147, 152], ['2026-06-01', 152, 160]].map(([month, actual, plan]) => ({ month, actual, plan }))
+    id: 'line-reversed-axis', note: 'yReverse: an axis drawn upside down for a measure where less is better; rank 1 is at the top',
+    spec: {
+      type: 'line', title: 'League table position', subtitle: 'Rank by month, 1 is best (invented figures)', x: 'month', y: 'rank', yReverse: true, yDomain: [1, 8], format: 'integer', yLabel: 'Rank',
+      data: [['2026-01-01', 6], ['2026-02-01', 5], ['2026-03-01', 5], ['2026-04-01', 3], ['2026-05-01', 2], ['2026-06-01', 3]].map(([month, rank]) => ({ month, rank }))
     }
   },
   {

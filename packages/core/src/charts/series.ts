@@ -228,13 +228,13 @@ function compileSeries(c: ChartCtx, area: boolean): { series: ReturnType<ChartCt
   }
   // A stream graph's vertical position has no zero: the middle is half of each total. Tick values would read as
   // amounts that do not exist, so the axis shows no ticks or gridlines; the tooltip gives each value and the total.
-  const yAxis: Axis = stack === 'center' ? { scale: yScale, title: s.yLabel, grid: false, ticks: () => [] } : valueAxis(c, yScale, { title: s.yLabel, vertical: true, format: yfmt })
+  const yAxis: Axis = stack === 'center' ? { scale: yScale, title: s.yLabel, grid: false, ticks: () => [] } : { ...valueAxis(c, yScale, { title: s.yLabel, vertical: true, format: yfmt }), ...(s.yReverse ? { reverse: true } : {}) }
 
   const frame = c.frame({ series, autoSide: 'top' })
   let extras = {}
   if (rScale) {
     c.axisFields = { ...(c.axisFields ?? {}), y2: keysR.length === 1 ? keysR[0] : undefined }
-    const rightAxis = valueAxis(c, rScale, { title: s.yRightLabel, vertical: true, format: s.formatRight ?? s.format, grid: false })
+    const rightAxis: Axis = { ...valueAxis(c, rScale, { title: s.yRightLabel, vertical: true, format: s.formatRight ?? s.format, grid: false }), ...(s.rightReverse ? { reverse: true } : {}) }
     const ink = {
       ...(keysL.length === 1 ? { left: axisInk(c, keysL[0], 0, series[0].color) } : {}),
       ...(keysR.length === 1 ? { right: axisInk(c, keysR[0], keysL.length, series[keysL.length].color) } : {})
@@ -415,7 +415,7 @@ const seriesCheck = (area: boolean): NonNullable<ChartDef['check']> => (spec, ct
     left,
     refused: area && stacked ? 'a stacked area adds its series together, and a series on another scale cannot be part of that sum.' : !area && spec.yScale === 'log' ? 'the left axis is logarithmic; a log and a linear axis on one plot cannot be compared at all.' : undefined
   })
-  if (!area) breakCheck(spec, ctx, { values: lineValues(spec), bars: false, refused: spec.yScale === 'log' ? 'a log axis already compresses large values; cutting a span out of it as well would hide by how much.' : rightCols(spec).length ? 'with a right axis, a break on the left one would make the two scales even harder to compare.' : undefined })
+  if (!area) breakCheck(spec, ctx, { values: lineValues(spec), bars: false, refused: spec.yReverse ? 'the left axis is drawn upside down; a cut in it would be read the wrong way round.' : spec.yScale === 'log' ? 'a log axis already compresses large values; cutting a span out of it as well would hide by how much.' : rightCols(spec).length ? 'with a right axis, a break on the left one would make the two scales even harder to compare.' : undefined })
   if (multi && spec.series) {
     ctx.issues.push({ severity: 'warning', code: 'series_ignored', path: 'series', message: '`series` is ignored when `y` lists several columns.' })
   }
@@ -463,6 +463,8 @@ export const line: ChartDef = {
     ...SERIES_FIELDS,
     dashes: { kind: 'dashes', desc: 'Series name to line style: `solid` (the default), `dashed`, `dotted` or `dashdot`, e.g. {"Forecast":"dashed"}. Use it to tell a projection, a target or a comparison from the measured series; the legend swatch shows the style, so it does not rely on colour alone.' },
     points: { kind: 'boolean', desc: 'Force markers on (`true`) or off (`false`). Default: markers when there are few points, otherwise only the last point.' },
+    yReverse: { kind: 'boolean', desc: 'Default false. Draw the left value axis upside down, larger values lower: for a measure where less is better (a rank, a latency, a price paid). The tick labels still read top to bottom, smallest first; say so in the axis title.' },
+    rightReverse: { kind: 'boolean', desc: 'Default false. Draw the right value axis upside down, like `yReverse`. Needs `yRight`.' },
     yBreak: breakField('series of very different size share one axis; changes across the cut look smaller than they are.'),
     yScale: scaleField('y', 'growth, orders of magnitude'),
     xScale: { ...scaleField('x', 'sizes, frequencies'), desc: `${scaleField('x', 'sizes, frequencies').desc} Only for a numeric x; dates and categories are refused.` }

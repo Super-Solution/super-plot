@@ -1227,6 +1227,16 @@
           "desc": "Force markers on (`true`) or off (`false`). Default: markers when there are few points, otherwise only the last point."
         },
         {
+          "name": "yReverse",
+          "kind": "boolean",
+          "desc": "Default false. Draw the left value axis upside down, larger values lower: for a measure where less is better (a rank, a latency, a price paid). The tick labels still read top to bottom, smallest first; say so in the axis title."
+        },
+        {
+          "name": "rightReverse",
+          "kind": "boolean",
+          "desc": "Default false. Draw the right value axis upside down, like `yReverse`. Needs `yRight`."
+        },
+        {
           "name": "yBreak",
           "kind": "domain",
           "desc": "Cut the span [from, to] out of the value axis (a broken axis), so series of very different size share one axis; changes across the cut look smaller than they are. The cut is drawn as a zigzag gap across the axis and the plot, tick labels stay on both sides with the same units per pixel, and tooltips and the description give real values. Validation always adds an `axis_break` info issue with the hidden span; a value inside the span is a `break_hides_values` warning (drawn at the edge of the cut and marked). Refused on log and stacked axes and with `yRight`; zoom and brush on the broken axis are refused."

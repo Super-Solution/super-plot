@@ -21,6 +21,8 @@ export interface Axis {
   grid: boolean
   /** Ticks for an axis `length` px long. */
   ticks(length: number): AxisTick[]
+  /** A value axis drawn upside down: larger values lower (`yReverse`, `rightReverse`). */
+  reverse?: boolean
 }
 
 /**
@@ -64,8 +66,8 @@ export function layoutCartesian(c: ChartCtx, area: Rect, x: Axis, y: Axis, extra
   const plot: Rect = { x: left, y: area.y + xTop, w: plotW, h: Math.max(40, area.h - xTop - bottomH) }
 
   x.scale.range = [plot.x, plot.x + plot.w]
-  y.scale.range = y.scale.kind === 'band' ? [plot.y, plot.y + plot.h] : [plot.y + plot.h, plot.y]
-  if (right) right.scale.range = [plot.y + plot.h, plot.y]
+  y.scale.range = y.scale.kind === 'band' || y.reverse ? [plot.y, plot.y + plot.h] : [plot.y + plot.h, plot.y]
+  if (right) right.scale.range = right.reverse ? [plot.y, plot.y + plot.h] : [plot.y + plot.h, plot.y]
   const info = (a: Axis, field: unknown, ink?: string): AxisInfo => {
     const s = a.scale
     const f = typeof field === 'string' ? { field } : {}
