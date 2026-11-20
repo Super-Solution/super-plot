@@ -149,7 +149,7 @@ describe('SuperPlot (web)', () => {
     const light = host.querySelector('svg')!.innerHTML
     p.setOptions({ theme: 'dark' })
     expect(host.querySelector('svg')!.innerHTML).not.toBe(light)
-    expect(host.querySelector('svg')!.innerHTML).toContain('#131722')
+    expect(host.querySelector('svg')!.innerHTML).toContain('#17171A')
     p.setSpec(line)
     expect(host.querySelector('svg title')!.textContent).toBe('Weekly active users')
     p.dispose()
@@ -215,7 +215,7 @@ describe('<super-plot>', () => {
     el.addEventListener('plot-select', select)
     document.body.appendChild(el)
     expect(el.querySelector('svg')).not.toBeNull()
-    expect(el.querySelector('svg')!.innerHTML).toContain('#131722')
+    expect(el.querySelector('svg')!.innerHTML).toContain('#17171A')
     fire(el.querySelector('.sp-data[data-s="Q1"]')!, 'click')
     expect(select).toHaveBeenCalledTimes(1)
     el.spec = line

@@ -143,6 +143,12 @@ export interface AxisPair { x: Axis; y: Axis }
 
 const TONE: Record<string, string> = { neutral: 'text-muted', positive: 'positive', negative: 'negative', warning: 'warning', info: 'info' }
 
+/** An annotation's colour: its `tone`, else the accent for what an assistant added (violet means the agent), else muted. */
+function annotationColor(c: ChartCtx, a: { tone?: string } & AnnotationExtra): string {
+  if (a.tone === undefined && a.by === 'assistant') return c.c('accent')
+  return c.c(TONE[a.tone ?? 'neutral'] ?? 'text-muted')
+}
+
 /** Reference lines and bands from `spec.annotations`. */
 export function drawAnnotations(c: ChartCtx, plot: Rect, x: Axis, y: Axis): void {
   const list = (c.spec.annotations ?? []) as ({ axis: 'x' | 'y'; value: string | number; to?: string | number; label?: string; tone?: string } & AnnotationExtra | PointAnnotation)[]
@@ -160,7 +166,7 @@ export function drawAnnotations(c: ChartCtx, plot: Rect, x: Axis, y: Axis): void
       c.warn('annotation_out_of_range', `annotations[${i}]`, `Annotation ${i} (${a.axis}=${a.value}) is outside the plotted range and was skipped.`)
       continue
     }
-    const color = c.c(TONE[a.tone ?? 'neutral'] ?? 'text-muted')
+    const color = annotationColor(c, a)
     const horizontal = a.axis === 'y'
     const { label, tip, aria } = annotationText(c, a)
     // One tab stop per annotation: the note's tooltip goes on the label, or on the line or band when there is none.
@@ -230,7 +236,7 @@ function drawPointAnnotation(c: ChartCtx, plot: Rect, x: Axis, y: Axis, i: numbe
     c.warn('annotation_out_of_range', `annotations[${i}]`, `Annotation ${i} (x=${a.x}, y=${a.y}) is outside the plotted range and was skipped.`, 'Point annotations take x and y in the units of their axis: a category name, a number or an ISO date.')
     return
   }
-  const color = c.c(TONE[a.tone ?? 'neutral'] ?? 'text-muted')
+  const color = annotationColor(c, a)
   const size = c.size - 1
   const text = annotationText(c, a)
   const own = { ...(text.tip ? { tip: text.tip, aria: text.aria } : {}), ...(a.key !== undefined ? { key: a.key } : {}) }

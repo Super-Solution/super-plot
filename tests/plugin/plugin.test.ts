@@ -97,9 +97,10 @@ describe('the card', () => {
   })
 
   it('follows the host theme with safe values only', () => {
-    show(cardOf('t'), { theme: 'dark', hostTheme: { mode: 'dark', tokens: { background: '#101010', text: 'url(javascript:x)', 'font-sans': 'Inter, sans-serif' } } })
+    show(cardOf('t'), { theme: 'dark', hostTheme: { mode: 'dark', tokens: { background: '#101010', accent: '#ff5500', text: 'url(javascript:x)', 'font-sans': 'Inter, sans-serif' } } })
     const fig = box.querySelector<HTMLElement>('figure')!
     expect(fig.style.getPropertyValue('--sp-background')).toBe('#101010')
+    expect(fig.style.getPropertyValue('--sp-accent')).toBe('#ff5500')
     expect(fig.style.getPropertyValue('--sp-text')).toBe('')
     expect(fig.style.getPropertyValue('--sp-font')).toBe('Inter, sans-serif')
   })

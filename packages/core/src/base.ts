@@ -33,7 +33,7 @@ export { resolveRef, matchMarks, markRef, datePeriod, REF_PARAMS } from './resol
 export type { RefMatch, ResolveOptions, MarkMatch } from './resolve.js'
 export { ChartCtx } from './context.js'
 export type { FrameOptions } from './context.js'
-export { light, dark, createTheme, registerTheme, resolveTheme, listThemes, cssVar, seriesVar, resolveVars, PALETTE, FONT_STACK } from './theme.js'
+export { light, dark, createTheme, registerTheme, resolveTheme, listThemes, cssVar, seriesVar, resolveVars, PALETTE, PALETTE_DARK, PALETTE_TRADINGVIEW, FONT_STACK } from './theme.js'
 export type { Theme, ThemeInput, ThemeOption, RenderEnv } from './theme.js'
 export type { Scene, SceneAxes, AxisInfo, Mark, RectMark, PathMark, CircleMark, LineMark, TextMark, Tip, SeriesInfo, Role, Rect } from './scene.js'
 export { roundedRectPath } from './scene.js'

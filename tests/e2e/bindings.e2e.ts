@@ -52,7 +52,7 @@ describe('React example', () => {
     await page.locator('.sp-data').first().click()
     await expect.poll(() => page.locator('pre').innerText()).toContain('Jul')
     await page.getByRole('button', { name: 'dark' }).click()
-    await expect.poll(() => page.locator('svg > rect').first().evaluate(e => getComputedStyle(e).fill)).toBe('rgb(19, 23, 34)')
+    await expect.poll(() => page.locator('svg > rect').first().evaluate(e => getComputedStyle(e).fill)).toBe('rgb(23, 23, 26)')
     expect(await page.locator('svg').count()).toBe(1) // still one chart: no duplicate mounts
     await page.close()
   })

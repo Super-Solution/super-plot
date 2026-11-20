@@ -35,7 +35,7 @@ const MAX_KEPT = 64
 const VERSION = '0.1.0'
 const NAME = '@supersolutions/super-plot-chat-plugin'
 /** Host theme tokens that are also plot colours (`--sp-<token>`). */
-const COLOUR_TOKENS = ['background', 'surface', 'border', 'text', 'text-muted', 'positive', 'negative', 'warning', 'info'] as const
+const COLOUR_TOKENS = ['background', 'surface', 'border', 'text', 'text-muted', 'accent', 'positive', 'negative', 'warning', 'info'] as const
 
 interface Card {
   id: string

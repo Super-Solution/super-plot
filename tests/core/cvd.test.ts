@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { compilePlot, chartCatalog, createTheme, PALETTE } from '../../packages/core/src'
+import { compilePlot, chartCatalog, createTheme, listThemes, light, dark, PALETTE, PALETTE_DARK, PALETTE_TRADINGVIEW } from '../../packages/core/src'
 import { parseColor, cvdDistance, cvdDistances, indistinctPairs, simulate, oklab, CVD_MIN_DISTANCE } from '../../packages/core/src/util/cvd'
 
 const rgb = (c: string) => parseColor(c)!
@@ -60,6 +60,7 @@ describe('cvd maths', () => {
   it('passes the default, accessible and shadcn palettes in order (measured minimum 14.0 and 9.6)', () => {
     expect(indistinctPairs(PALETTE)).toEqual([])
     expect(indistinctPairs([...PALETTE, PALETTE[0]])).toEqual([])
+    expect(indistinctPairs(PALETTE_DARK)).toEqual([])
     expect(indistinctPairs(['#0072B2', '#E69F00', '#009E73', '#D55E00', '#CC79A7', '#56B4E9', '#7B6BC6', '#A0522D'])).toEqual([])
   })
 })
@@ -84,7 +85,7 @@ describe('colors_indistinct warning', () => {
 
   it('does not fire with patterns, for far-apart colours, for variables, or for one series', () => {
     expect(warn({ ...spec, colors: { A: '#d62728', B: '#2ca02c' }, patterns: true })).toEqual([])
-    expect(warn({ ...spec, colors: { A: '#1f77b4', B: '#ff7f0e' } })).toEqual([])
+    expect(warn({ ...spec, colors: { A: '#1f77b4', B: '#ff7f0e', C: '#1f77b4' } })).toEqual([])
     expect(warn({ ...spec, colors: { A: 'var(--a)', B: 'var(--b)' } })).toEqual([])
     expect(warn({ type: 'bar', x: 'k', y: 'A', colors: { A: '#d62728' }, data: rows })).toEqual([])
   })
@@ -95,8 +96,8 @@ describe('colors_indistinct warning', () => {
   })
 
   it('compares a user colour with the theme colour next to it', () => {
-    // B keeps palette colour 2 (#FF9800); a near-identical orange for A collides with it.
-    expect(warn({ ...spec, colors: { A: '#FF9900' } })).toHaveLength(1)
+    // B keeps palette colour 2 (#2FAE75); a near-identical green for A collides with it.
+    expect(warn({ ...spec, colors: { A: '#30AF76' } })).toHaveLength(1)
   })
 
   it('leaves theme-only pairs alone: the theme is the host\'s choice', () => {
@@ -111,5 +112,29 @@ describe('colors_indistinct warning', () => {
     for (const info of chartCatalog()) for (const theme of ['light', 'dark', 'accessible', 'accessible-dark', 'shadcn']) {
       expect(warn(info.example, { theme }), `${info.type} ${theme}`).toEqual([])
     }
+  })
+})
+
+describe('design system themes', () => {
+  it('light and dark carry the family palette, led by the accent, and tradingview keeps the old look', () => {
+    expect(light.palette).toEqual(PALETTE)
+    expect(dark.palette).toEqual(PALETTE_DARK)
+    expect(PALETTE[0]).toBe(light.colors.accent)
+    expect(PALETTE_DARK[0]).not.toBe(PALETTE[0])
+    expect(listThemes()).toEqual(expect.arrayContaining(['tradingview', 'tradingview-dark']))
+    expect(createTheme('tradingview').palette).toEqual(PALETTE_TRADINGVIEW)
+    expect(createTheme('tradingview-dark').colors.background).toBe('#131722')
+  })
+
+  it('draws what an assistant added in the accent, unless the annotation names a tone', () => {
+    const spec = { type: 'line', x: 'k', y: 'v', data: [{ k: 1, v: 1 }, { k: 2, v: 3 }] }
+    const fill = (annotation: object): unknown => {
+      const r = compilePlot({ ...spec, annotations: [annotation] })
+      if (!r.ok) throw new Error(JSON.stringify(r.issues))
+      return r.scene.marks.find((m: { role?: string; type: string }) => m.role === 'annotation' && m.type === 'text') ? (r.scene.marks.find((m: { role?: string; type: string }) => m.role === 'annotation' && m.type === 'text') as { fill: string }).fill : null
+    }
+    expect(fill({ axis: 'y', value: 2, label: 'Mean', by: 'assistant' })).toBe('var(--sp-accent, #6C4AF2)')
+    expect(fill({ axis: 'y', value: 2, label: 'Mean' })).toBe('var(--sp-text-muted, #5F5F68)')
+    expect(fill({ axis: 'y', value: 2, label: 'Mean', by: 'assistant', tone: 'negative' })).toBe('var(--sp-negative, #C2362B)')
   })
 })

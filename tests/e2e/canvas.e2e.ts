@@ -32,10 +32,10 @@ describe('canvas renderer in a real browser', () => {
     expect(await page.evaluate(() => (window as unknown as W).plot.getRenderer())).toBe('canvas')
     expect(await page.locator('.sp-cv canvas').count()).toBe(2)
     expect(await page.locator('svg').count()).toBe(0)
-    const blue = await countPixels(page, [41, 98, 255])
-    const orange = await countPixels(page, [255, 152, 0])
-    expect(blue).toBeGreaterThan(5000)
-    expect(orange).toBeGreaterThan(5000)
+    const violet = await countPixels(page, [108, 74, 242])
+    const green = await countPixels(page, [47, 174, 117])
+    expect(violet).toBeGreaterThan(5000)
+    expect(green).toBeGreaterThan(5000)
     await page.close()
   })
 
@@ -74,11 +74,11 @@ describe('canvas renderer in a real browser', () => {
 
   it('legend: a click on the label and the keyboard both toggle a series; pixels follow', async () => {
     const page = await open()
-    const before = await countPixels(page, [41, 98, 255])
+    const before = await countPixels(page, [108, 74, 242])
     const lk = page.locator('.sp-cv-lk[aria-label="Search: toggle series"]')
     await lk.focus()
     await page.keyboard.press('Enter')
-    await expect.poll(() => countPixels(page, [41, 98, 255])).toBeLessThan(before / 4)
+    await expect.poll(() => countPixels(page, [108, 74, 242])).toBeLessThan(before / 4)
     expect(await page.locator('.sp-cv-lk[aria-label="Search: toggle series"]').getAttribute('aria-pressed')).toBe('false')
     expect(await page.evaluate(() => document.activeElement?.getAttribute('aria-label'))).toBe('Search: toggle series') // focus survives the redraw
     const b = (await page.locator('.sp-cv canvas').first().boundingBox())!
@@ -87,7 +87,7 @@ describe('canvas renderer in a real browser', () => {
       return { x: m.x + 6, y: m.y + m.h / 2 }
     })
     await page.mouse.click(b.x + mark.x, b.y + mark.y)
-    await expect.poll(() => countPixels(page, [41, 98, 255])).toBeGreaterThan(before / 2)
+    await expect.poll(() => countPixels(page, [108, 74, 242])).toBeGreaterThan(before / 2)
     await page.close()
   })
 
