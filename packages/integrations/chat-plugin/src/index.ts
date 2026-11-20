@@ -3,16 +3,11 @@
 // Every chart type, registered: a chat may show any of them.
 import { SuperPlot, type SuperPlotOptions } from '@supersolutions/super-plot-web'
 import { LIMITS, formatCardRef, isSafeColor, parseCardRef, resolveRef, validatePlot, type CardRef, type CardRefEvent, type CardRefResult, type Issue } from '@supersolutions/super-plot-core/base'
-import { isThemeValue, readHostTheme, type CardMount, type CardMountContext, type CardMountHandle, type ChatPlugin, type HostTheme, type PluginTool } from '@supersolutions/super-protocol'
-import { PLOT_CARD_KIND, plotCardKind, validatePlotCardSpec, type PlotCardSpec } from './card.js'
+import { PLOT_CARD_KIND, PLOT_FALLBACK_MESSAGE, isThemeValue, plotCardKind, readHostTheme, validatePlotCardSpec, type CardMount, type CardMountContext, type CardMountHandle, type ChatPlugin, type HostTheme, type PlotCardSpec, type PluginTool } from '@supersolutions/super-protocol'
 
-export { PLOT_CARD_KIND, PLOT_LIMITS, plotCardKind, validatePlotCardSpec, type PlotCardSpec } from './card.js'
+export { PLOT_CARD_KIND, PLOT_LIMITS, plotCardKind, validatePlotCardSpec, type PlotCardSpec } from '@supersolutions/super-protocol'
 
-/**
- * A card handle that answers card references (`ref:<card id>?x=...`). Protocol 0.3.0 adds the optional `ref` to
- * `CardMountHandle`; 0.2.0, which this package depends on, does not have it yet, so it is added here with the same
- * shape (a copy, to drop once 0.3.0 is published).
- */
+/** A card handle that always answers card references (`ref:<card id>?x=...`); `ref` is optional in the protocol's `CardMountHandle`. */
 export interface PlotCardHandle extends CardMountHandle {
   ref(ref: CardRef | null, event: CardRefEvent): CardRefResult
 }
@@ -175,7 +170,13 @@ export function createPlotChatPlugin(options: PlotChatPluginOptions = {}): PlotC
       shown = signature
       if (context.partial === true) return note('The plot is still being written.', 'status')
       const valid = validatePlotCardSpec(raw)
-      if (!valid.ok) return note(`This plot card cannot be shown: ${valid.error}${valid.expected ? ` Expected ${valid.expected}.` : ''}`, 'alert')
+      if (!valid.ok) {
+        // The reason is for the developer and the model, never the reader (super-protocol 0.3.0): the reader gets the
+        // protocol's plain line and the card's own description of the plot when it has one.
+        console.warn(`[super-plot] The ${PLOT_CARD_KIND} card was refused: ${valid.error}${valid.expected ? ` Expected ${valid.expected}.` : ''}`)
+        const alt = typeof (raw as { alt?: unknown } | null)?.alt === 'string' ? (raw as { alt: string }).alt.trim() : ''
+        return note(alt ? `${PLOT_FALLBACK_MESSAGE} ${alt}` : PLOT_FALLBACK_MESSAGE, 'status')
+      }
       const spec = raw as PlotCardSpec
       const plotTheme = theme?.mode ?? context.theme
       if (card && card.id === (spec.id ?? card.id)) {

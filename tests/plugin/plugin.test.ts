@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { validateChatPlugin } from '@supersolutions/super-protocol'
+import { PLOT_FALLBACK_MESSAGE, validateChatPlugin } from '@supersolutions/super-protocol'
 import { createPlotChatPlugin, PLOT_CARD_KIND, PLOT_LIMITS, validatePlotCardSpec, type PlotCardHandle, type PlotChatPlugin } from '@supersolutions/super-plot-chat-plugin'
 import { parseCardRef, validatePlot, type CardRef } from '@supersolutions/super-plot-core'
 import cases from './plot-card.cases.json'
@@ -82,8 +82,16 @@ describe('the card', () => {
     const h = show(cardOf('s'), { ...ctx, partial: true })
     expect(box.querySelector('[role="status"]')!.textContent).toMatch(/still being written/)
     expect(h.ref(R('ref:s'), 'enter')).toMatchObject({ ok: false, code: 'card_not_ready' })
+    // A card it cannot show: the reader gets the protocol's plain line (and the card's alt when it has one); the
+    // validator's reason goes to the console, never the screen.
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     h.update({ kind: PLOT_CARD_KIND, spec: plotSpec() }, ctx)
-    expect(box.querySelector('[role="alert"]')!.textContent).toMatch(/alt must be a non-empty string/)
+    expect(box.querySelector('[role="status"]')!.textContent).toBe(PLOT_FALLBACK_MESSAGE)
+    h.update({ kind: PLOT_CARD_KIND, spec: { type: 'bar' }, alt: 'Revenue rose each month.', height: -1 }, ctx)
+    expect(box.querySelector('[role="status"]')!.textContent).toBe(`${PLOT_FALLBACK_MESSAGE} Revenue rose each month.`)
+    expect(box.textContent).not.toMatch(/alt must|height|super\.plot|Expected/)
+    expect(String(warn.mock.calls[0]![0])).toMatch(/alt must be a non-empty string/)
+    warn.mockRestore()
     h.update(cardOf('s'), ctx)
     expect(box.querySelector('svg')).not.toBeNull()
   })

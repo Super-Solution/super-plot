@@ -430,7 +430,7 @@ tool registry in a few lines. Suggested agent loop: `plot_catalog` -> write spec
 A **card reference** lets text elsewhere (a chat message, a report, an agent's answer) point into a plot:
 `[March was highest](ref:sales?x=2026-03)`. Hovering or focusing the words highlights the matching marks; a click or
 Enter brings them into view. The link format is the Super Protocol card-reference shell (`parseCardRef`,
-`formatCardRef`, `CARD_REF_LIMITS`; a marked copy until protocol 0.3.0 is published):
+`formatCardRef`, `CARD_REF_LIMITS`; core's marked copy of protocol 0.3.0's, since core imports nothing):
 `ref:<target>?<name>=<value>&...`, the target being the card's id, a repeated name a list (`x=a&x=b`), values
 percent-encoded, at most 512 characters. What the names mean is Super Plot's own vocabulary:
 

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2026 SUPER SOLUTION LABS INC
 /**
- * COPY of the card reference shell of super-protocol (PR #6, `implementations/typescript/src/ref.ts`, protocol
- * 0.3.0, not published yet). Replace this file with an import from `@supersolutions/super-protocol` once 0.3.0 is
- * on npm. Keep it identical until then: the types, names, limits and every message are the protocol's, and
+ * COPY of the card reference shell of super-protocol 0.3.0 (`implementations/typescript/src/ref.ts`). Core imports
+ * nothing, so it keeps this copy even though 0.3.0 is on npm; the chat plugin, which may import the protocol, uses
+ * this one too (one copy per language). Keep it identical: the types, names, limits and every message are the protocol's, and
  * `conformance/card-ref.v1.json` holds the protocol's own cases (`card_ref_parse`, `card_ref_format`), which this
  * copy and the Go and Python copies must pass. Only the envelope is copied: what the params mean for a plot is
  * Super Plot's own vocabulary (`resolveRef` in `resolve.ts`); the chart vocabulary stays in the protocol.
