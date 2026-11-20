@@ -2,7 +2,6 @@
   "name": "@supersolutions/super-plot-react",
   "version": "0.1.0",
   "description": "<SuperPlot> React component: a thin binding over the web mount.",
-  "private": true,
   "license": "Apache-2.0",
   "type": "module",
   "engines": {

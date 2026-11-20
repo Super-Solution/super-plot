@@ -500,6 +500,9 @@ export class SuperPlot {
   reveal(ref: CardRef | string): CardRefResult {
     const all = this.refMatch(ref, false)
     if (!all.ok) return { ok: false, code: all.code, reason: all.reason }
+    // A change still waiting for the next frame (a zoom set from code a moment ago) must be on screen before deciding
+    // what is off it: the scene from the last frame would put a point inside a zoom that has since moved away from it.
+    if (this.raf) this.drawNow()
     this.refOn = { ref, text: this.refText(ref) }
     const unhide = all.series.filter(k => this.hidden.has(k))
     if (unhide.length) {

@@ -2,7 +2,6 @@
   "name": "@supersolutions/super-plot-chat-plugin",
   "version": "0.1.0",
   "description": "Chat plugin for Super Plot: shows super.plot cards in a chat, answers card references, and gives an agent tools to read, highlight and annotate them.",
-  "private": true,
   "license": "Apache-2.0",
   "type": "module",
   "engines": {

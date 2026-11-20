@@ -22,10 +22,10 @@
 
 ## Open
 
-1. **Publishing.** Nothing is published to npm or PyPI yet; packages stay `private`. The Go module path follows the repository (`github.com/super-solution/super-plot/ports/go`); the Python distribution name `super-plot` is a placeholder.
+1. **Publishing.** The owner chose to publish 0.1.0 to npm (2026-11-20): `core`, `web`, `react` and `chat-plugin`, by hand from each package directory after `npm run build`, in that order. Nothing is on PyPI. The Go module path follows the repository (`github.com/super-solution/super-plot/ports/go`); the Python distribution name `super-plot` is a placeholder.
 2. **A native renderer in Go or Python?** The ports validate, describe and compute; they do not draw. Drawing in a second language means porting the layout of all 28 chart types (about 3,500 lines of TypeScript, plus text measurement, which differs per language) and keeping pixels close, not identical. Worth it only if a backend must produce SVG or PNG without Node. The scene is already a flat JSON structure, so the cheaper alternative is to run the TypeScript renderer where Node is available.
 3. **Rust.** The Rust core is closed per strategy; a Rust port would be a separate decision and would check against the same conformance data.
-4. **Chat plugin package**: built (`@supersolutions/super-plot-chat-plugin`, private, 0.1.0, Apache-2.0), against protocol 0.2.0 from npm. Not published (item 1).
+4. **Chat plugin package**: `@supersolutions/super-plot-chat-plugin` 0.1.0, Apache-2.0, against protocol 0.3.0 from npm. Published with the other packages (item 1).
 5. **More chart types.** Round 5 added 12 (waterfall, funnel, bullet, bump, violin, calendar, sunburst, parallel, waffle, beeswarm, timeline, stream graph via `stack: 'center'`). Still open: network graph, chord, arc, venn, marimekko (layout must be made deterministic; hard to read). Round 6 added gauge, word cloud, scatter3d and surface at the owner's request (safe by default). Still refused with reasons in COMPETITIVE.md: pictorial bars, 3D bars.
 6. **Vue, Svelte, Angular bindings.** Settled for now: the element is documented and tested for all three (properties, events); native packages only if DX asks.
 7. **Declared linking between charts.** The page-level part is built: `sync` (hover, zoom, brush across plots sharing a key). Still open: a selection named in one spec and used as a `transform` filter in another, without host code.
