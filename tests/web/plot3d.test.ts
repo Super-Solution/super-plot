@@ -4,6 +4,10 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { SuperPlot } from '@supersolutions/super-plot-web'
 import { chartCatalog, DEFAULT_CAMERA3D, type Camera, type Camera3d } from '@supersolutions/super-plot-core'
+import { loadCanvasChunk } from './stub2d'
+
+// The canvas renderer is loaded on demand: load it once, so canvas plots below draw at once.
+beforeAll(loadCanvasChunk)
 
 const ex = (t: string): Record<string, unknown> => structuredClone(chartCatalog().find(c => c.type === t)!.example) as Record<string, unknown>
 const small = { type: 'scatter3d', x: 'x', y: 'y', z: 'z', series: 'g', data: [{ x: 3, y: 1, z: 2, g: 'a' }, { x: 1, y: 5, z: 4, g: 'b' }, { x: 2, y: 2, z: 9, g: 'a' }, { x: 1, y: 2, z: 1, g: 'b' }] }

@@ -1,12 +1,15 @@
 // @vitest-environment jsdom
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createElement, createRef, act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { SuperPlot, type RenderEvent } from '@supersolutions/super-plot-web'
 import { defineSuperPlot } from '@supersolutions/super-plot-web/element'
 import { SuperPlot as ReactPlot } from '@supersolutions/super-plot-react'
 import { chartCatalog, DEFAULT_STRINGS, renderToSvg, type Scene } from '@supersolutions/super-plot-core'
-import { stub2d } from './stub2d'
+import { stub2d, loadCanvasChunk } from './stub2d'
+
+// The canvas renderer is loaded on demand: load it once, so canvas plots below draw at once.
+beforeAll(loadCanvasChunk)
 
 const realGetContext = HTMLCanvasElement.prototype.getContext
 const rect = { width: 600, height: 400, top: 0, left: 0, right: 600, bottom: 400, x: 0, y: 0, toJSON() {} } as DOMRect

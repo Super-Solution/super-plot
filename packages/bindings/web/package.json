@@ -10,7 +10,7 @@
   },
   "sideEffects": [
     "./dist/index.js",
-    "./dist/element.js",
+    "./dist/element-entry.js",
     "./dist/super-plot.global.js",
     "./src/index.ts",
     "./src/element-entry.ts",
@@ -36,8 +36,8 @@
       "import": "./dist/base.js"
     },
     "./element": {
-      "types": "./dist/element.d.ts",
-      "import": "./dist/element.js"
+      "types": "./dist/element-entry.d.ts",
+      "import": "./dist/element-entry.js"
     },
     "./global": "./dist/super-plot.global.js"
   },
@@ -47,7 +47,7 @@
         "./dist/base.d.ts"
       ],
       "element": [
-        "./dist/element.d.ts"
+        "./dist/element-entry.d.ts"
       ]
     }
   },

@@ -5,7 +5,10 @@ import { defineSuperPlot } from '@supersolutions/super-plot-web/element'
 import { compilePlot, type Issue } from '@supersolutions/super-plot-core'
 import { NAV_HEIGHT, overviewOf, thinPath } from '../../packages/bindings/web/src/navigator'
 import { CSS } from '../../packages/bindings/web/src/styles'
-import { stub2d } from './stub2d'
+import { stub2d, loadCanvasChunk } from './stub2d'
+
+// The canvas renderer is loaded on demand: load it once, so canvas plots below draw at once.
+beforeAll(loadCanvasChunk)
 
 const realGetContext = HTMLCanvasElement.prototype.getContext
 let host: HTMLDivElement

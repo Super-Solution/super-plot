@@ -4,6 +4,7 @@
 //   node scripts/examples.mjs          build + serve on http://localhost:5173/
 //   node scripts/examples.mjs --build  build only
 import { build } from 'esbuild'
+import { sourceAliases } from './aliases.mjs'
 import { cpSync, createReadStream, existsSync, mkdirSync, rmSync, statSync } from 'node:fs'
 import { createServer } from 'node:http'
 import { extname, join, normalize } from 'node:path'
@@ -12,14 +13,7 @@ import { fileURLToPath } from 'node:url'
 const root = fileURLToPath(new URL('..', import.meta.url))
 const out = join(root, 'examples/dist')
 rmSync(out, { recursive: true, force: true })
-const alias = {
-  '@supersolutions/super-plot-core/base': join(root, 'packages/core/src/base.ts'),
-  '@supersolutions/super-plot-core/charts': join(root, 'packages/core/src/charts.ts'),
-  '@supersolutions/super-plot-core': join(root, 'packages/core/src/index.ts'),
-  '@supersolutions/super-plot-web/base': join(root, 'packages/bindings/web/src/base.ts'),
-  '@supersolutions/super-plot-web': join(root, 'packages/bindings/web/src/index.ts'),
-  '@supersolutions/super-plot-react': join(root, 'packages/bindings/react/src/index.tsx')
-}
+const alias = sourceAliases(root)
 for (const [dir, entry] of [['gallery', 'main.ts'], ['react', 'main.tsx'], ['canvas', 'main.ts'], ['maps', 'main.ts'], ['features', 'main.ts']]) {
   mkdirSync(join(out, dir), { recursive: true })
   await build({ entryPoints: [join(root, 'examples', dir, entry)], outfile: join(out, dir, 'main.js'), bundle: true, format: 'esm', target: 'es2022', alias, jsx: 'automatic', logLevel: 'warning' })

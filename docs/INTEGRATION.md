@@ -2,25 +2,74 @@
 
 ## Import only what you use
 
-The package roots register every chart, so `import { renderToSvg } from '@supersolutions/super-plot-core'` keeps working. To ship only the charts you draw, import from `/base` and register from `/charts`:
+Start from `/base` and register what the page draws. The everyday charts are one group:
 
 ```ts
-import { registerChart, validatePlot, renderToSvg } from '@supersolutions/super-plot-core/base'
-import { bar, line } from '@supersolutions/super-plot-core/charts'
-import { SuperPlot } from '@supersolutions/super-plot-web/base'      // React: '@supersolutions/super-plot-react/base'
-registerChart(bar); registerChart(line)
+import { registerCharts, validatePlot, renderToSvg } from '@supersolutions/super-plot-core/base'
+import { basicCharts } from '@supersolutions/super-plot-core/charts/basic'   // bar, line, area, scatter, pie, donut, histogram, box, heatmap
+import { SuperPlot } from '@supersolutions/super-plot-web/base'              // React: '@supersolutions/super-plot-react/base'
+registerCharts(basicCharts)
 ```
 
-Measured with `npm run size` (esbuild, minified + gzip, 0.4.0): validating a bar chart 21.9 KB against 93.5 KB for everything; `renderToSvg` with bar 32.8 KB against 102.0 KB; the browser binding with bar and line 66.8 KB against 128.3 KB (chunks loaded on demand excluded). Map code (geography import, projections) only comes in with the map charts.
+Add more the same way, a group or single charts: `/charts/business` (waterfall, bullet, funnel, waffle, timeline,
+gauge), `/charts/stats` (violin, beeswarm, parallel, radar, bump, calendar), `/charts/maps` (choropleth, bubble map,
+column map, flow map: they bring the projection maths), `/charts/hierarchy` (treemap, sunburst, sankey), `/charts/3d`
+(scatter3d, surface) and `/charts/text` (wordcloud). Each group exports its charts one by one too
+(`import { waterfall } from '@supersolutions/super-plot-core/charts/business'; registerChart(waterfall)`), and
+`/charts` still exports every chart, `allCharts` and `chartGroups`. Every chart is in exactly one group.
 
-**Loaded on demand.** Parts of the browser binding that only some pages use are separate chunks, fetched the first time a plot needs them (your bundler emits them next to the main file; serve them from the same place): the WebGL layer, the `navigator` strip (8 KB minified), the `toolbar` (1.5 KB) and the map controls (drag, pinch, keys and zoom buttons on an interactive map, 4.5 KB). The chart itself is always drawn before the constructor, `setSpec` or `setOptions` returns; a chunk only adds its part a moment later, without moving anything: the navigator's 44 px are kept at once (an empty strip until it is drawn), the toolbar and the map buttons float over the chart. The `<script>` bundle (`super-plot.global.js`) has everything inlined.
+**Transform steps are registered the same way.** `/base` checks the shape of a `transform` (every step is still in
+the JSON Schema and SPEC.md) but carries no step code. Register the steps the specs use:
+
+```ts
+import { registerTransforms } from '@supersolutions/super-plot-core/base'
+import { filterStep, aggregateStep } from '@supersolutions/super-plot-core/transforms'   // or allTransforms
+registerTransforms([filterStep, aggregateStep])
+```
+
+A spec that uses a step this bundle did not register is refused, never run without it: the error
+`transform_not_registered` at `transform[i].<step>`, with a hint that names the import. Specs without `transform`
+need nothing.
+
+**Quick start, agents, servers: the package root.** `@supersolutions/super-plot-core`, `@supersolutions/super-plot-web`
+and `@supersolutions/super-plot-react` register every chart type and transform step and re-export every entry point,
+so `import { renderToSvg } from '@supersolutions/super-plot-core'` draws any spec an agent sends. Use it where bundle
+size does not matter (Node, a server, a prototype, an agent tool that must accept every chart); the MCP tools in
+`/tools` use it.
+
+### Entry points and what they cost
+
+`npm run size` (esbuild, minified + gzip, the entry and what it imports statically; code loaded on demand apart;
+measured on the built packages, as an app imports them). `npm run gate` fails when a case grows past its budget
+(`scripts/size.mjs`).
+
+| Import | What is in it | KB gzip |
+|---|---|---|
+| core `/base`, `renderToSvg`, no chart | validation, layout, SVG, themes, the transform loop; no chart, no step | 19.9 |
+| core `/base` + `bar`, `validatePlot` | | 23.9 |
+| core `/base` + `bar`, `renderToSvg` | | 34.4 |
+| core `/base` + `/charts/basic` | the nine everyday charts | 54.2 |
+| core `/base` + `/charts/basic` + `/transforms` | every transform step (5.2 KB more) | 59.4 |
+| core `.` (everything) | every chart and step, `/canvas`, `/view` | 124.9 |
+| web `/base`, no chart | `SuperPlot` (SVG path, hover, keyboard, zoom, brush, sync, sound, styles) | 40.3 |
+| web `/base` + bar + line | | 63.3 |
+| web `/base` + `/charts/basic` | | 75.8 |
+| web `.` (everything) | | 147.8 |
+
+Core entry points that are not chart groups: `/charts` (every chart), `/transforms` (the steps, `TRANSFORM_DOCS`,
+`filterRow`, `bucket`), `/canvas` (`drawScene`, `drawHover`, `buildHitIndex`, `resolveColor`, `drawPatternTile`: draw
+a scene on any 2D context), `/view` (map projections and the 3D view: `makeView`, `project`, `makeView3d`,
+`project3d`, `arcPoints`, ...; `/base` keeps the cameras and their limits, `clampCamera`, `clampCamera3d`), `/tools`
+(agent tools) and `/adapters`. The package root re-exports all of them.
+
+**Loaded on demand.** Parts of the browser binding that only some pages use are separate chunks, fetched the first time a plot needs them (your bundler emits them next to the main file; serve them from the same place): the canvas renderer (6.6 KB gzip with core's `/canvas`), the WebGL layer (9.4 KB), the transitions (3.9 KB), the `navigator` strip (3.4 KB), the map and 3D camera controls (drag, pinch, keys and zoom buttons, 2.3 KB, plus 1.8 KB of projection maths shared with the WebGL layer) and the `toolbar` (0.7 KB); sizes as `npm run size` lists them for a web `/base` page. An SVG chart is always drawn before the constructor, `setSpec` or `setOptions` returns; a chunk only adds its part a moment later, without moving anything: the navigator's 44 px are kept at once (an empty strip until it is drawn), the toolbar and the map buttons float over the chart. A chart that needs the canvas renderer (`renderer: 'canvas'` or `'webgl'`, or `auto` above `canvasAbove` marks) waits for it the first time on a page: the plot keeps its room and what it showed (the previous drawing, or the server's markup), and `getScene()`, `onRender` and the canvas come with the first canvas frame. Later plots on the page draw at once. The `<script>` bundle (`super-plot.global.js`) has everything inlined.
 
 ```ts
 const plot = new SuperPlot(el, spec, { navigator: true, toolbar: true })
 await plot.ready()   // the strip and the buttons are drawn: take the screenshot, run the test
 ```
 
-`plot.ready()` settles once every chunk this plot needs for what it shows now is loaded and drawn (navigator, toolbar, map controls, WebGL layer); with nothing pending it settles at once. It never rejects: a chunk that fails to load (a 404, the network) is reported once through `onIssues` as the warning `load_failed` (the chart stays, without that part; the next draw tries again), and WebGL falls back to canvas as before. `sonify()` is not split (its note plan is the public `sonifyNotes` export, so it is in the bundle either way) and plays at once.
+`plot.ready()` settles once every chunk this plot needs for what it shows now is loaded and drawn (canvas renderer, navigator, toolbar, map controls, WebGL layer, transitions); with nothing pending it settles at once. `toPng()` waits for it. It never rejects: a chunk that fails to load (a 404, the network) is reported once through `onIssues` as the warning `load_failed` (the chart stays, without that part; a canvas chart is drawn on SVG instead; the next draw tries again), and WebGL falls back to canvas as before. `sonify()` is not split: it returns its notes at once (the controller's `notes`), which needs the note plan in the bundle, so `sonifyNotes` stays in web `/base` (about 1.6 KB gzip).
 
 ## Events, zoom, brush and linked charts
 

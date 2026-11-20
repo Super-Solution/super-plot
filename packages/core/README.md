@@ -11,9 +11,10 @@ const alt   = describePlot(spec)           // { ok, text } plain-language summar
 const svg   = renderToSvg(spec, { width: 640, height: 360, theme: 'dark' })
 ```
 
-- `compilePlot(spec, opts)` returns `{ ok, scene, issues }` for a custom renderer. `drawScene(ctx, scene, opts)` draws a scene on any object shaped like a 2D canvas context (no DOM), and `buildHitIndex(scene)` gives fast hover lookup.
+- The package root registers every chart type and transform step. For a smaller bundle import `/base` and register what you use: a chart group (`registerCharts(basicCharts)` from `/charts/basic`; also `/charts/business`, `/charts/stats`, `/charts/maps`, `/charts/hierarchy`, `/charts/3d`, `/charts/text`, or single charts from `/charts`) and the transform steps (`registerTransforms(allTransforms)` from `/transforms`). See `docs/INTEGRATION.md`.
+- `compilePlot(spec, opts)` returns `{ ok, scene, issues }` for a custom renderer. `drawScene(ctx, scene, opts)` (from `/canvas`, or the root) draws a scene on any object shaped like a 2D canvas context (no DOM), and `buildHitIndex(scene)` gives fast hover lookup. Map projections and the 3D view (`makeView`, `project`, `makeView3d`, ...) are in `/view`.
 - `valueFormatter(format, locale)` and `formatPercent` format numbers the way the charts do.
-- `chartCatalog()` and `plotJsonSchema()` describe every chart for agents; `registerChart(def)` adds one.
+- `chartCatalog()` and `plotJsonSchema()` describe every registered chart for agents; `registerChart(def)` adds one.
 - `createTheme`, `registerTheme`, `resolveVars` for themes; see `docs/THEMING.md`.
 - `@supersolutions/super-plot-core/tools`: agent tools (`plot_catalog`, `plot_schema`, `plot_validate`, `plot_describe`, `plot_render_svg`), all read-only.
 - `@supersolutions/super-plot-core/adapters`: `fromChatChartCard` turns a Super Chat `chart` card into a spec.

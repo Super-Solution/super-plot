@@ -40,11 +40,15 @@ new SuperPlot(document.getElementById('chart')!, spec, { theme: 'auto', onSelect
 // <super-plot spec='{"type":"bar", ...}'></super-plot>   (Vue, Svelte, Angular, plain HTML)
 ```
 
-| Package | What it is |
-|---|---|
-| `@supersolutions/super-plot-core` | Spec validation, layout to a serializable scene, SVG string, themes, agent tools. No DOM. |
-| `@supersolutions/super-plot-web` | `SuperPlot` class (resize, tooltip, hover, legend toggle, zoom, pan, brush, live append, plugins, data table, PNG/SVG export; canvas and WebGL automatically for dense charts and 3D maps; map camera control) and the `<super-plot>` element. |
-| `@supersolutions/super-plot-react` | `<SuperPlot>`: a thin binding over the web class. |
+| Package | What it is | Entry points |
+|---|---|---|
+| `@supersolutions/super-plot-core` | Spec validation, layout to a serializable scene, SVG string, themes, agent tools. No DOM. | `.` (everything registered), `/base` (nothing registered), chart groups `/charts/basic`, `/charts/business`, `/charts/stats`, `/charts/maps`, `/charts/hierarchy`, `/charts/3d`, `/charts/text` (and `/charts`, every chart), `/transforms`, `/canvas`, `/view`, `/tools`, `/adapters` |
+| `@supersolutions/super-plot-web` | `SuperPlot` class (resize, tooltip, hover, legend toggle, zoom, pan, brush, live append, plugins, data table, PNG/SVG export; canvas and WebGL automatically for dense charts and 3D maps; map camera control) and the `<super-plot>` element. | `.`, `/base`, `/element`, `/global` (a `<script>` file) |
+| `@supersolutions/super-plot-react` | `<SuperPlot>`: a thin binding over the web class. | `.`, `/base` |
+
+Quick start and agents: the package roots (everything registered). For a page: `/base` plus the groups it draws,
+`registerCharts(basicCharts)`; the browser binding with the nine basic charts is 75.8 KB gzip against 147.8 KB for
+everything ([INTEGRATION](docs/INTEGRATION.md#import-only-what-you-use) has the table).
 
 Other languages ([`ports/`](ports/README.md)): **Go and Python** validate a spec, write its plain-language description and compute the shared numbers, identical to TypeScript (they do not draw).
 

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2026 SUPER SOLUTION LABS INC
 import type { AxisInfo, Mark, Scene } from '@supersolutions/super-plot-core/base'
-import { markCenter } from './canvas.js'
+import { markCenter } from './marks.js'
 import { invert, pixelOf } from './interact.js'
 
 /** The `sync` option in object form. */

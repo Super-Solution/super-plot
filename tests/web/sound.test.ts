@@ -1,7 +1,11 @@
 // @vitest-environment jsdom
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { SuperPlot, sonifyNotes } from '@supersolutions/super-plot-web'
 import { chartCatalog, compilePlot, type Issue } from '@supersolutions/super-plot-core'
+import { loadCanvasChunk } from './stub2d'
+
+// The canvas renderer is loaded on demand: load it once, so canvas plots below draw at once.
+beforeAll(loadCanvasChunk)
 
 HTMLCanvasElement.prototype.getContext = (() => null) as typeof HTMLCanvasElement.prototype.getContext
 

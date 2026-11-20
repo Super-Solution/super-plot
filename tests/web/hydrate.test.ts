@@ -1,7 +1,11 @@
 // @vitest-environment jsdom
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { SuperPlot } from '@supersolutions/super-plot-web'
 import { chartCatalog, renderToSvg, svgKey } from '@supersolutions/super-plot-core'
+import { loadCanvasChunk } from './stub2d'
+
+// The canvas renderer is loaded on demand: load it once, so canvas plots below draw at once.
+beforeAll(loadCanvasChunk)
 
 const bar = chartCatalog().find(c => c.type === 'bar')!.example
 const line = chartCatalog().find(c => c.type === 'line')!.example

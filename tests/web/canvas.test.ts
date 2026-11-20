@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { SuperPlot } from '@supersolutions/super-plot-web'
-import { chartCatalog } from '@supersolutions/super-plot-core'
+import { chartCatalog, renderToSvg, type Issue } from '@supersolutions/super-plot-core'
+import { loadCanvasChunk } from './stub2d'
 
 // A recording 2D context: jsdom has none. Real pixels are checked in the browser suite (tests/e2e).
 const calls: string[] = []
@@ -26,6 +27,87 @@ beforeEach(() => {
 })
 afterEach(() => {
   document.body.innerHTML = ''
+})
+
+// The tests run with the canvas chunk loaded, except those that import a fresh copy of the binding.
+beforeAll(loadCanvasChunk)
+
+describe('the canvas renderer is loaded on demand', () => {
+  // A fresh module registry each time: the canvas chunk is not loaded yet.
+  const fresh = async (): Promise<typeof SuperPlot> => {
+    vi.resetModules()
+    return (await import('@supersolutions/super-plot-web')).SuperPlot
+  }
+  afterEach(() => { vi.doUnmock('../../packages/bindings/web/src/canvas') })
+
+  it('a big chart waits for it: nothing half-drawn, the scene and onRender come with the first canvas frame', async () => {
+    const Fresh = await fresh()
+    const renders: string[] = []
+    const p = new Fresh(host, dots(6000), { width: 600, height: 400, onRender: e => renders.push(e.renderer) })
+    expect(host.querySelector('canvas')).toBeNull()
+    expect(host.querySelector('svg')).toBeNull()
+    expect(p.getScene()).toBeNull()
+    expect(renders).toEqual([])
+    // The room is kept, so nothing moves when it arrives.
+    expect(host.querySelector<HTMLElement>('.sp-root')!.style.height).toBe('400px')
+    await p.ready()
+    expect(p.getRenderer()).toBe('canvas')
+    expect(host.querySelectorAll('canvas')).toHaveLength(2)
+    expect(p.getScene()!.marks.length).toBeGreaterThan(6000)
+    expect(renders).toEqual(['canvas'])
+    p.dispose()
+  })
+  it('a chart that grows past the threshold keeps its SVG (and the scene it drew) until the canvas is here', async () => {
+    const Fresh = await fresh()
+    const p = new Fresh(host, dots(50), { width: 600, height: 400 })
+    expect(p.getRenderer()).toBe('svg')
+    const before = p.getScene()
+    p.setSpec(dots(6000))
+    expect(host.querySelector('svg')).not.toBeNull()
+    expect(p.getScene()).toBe(before)
+    await p.ready()
+    expect(p.getRenderer()).toBe('canvas')
+    expect(host.querySelector('svg')).toBeNull()
+    expect(p.getScene()).not.toBe(before)
+    p.dispose()
+  })
+  it('server markup stays on screen while it loads, then the canvas replaces it', async () => {
+    const Fresh = await fresh()
+    host.innerHTML = renderToSvg(bar, { width: 600, height: 400, hydrate: true })
+    const p = new Fresh(host, bar, { width: 600, height: 400, renderer: 'canvas' })
+    expect(host.querySelector('svg[data-sp-key]')).not.toBeNull()
+    await p.ready()
+    expect(p.getRenderer()).toBe('canvas')
+    expect(host.querySelector('svg')).toBeNull()
+    p.dispose()
+  })
+  it('an SVG chart never fetches it', async () => {
+    let fetched = 0
+    vi.doMock('../../packages/bindings/web/src/canvas', async importOriginal => {
+      fetched++
+      return importOriginal()
+    })
+    const Fresh = await fresh()
+    const p = new Fresh(host, bar, { width: 600, height: 400 })
+    await p.ready()
+    expect(fetched).toBe(0)
+    p.setOptions({ renderer: 'canvas' })
+    await p.ready()
+    expect(fetched).toBe(1)
+    expect(p.getRenderer()).toBe('canvas')
+    p.dispose()
+  })
+  it('when it cannot be fetched, the chart is drawn on SVG and a load_failed warning says why', async () => {
+    vi.doMock('../../packages/bindings/web/src/canvas', () => { throw new Error('offline') })
+    const Fresh = await fresh()
+    const seen: Issue[][] = []
+    const p = new Fresh(host, dots(6000), { width: 600, height: 400, onIssues: i => seen.push(i) })
+    await p.ready()
+    expect(p.getRenderer()).toBe('svg')
+    expect(host.querySelectorAll('circle.sp-data').length).toBe(6000)
+    expect(seen.flat().map(i => i.code)).toContain('load_failed')
+    p.dispose()
+  })
 })
 
 describe('canvas renderer', () => {

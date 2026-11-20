@@ -211,7 +211,7 @@ describe('transform edge cases', () => {
     expect((r.spec!.data as { k: string }[]).map(x => x.k)).toEqual(['y', 'x'])
   })
   it('buckets early years correctly and refuses times outside years 1 to 9999', async () => {
-    const { bucket } = await import('../../packages/core/src/transform')
+    const { bucket } = await import('../../packages/core/src/transforms')
     expect(bucket(Date.parse('0050-06-15T00:00:00Z'), 'month')).toBe('0050-06-01')
     expect(bucket(Date.parse('0050-06-15T00:00:00Z'), 'year')).toBe('0050-01-01')
     const issues: Issue[] = []

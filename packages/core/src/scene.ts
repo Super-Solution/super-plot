@@ -188,3 +188,10 @@ export function roundedRectPath(x: number, y: number, w: number, h: number, r: [
     'Z'
   )
 }
+
+/** How many marks the viewer can hover or select: what decides between SVG and canvas. */
+export const dataMarkCount = (scene: Scene): number => {
+  let n = 0
+  for (const m of scene.marks) if (m.role === 'data') n++
+  return n
+}

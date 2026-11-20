@@ -42,6 +42,11 @@ export function registerChart(def: ChartDef): void {
   defs.set(def.type, def)
 }
 
+/** Register several chart types at once, e.g. a group: `registerCharts(basicCharts)` (`@supersolutions/super-plot-core/charts/basic`). */
+export function registerCharts(list: readonly ChartDef[]): void {
+  for (const d of list) registerChart(d)
+}
+
 export const getChart = (type: string): ChartDef | undefined => defs.get(type)
 export const chartTypes = (): string[] => [...defs.keys()]
 

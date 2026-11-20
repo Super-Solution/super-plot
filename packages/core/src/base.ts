@@ -1,18 +1,21 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2026 SUPER SOLUTION LABS INC
 /**
- * Everything in core except the chart types: register the ones you use with `registerChart` (from
- * `@supersolutions/super-plot-core/charts`) and a bundler leaves the others out. The package root registers them all.
+ * Everything in core except the chart types and the transform steps: register the ones you use with
+ * `registerCharts` (a group such as `@supersolutions/super-plot-core/charts/basic`, or single charts from
+ * `/charts`) and `registerTransforms` (`/transforms`), and a bundler leaves the others out. The canvas renderer
+ * (`/canvas`) and the map and 3D projections (`/view`) are entry points of their own. The package root registers
+ * and re-exports everything.
  */
 export { compilePlot, compileOrThrow, renderToSvg, defaultHeight } from './compile.js'
 export type { RenderOptions, CompileResult, PlotPlugin, HydrateOptions } from './compile.js'
 export { MAX_FACETS } from './compile.js'
-export { applyTransform, filterRow, bucket, MIN_TIME, MAX_TIME, TRANSFORM_OPS, TIME_UNITS, AGGREGATE_OPS, WINDOW_OPS, TRANSFORM_LIMIT, TRANSFORM_KEYS, TRANSFORM_DOCS, BIN_LIMIT, FOLD_LIMIT } from './transform.js'
-export type { TransformStep, FilterStep } from './transform.js'
+export { applyTransform, registerTransforms, registerTransform, transformTypes, MIN_TIME, MAX_TIME, TRANSFORM_OPS, TIME_UNITS, AGGREGATE_OPS, WINDOW_OPS, TRANSFORM_LIMIT, TRANSFORM_KEYS, BIN_LIMIT, FOLD_LIMIT } from './transform.js'
+export type { TransformStep, FilterStep, TransformDef, TransformCtx, TransformOp } from './transform.js'
 export { PATTERNS, PATTERN_SIZE, PATTERN_OPACITY, patternAt } from './patterns.js'
 export type { PatternTile } from './patterns.js'
 export { renderSvg, escapeXml, svgKey } from './svg.js'
-export { drawScene, drawHover, buildHitIndex, resolveColor, dataMarkCount, drawPatternTile } from './canvas.js'
+export { dataMarkCount } from './scene.js'
 export type { Canvas2D, DrawOptions, HitIndex, Path2DCtor } from './canvas.js'
 export type { SvgOptions } from './svg.js'
 export { validatePlot, PlotSpecError } from './validate.js'
@@ -22,7 +25,7 @@ export { plotTable, plotCsv, csvCell } from './table.js'
 export type { PlotTable, CsvOptions } from './table.js'
 export { chartCatalog, plotJsonSchema } from './catalog.js'
 export type { ChartInfo, FieldInfo } from './catalog.js'
-export { registerChart, getChart, chartTypes } from './registry.js'
+export { registerChart, registerCharts, getChart, chartTypes } from './registry.js'
 export type { ChartDef } from './registry.js'
 export { ChartCtx } from './context.js'
 export type { FrameOptions } from './context.js'
@@ -64,12 +67,13 @@ export { DEFAULT_STRINGS, MAX_STRING_LENGTH, resolveStrings, fillString } from '
 export type { UiStringKey, UiStrings } from './strings.js'
 export { registerGeography, unregisterGeography, getGeography, listGeographies, readGeography, matchRegion, normalizeRegion, GeographyError, GEO_PRESETS, GEO_LIMITS } from './geo/geography.js'
 export type { Geography, GeographyOptions, GeoRegion, Ring } from './geo/geography.js'
-export { makeView, project, projectFlat, unprojectFlat, dragCamera, zoomCamera, defaultCamera, clampCamera, slerp, angularDistance, worldOutline, OBLIQUE, CAMERA_LIMITS } from './geo/view.js'
-export type { Camera, ViewParams, ViewInput, Projection, GeoViewKind, Projected } from './geo/view.js'
-export { arcPoints } from './geo/draw.js'
+export { clampCamera, CAMERA_LIMITS } from './geo/camera.js'
+export type { Camera } from './geo/camera.js'
+export type { ViewParams, ViewInput, Projection, GeoViewKind, Projected } from './geo/view.js'
 export type { SceneGeo, GeoRegionItem, GeoPointItem, GeoColumnItem, GeoArcItem } from './scene.js'
-export { isMapType } from './charts/maps.js'
-export { makeView3d, project3d, dragCamera3d, zoomCamera3d, clampCamera3d, camera3dOf, CAMERA3D_LIMITS, DEFAULT_CAMERA3D, EYE_DISTANCE } from './view3d.js'
-export type { Camera3d, View3d, View3dInput, Projection3d, Projected3d } from './view3d.js'
+export { isMapType } from './charts/kinds.js'
+export { clampCamera3d, camera3dOf, CAMERA3D_LIMITS, DEFAULT_CAMERA3D } from './camera3d.js'
+export type { Camera3d } from './camera3d.js'
+export type { View3d, View3dInput, Projection3d, Projected3d } from './view3d.js'
 export type { SceneView3d } from './scene.js'
-export { is3dType, MAX_SURFACE_SIDE, DROP_LINES_AUTO } from './charts/plot3d.js'
+export { is3dType, MAX_SURFACE_SIDE, DROP_LINES_AUTO } from './charts/kinds.js'
