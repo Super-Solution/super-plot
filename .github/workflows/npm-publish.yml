@@ -1,0 +1,64 @@
+name: Publish npm packages
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Exact version already committed in all four packages (X.Y.Z publishes to latest; X.Y.Z-next.N publishes to next)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: npm-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.repository == 'Super-Solution/super-plot' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      RELEASE_VERSION: ${{ inputs.version }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24.12.0'
+          package-manager-cache: false
+      - name: Verify requested release
+        run: |
+          node --input-type=module -e "
+            import fs from 'node:fs'
+            if (!/^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(-next\\.(0|[1-9]\\d*))?\$/.test(process.env.RELEASE_VERSION)) throw new Error('Unsupported release version: use X.Y.Z or X.Y.Z-next.N')
+            for (const dir of ['core', 'bindings/web', 'bindings/react', 'integrations/chat-plugin']) {
+              const p = JSON.parse(fs.readFileSync('packages/' + dir + '/package.json', 'utf8'))
+              if (p.version !== process.env.RELEASE_VERSION) throw new Error(p.name + ' is ' + p.version + ', not ' + process.env.RELEASE_VERSION)
+              if (p.private) throw new Error(p.name + ' is private')
+            }"
+      - name: Install dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Typecheck and unit tests
+        run: npm run typecheck && npm test
+      - name: Build and check packages, size budgets, conformance and spec up to date
+        run: |
+          npm run build
+          node scripts/size.mjs --check
+          node scripts/export-conformance.mjs --check
+          node scripts/export-spec.mjs --check
+      - name: Publish with npm Trusted Publishing
+        # Dependency order: core, then web, then the React binding and the chat plugin.
+        # The tag always comes from the version: a prerelease (X.Y.Z-next.N) goes to `next`
+        # and must never reach `latest`.
+        run: |
+          tag="$( [[ "$RELEASE_VERSION" == *-* ]] && echo next || echo latest )"
+          for dir in core bindings/web bindings/react integrations/chat-plugin; do
+            npm publish "./packages/$dir" --registry=https://registry.npmjs.org/ --access=public --provenance --tag="$tag" --ignore-scripts
+          done
