@@ -6,8 +6,9 @@ funnel, gauge, word cloud, 3D scatter and surface, and maps (choropleth, bubbles
 Super Plot is the sibling of Super Chart: Super Chart draws financial time series (candles, drawing tools),
 Super Plot draws everything else you put in a report or a chat answer.
 
-Status: **version 0.1.0, the first version meant for publishing; not published yet.** Packages stay `private` (not on npm or
-PyPI) until the owner decides to publish (see [docs/OPEN-DECISIONS.md](docs/OPEN-DECISIONS.md)). Licensed under Apache-2.0 (see
+Status: **version 0.1.0, the first published version.** The four npm packages are `@supersolutions/super-plot-core`,
+`-web`, `-react` and `-chat-plugin`; the Python and Go ports are not published (see
+[docs/OPEN-DECISIONS.md](docs/OPEN-DECISIONS.md)). Licensed under Apache-2.0 (see
 [LICENSE](LICENSE) and [NOTICE](NOTICE)), © SUPER SOLUTION LABS INC.
 
 Before 0.1.0, the library was built locally in six rounds, numbered 0.1.0 to 0.4.0 at the time and never published; the docs

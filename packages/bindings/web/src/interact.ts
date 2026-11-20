@@ -450,6 +450,9 @@ export class AxisControl {
   }
 
   private onDown = (e: PointerEvent): void => {
+    // A new press is a new gesture: the click that ended the last drag has passed, even when the timer that clears
+    // this has not run yet (timers are throttled in a background tab), so this press's click is the viewer's.
+    if (this.pointers.size === 0) this.justDragged = false
     const a = this.axes()
     if (!a || (e.pointerType === 'mouse' && e.button !== 0)) return
     if ((e.target as Element | null)?.closest?.('.sp-ctl, .sp-bar, .sp-cv-lk, [data-lk], .sp-table')) return
