@@ -29,4 +29,4 @@ __all__ = [
     "normalize_region", "quantile", "register_geography", "require_valid", "silverman", "time_bucket", "transform_bin_edges",
     "unregister_geography", "validate_plot", "waffle_cells",
 ]
-__version__ = "0.1.0"
+__version__ = "0.2.0"

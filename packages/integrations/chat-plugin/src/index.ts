@@ -32,7 +32,7 @@ export interface PlotChatPlugin extends ChatPlugin {
 export const PLOT_DATA_MAX = 500
 /** Cards whose agent annotations are kept for a remount. */
 const MAX_KEPT = 64
-const VERSION = '0.1.0'
+const VERSION = '0.2.0'
 const NAME = '@supersolutions/super-plot-chat-plugin'
 /** Host theme tokens that are also plot colours (`--sp-<token>`). */
 const COLOUR_TOKENS = ['background', 'surface', 'border', 'text', 'text-muted', 'accent', 'positive', 'negative', 'warning', 'info'] as const
