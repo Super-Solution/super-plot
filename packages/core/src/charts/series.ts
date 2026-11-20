@@ -264,6 +264,8 @@ function compileSeries(c: ChartCtx, area: boolean): { series: ReturnType<ChartCt
   const yMin = yScale.domain[0]
   // Lines break at a missing value, unless `gaps: "connect"` joins over it.
   const split = <T extends { y: number | null }>(pts: T[]): T[][] => (gaps === 'connect' ? [pts.filter(p => p.y !== null)].filter(r => r.length) : runs(pts))
+  const widths = (s.widths ?? {}) as Record<string, number>
+  const widthOf = (k: string): number => widths[k] ?? c.theme.lineWidth
   // Areas: draw the first series first so later ones sit above.
   for (const k of draw) {
     const si = keys.indexOf(k)
@@ -296,7 +298,7 @@ function compileSeries(c: ChartCtx, area: boolean): { series: ReturnType<ChartCt
         // A stream graph's lowest layer floats too: outline its lower edge as well, or the shape reads lopsided.
         if (stack === 'center' && k === draw[0]) marks.push({ type: 'path', role: 'data', series: k, d: curvePath(bottom, curve), stroke: color, strokeWidth: c.theme.lineWidth, anim: 'draw', rows: all, ...(clipTo ? { clip: clipTo } : {}) })
       }
-      marks.push({ type: 'path', role: 'data', series: k, d: curvePath(top, curve), stroke: color, strokeWidth: c.theme.lineWidth, anim: 'draw', rows: all, ...(series[si].dash ? { dash: series[si].dash } : {}), ...(clipTo ? { clip: clipTo } : {}) })
+      marks.push({ type: 'path', role: 'data', series: k, d: curvePath(top, curve), stroke: color, strokeWidth: widthOf(k), anim: 'draw', rows: all, ...(series[si].dash ? { dash: series[si].dash } : {}), ...(clipTo ? { clip: clipTo } : {}) })
     }
     // Markers: every point when sparse, otherwise only the last one.
     const real = pts.filter(p => p.y !== null) as (Pnt & { y: number })[]
@@ -465,6 +467,7 @@ export const line: ChartDef = {
     points: { kind: 'boolean', desc: 'Force markers on (`true`) or off (`false`). Default: markers when there are few points, otherwise only the last point.' },
     yReverse: { kind: 'boolean', desc: 'Default false. Draw the left value axis upside down, larger values lower: for a measure where less is better (a rank, a latency, a price paid). The tick labels still read top to bottom, smallest first; say so in the axis title.' },
     rightReverse: { kind: 'boolean', desc: 'Default false. Draw the right value axis upside down, like `yReverse`. Needs `yRight`.' },
+    widths: { kind: 'widths', desc: 'Series name to line width in px (0.5 to 8), e.g. {"Total":3,"Detail":1}. Unlisted series keep the theme\'s line width. Use it to give the headline series weight over its parts.' },
     yBreak: breakField('series of very different size share one axis; changes across the cut look smaller than they are.'),
     yScale: scaleField('y', 'growth, orders of magnitude'),
     xScale: { ...scaleField('x', 'sizes, frequencies'), desc: `${scaleField('x', 'sizes, frequencies').desc} Only for a numeric x; dates and categories are refused.` }

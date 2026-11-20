@@ -8,6 +8,7 @@ All four npm packages (`@supersolutions/super-plot-core`, `-web`, `-react`, `-ch
 
 - `dashes` on line charts: series name to `solid`, `dashed`, `dotted` or `dashdot`. The legend swatch follows the style. Validation, JSON Schema, the Python and Go ports and conformance cases are in step.
 - `yReverse` and `rightReverse` on line charts: draw a value axis upside down. Refused together with `yBreak`.
+- `widths` on line charts: series name to line width in px (0.5 to 8).
 
 ## 0.1.0
 
