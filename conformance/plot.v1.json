@@ -24016,6 +24016,129 @@
       "normalized": null
     },
     {
+      "name": "splits ok",
+      "spec": {
+        "type": "line",
+        "x": "a",
+        "y": "b",
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "b": 2
+          }
+        ],
+        "splits": {
+          "b": [
+            "x",
+            3,
+            "2026-03-01"
+          ],
+          "c": []
+        }
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "line",
+        "x": "a",
+        "y": "b",
+        "splits": {
+          "b": [
+            "x",
+            "3",
+            "2026-03-01"
+          ],
+          "c": []
+        },
+        "legend": "auto",
+        "tooltip": true,
+        "bare": false,
+        "xType": "auto",
+        "curve": "linear"
+      }
+    },
+    {
+      "name": "splits is a list",
+      "spec": {
+        "type": "line",
+        "x": "a",
+        "y": "b",
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "b": 2
+          }
+        ],
+        "splits": [
+          "x"
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "bad_type",
+          "path": "splits"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "splits with bad entries",
+      "spec": {
+        "type": "line",
+        "x": "a",
+        "y": "b",
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "b": 2
+          }
+        ],
+        "splits": {
+          "b": "x",
+          "c": [
+            "x",
+            true
+          ],
+          "d": [
+            null
+          ]
+        }
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "bad_type",
+          "path": "splits.b"
+        },
+        {
+          "severity": "error",
+          "code": "bad_type",
+          "path": "splits.c[1]"
+        },
+        {
+          "severity": "error",
+          "code": "bad_type",
+          "path": "splits.d[0]"
+        }
+      ],
+      "normalized": null
+    },
+    {
       "name": "bare ok",
       "spec": {
         "type": "line",

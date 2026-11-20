@@ -127,6 +127,13 @@ export const gallery: { id: string; note: string; spec: Record<string, unknown> 
     }
   },
   {
+    id: 'line-splits', note: 'splits: only the named series is cut where its own definition changed; the other line runs on',
+    spec: {
+      type: 'line', title: 'Two surveys', subtitle: 'Percent (invented figures); only the first series changed its wording in April', x: 'month', y: ['survey a', 'survey b'], splits: { 'survey a': ['2026-04-01'] }, format: 'fixed:1', yLabel: 'Percent',
+      data: [['2026-01-01', 5.1, 7.0], ['2026-02-01', 5.4, 7.3], ['2026-03-01', 5.8, 7.5], ['2026-04-01', 9.2, 7.9], ['2026-05-01', 9.9, 8.2], ['2026-06-01', 10.4, 8.6]].map(([month, a, b]) => ({ month, 'survey a': a, 'survey b': b }))
+    }
+  },
+  {
     id: 'line-bare', note: 'bare: marks only, the shape of a sparkline (set yDomain to fill the height)',
     spec: {
       type: 'line', title: 'Equity, last 12 weeks', x: 'week', y: 'equity', bare: true, yDomain: [96, 112], points: false,

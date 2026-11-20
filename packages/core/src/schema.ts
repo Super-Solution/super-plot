@@ -31,6 +31,7 @@ export type FieldDef = { desc: string; required?: boolean } & (
   | { kind: 'dashes' }
   | { kind: 'widths' }
   | { kind: 'enumMap'; values: readonly string[] }
+  | { kind: 'valuesMap'; max?: number }
   | { kind: 'annotations' }
   | { kind: 'format' }
   | { kind: 'bins'; default?: 'auto' | number }
@@ -217,6 +218,19 @@ export function validateField(name: string, def: FieldDef, value: unknown, ctx: 
           const near = typeof v === 'string' ? closest(v, def.values) : undefined
           add(ctx, 'error', 'bad_enum', `${name}.${k}`, `${name}.${k} must be one of ${def.values.join(', ')}; got ${fmt(v)}.`, near ? `Did you mean "${near}"?` : undefined)
         }
+      }
+      return out
+    }
+    case 'valuesMap': {
+      if (!value || typeof value !== 'object' || Array.isArray(value)) return bad('bad_type', `${name} must be an object of series name to a list of values, e.g. {"Taiwan":["2026-04-01"]}.`)
+      const max = def.max ?? LIMITS.maxCategories
+      const out: Record<string, string[]> = {}
+      for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+        if (!Array.isArray(v)) { add(ctx, 'error', 'bad_type', `${name}.${k}`, `${name}.${k} must be a list of values, got ${fmt(v)}.`); continue }
+        if (v.length > max) { add(ctx, 'error', 'too_many', `${name}.${k}`, `${name}.${k} lists ${v.length} values; at most ${max}.`); continue }
+        const at = v.findIndex(x => !(typeof x === 'string' || (typeof x === 'number' && Number.isFinite(x))))
+        if (at >= 0) { add(ctx, 'error', 'bad_type', `${name}.${k}[${at}]`, `${name}.${k}[${at}] must be a string or a number, got ${fmt(v[at])}.`); continue }
+        out[k] = v.map(x => String(x))
       }
       return out
     }
@@ -410,6 +424,7 @@ export function fieldSchema(def: FieldDef): Record<string, unknown> {
     case 'dashes': return { type: 'object', additionalProperties: { enum: [...DASH_STYLES] }, description: d }
     case 'widths': return { type: 'object', additionalProperties: { type: 'number', minimum: WIDTH_RANGE[0], maximum: WIDTH_RANGE[1] }, description: d }
     case 'enumMap': return { type: 'object', additionalProperties: { enum: [...def.values] }, description: d }
+    case 'valuesMap': return { type: 'object', additionalProperties: { type: 'array', maxItems: def.max ?? LIMITS.maxCategories, items: { type: ['string', 'number'] } }, description: d }
     case 'annotations':
       return {
         type: 'array', maxItems: LIMITS.maxAnnotations, description: d,
@@ -457,6 +472,7 @@ export function fieldType(def: FieldDef): string {
     case 'dashes': return 'object'
     case 'widths': return 'object'
     case 'enumMap': return 'object'
+    case 'valuesMap': return 'object'
     case 'annotations': return 'array'
     case 'format': return 'format string'
     case 'data': return 'array of rows'

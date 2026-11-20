@@ -330,6 +330,42 @@ func validateField(name string, d fieldDef, value any, issues *[]Issue, columns 
 			add(issues, "error", "bad_enum", name+"."+k, fmt.Sprintf("%s.%s must be one of %s; got %s.", name, k, strings.Join(d.Values, ", "), show(m[k])), hint)
 		}
 		return out
+	case "valuesMap":
+		m, ok := value.(map[string]any)
+		if !ok {
+			return bad("bad_type", fmt.Sprintf(`%s must be an object of series name to a list of values, e.g. {"Taiwan":["2026-04-01"]}.`, name))
+		}
+		most := data.Limits["maxCategories"]
+		if d.Max != nil {
+			most = int(*d.Max)
+		}
+		out := map[string]any{}
+		for _, k := range sortedKeys(m) {
+			list, isList := m[k].([]any)
+			if !isList {
+				add(issues, "error", "bad_type", name+"."+k, fmt.Sprintf("%s.%s must be a list of values, got %s.", name, k, show(m[k])))
+				continue
+			}
+			if len(list) > most {
+				add(issues, "error", "too_many", name+"."+k, fmt.Sprintf("%s.%s lists %d values; at most %d.", name, k, len(list), most))
+				continue
+			}
+			named := make([]any, len(list))
+			broken := false
+			for i, v := range list {
+				f, isNum := v.(float64)
+				if _, isStr := v.(string); !isStr && !(isNum && isFinite(f)) {
+					add(issues, "error", "bad_type", fmt.Sprintf("%s.%s[%d]", name, k, i), fmt.Sprintf("%s.%s[%d] must be a string or a number, got %s.", name, k, i, show(v)))
+					broken = true
+					break
+				}
+				named[i] = jsString(v)
+			}
+			if !broken {
+				out[k] = named
+			}
+		}
+		return out
 	case "annotations":
 		return validateAnnotations(name, value, issues)
 	case "geo":

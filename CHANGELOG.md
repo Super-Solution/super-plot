@@ -2,6 +2,12 @@
 
 All four npm packages (`@supersolutions/super-plot-core`, `-web`, `-react`, `-chat-plugin`) share one version.
 
+## Unreleased
+
+### Added
+
+- `splits` on line and area charts: series name to a list of x values at which only that series is cut (a series break), alongside `splitAt` which cuts every series.
+
 ## 0.2.0 (2026-11-20)
 
 ### Added
