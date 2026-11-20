@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Super Plot: many points</title>
+<style>
+:root { --bg: #f4f5f7; --ink: #131722; --muted: #5f6270; --line: #d1d4dc; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", sans-serif; }
+main { max-width: 1100px; margin: 0 auto; padding: 32px 24px 64px; }
+h1 { margin: 0; font-size: 28px; letter-spacing: -.02em; }
+p { color: var(--muted); margin: 6px 0 0; }
+.bar { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: center; margin: 20px 0 12px; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: #fff; }
+.seg button { border: 0; background: none; color: var(--muted); padding: 6px 14px; font: inherit; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: #2962ff; color: #fff; }
+.stat { font-variant-numeric: tabular-nums; }
+.stat b { color: var(--ink); }
+.card { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 4px; }
+#plot { height: 520px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Many points</h1>
+  <p>Above 4,000 marks the browser binding draws on a canvas by itself, and above 20,000 on the GPU (WebGL) when the device has one. Same spec, same tooltips, same legend. Move the mouse over the dots.</p>
+  <div class="bar">
+    <div class="seg" id="n" role="group" aria-label="Number of points"></div>
+    <div class="seg" id="r" role="group" aria-label="Renderer"><button data-v="auto">Auto</button><button data-v="svg">SVG</button><button data-v="canvas">Canvas</button><button data-v="webgl">WebGL</button></div>
+    <span class="stat" id="stat" aria-live="polite"></span>
+  </div>
+  <div class="card"><div id="plot"></div></div>
+</main>
+<script type="module" src="./main.js"></script>
+</body>
+</html>

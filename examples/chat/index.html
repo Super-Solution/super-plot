@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Super Plot: chat plugin demo</title>
+<style>
+:root { --bg: #f4f5f7; --ink: #131722; --muted: #5f6270; --line: #d1d4dc; --you: #e3ecff; --accent: #2962ff; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", sans-serif; }
+main { max-width: 860px; margin: 0 auto; padding: 24px 16px 64px; }
+h1 { margin: 0 0 4px; font-size: 24px; letter-spacing: -.01em; }
+.demo { border: 2px dashed #ff9800; background: #fff8e1; border-radius: 10px; padding: 10px 14px; margin: 12px 0 20px; }
+.demo b { color: #8a5300; }
+.msg { margin: 14px 0; padding: 12px 14px; border-radius: 12px; background: #fff; border: 1px solid var(--line); }
+.msg.you { background: var(--you); border-color: transparent; margin-left: 20%; }
+.who { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+.msg p { margin: 6px 0; }
+.card { margin: 8px 0; }
+a.ref { color: var(--accent); text-decoration: underline dotted; text-underline-offset: 3px; cursor: pointer; border-radius: 3px; }
+a.ref:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+a.ref.lit { background: #e3ecff; text-decoration-style: solid; }
+.plain-ref { color: inherit; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.agent { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+button { font: inherit; font-size: 13px; border: 1px solid var(--line); background: #fff; border-radius: 8px; padding: 4px 12px; cursor: pointer; }
+pre { background: #131722; color: #e6e8ee; border-radius: 8px; padding: 10px 12px; font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; overflow: auto; max-height: 220px; white-space: pre-wrap; }
+@media (forced-colors: active) { .demo { border-color: CanvasText; } a.ref.lit { background: Highlight; color: HighlightText; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Chat plugin</h1>
+  <p class="demo" role="note"><b>Demo host, not a chat app.</b> This page stands in for one: the messages are written into the page, no model is called, and the buttons under "Agent" call the plugin's tools the way an agent would. The cards, the links and the tools are the real <code>@supersolutions/super-plot-chat-plugin</code>.</p>
+
+  <section aria-label="Conversation" id="thread">
+    <article class="msg you"><div class="who">You</div><p>Which month sold best, and how do the campaigns compare?</p></article>
+    <article class="msg">
+      <div class="who">Assistant</div>
+      <div class="card" data-card="sales"></div>
+      <p data-md="[March was highest](ref:sales?x=2026-03) at 90, well above [the goal](ref:sales?key=goal). [The first quarter](ref:sales?x=2026-01..2026-03) and [the second](ref:sales?x=2026-04..2026-06) are close overall. [Anything over 60](ref:sales?y=60..) is a good month."></p>
+      <div class="card" data-card="weekly"></div>
+      <p data-md="[Mobile](ref:weekly?series=Mobile) passed web in [week 8](ref:weekly?x=8). The dip on [the web in weeks 3 to 5](ref:weekly?series=Web&amp;x=3..5) is a holiday. A link that names nothing, such as [week 40](ref:weekly?x=40), stays plain text."></p>
+      <div class="card" data-card="campaigns"></div>
+      <p data-md="With 6,000 campaigns this one is drawn on canvas. [Email](ref:campaigns?series=Email) sits apart from [search and social](ref:campaigns?series=Search&amp;series=Social), and [the big spenders](ref:campaigns?x=80..) are mostly email."></p>
+    </article>
+  </section>
+
+  <section aria-labelledby="agent-h">
+    <h2 id="agent-h" style="font-size:16px;margin:24px 0 0">Agent</h2>
+    <p style="color:var(--muted);margin:2px 0">What an agent can do with the plugin's tools. The highlight is a draft: it goes when you move onto the plot.</p>
+    <div class="agent">
+      <button type="button" data-tool="annotate">plot_annotate: mark the peak</button>
+      <button type="button" data-tool="highlight">plot_highlight: the second quarter</button>
+      <button type="button" data-tool="state">plot_state</button>
+      <button type="button" data-tool="data">plot_data: Q1 rows</button>
+      <button type="button" data-tool="clear">plot_clear_annotations</button>
+      <button type="button" data-tool="remount">Host: remount the cards</button>
+    </div>
+    <pre id="tool-out" aria-live="polite">Tool results appear here.</pre>
+  </section>
+</main>
+<script type="module" src="./main.js"></script>
+</body>
+</html>

@@ -1,0 +1,30 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@supersolutions/super-plot-core": ["packages/core/src/index.ts"],
+      "@supersolutions/super-plot-core/tools": ["packages/core/src/tools.ts"],
+      "@supersolutions/super-plot-core/base": ["packages/core/src/base.ts"],
+      "@supersolutions/super-plot-core/charts": ["packages/core/src/charts.ts"],
+      "@supersolutions/super-plot-core/adapters": ["packages/core/src/adapters.ts"],
+      "@supersolutions/super-plot-core/transforms": ["packages/core/src/transforms.ts"],
+      "@supersolutions/super-plot-core/canvas": ["packages/core/src/canvas.ts"],
+      "@supersolutions/super-plot-core/view": ["packages/core/src/view.ts"],
+      "@supersolutions/super-plot-core/charts/basic": ["packages/core/src/groups/basic.ts"],
+      "@supersolutions/super-plot-core/charts/business": ["packages/core/src/groups/business.ts"],
+      "@supersolutions/super-plot-core/charts/stats": ["packages/core/src/groups/stats.ts"],
+      "@supersolutions/super-plot-core/charts/maps": ["packages/core/src/groups/maps.ts"],
+      "@supersolutions/super-plot-core/charts/hierarchy": ["packages/core/src/groups/hierarchy.ts"],
+      "@supersolutions/super-plot-core/charts/3d": ["packages/core/src/groups/3d.ts"],
+      "@supersolutions/super-plot-core/charts/text": ["packages/core/src/groups/text.ts"],
+      "@supersolutions/super-plot-web": ["packages/bindings/web/src/index.ts"],
+      "@supersolutions/super-plot-web/element": ["packages/bindings/web/src/element-entry.ts"],
+      "@supersolutions/super-plot-web/base": ["packages/bindings/web/src/base.ts"],
+      "@supersolutions/super-plot-react/base": ["packages/bindings/react/src/base.tsx"],
+      "@supersolutions/super-plot-react": ["packages/bindings/react/src/index.tsx"],
+      "@supersolutions/super-plot-chat-plugin": ["packages/integrations/chat-plugin/src/index.ts"]
+    }
+  },
+  "include": ["packages/*/src", "packages/bindings/*/src", "packages/integrations/*/src", "tests", "examples/**/*.ts", "examples/**/*.tsx"]
+}

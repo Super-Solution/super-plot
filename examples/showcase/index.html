@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Super Plot examples</title>
+<style>
+:root { --bg: #f4f5f7; --ink: #131722; --muted: #5f6270; --line: #d1d4dc; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", "PingFang TC", sans-serif; }
+header, main { max-width: 1280px; margin: 0 auto; padding: 0 24px; }
+header { padding-top: 40px; }
+h1 { font-size: 32px; letter-spacing: -0.02em; margin: 0; }
+h2 { font-size: 20px; margin: 56px 0 4px; letter-spacing: -0.01em; }
+header p, h2 + p { color: var(--muted); margin: 6px 0 0; max-width: 70ch; }
+nav { margin-top: 16px; display: flex; gap: 8px; flex-wrap: wrap; }
+nav a { color: var(--ink); text-decoration: none; border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px; background: #fff; font-size: 13px; }
+.row { margin-top: 28px; }
+.rowhead { display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; }
+.rowhead h3 { margin: 0; font: 600 14px ui-monospace, SFMono-Regular, Menlo, monospace; }
+.rowhead p { margin: 0; color: var(--muted); }
+.lead { color: var(--muted); margin: 4px 0 8px; }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 8px; }
+.card { position: relative; border: 1px solid var(--line); border-radius: 12px; padding: 4px; background: #fff; overflow: hidden; }
+.card.dark { background: #131722; border-color: #363a45; }
+.card .plot { height: 340px; }
+.card .tag { position: absolute; top: 8px; right: 12px; z-index: 2; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; pointer-events: none; }
+.card.dark .tag { color: #9ea3b0; }
+.themes { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-top: 16px; align-items: start; }
+.variant h3 { margin: 0; font-size: 15px; }
+.variant > p { color: var(--muted); margin: 2px 0 8px; font-size: 13px; min-height: 40px; }
+.variant pre { margin: 0 0 10px; padding: 8px 10px; background: #fff; border: 1px solid var(--line); border-radius: 8px; font: 11px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace; overflow: auto; }
+.variant .card { margin-bottom: 12px; }
+.variant .card .plot { height: 260px; }
+/* Override 1: plain CSS variables. The charts read them; nothing re-renders. */
+.v-brand { --sp-series-1: #e8445a; --sp-series-2: #1f8a70; --sp-series-3: #f5a524; --sp-series-4: #6d5dd3; --sp-font: Georgia, "Noto Serif TC", serif; --sp-grid: #f6dde1; }
+footer { max-width: 1280px; margin: 56px auto 48px; padding: 0 24px; color: var(--muted); font-size: 13px; }
+@media (max-width: 900px) { .pair { grid-template-columns: 1fr; } .themes { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 560px) { .themes { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Super Plot</h1>
+  <p>Statistical charts for people and agents. Every chart on this page is one small JSON spec. Hover for tooltips, click a legend item to hide a series. This is one self-contained file: no server, no network.</p>
+  <nav><a href="#types-h">12 chart types</a><a href="#themes-h">Restyle it</a><a href="#a11y-h">Colour-vision safe</a><a href="#dense-h">Many points</a></nav>
+</header>
+<main>
+  <h2 id="types-h">Every chart type, light and dark</h2>
+  <p>Bar, line, area, scatter, pie, donut, histogram, box plot, heatmap, radar, treemap and sankey, with a few variants. The default style follows TradingView's palette.</p>
+  <div id="types"></div>
+  <h2 id="themes-h">Restyle it without forking</h2>
+  <p>The same three specs under four looks. Overrides are CSS variables, a theme object, or a colour in the spec itself.</p>
+  <div id="themes" class="themes"></div>
+  <h2 id="a11y-h">Colour-vision safe preset</h2>
+  <p class="lead">One word, <code>theme: 'accessible'</code>: Okabe-Ito hues ordered to stay apart for deutan, protan and tritan vision; up and down are blue and vermillion, not green and red.</p>
+  <div id="a11y"></div>
+  <h2 id="dense-h">Many points</h2>
+  <p class="lead">Above about 4,000 marks the browser binding switches to canvas by itself. Same spec, same tooltips, same legend. Hover a dot.</p>
+  <div id="dense"></div>
+</main>
+<footer>Super Plot 0.1.0, local build. Not published.</footer>
+<script>/*BUNDLE*/</script>
+</body>
+</html>

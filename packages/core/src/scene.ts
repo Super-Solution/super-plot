@@ -1,0 +1,205 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 SUPER SOLUTION LABS INC
+/**
+ * The scene is the contract between a chart and a renderer: a flat, ordered, serialisable list of
+ * marks in pixel space. SVG string, DOM mount, canvas and tests all consume the same thing.
+ */
+
+export type Role = 'background' | 'grid' | 'axis' | 'axis-label' | 'title' | 'legend' | 'data' | 'label' | 'annotation' | 'hit'
+
+export interface Tip {
+  title?: string
+  rows: { label: string; value: string; color?: string }[]
+}
+
+export interface MarkBase {
+  role: Role
+  /** Series key this mark belongs to (drives highlight and legend toggling). */
+  series?: string
+  /** Hover content; the renderer decides how to show it. */
+  tip?: Tip
+  /** Accessible name for focusable data marks. */
+  aria?: string
+  /** Entry animation: grow along an axis, fade, or draw a line. */
+  anim?: 'y' | 'x' | 'fade' | 'draw'
+  /** Legend entry this mark toggles when clicked. */
+  legendKey?: string
+  /** Guide line shown while a `hit` mark is hovered. */
+  guide?: { x1: number; y1: number; x2: number; y2: number }
+  /** Points to highlight while a `hit` mark is hovered (one per series at the hovered x), with the rows each draws. */
+  focus?: { x: number; y: number; color: string; series?: string; rows?: number[] }[]
+  /** Free-form payload handed to `onSelect`: the source row(s) of this mark. */
+  datum?: unknown
+  /**
+   * The rows this mark draws: indexes into the spec's data after `transform` (`validatePlot(spec).spec.data`), in
+   * order. A bar summed from three rows lists all three; a line lists every row of its series. References
+   * (`resolveRef`, `matchMarks`) and anything else that links data to pixels read it.
+   */
+  rows?: number[]
+  /** Annotations: the annotation's `key`, on each mark it draws. */
+  key?: string
+  /**
+   * Drill-down (treemap, sunburst): the `focus` path that activating this mark shows. On a data mark it is the
+   * group itself (go down); on a breadcrumb item (`role: 'label'`, a transparent rect) an ancestor (go up).
+   */
+  drill?: string[]
+  /** Texture drawn over the fill (`patterns: true`): index into the pattern set, one per series. */
+  pattern?: number
+  opacity?: number
+  /** Clip to `scene.clips[clip]` (maps: the world outline and the plot area). */
+  clip?: string
+  /**
+   * `geo`: part of a map's geography, also present in `scene.geo`. A 3D renderer draws `scene.geo` itself
+   * and skips these; the SVG and canvas renderers draw them like any mark.
+   */
+  layer?: 'geo'
+}
+
+export interface RectMark extends MarkBase { type: 'rect'; x: number; y: number; w: number; h: number; r?: number | [number, number, number, number]; fill?: string; stroke?: string; strokeWidth?: number }
+export interface PathMark extends MarkBase { type: 'path'; d: string; fill?: string; stroke?: string; strokeWidth?: number; dash?: string; /** Fill rule; `evenodd` cuts holes from region outlines. */ rule?: 'evenodd' }
+export interface CircleMark extends MarkBase { type: 'circle'; cx: number; cy: number; r: number; fill?: string; stroke?: string; strokeWidth?: number }
+export interface LineMark extends MarkBase { type: 'line'; x1: number; y1: number; x2: number; y2: number; stroke: string; strokeWidth?: number; dash?: string }
+export interface TextMark extends MarkBase {
+  type: 'text'
+  x: number
+  y: number
+  text: string
+  size: number
+  fill: string
+  weight?: number
+  anchor?: 'start' | 'middle' | 'end'
+  baseline?: 'alphabetic' | 'middle' | 'hanging'
+  rotate?: number
+}
+
+export type Mark = RectMark | PathMark | CircleMark | LineMark | TextMark
+
+export interface SeriesInfo { key: string; label: string; color: string; hidden: boolean }
+
+export interface Scene {
+  width: number
+  height: number
+  /** Resolved CSS colour of the surface behind the chart. */
+  background: string
+  /** Accessible title and long description (also what an agent reads). */
+  title: string
+  description: string
+  marks: Mark[]
+  series: SeriesInfo[]
+  type: string
+  /** Clip paths referenced by marks' `clip`. */
+  clips?: Record<string, string>
+  /** Maps only: the geography and data in longitude/latitude, for renderers that project it themselves (WebGL). */
+  geo?: SceneGeo
+  /** 3D charts only (`scatter3d`, `surface`): the camera, and the keyboard order of the data marks. */
+  view3d?: SceneView3d
+  /** Charts on two axes: the plot rectangle and both scales, so a binding can map pixels back to data (zoom, brush). */
+  axes?: SceneAxes
+  /** Small multiples (`facet`): one entry per panel. */
+  panels?: { key: string; plot: Rect }[]
+}
+
+export interface AxisInfo {
+  kind: 'linear' | 'time' | 'band'
+  /** Numbers for linear and time (epoch ms); the categories, in order, for band. */
+  domain: [number, number] | string[]
+  /** Pixel range: [left, right] or [bottom, top]. For band, [first band start, last band end]. */
+  range: [number, number]
+  /** The data column this axis shows, when there is one. */
+  field?: string
+  /**
+   * `log`: a base-10 log axis (kind `linear`, positive domain in data units). Pixels are linear in log10 of the
+   * value, so pixel-to-data maps and zoom must work in log space.
+   */
+  scale?: 'log'
+  /**
+   * A broken value axis (`yBreak`): the data span [from, to] is cut out and both sides keep the same pixels per unit,
+   * with a fixed gap between them. Pixel-to-data maps must skip the gap; the web binding refuses zoom and brush on
+   * such an axis.
+   */
+  breaks?: [number, number]
+  /** The colour of this axis's title and tick labels when it takes its one series' colour (two value axes). */
+  ink?: string
+}
+
+export interface SceneAxes {
+  plot: Rect
+  x: AxisInfo
+  y: AxisInfo
+  /**
+   * The second value axis on the right (`yRight`), in its own units. Zoom and brush act on `x` only when it exists.
+   */
+  y2?: AxisInfo
+  /** What the spec allows the viewer to do (only where the axes support it). */
+  zoom?: 'x' | 'xy'
+  brush?: 'x' | 'xy'
+}
+
+export interface GeoRegionItem {
+  /** Polygons of [outer, ...holes]; each ring is interleaved [lng, lat, ...], longitudes unwrapped. */
+  polygons: Float64Array[][]
+  fill: string
+  stroke: string
+  strokeWidth: number
+  dashed?: boolean
+  /** 0..1 of the view's height unit; 0 lies flat. */
+  height: number
+  /** Index of the scene mark that carries this item's tooltip and datum, or -1 (basemap). */
+  mark: number
+}
+export interface GeoPointItem { lng: number; lat: number; r: number; fill: string; stroke: string; opacity: number; mark: number }
+export interface GeoColumnItem { lng: number; lat: number; height: number; width: number; fill: string; mark: number }
+export interface GeoArcItem { from: [number, number]; to: [number, number]; height: number; width: number; stroke: string; opacity: number; mark: number }
+
+export interface SceneGeo {
+  /** The resolved view (plain numbers: see `makeView`). */
+  view: import('./geo/view.js').ViewParams
+  /** The view's inputs: give them a new camera with `makeView` to move without recompiling. */
+  input: import('./geo/view.js').ViewInput
+  /** Globe only: the sea behind the regions. */
+  sphere: { fill: string; stroke: string } | null
+  /** Graticule stroke colour, or null. */
+  graticule: string | null
+  regions: GeoRegionItem[]
+  points: GeoPointItem[]
+  columns: GeoColumnItem[]
+  arcs: GeoArcItem[]
+}
+
+export interface SceneView3d {
+  /** The resolved view (plain numbers: see `makeView3d`). */
+  view: import('./view3d.js').View3d
+  /** The view's inputs: give them a new camera with `makeView3d`. */
+  input: import('./view3d.js').View3dInput
+  /**
+   * Indices of the data marks in the order Tab steps through them: by x, then y (then z), whatever the camera.
+   * Their drawing order is back to front instead, and changes as the box turns.
+   */
+  order: number[]
+}
+
+export interface Rect { x: number; y: number; w: number; h: number }
+
+/** Rounded rectangle with independent corner radii as a path (SVG `rx` cannot do per-corner). */
+export function roundedRectPath(x: number, y: number, w: number, h: number, r: [number, number, number, number]): string {
+  const [tl, tr, br, bl] = r.map(v => Math.max(0, Math.min(v, w / 2, h / 2))) as [number, number, number, number]
+  const f = (v: number): string => String(Math.round(v * 100) / 100)
+  return (
+    `M${f(x + tl)} ${f(y)}H${f(x + w - tr)}` +
+    (tr ? `A${f(tr)} ${f(tr)} 0 0 1 ${f(x + w)} ${f(y + tr)}` : '') +
+    `V${f(y + h - br)}` +
+    (br ? `A${f(br)} ${f(br)} 0 0 1 ${f(x + w - br)} ${f(y + h)}` : '') +
+    `H${f(x + bl)}` +
+    (bl ? `A${f(bl)} ${f(bl)} 0 0 1 ${f(x)} ${f(y + h - bl)}` : '') +
+    `V${f(y + tl)}` +
+    (tl ? `A${f(tl)} ${f(tl)} 0 0 1 ${f(x + tl)} ${f(y)}` : '') +
+    'Z'
+  )
+}
+
+/** How many marks the viewer can hover or select: what decides between SVG and canvas. */
+export const dataMarkCount = (scene: Scene): number => {
+  let n = 0
+  for (const m of scene.marks) if (m.role === 'data') n++
+  return n
+}

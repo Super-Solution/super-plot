@@ -1,0 +1,52 @@
+{
+  "name": "@supersolutions/super-plot-react",
+  "version": "0.1.0",
+  "description": "<SuperPlot> React component: a thin binding over the web mount.",
+  "private": true,
+  "license": "Apache-2.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "sideEffects": [
+    "./dist/index.js",
+    "./src/index.tsx"
+  ],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "NOTICE"
+  ],
+  "dependencies": {
+    "@supersolutions/super-plot-web": "0.1.0"
+  },
+  "peerDependencies": {
+    "react": ">=18"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./base": {
+      "types": "./dist/base.d.ts",
+      "import": "./dist/base.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Super-Solution/super-plot.git",
+    "directory": "packages/bindings/react"
+  },
+  "author": "SUPER SOLUTION LABS INC",
+  "typesVersions": {
+    "*": {
+      "base": [
+        "./dist/base.d.ts"
+      ]
+    }
+  }
+}

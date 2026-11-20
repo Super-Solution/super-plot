@@ -1,0 +1,8 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 SUPER SOLUTION LABS INC
+/** The web binding without the chart types: register the ones you use (`@supersolutions/super-plot-core/charts`). */
+export { SuperPlot } from './plot.js'
+export { fileNameOf } from './plot.js'
+export type { SuperPlotOptions, SelectEvent, DrawTarget, RenderEvent, BrushSelection, ZoomRange, AxisRange, AxisPick, TipContent, ToolbarItem, SyncOptions, TransitionOptions, Note, SonifyController, SonifyOptions, SonifyPlan } from './plot.js'
+export { sonifyNotes } from './sound.js'
+export { defineSuperPlot } from './element.js'
