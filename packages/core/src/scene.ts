@@ -26,8 +26,8 @@ export interface MarkBase {
   legendKey?: string
   /** Guide line shown while a `hit` mark is hovered. */
   guide?: { x1: number; y1: number; x2: number; y2: number }
-  /** Points to highlight while a `hit` mark is hovered (one per series at the hovered x). */
-  focus?: { x: number; y: number; color: string; series?: string }[]
+  /** Points to highlight while a `hit` mark is hovered (one per series at the hovered x), with the rows each draws. */
+  focus?: { x: number; y: number; color: string; series?: string; rows?: number[] }[]
   /** Free-form payload handed to `onSelect`: the source row(s) of this mark. */
   datum?: unknown
   /**

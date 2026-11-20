@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2026 SUPER SOLUTION LABS INC
-import type { Camera, Issue } from '@supersolutions/super-plot-core/base'
+import type { Camera, CardRef, CardRefResult, Issue } from '@supersolutions/super-plot-core/base'
 import { SuperPlot, type BrushSelection, type SelectEvent, type SuperPlotOptions, type ToolbarItem, type ZoomRange } from './plot.js'
 import { idleController, type SonifyController, type SonifyOptions } from './sound.js'
 
 /** Callbacks the element turns into DOM events; one passed in `options` is called as well. */
-const EVENTS = ['onSelect', 'onIssues', 'onCameraChange', 'onHover', 'onRender', 'onZoom', 'onBrush', 'onDrill'] as const
+const EVENTS = ['onSelect', 'onIssues', 'onCameraChange', 'onHover', 'onRender', 'onZoom', 'onBrush', 'onDrill', 'onRefChange'] as const
 type EventKey = (typeof EVENTS)[number]
 
 /**
@@ -21,10 +21,11 @@ type EventKey = (typeof EVENTS)[number]
  * for true, `"false"` for false), and `transition` (present for true, a number of ms, or `"false"`). Attributes win over the properties, and those over the same key in `options`.
  * Events (bubbling CustomEvents): `plot-select` (detail: SelectEvent), `plot-issues` (detail: Issue[]),
  * `plot-hover` (SelectEvent or null), `plot-render` (RenderEvent), `plot-zoom` (ZoomRange or null),
- * `plot-brush` (BrushSelection or null), `plot-drill` (the focus path, string[]) and, for maps, `plot-camera`
+ * `plot-brush` (BrushSelection or null), `plot-drill` (the focus path, string[]), `plot-ref` (the
+ * reference of the mark the viewer moved onto, a CardRef, or null; see `onRefChange`) and, for maps, `plot-camera`
  * (Camera; a Camera3d for a 3D chart) when the viewer moved the map or turned the box.
  * Methods: `appendRows(rows, { max })`, `setZoom()`, `getZoom()`, `setBrush()`, `getBrush()`, `toSvg()`, `toPng()`,
- * `toCsv()`, `sonify(options)`.
+ * `toCsv()`, `sonify(options)`, `highlight(ref)`, `reveal(ref)`.
  */
 export function defineSuperPlot(name = 'super-plot'): CustomElementConstructor {
   const existing = customElements.get(name)
@@ -105,6 +106,8 @@ export function defineSuperPlot(name = 'super-plot'): CustomElementConstructor {
     toPng(scale?: number): Promise<Blob> { return this.plot ? this.plot.toPng(scale) : Promise.reject(new Error('Not mounted.')) }
     toCsv(): string { if (!this.plot) throw new Error('Not mounted.'); return this.plot.toCsv() }
     sonify(options?: SonifyOptions): SonifyController { return this.plot ? this.plot.sonify(options) : idleController() }
+    highlight(ref: CardRef | string | null): CardRefResult { return this.plot ? this.plot.highlight(ref) : NOT_MOUNTED }
+    reveal(ref: CardRef | string): CardRefResult { return this.plot ? this.plot.reveal(ref) : NOT_MOUNTED }
 
     /** `options` without its callbacks, with the properties on top. */
     private base(): Partial<SuperPlotOptions> {
@@ -146,7 +149,8 @@ export function defineSuperPlot(name = 'super-plot'): CustomElementConstructor {
           onRender: this.emit('onRender', 'plot-render'),
           onZoom: this.emit('onZoom', 'plot-zoom'),
           onBrush: this.emit('onBrush', 'plot-brush'),
-          onDrill: this.emit('onDrill', 'plot-drill')
+          onDrill: this.emit('onDrill', 'plot-drill'),
+          onRefChange: this.emit('onRefChange', 'plot-ref')
         })
       }
     }
@@ -154,6 +158,8 @@ export function defineSuperPlot(name = 'super-plot'): CustomElementConstructor {
   customElements.define(name, SuperPlotElement)
   return SuperPlotElement
 }
+
+const NOT_MOUNTED: CardRefResult = { ok: false, code: 'not_mounted', reason: 'The element has no plot yet: give it a spec and put it in the document.' }
 
 const RENDERERS = ['auto', 'svg', 'canvas', 'webgl'] as const
 

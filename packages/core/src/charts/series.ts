@@ -341,7 +341,7 @@ function compileSeries(c: ChartCtx, area: boolean): { series: ReturnType<ChartCt
       const v = stack === 'none' ? valueAt(k, x) : val.get(k)?.get(x)
       if (v === undefined) return []
       const y = stack !== 'none' ? yScale.at(upper.get(k)!.get(x) ?? 0) : scaleOf(k).at(v)
-      return [{ x: cx[i], y, color: series[keys.indexOf(k)].color, series: k }]
+      return [{ x: cx[i], y, color: series[keys.indexOf(k)].color, series: k, rows: c.rowsOf(rowsAt.get(k)?.get(x) ?? []) }]
     })
     hits.push({ type: 'rect', role: 'hit', x: left, y: plot.y, w: Math.max(1, right - left), h: plot.h, fill: 'transparent', tip: { title: xTitle(x), rows }, guide: { x1: cx[i], y1: plot.y, x2: cx[i], y2: plot.y + plot.h }, focus, aria: `${xTitle(x)}: ${rows.map(r => `${r.label} ${r.value}`).join(', ')}`, datum: { x }, rows: c.rowsOf(visible.flatMap(k => rowsAt.get(k)?.get(x) ?? [])) })
   })

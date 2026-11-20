@@ -16,7 +16,7 @@ export interface SuperPlotProps extends SuperPlotOptions {
  * `<SuperPlot spec={...} />`. A thin binding over the web mount: one effect creates it, props
  * update it, unmount disposes it. Safe under Strict Mode and server rendering (the DOM work
  * happens in an effect; on the server use `renderToSvg` from core for a static chart).
- * The ref is the underlying `SuperPlot` instance (`toSvg()`, `toPng()`, `toCsv()`, `sonify()`, `getScene()`).
+ * The ref is the underlying `SuperPlot` instance (`toSvg()`, `toPng()`, `toCsv()`, `sonify()`, `highlight()`, `reveal()`, `getScene()`).
  * `sync`, `toolbar` and `transition` may be inline objects or arrays (compared by value); `tooltipFormat` always calls the
  * latest function, like the callbacks.
  */
@@ -46,6 +46,7 @@ export const SuperPlot = forwardRef<Plot | null, SuperPlotProps>(function SuperP
       onZoom: z => latest.current.onZoom?.(z),
       onBrush: b => latest.current.onBrush?.(b),
       onDrill: path => latest.current.onDrill?.(path),
+      onRefChange: r => latest.current.onRefChange?.(r),
       tooltipFormat: (tip, e) => latest.current.tooltipFormat?.(tip, e) ?? null
     })
     plot.current = p
@@ -65,7 +66,7 @@ export const SuperPlot = forwardRef<Plot | null, SuperPlotProps>(function SuperP
     plot.current?.setSpec(spec)
   }, [spec])
 
-  const { theme, locale, width, height, animate, transition, tooltip, hidden, renderer, canvasAbove, webglAbove, interactive, camera, plugins, dataTable, sync, toolbar, navigator, drill, announce, printLight, timeZone, strings } = options
+  const { theme, locale, width, height, animate, transition, tooltip, hidden, renderer, canvasAbove, webglAbove, interactive, camera, plugins, dataTable, sync, toolbar, navigator, drill, announce, printLight, timeZone, strings, refTarget } = options
   // Inline `sync={{ key: 'a' }}`, `toolbar={['png']}` or `strings={{ total: 'Summe' }}` is a new object every render: compare by value.
   const syncKey = JSON.stringify(sync ?? null)
   const toolbarKey = JSON.stringify(toolbar ?? null)
@@ -76,9 +77,9 @@ export const SuperPlot = forwardRef<Plot | null, SuperPlotProps>(function SuperP
       first.current = false
       return
     }
-    plot.current?.setOptions({ theme, locale, width, height, animate, transition, tooltip, renderer, canvasAbove, webglAbove, interactive, dataTable, sync, toolbar, navigator, drill, announce, printLight, timeZone, strings, ...(plugins ? { plugins } : {}), ...(hidden ? { hidden } : {}), ...(camera ? { camera } : {}) })
+    plot.current?.setOptions({ theme, locale, width, height, animate, transition, tooltip, renderer, canvasAbove, webglAbove, interactive, dataTable, sync, toolbar, navigator, drill, announce, printLight, timeZone, strings, refTarget, ...(plugins ? { plugins } : {}), ...(hidden ? { hidden } : {}), ...(camera ? { camera } : {}) })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [theme, locale, width, height, animate, transitionKey, tooltip, hidden, renderer, canvasAbove, webglAbove, interactive, camera, plugins, dataTable, syncKey, toolbarKey, navigator, drill, announce, printLight, timeZone, stringsKey])
+  }, [theme, locale, width, height, animate, transitionKey, tooltip, hidden, renderer, canvasAbove, webglAbove, interactive, camera, plugins, dataTable, syncKey, toolbarKey, navigator, drill, announce, printLight, timeZone, stringsKey, refTarget])
 
   return <div ref={host} className={className} style={style} />
 })

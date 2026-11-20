@@ -2,8 +2,8 @@
 // Copyright 2026 SUPER SOLUTION LABS INC
 import {
   compilePlot, renderSvg, resolveTheme, estimateWidth, defaultHeight, dataMarkCount, clampCamera, clampCamera3d, camera3dOf, plotTable, plotCsv, svgKey, cssVar,
-  resolveStrings, fillString, type UiStringKey, type UiStrings,
-  type AxisInfo, type Camera, type Camera3d, type Issue, type Mark, type Measure, type PlotPlugin, type RenderOptions, type Scene, type Theme, type Tip
+  resolveStrings, fillString, resolveRef, matchMarks, markRef, formatCardRef, type UiStringKey, type UiStrings,
+  type CardRef, type CardRefResult, type MarkMatch, type RefMatch, type AxisInfo, type Camera, type Camera3d, type Issue, type Mark, type Measure, type PlotPlugin, type RenderOptions, type Scene, type Theme, type Tip
 } from '@supersolutions/super-plot-core/base'
 import type * as Cv from './canvas.js'
 import { markCenter, nearestMark } from './marks.js'
@@ -170,6 +170,14 @@ export interface SuperPlotOptions extends Omit<RenderOptions, 'hidden' | 'measur
    * dark screen) in its light counterpart, so dark backgrounds do not waste ink. Default true.
    */
   printLight?: boolean
+  /**
+   * The pointer or keyboard moved onto a mark: the reference that names it (`markRef`), so words elsewhere on the
+   * page (a chat message's `ref:` link) can follow the viewer; null when it moved off, or onto a mark no reference
+   * names. Called once per change, never for `reveal`'s own focus move.
+   */
+  onRefChange?: (ref: CardRef | null) => void
+  /** The `target` of the references `onRefChange` reports (the card's id where the plot is one). Default `"plot"`. */
+  refTarget?: string
 }
 
 const NAV_REFUSED: Issue = { severity: 'warning', code: 'navigator_unsupported', path: '', message: 'The navigator needs `zoom` on a line, area or scatter chart with a numeric or time x axis and no facets; it was left out.', hint: 'Add zoom: "x" to the spec, or drop the navigator option.' }
@@ -180,6 +188,9 @@ const ANNOUNCE_EVERY = 5000
 const PRINT_LIGHT: Record<string, string> = { dark: 'light', 'accessible-dark': 'accessible' }
 /** Coarse pointers (touch, pen): a tap this close to a mark (scene px) picks it, so targets are 24 px or more. */
 const TOUCH_SLOP = 12
+/** `highlight`: the most marks outlined (the rest of a larger match is left dimmed). */
+const REF_MAX = 2000
+const SVG_NS = 'http://www.w3.org/2000/svg'
 
 let uid = 0
 
@@ -260,7 +271,7 @@ export class SuperPlot {
   private canvas: CanvasRenderingContext2D | null = null
   private canvasTried = false
   private overlay: SVGGElement | null = null
-  private highlighted: string | null = null
+  private dimmed: string | null = null
   private spec: unknown
   private layer: Cv.CanvasLayer | null = null
   /** The canvas chunk failed to load: draw this once on SVG (the next draw tries the chunk again). */
@@ -329,6 +340,15 @@ export class SuperPlot {
   /** When the last appended rows were drawn, and the gap before that (fast streams do not animate). */
   private lastAppend = -Infinity
   private appendGap = Infinity
+  /** `highlight` and `reveal`: the reference on show (its text, for idempotent calls) and its overlay, drawn again after every draw. */
+  private refOn: { ref: CardRef | string; text: string } | null = null
+  private refSvg: SVGSVGElement | null = null
+  /** The validated spec of the scene on screen: what `markRef` reads for `onRefChange`. */
+  private compiled: Record<string, any> | null = null
+  /** The last reference `onRefChange` reported (its text). */
+  private refSaid: string | null = null
+  /** `reveal` is moving keyboard focus: not the viewer, so `onRefChange` stays quiet. */
+  private revealing = false
 
   constructor(readonly host: HTMLElement, spec: unknown, private options: SuperPlotOptions = {}) {
     const doc = host.ownerDocument
@@ -440,6 +460,82 @@ export class SuperPlot {
   getBrush(): BrushSelection | null { return this.axis.getBrush() }
   /** Brush from code: `{ x: [from, to] }` or `{ x: ["A", "B"] }` on categories; null clears. Does not fire `onBrush`. */
   setBrush(brush: { x?: unknown; y?: unknown } | null): void { this.axis.setBrush(brush) }
+
+  /**
+   * Show what a reference names (`ref:` link, a `CardRef` or its text; see `resolveRef` in core for what it can
+   * name): the matched marks outlined over a halo and everything else in the plot area dimmed, on SVG, canvas and
+   * WebGL alike, and the tooltip when exactly one point matched. The outline does not rely on colour (it is a
+   * shape), uses the system `Highlight` colour in forced-colours mode and never animates. It stays through
+   * redraws (resize, new data, legend toggles) until `highlight(null)` or Escape in the chart. Calling it again with
+   * the same reference changes nothing. Returns `{ ok: true, label }`, or `{ ok: false, code, reason }` (the codes
+   * of `resolveRef`) with nothing highlighted. Points in series the viewer hid are left out (`reveal` shows them).
+   */
+  highlight(ref: CardRef | string | null): CardRefResult {
+    if (ref === null) {
+      this.clearRef()
+      return { ok: true }
+    }
+    const text = this.refText(ref)
+    const m = this.refMatch(ref, true)
+    if (!m.ok) {
+      this.clearRef()
+      return { ok: false, code: m.code, reason: m.reason }
+    }
+    if (this.refOn?.text === text && this.refSvg?.parentNode === this.root) return { ok: true, label: m.label }
+    this.refOn = { ref, text }
+    this.paintRef(true)
+    return { ok: true, label: m.label }
+  }
+
+  /**
+   * Bring what a reference names into view and give it keyboard focus: unhide its series, leave a drill-down
+   * that hides it, zoom out (or move a map back to its own view) when it is off screen, scroll the chart into view
+   * (smoothly unless the viewer prefers reduced motion), highlight it as `highlight` does, focus its first point
+   * and say what it shows in the live region. Changes it makes are reported as the viewer's would be
+   * (`onHiddenChange`, `onDrill`, `onZoom`, `onCameraChange`). Calling it again with the same reference changes
+   * nothing more. Returns what `highlight` returns.
+   */
+  reveal(ref: CardRef | string): CardRefResult {
+    const all = this.refMatch(ref, false)
+    if (!all.ok) return { ok: false, code: all.code, reason: all.reason }
+    this.refOn = { ref, text: this.refText(ref) }
+    const unhide = all.series.filter(k => this.hidden.has(k))
+    if (unhide.length) {
+      for (const k of unhide) this.hidden.delete(k)
+      this.options.onHiddenChange?.([...this.hidden])
+      this.render(false, 'data')
+    }
+    let mm = this.paintRef(false)
+    const drawn = (x: MarkMatch | null): boolean => !!x && (x.marks.length > 0 || x.rings.length > 0)
+    if (!drawn(mm) && this.drillOn() && this.shownFocus().length) {
+      this.focusPath = []
+      this.render(false)
+      this.options.onDrill?.([])
+      mm = this.paintRef(false)
+    }
+    const scene = this.scene
+    if (scene && this.offScreen(scene, mm)) {
+      if (scene.axes && this.axis.view) {
+        this.axis.setZoom(null, true)
+        this.drawNow()
+      } else if (scene.geo && this.cam) {
+        this.cam = null
+        this.drawNow()
+        const c = this.getCamera()
+        if (c) this.options.onCameraChange?.(c)
+      }
+      mm = this.paintRef(false)
+    }
+    if (this.disposed) return { ok: true, label: all.label }
+    if (mm) this.paintTip(mm.tip)
+    // No mark of its own takes focus (a line's points on SVG): the chart does, with the first point's tooltip.
+    if (mm && !this.focusRef(mm) && mm.focus >= 0) this.paintTip(mm.focus)
+    const win = this.host.ownerDocument.defaultView
+    const still = !!win?.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    this.host.scrollIntoView?.({ block: 'nearest', inline: 'nearest', behavior: still ? 'auto' : 'smooth' })
+    this.announce(this.t('refShowing', { label: all.label }))
+    return { ok: true, label: all.label }
+  }
 
   /** Change render options (theme, locale, size, ...). */
   setOptions(patch: Partial<SuperPlotOptions>): void {
@@ -815,7 +911,7 @@ export class SuperPlot {
     this.glMoved = false
     this.hideTip()
     this.overlay = null
-    this.highlighted = null
+    this.dimmed = null
     this.hoverMark = null
     if (!result.ok) {
       this.ssr = null
@@ -824,6 +920,7 @@ export class SuperPlot {
       this.layer?.dispose()
       this.layer = null
       this.scene = null
+      this.compiled = null
       this.issues = result.issues
       if (this.map) {
         this.map.controls?.remove()
@@ -835,6 +932,7 @@ export class SuperPlot {
       err.setAttribute('role', 'alert')
       err.textContent = result.issues.filter(i => i.severity === 'error').map(i => `${i.path || 'spec'}: ${i.message}${i.hint ? ` ${i.hint}` : ''}`).join('\n')
       this.mount(err)
+      this.paintRef(false)
       this.axis.afterRender()
       this.syncNav(null)
       this.syncTable()
@@ -842,6 +940,7 @@ export class SuperPlot {
       return
     }
     this.scene = result.scene
+    this.compiled = result.spec
     const changed = JSON.stringify(result.issues) !== JSON.stringify(this.issues)
     this.issues = result.issues
     const theme = this.themeNow()
@@ -1010,6 +1109,7 @@ export class SuperPlot {
     if (target.svg) this.syncCrumbs(target.svg, scene)
     const renderer = this.getRenderer()
     if (this.runPlugins(scene, target)) report = true
+    this.paintRef(false)
     this.syncTable()
     this.syncBar()
     if (report) o.onIssues?.(this.issues)
@@ -1274,11 +1374,11 @@ export class SuperPlot {
     const i = v && scene ? syncTarget(scene, v) : -1
     if (this.layer) return this.layer.showMark(i)
     this.clearGuide()
-    this.clearHighlight()
+    this.undim()
     const m = i >= 0 ? scene!.marks[i] : null
     if (!m) return this.hideTip()
     if (m.guide) this.showGuide(m)
-    else if (m.series !== undefined) this.highlight(m.series)
+    else if (m.series !== undefined) this.dimSeries(m.series)
     if (!m.tip || !this.tipEnabled()) return this.hideTip()
     const c = m.guide ? { x: m.guide.x1, y: m.focus?.[0]?.y ?? (m.guide.y1 + m.guide.y2) / 2 } : markCenter(m)
     const r = this.root.getBoundingClientRect()
@@ -1388,10 +1488,22 @@ export class SuperPlot {
     if (m === this.hoverMark) return
     this.hoverMark = m
     this.options.onHover?.(m ? { datum: m.datum, series: m.series, tip: m.tip } : null)
+    this.sayRef(m)
     const peers = this.peers('hover')
     if (!peers.length) return
     const v = m ? xValueOf(this.scene, m) : null
     for (const p of peers) p.followHover(v)
+  }
+
+  /** `onRefChange`: the reference the viewer's mark stands for, once per change. */
+  private sayRef(m: Mark | null): void {
+    const f = this.options.onRefChange
+    if (!f || this.revealing) return
+    const ref = m && this.compiled ? markRef(this.compiled, m, this.options.refTarget ?? 'plot') : null
+    const text = ref ? formatCardRef(ref) : null
+    if (text === this.refSaid) return
+    this.refSaid = text
+    f(ref)
   }
 
   /** A WebGL layer for this plot, or null (not loaded yet, unavailable, or a software GPU under `auto`). */
@@ -1486,8 +1598,8 @@ export class SuperPlot {
     const m = this.markOf(e.target)
     const mark = (m && this.scene?.marks[m.i]) || this.nearTouch(e)
     this.hovered(mark ?? null)
-    if (!mark) return this.clearHighlight()
-    if (mark.series !== undefined && mark.role !== 'hit') this.highlight(mark.series)
+    if (!mark) return this.undim()
+    if (mark.series !== undefined && mark.role !== 'hit') this.dimSeries(mark.series)
     else if (mark.role === 'hit') this.showGuide(mark)
     if (mark.tip && this.tipEnabled()) this.showTip(mark.tip, e.clientX, e.clientY, mark)
   }
@@ -1503,7 +1615,7 @@ export class SuperPlot {
 
   private onLeave = (): void => {
     this.hideTip()
-    this.clearHighlight()
+    this.undim()
     this.clearGuide()
     if (!this.layer) this.hovered(null)
   }
@@ -1515,7 +1627,7 @@ export class SuperPlot {
     if (!m || !mark?.tip || !this.tipEnabled()) return
     const r = m.el.getBoundingClientRect()
     this.showTip(mark.tip, r.left + r.width / 2, r.top, mark)
-    if (mark.series !== undefined) this.highlight(mark.series)
+    if (mark.series !== undefined) this.dimSeries(mark.series)
   }
 
   private onClick = (e: MouseEvent): void => {
@@ -1528,6 +1640,11 @@ export class SuperPlot {
 
   private onKey = (e: KeyboardEvent): void => {
     if (e.key === 'Escape') {
+      // A reference on show goes first; then drill-down.
+      if (this.refOn) {
+        e.preventDefault()
+        return this.clearRef()
+      }
       // Drilled down: Escape goes up one level (and the tooltip goes away with the redraw).
       const shown = this.drillOn() ? this.shownFocus() : []
       if (shown.length) {
@@ -1571,18 +1688,199 @@ export class SuperPlot {
     if (mark.drill !== undefined && mark.role === 'data' && this.drillOn() && !this.disposed) this.drillTo(mark.drill)
   }
 
-  private highlight(series: string): void {
-    if (this.highlighted === series) return
-    this.highlighted = series
+  /** Hover: fade the other series (SVG). */
+  private dimSeries(series: string): void {
+    if (this.dimmed === series) return
+    this.dimmed = series
     const els = this.root.querySelectorAll<SVGElement>('.sp-data')
     if (els.length > 3000) return
     els.forEach(el => el.classList.toggle('sp-dimmed', el.getAttribute('data-s') !== series))
   }
 
-  private clearHighlight(): void {
-    if (this.highlighted === null) return
-    this.highlighted = null
+  private undim(): void {
+    if (this.dimmed === null) return
+    this.dimmed = null
     this.root.querySelectorAll('.sp-dimmed').forEach(el => el.classList.remove('sp-dimmed'))
+  }
+
+  // ---- references (highlight, reveal) -------------------------------------------------------
+
+  private refText(ref: CardRef | string): string {
+    return typeof ref === 'string' ? ref : formatCardRef(ref) ?? ''
+  }
+
+  /** What `ref` matches in the spec on screen: without the hidden series (`withHidden: false`, for `reveal`), or with them. */
+  private refMatch(ref: CardRef | string, withHidden: boolean): RefMatch {
+    return resolveRef(this.specNow(), ref, withHidden ? { hidden: this.hidden } : {})
+  }
+
+  private clearRef(): void {
+    if (this.refOn) this.hideTip()
+    this.refOn = null
+    this.refSvg?.remove()
+    this.refSvg = null
+  }
+
+  /** Draw the reference on show over the chart (after every draw), and its tooltip when asked. Returns what it outlined. */
+  private paintRef(tip: boolean): (MarkMatch & { rows: number[] }) | null {
+    const on = this.refOn
+    const scene = this.scene
+    this.refSvg?.remove()
+    this.refSvg = null
+    if (!on || !scene) return null
+    const m = this.refMatch(on.ref, true)
+    // The viewer hid everything it named: nothing to show until they bring it back.
+    if (!m.ok) return null
+    const mm = matchMarks(scene, m)
+    this.refSvg = this.refOverlay(scene, mm)
+    this.root.appendChild(this.refSvg)
+    if (tip) this.paintTip(mm.tip)
+    return { ...mm, rows: m.rows }
+  }
+
+  /** The tooltip of mark `i` (the one matched point), placed over it. */
+  private paintTip(i: number): void {
+    const scene = this.scene
+    const mark = i >= 0 ? scene?.marks[i] : undefined
+    if (!scene || !mark?.tip || !this.tipEnabled()) return
+    const c = mark.focus?.[0] ?? markCenter(mark)
+    if (!c) return
+    const r = this.root.getBoundingClientRect()
+    const k = r.width > 0 ? r.width / scene.width : 1
+    this.showTip(mark.tip, r.left + c.x * k, r.top + c.y * k, mark)
+  }
+
+  /**
+   * The overlay: an `<svg>` the size of the scene over whatever drew it. A veil over the plot area (with holes
+   * where the matched marks are) dims the rest; each matched mark gets a halo in the background colour and an
+   * outline in the text colour, lines and areas their matched points ringed. At most {@link REF_MAX} marks.
+   */
+  private refOverlay(scene: Scene, mm: MarkMatch): SVGSVGElement {
+    const doc = this.host.ownerDocument
+    const theme = this.themeNow()
+    const el = <K extends keyof SVGElementTagNameMap>(name: K, attrs: Record<string, string | number>): SVGElementTagNameMap[K] => {
+      const e = doc.createElementNS(SVG_NS, name)
+      for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, String(v))
+      return e
+    }
+    const { width: w, height: h } = scene
+    const svg = el('svg', { class: 'sp-ref', viewBox: `0 0 ${w} ${h}`, 'aria-hidden': 'true', focusable: 'false' })
+    const id = `${this.id}-ref`
+    const bg = `var(--sp-background, ${theme.colors.background})`
+    const ink = `var(--sp-text, ${theme.colors.text})`
+    const mask = el('mask', { id, maskUnits: 'userSpaceOnUse', x: 0, y: 0, width: w, height: h })
+    mask.appendChild(el('rect', { x: 0, y: 0, width: w, height: h, fill: 'white' }))
+    const halo = el('g', { class: 'sp-ref-h', fill: 'none', stroke: bg, 'stroke-linejoin': 'round' })
+    const line = el('g', { class: 'sp-ref-o', fill: 'none', stroke: ink, 'stroke-linejoin': 'round' })
+    const over = el('g', { fill: 'none' })
+    for (const i of mm.marks.slice(0, REF_MAX)) {
+      const m = scene.marks[i]
+      const shape = this.refShape(m, el)
+      if (!shape) continue
+      const sw = 'strokeWidth' in m && typeof m.strokeWidth === 'number' ? m.strokeWidth : 1.5
+      // A stroke with no fill (a line, an outline): outline it wider, then draw it again above the outline.
+      const stroked = m.type === 'line' || (m.type === 'path' && (!m.fill || m.fill === 'none'))
+      const hole = shape.cloneNode() as SVGElement
+      if (stroked) {
+        hole.setAttribute('fill', 'none')
+        hole.setAttribute('stroke', 'black')
+        hole.setAttribute('stroke-width', String(sw + 8))
+      } else hole.setAttribute('fill', 'black')
+      mask.appendChild(hole)
+      const hl = shape.cloneNode() as SVGElement
+      hl.setAttribute('stroke-width', String(stroked ? sw + 8 : 5))
+      halo.appendChild(hl)
+      const ol = shape.cloneNode() as SVGElement
+      ol.setAttribute('stroke-width', String(stroked ? sw + 4 : 2))
+      line.appendChild(ol)
+      if (stroked && 'stroke' in m && m.stroke) {
+        const again = shape.cloneNode() as SVGElement
+        again.setAttribute('stroke', m.stroke)
+        again.setAttribute('stroke-width', String(sw))
+        if (m.dash) again.setAttribute('stroke-dasharray', m.dash)
+        over.appendChild(again)
+      }
+    }
+    for (const r of mm.rings.slice(0, REF_MAX)) {
+      mask.appendChild(el('circle', { cx: r.x, cy: r.y, r: 7, fill: 'black' }))
+      halo.appendChild(el('circle', { cx: r.x, cy: r.y, r: 6, 'stroke-width': 5 }))
+      line.appendChild(el('circle', { cx: r.x, cy: r.y, r: 6, 'stroke-width': 2 }))
+    }
+    const defs = el('defs', {})
+    defs.appendChild(mask)
+    const veil = el('g', { class: 'sp-ref-veil', fill: bg, 'fill-opacity': 0.62, mask: `url(#${id})` })
+    const areas = scene.panels?.map(p => p.plot) ?? (scene.axes ? [scene.axes.plot] : [{ x: 0, y: 0, w, h }])
+    for (const a of areas) veil.appendChild(el('rect', { x: a.x, y: a.y, width: a.w, height: a.h }))
+    svg.append(defs, veil, halo, line, over)
+    return svg
+  }
+
+  /** A mark's outline as an SVG shape (no paint), or null. Text is its box, from the measured width. */
+  private refShape(m: Mark, el: <K extends keyof SVGElementTagNameMap>(name: K, attrs: Record<string, string | number>) => SVGElementTagNameMap[K]): SVGElement | null {
+    switch (m.type) {
+      case 'rect': {
+        const r = Array.isArray(m.r) ? Math.max(...m.r) : m.r ?? 0
+        return el('rect', { x: m.x, y: m.y, width: Math.max(0, m.w), height: Math.max(0, m.h), rx: r })
+      }
+      case 'circle': return el('circle', { cx: m.cx, cy: m.cy, r: m.r })
+      case 'line': return el('line', { x1: m.x1, y1: m.y1, x2: m.x2, y2: m.y2 })
+      case 'path': return el('path', { d: m.d, ...(m.rule ? { 'fill-rule': m.rule } : {}) })
+      case 'text': {
+        const tw = this.measure(m.text, m.size, m.weight ?? 400)
+        const x = m.anchor === 'middle' ? m.x - tw / 2 : m.anchor === 'end' ? m.x - tw : m.x
+        const y = m.baseline === 'middle' ? m.y - m.size / 2 : m.baseline === 'hanging' ? m.y : m.y - m.size * 0.8
+        return el('rect', { x: x - 3, y: y - 2, width: tw + 6, height: m.size + 4, rx: 3, ...(m.rotate ? { transform: `rotate(${m.rotate} ${m.x} ${m.y})` } : {}) })
+      }
+      default: return null
+    }
+  }
+
+  /**
+   * Nothing of the match is drawn, or a matched mark is outside the plot area (zoomed) or the scene (a map), or
+   * only lines that draw more than matched are (a zoomed line keeps every row of its series, not its points).
+   */
+  private offScreen(scene: Scene, mm: (MarkMatch & { rows: number[] }) | null): boolean {
+    if (!mm || (!mm.marks.length && !mm.rings.length)) return true
+    const rows = new Set(mm.rows)
+    const exact = mm.rings.length > 0 || mm.marks.some(i => scene.marks[i].role === 'annotation' || (scene.marks[i].rows ?? []).every(r => rows.has(r)))
+    if (!exact) return true
+    const box = scene.axes && !scene.panels ? scene.axes.plot : { x: 0, y: 0, w: scene.width, h: scene.height }
+    const out = (c: { x: number; y: number } | null): boolean => !!c && (c.x < box.x - 1 || c.x > box.x + box.w + 1 || c.y < box.y - 1 || c.y > box.y + box.h + 1)
+    return mm.marks.some(i => scene.marks[i].role === 'data' && out(markCenter(scene.marks[i]))) || mm.rings.some(out)
+  }
+
+  /** Draw now (not on the next frame): `reveal` focuses what the draw puts on screen. */
+  private drawNow(): void {
+    cancelAnimationFrame(this.raf)
+    this.raf = 0
+    this.render(false)
+  }
+
+  /**
+   * `reveal`: keyboard focus on the first matched point the keyboard can reach (an SVG element, or the canvas
+   * view's mark). False when none can: the chart itself takes focus when it can (zoom keys), else nothing moves.
+   */
+  private focusRef(mm: MarkMatch): boolean {
+    const order = [mm.focus, ...mm.marks].filter(i => i >= 0)
+    this.revealing = true
+    try {
+      if (this.layer) {
+        for (const i of order) if (this.layer.focusOn(i)) return true
+        this.layer.el.querySelector<HTMLElement>('canvas[tabindex="0"]')?.focus({ preventScroll: true })
+        return false
+      }
+      for (const i of order) {
+        const e = this.root.querySelector<SVGElement>(`[data-i="${i}"][tabindex]`)
+        if (e) {
+          e.focus({ preventScroll: true })
+          return true
+        }
+      }
+      if (this.root.hasAttribute('tabindex')) this.root.focus({ preventScroll: true })
+      return false
+    } finally {
+      this.revealing = false
+    }
   }
 
   private showGuide(mark: Scene['marks'][number]): void {
@@ -1725,7 +2023,7 @@ export class SuperPlot {
       reset: () => this.reset(true),
       text: (key, vars) => this.t(key, vars),
       hideTip: () => this.hideTip(),
-      clearHighlight: () => this.clearHighlight()
+      clearHighlight: () => this.undim()
     })
     this.map.setup(scene, theme, on)
   }
@@ -1747,7 +2045,12 @@ export class SuperPlot {
 
   private applyCamera(c: Camera | Camera3d): void {
     this.cam = c
-    if (this.layer?.moveCamera(c)) this.glMoved = true
+    if (this.layer?.moveCamera(c)) {
+      this.glMoved = true
+      // The GPU moved the map but not the scene: the outline comes back with the redraw when the gesture ends.
+      this.refSvg?.remove()
+      this.refSvg = null
+    }
     else this.schedule(false)
   }
 

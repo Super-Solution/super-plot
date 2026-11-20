@@ -22,6 +22,7 @@ export const CSS = `
 .sp-root[data-axes]:focus-visible{outline:2px solid var(--sp-info,#2962FF);outline-offset:2px}
 .sp-root[data-brushing]{cursor:crosshair}
 .sp-root[data-panning]{cursor:grabbing}
+.sp-root svg.sp-ref{position:absolute;left:0;top:0;pointer-events:none;z-index:3;overflow:visible}
 .sp-brush{position:absolute;pointer-events:none;z-index:4;background:color-mix(in srgb,var(--sp-info,#2962FF) 14%,transparent);border:1px solid var(--sp-info,#2962FF);box-sizing:border-box;line-height:0}
 .sp-m:focus{outline:none}
 .sp-m:focus-visible{outline:2px solid var(--sp-info,#2962FF);outline-offset:2px}
@@ -94,6 +95,10 @@ export const CSS = `
 .sp-m.sp-data:focus-visible{stroke:Highlight;stroke-width:3px}
 .sp-root svg g[pointer-events] line{stroke:Highlight}
 .sp-brush{background:transparent;border:2px solid Highlight}
+.sp-ref{forced-color-adjust:none}
+.sp-ref .sp-ref-o>*{stroke:Highlight}
+.sp-ref .sp-ref-h>*{stroke:Canvas}
+.sp-ref .sp-ref-veil{fill:Canvas}
 .sp-tip{background:Canvas!important;color:CanvasText!important;border-color:CanvasText!important;box-shadow:none}
 .sp-tip i{forced-color-adjust:none;outline:1px solid CanvasText}
 .sp-bar,.sp-bar:focus-within{opacity:1}
@@ -105,6 +110,7 @@ export const CSS = `
 }
 @media (prefers-contrast:more){
 .sp-dimmed{opacity:.15!important}
+.sp-ref .sp-ref-veil{fill-opacity:.75}
 .sp-tip{border-width:2px;box-shadow:none}
 .sp-brush{border-width:2px;background:color-mix(in srgb,var(--sp-info,#2962FF) 22%,transparent)}
 .sp-m:focus-visible,.sp-cv-lk:focus-visible,.sp-cv>canvas:first-child:focus-visible,.sp-root[data-axes]:focus-visible,.sp-root[data-map]:focus-visible,.sp-ctl button:focus-visible,.sp-bar button:focus-visible{outline-width:3px}

@@ -380,6 +380,21 @@ export class CanvasLayer {
   }
 
   /**
+   * Move keyboard focus to mark `i` (a reference was revealed): the canvas takes focus and the arrow keys go on
+   * from there. False when the keyboard cannot reach that mark (a map or 3D chart, or a mark without a tooltip).
+   */
+  focusOn(i: number): boolean {
+    const s = this.scene
+    if (!s || s.geo || s.view3d) return false
+    const k = this.keyOrder().indexOf(i)
+    if (k < 0) return false
+    this.base.focus({ preventScroll: true })
+    this.cursor = k
+    this.focusMark(i)
+    return true
+  }
+
+  /**
    * Show mark `i` as hovered (outline, guide, tooltip) without telling the owner: what a synchronised plot
    * shows for a value hovered in another one. -1 clears it.
    */

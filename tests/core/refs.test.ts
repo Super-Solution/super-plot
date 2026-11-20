@@ -175,8 +175,14 @@ describe('Mark.rows and matchMarks', () => {
   it('rings matched points on a line instead of outlining the whole line', () => {
     const scene = compile(daily)
     const m = matchMarks(scene, ok(resolveRef(daily, 'ref:d?x=2026-03-15')))
-    expect(m.rings).toHaveLength(1)
+    // A short line draws its dots: the dot is outlined, and not ringed as well.
+    expect(m.marks.filter(i => scene.marks[i].type === 'circle')).toHaveLength(1)
+    expect(m.rings).toHaveLength(0)
     expect(m.marks.every(i => scene.marks[i].type !== 'path')).toBe(true)
+    const bare = { ...daily, points: false }
+    const b = matchMarks(compile(bare), ok(resolveRef(bare, 'ref:d?x=2026-03-15')))
+    expect(b.rings).toHaveLength(1)
+    expect(b.marks).toHaveLength(0)
     const whole = matchMarks(scene, ok(resolveRef(daily, 'ref:d')))
     expect(whole.marks.some(i => scene.marks[i].type === 'path')).toBe(true)
   })

@@ -356,7 +356,7 @@ export function matchMarks(scene: Scene, match: Extract<RefMatch, { ok: true }>)
     return !!ss && ss.some(x => x === undefined || m.series === undefined || x === m.series)
   }
   const ringed = new Set<number>()
-  const rings: { x: number; y: number }[] = []
+  const found: { x: number; y: number; series?: string; rows: number[] }[] = []
   let tip = -1
   let focus = -1
   scene.marks.forEach((m, i) => {
@@ -365,7 +365,11 @@ export function matchMarks(scene: Scene, match: Extract<RefMatch, { ok: true }>)
     if (!hitRows.length) return
     for (const r of hitRows) ringed.add(r)
     const want = new Set(hitRows.flatMap(r => byRow.get(r)!))
-    for (const f of m.focus) if (want.has(undefined) || f.series === undefined || want.has(f.series)) rings.push({ x: f.x, y: f.y })
+    for (const f of m.focus) {
+      // A point that says which rows it draws is ringed when one of them matched (for its series, in wide form).
+      const rows = f.rows ? f.rows.filter(r => byRow.get(r)?.some(x => x === undefined || f.series === undefined || x === f.series)) : hitRows
+      if (f.rows ? rows.length : want.has(undefined) || f.series === undefined || want.has(f.series)) found.push({ x: f.x, y: f.y, series: f.series, rows })
+    }
     if (focus < 0) focus = i
     if (tip < 0 && match.points.length === 1 && m.tip) tip = i
   })
@@ -386,6 +390,13 @@ export function matchMarks(scene: Scene, match: Extract<RefMatch, { ok: true }>)
     if (focus < 0 && (m.tip || m.aria)) focus = i
     if (tip < 0 && match.points.length === 1 && m.tip) tip = i
   })
+  // A point already outlined as a dot of its own is not ringed as well.
+  const dots = new Set<string>()
+  for (const i of marks) {
+    const m = scene.marks[i]
+    if (m.type === 'circle' && m.rows) for (const r of m.rows) dots.add(`${m.series}\u0000${r}`)
+  }
+  const rings = found.filter(f => !f.rows.length || !f.rows.every(r => dots.has(`${f.series}\u0000${r}`))).map(f => ({ x: f.x, y: f.y }))
   return { marks, rings, tip, focus }
 }
 
