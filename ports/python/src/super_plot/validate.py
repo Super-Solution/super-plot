@@ -194,6 +194,24 @@ def _validate_field(name: str, d: dict[str, Any], value: Any, issues: list, colu
                 near_e = closest(v, d["values"]) if isinstance(v, str) else None
                 _add(issues, "error", "bad_enum", f"{name}.{k}", f"{name}.{k} must be one of {', '.join(d['values'])}; got {_show(v)}.", f'Did you mean "{near_e}"?' if near_e else None)
         return out_e
+    if kind == "valuesMap":
+        if not isinstance(value, dict):
+            return bad("bad_type", f'{name} must be an object of series name to a list of values, e.g. {{"Taiwan":["2026-04-01"]}}.')
+        most_m = d.get("max", LIMITS["maxCategories"])
+        out_v: dict[str, list[str]] = {}
+        for k, v in value.items():
+            if not isinstance(v, list):
+                _add(issues, "error", "bad_type", f"{name}.{k}", f"{name}.{k} must be a list of values, got {_show(v)}.")
+                continue
+            if len(v) > most_m:
+                _add(issues, "error", "too_many", f"{name}.{k}", f"{name}.{k} lists {len(v)} values; at most {most_m}.")
+                continue
+            at = next((i for i, x in enumerate(v) if not (isinstance(x, str) or is_finite_number(x))), -1)
+            if at >= 0:
+                _add(issues, "error", "bad_type", f"{name}.{k}[{at}]", f"{name}.{k}[{at}] must be a string or a number, got {_show(v[at])}.")
+                continue
+            out_v[k] = [js_string(x) for x in v]
+        return out_v
     if kind == "annotations":
         return _annotations(name, value, issues)
     if kind == "geo":

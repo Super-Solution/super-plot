@@ -1213,6 +1213,12 @@
           "desc": "x values at which lines are cut: the point at or after each one starts a new piece, and nothing is drawn across the cut (a change of definition, a series break). Dates as ISO strings; for a category x axis the category that starts the new piece. Markers, tooltips and the legend are unchanged."
         },
         {
+          "name": "splits",
+          "kind": "valuesMap",
+          "max": 32,
+          "desc": "Series name to the x values at which only that series is cut, e.g. {\"Taiwan\":[\"2026-04-01\"]}: for a change of definition that hit one series and not the others. Same rules as `splitAt`, which cuts every series; the two add up."
+        },
+        {
           "name": "gaps",
           "kind": "enum",
           "values": [
@@ -1524,6 +1530,12 @@
           "kind": "values",
           "max": 32,
           "desc": "x values at which lines are cut: the point at or after each one starts a new piece, and nothing is drawn across the cut (a change of definition, a series break). Dates as ISO strings; for a category x axis the category that starts the new piece. Markers, tooltips and the legend are unchanged."
+        },
+        {
+          "name": "splits",
+          "kind": "valuesMap",
+          "max": 32,
+          "desc": "Series name to the x values at which only that series is cut, e.g. {\"Taiwan\":[\"2026-04-01\"]}: for a change of definition that hit one series and not the others. Same rules as `splitAt`, which cuts every series; the two add up."
         },
         {
           "name": "gaps",

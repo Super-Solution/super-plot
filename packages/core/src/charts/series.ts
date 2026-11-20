@@ -264,18 +264,30 @@ function compileSeries(c: ChartCtx, area: boolean): { series: ReturnType<ChartCt
   const yMin = yScale.domain[0]
   // Lines break at a missing value, unless `gaps: "connect"` joins over it.
   const joined = <T extends { y: number | null }>(pts: T[]): T[][] => (gaps === 'connect' ? [pts.filter(p => p.y !== null)].filter(r => r.length) : runs(pts))
-  // `splitAt` cuts every line at those x values: the point at or after one starts a new piece, nothing is drawn across it.
-  const cutOf = new Map<number | string, number>()
-  {
-    const cuts = ((s.splitAt ?? []) as string[]).map(v => xKeyOf(v)).filter((v): v is number | string => v !== null)
-    let piece = 0
-    xs.forEach((x, i) => {
-      if (i > 0 && cuts.some(cv => (kind === 'category' ? cv === x : (x as number) >= (cv as number) && (xs[i - 1] as number) < (cv as number)))) piece++
-      cutOf.set(x, piece)
-    })
+  // `splitAt` cuts every line at those x values, `splits` the named series at theirs: the point at or after a cut
+  // starts a new piece, and nothing is drawn across it.
+  const byKey = (s.splits ?? {}) as Record<string, string[]>
+  const pieces = new Map<string, Map<number | string, number>>()
+  const piecesOf = (k: string): Map<number | string, number> | undefined => {
+    const raw = [...((s.splitAt ?? []) as string[]), ...(byKey[k] ?? [])]
+    if (!raw.length) return undefined
+    let m = pieces.get(k)
+    if (!m) {
+      const cuts = raw.map(v => xKeyOf(v)).filter((v): v is number | string => v !== null)
+      m = new Map()
+      let piece = 0
+      xs.forEach((x, i) => {
+        if (i > 0 && cuts.some(cv => (kind === 'category' ? cv === x : (x as number) >= (cv as number) && (xs[i - 1] as number) < (cv as number)))) piece++
+        m!.set(x, piece)
+      })
+      pieces.set(k, m)
+    }
+    return m
   }
-  const split = <T extends { y: number | null; xv?: number | string }>(pts: T[]): T[][] =>
-    cutOf.size && s.splitAt ? joined(pts).flatMap(run => run.reduce<T[][]>((out, p, i) => (i > 0 && cutOf.get(p.xv!) !== cutOf.get(run[i - 1].xv!) ? out.push([p]) : out[out.length - 1].push(p), out), [[run[0]]])) : joined(pts)
+  const split = <T extends { y: number | null; xv?: number | string }>(pts: T[], k: string): T[][] => {
+    const cutOf = piecesOf(k)
+    return cutOf ? joined(pts).flatMap(run => run.reduce<T[][]>((out, p, i) => (i > 0 && cutOf.get(p.xv!) !== cutOf.get(run[i - 1].xv!) ? out.push([p]) : out[out.length - 1].push(p), out), [[run[0]]])) : joined(pts)
+  }
   const widths = (s.widths ?? {}) as Record<string, number>
   const widthOf = (k: string): number => widths[k] ?? c.theme.lineWidth
   // `curves` gives a series its own curve; the others use `curve`.
@@ -292,7 +304,7 @@ function compileSeries(c: ChartCtx, area: boolean): { series: ReturnType<ChartCt
         const b = highV.get(k)?.get(x)
         return { xv: x, px: px(x), y: a === undefined || b === undefined ? null : yScale.at(Math.max(a, logY ? yMin : -Infinity)), y1: b === undefined ? 0 : yScale.at(b) }
       })
-      for (const run of split(bp)) {
+      for (const run of split(bp, k)) {
         const top: Pt[] = decimate(run.map(p => [p.px, p.y1] as Pt), plot.w)
         const bottom: Pt[] = decimate(run.map(p => [p.px, p.y as number] as Pt), plot.w)
         bands.push({ type: 'path', role: 'data', series: k, d: run.length > 1 ? areaPath(top, bottom, curve) : `M${Math.round(run[0].px * 100) / 100} ${Math.round(run[0].y1 * 100) / 100}V${Math.round((run[0].y as number) * 100) / 100}`, fill: color, stroke: run.length > 1 ? undefined : color, strokeWidth: run.length > 1 ? undefined : 2, opacity: 0.14, anim: 'fade', rows: all, ...(clipTo ? { clip: clipTo } : {}) })
@@ -304,7 +316,7 @@ function compileSeries(c: ChartCtx, area: boolean): { series: ReturnType<ChartCt
       if (stack !== 'none') return { xv: x, px: px(x), y: yScale.at(upper.get(k)!.get(x) ?? 0), y0: yScale.at(lower.get(k)!.get(x) ?? 0), y1: yScale.at(upper.get(k)!.get(x) ?? 0) }
       return { xv: x, px: px(x), y: v === undefined ? null : ks.at(v) }
     })
-    const pr = split(pts)
+    const pr = split(pts, k)
     for (const run of pr) {
       const top: Pt[] = decimate(run.map(p => [p.px, p.y as number] as Pt), plot.w)
       if (area) {
@@ -421,6 +433,7 @@ const SERIES_FIELDS: ChartDef['fields'] = {
   curve: { kind: 'enum', values: ['linear', 'smooth', 'step'], default: 'linear', desc: '`smooth` is monotone (never overshoots the data); `step` holds each value until the next point.' },
   ...dualFields('as lines'),
   splitAt: { kind: 'values', max: 32, desc: 'x values at which lines are cut: the point at or after each one starts a new piece, and nothing is drawn across the cut (a change of definition, a series break). Dates as ISO strings; for a category x axis the category that starts the new piece. Markers, tooltips and the legend are unchanged.' },
+  splits: { kind: 'valuesMap', max: 32, desc: 'Series name to the x values at which only that series is cut, e.g. {"Taiwan":["2026-04-01"]}: for a change of definition that hit one series and not the others. Same rules as `splitAt`, which cuts every series; the two add up.' },
   gaps: { kind: 'enum', values: ['break', 'connect', 'zero'], desc: 'Default break. What a missing or null y does: `break` leaves a gap in the line, `connect` joins the points on either side, `zero` draws it as 0 (the tooltip says "missing"). Stacked areas always count a missing value as 0.' },
   ...intervalFields('y', 'a shaded band behind each line (one band per series; with long-form `series`, not with several `y` columns)')
 }
