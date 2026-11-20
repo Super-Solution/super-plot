@@ -12,16 +12,16 @@ const core = '@supersolutions/super-plot-core'
 const web = '@supersolutions/super-plot-web'
 /** Each case: the code, and its budget in KB gzip (a little above what it measured when the budget was set). */
 const cases = {
-  'core base, no chart': [`import { renderToSvg } from '${core}/base'; console.log(renderToSvg({}))`, 22],
+  'core base, no chart': [`import { renderToSvg } from '${core}/base'; console.log(renderToSvg({}))`, 22.5],
   'core base+bar validate': [`import { validatePlot, registerChart } from '${core}/base'; import { bar } from '${core}/charts'; registerChart(bar); console.log(validatePlot({}))`, 26],
   'core base+bar renderToSvg': [`import { renderToSvg, registerChart } from '${core}/base'; import { bar } from '${core}/charts'; registerChart(bar); console.log(renderToSvg({}))`, 37],
   'core base+basic': [`import { renderToSvg, registerCharts } from '${core}/base'; import { basicCharts } from '${core}/charts/basic'; registerCharts(basicCharts); console.log(renderToSvg({}))`, 57.5],
-  'core base+basic+transforms': [`import { renderToSvg, registerCharts, registerTransforms } from '${core}/base'; import { basicCharts } from '${core}/charts/basic'; import { allTransforms } from '${core}/transforms'; registerCharts(basicCharts); registerTransforms(allTransforms); console.log(renderToSvg({}))`, 62.5],
-  'core base+bar resolveRef': [`import { resolveRef, registerChart } from '${core}/base'; import { bar } from '${core}/charts'; registerChart(bar); console.log(resolveRef({}, 'ref:p'))`, 29],
+  'core base+basic+transforms': [`import { renderToSvg, registerCharts, registerTransforms } from '${core}/base'; import { basicCharts } from '${core}/charts/basic'; import { allTransforms } from '${core}/transforms'; registerCharts(basicCharts); registerTransforms(allTransforms); console.log(renderToSvg({}))`, 63],
+  'core base+bar resolveRef': [`import { resolveRef, registerChart } from '${core}/base'; import { bar } from '${core}/charts'; registerChart(bar); console.log(resolveRef({}, 'ref:p'))`, 29.5],
   'core full': [`import { renderToSvg } from '${core}'; console.log(renderToSvg({}))`, 128.5],
   'web base, no chart': [`import { SuperPlot } from '${web}/base'; new SuperPlot(document.body, {})`, 49],
-  'web base+bar+line': [`import { SuperPlot } from '${web}/base'; import { registerChart } from '${core}/base'; import { bar, line } from '${core}/charts'; registerChart(bar); registerChart(line); new SuperPlot(document.body, {})`, 72],
-  'web base+basic': [`import { SuperPlot } from '${web}/base'; import { registerCharts } from '${core}/base'; import { basicCharts } from '${core}/charts/basic'; registerCharts(basicCharts); new SuperPlot(document.body, {})`, 85],
+  'web base+bar+line': [`import { SuperPlot } from '${web}/base'; import { registerChart } from '${core}/base'; import { bar, line } from '${core}/charts'; registerChart(bar); registerChart(line); new SuperPlot(document.body, {})`, 72.5],
+  'web base+basic': [`import { SuperPlot } from '${web}/base'; import { registerCharts } from '${core}/base'; import { basicCharts } from '${core}/charts/basic'; registerCharts(basicCharts); new SuperPlot(document.body, {})`, 85.5],
   'web full': [`import { SuperPlot } from '${web}'; new SuperPlot(document.body, {})`, 158],
   'chat plugin': [`import { createPlotChatPlugin } from '@supersolutions/super-plot-chat-plugin'; console.log(createPlotChatPlugin())`, 163.5]
 }

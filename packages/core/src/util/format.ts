@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2026 SUPER SOLUTION LABS INC
+import { currencyDigits } from './currency.js'
 import { tickStep } from './num.js'
 
 /**
@@ -45,8 +46,9 @@ export function valueFormatter(format: ValueFormat | undefined, locale: string):
   }
   if (f.startsWith('currency:')) {
     const code = f.slice(9).toUpperCase()
-    const big = nf(locale, { style: 'currency', currency: code, maximumFractionDigits: 0 })
-    const small = nf(locale, { style: 'currency', currency: code, maximumFractionDigits: 2 })
+    // The minor units come from our own table, not the runtime's ICU data, so every runtime shows the same digits.
+    const big = nf(locale, { style: 'currency', currency: code, minimumFractionDigits: 0, maximumFractionDigits: 0 })
+    const small = nf(locale, { style: 'currency', currency: code, minimumFractionDigits: Math.min(currencyDigits(code), 2), maximumFractionDigits: 2 })
     return v => (Math.abs(v) >= 1000 ? big : small).format(v)
   }
   const whole = nf(locale, { maximumFractionDigits: 0 })

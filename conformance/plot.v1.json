@@ -76389,14 +76389,14 @@
         "format": "currency:COP",
         "value": 0
       },
-      "out": "COP 0"
+      "out": "COP 0.00"
     },
     {
       "in": {
         "format": "currency:COP",
         "value": 1.5
       },
-      "out": "COP 1.5"
+      "out": "COP 1.50"
     },
     {
       "in": {
@@ -76410,7 +76410,7 @@
         "format": "currency:COP",
         "value": -7
       },
-      "out": "-COP 7"
+      "out": "-COP 7.00"
     },
     {
       "in": {
@@ -77173,14 +77173,14 @@
         "format": "currency:HUF",
         "value": 0
       },
-      "out": "HUF 0"
+      "out": "HUF 0.00"
     },
     {
       "in": {
         "format": "currency:HUF",
         "value": 1.5
       },
-      "out": "HUF 1.5"
+      "out": "HUF 1.50"
     },
     {
       "in": {
@@ -77194,21 +77194,21 @@
         "format": "currency:HUF",
         "value": -7
       },
-      "out": "-HUF 7"
+      "out": "-HUF 7.00"
     },
     {
       "in": {
         "format": "currency:IDR",
         "value": 0
       },
-      "out": "IDR 0"
+      "out": "IDR 0.00"
     },
     {
       "in": {
         "format": "currency:IDR",
         "value": 1.5
       },
-      "out": "IDR 1.5"
+      "out": "IDR 1.50"
     },
     {
       "in": {
@@ -77222,7 +77222,7 @@
         "format": "currency:IDR",
         "value": -7
       },
-      "out": "-IDR 7"
+      "out": "-IDR 7.00"
     },
     {
       "in": {
@@ -78573,14 +78573,14 @@
         "format": "currency:PKR",
         "value": 0
       },
-      "out": "PKR 0"
+      "out": "PKR 0.00"
     },
     {
       "in": {
         "format": "currency:PKR",
         "value": 1.5
       },
-      "out": "PKR 1.5"
+      "out": "PKR 1.50"
     },
     {
       "in": {
@@ -78594,7 +78594,7 @@
         "format": "currency:PKR",
         "value": -7
       },
-      "out": "-PKR 7"
+      "out": "-PKR 7.00"
     },
     {
       "in": {
@@ -78713,14 +78713,14 @@
         "format": "currency:RSD",
         "value": 0
       },
-      "out": "RSD 0.00"
+      "out": "RSD 0"
     },
     {
       "in": {
         "format": "currency:RSD",
         "value": 1.5
       },
-      "out": "RSD 1.50"
+      "out": "RSD 1.5"
     },
     {
       "in": {
@@ -78734,7 +78734,7 @@
         "format": "currency:RSD",
         "value": -7
       },
-      "out": "-RSD 7.00"
+      "out": "-RSD 7"
     },
     {
       "in": {
