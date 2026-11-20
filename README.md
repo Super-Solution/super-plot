@@ -6,14 +6,16 @@ funnel, gauge, word cloud, 3D scatter and surface, and maps (choropleth, bubbles
 Super Plot is the sibling of Super Chart: Super Chart draws financial time series (candles, drawing tools),
 Super Plot draws everything else you put in a report or a chat answer.
 
-Status: **local version 0.4.0, not published.** 0.4.0 takes the strengths of 18 competing libraries, row by row, and says for each one
-what was built, what was refused and why ([docs/COMPETITIVE.md](docs/COMPETITIVE.md), sources in
-[docs/COMPETITORS-2026-11-19.md](docs/COMPETITORS-2026-11-19.md)): 12 more chart types, log scales, error bars and bands, point
-annotations, loess trends, bin/window/fold transforms, synced charts, a navigator, drill-down, an export toolbar and CSV, custom
-tooltips, sonification, server-rendered SVG that the browser adopts, a colour-blind check, time zones and translatable text.
-Round 6 (same version) adds, at the owner's request and each safe by default with its risk documented: gauge, word cloud, 3D scatter and surface, a second value axis, broken axes, an `index` transform and opt-in animated data transitions; an expression language stays refused.
-0.3.0 added transforms, zoom/brush, facets, live data and per-chart imports. Licensed under Apache-2.0 (see [LICENSE](LICENSE) and [NOTICE](NOTICE)), © SUPER SOLUTION LABS INC. Packages stay `private` (not
-published to npm or PyPI) until the owner decides to publish (see [docs/OPEN-DECISIONS.md](docs/OPEN-DECISIONS.md)).
+Status: **version 0.1.0, the first version meant for publishing; not published yet.** Packages stay `private` (not on npm or
+PyPI) until the owner decides to publish (see [docs/OPEN-DECISIONS.md](docs/OPEN-DECISIONS.md)). Licensed under Apache-2.0 (see
+[LICENSE](LICENSE) and [NOTICE](NOTICE)), © SUPER SOLUTION LABS INC.
+
+Before 0.1.0, the library was built locally in six rounds, numbered 0.1.0 to 0.4.0 at the time and never published; the docs
+refer to them as rounds 1 to 6 (see [History](#history)). The latest rounds took the strengths of 18 competing libraries, row by row,
+and say for each one what was built, what was refused and why ([docs/COMPETITIVE.md](docs/COMPETITIVE.md), sources in
+[docs/COMPETITORS-2026-11-19.md](docs/COMPETITORS-2026-11-19.md)). Round 6 added, at the owner's request and each safe by default
+with its risk documented: gauge, word cloud, 3D scatter and surface, a second value axis, broken axes, an `index` transform and
+opt-in animated data transitions; an expression language stays refused.
 
 ```
 npm install
@@ -63,6 +65,18 @@ describe_plot(spec)          # 'Bar chart. 4 categories, 3 series ...'
 - [docs/INTEGRATION.md](docs/INTEGRATION.md): importing only what you use, events, zoom and brush, linked charts, live data, plugins, agents/MCP, Super Chat, Super Chart, other languages.
 - [docs/OPEN-DECISIONS.md](docs/OPEN-DECISIONS.md): what the owner still has to decide.
 - [AGENTS.md](AGENTS.md): where to change things (for coding agents).
+
+## History
+
+The version numbers below were local milestones only; nothing was published under them. The first published version will be 0.1.0.
+
+| Round | Local number then | What it added |
+|---|---|---|
+| 1–2 | 0.1.0 | The first chart types (bar through sankey), the field DSL, validation, description, agent tools, the canvas renderer, browser tests, Go and Python ports |
+| 3 | 0.2.0 | Maps and the WebGL renderer |
+| 4 | 0.3.0 | Transforms, zoom and brush, facets, live data, plugins, per-chart imports |
+| 5 | 0.4.0 | The competitor review: 12 more chart types, log scales, intervals, sync, toolbar, i18n and more |
+| 6 | 0.4.0 | Gauge, word cloud, 3D, dual and broken axes, `index`, data transitions |
 
 ## Licence
 

@@ -1,6 +1,6 @@
 # Super Plot against its competitors
 
-**Last verified:** 2026-11-19 · **Against:** Super Plot 0.4.0 (local) · **Method:** super-dev-docs `docs/30-runbooks/competitive-review.md` · **Evidence:** [COMPETITORS-2026-11-19.md](COMPETITORS-2026-11-19.md) (18 libraries, 62 capabilities, 66 sources opened that day)
+**Last verified:** 2026-11-19 · **Against:** Super Plot 0.1.0 (rounds 5 and 6, unpublished) · **Method:** super-dev-docs `docs/30-runbooks/competitive-review.md` · **Evidence:** [COMPETITORS-2026-11-19.md](COMPETITORS-2026-11-19.md) (18 libraries, 62 capabilities, 66 sources opened that day)
 
 This page answers one question per row: a competitor does X, what does Super Plot do about it? Each row is **built** (with the field, option or event that does it), **refused** (with the reason, tied to a Super Kit principle) or **open** (waiting for the owner, also in [OPEN-DECISIONS.md](OPEN-DECISIONS.md)). Competitor cells, sources and the "deliberately does not do" notes are in the evidence file; nothing here repeats a vendor number as if it were ours.
 

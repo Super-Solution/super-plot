@@ -11,7 +11,7 @@ import { SuperPlot } from '@supersolutions/super-plot-web/base'      // React: '
 registerChart(bar); registerChart(line)
 ```
 
-Measured with `npm run size` (esbuild, minified + gzip, 0.4.0): validating a bar chart 21.9 KB against 93.5 KB for everything; `renderToSvg` with bar 32.8 KB against 102.0 KB; the browser binding with bar and line 66.8 KB against 128.3 KB (chunks loaded on demand excluded). Map code (geography import, projections) only comes in with the map charts.
+Measured with `npm run size` (esbuild, minified + gzip, round 5): validating a bar chart 21.9 KB against 93.5 KB for everything; `renderToSvg` with bar 32.8 KB against 102.0 KB; the browser binding with bar and line 66.8 KB against 128.3 KB (chunks loaded on demand excluded). Map code (geography import, projections) only comes in with the map charts.
 
 **Loaded on demand.** Parts of the browser binding that only some pages use are separate chunks, fetched the first time a plot needs them (your bundler emits them next to the main file; serve them from the same place): the WebGL layer, the `navigator` strip (8 KB minified), the `toolbar` (1.5 KB) and the map controls (drag, pinch, keys and zoom buttons on an interactive map, 4.5 KB). The chart itself is always drawn before the constructor, `setSpec` or `setOptions` returns; a chunk only adds its part a moment later, without moving anything: the navigator's 44 px are kept at once (an empty strip until it is drawn), the toolbar and the map buttons float over the chart. The `<script>` bundle (`super-plot.global.js`) has everything inlined.
 
@@ -72,7 +72,7 @@ transform: [
 Window ops: `sum`, `mean`, `count` (cumulative), `rank` (1, 2, 2, 4), `pctChange`, `lag`, `lead`, `movingMean` (`frame` rows, default 3). A ninth step, `index`, rescales each group to a common base (see [below](#index-rescale-each-group-to-a-common-base)). The table of steps with their keys is generated in [SPEC.md](SPEC.md#transform-steps); the Go and Python ports will be checked against the new `transformCases` in `conformance/plot.v1.json`.
 ## Two value axes, broken axes and indexed series (read the risks first)
 
-These three were refused in 0.4.0 and are built in round 6 because people ask for them. Each one can mislead; each is off unless the spec asks for it, says its risk as an issue the agent sees, and has a safer alternative named in that issue's `hint`.
+These three were refused in round 5 and are built in round 6 because people ask for them. Each one can mislead; each is off unless the spec asks for it, says its risk as an issue the agent sees, and has a safer alternative named in that issue's `hint`.
 
 ```ts
 // Safer first: index every series to 100 at its first month, then compare growth on one axis.

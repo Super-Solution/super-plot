@@ -1,6 +1,6 @@
 {
   "name": "@supersolutions/super-plot-react",
-  "version": "0.4.0",
+  "version": "0.1.0",
   "description": "<SuperPlot> React component: a thin binding over the web mount.",
   "private": true,
   "license": "Apache-2.0",
@@ -19,7 +19,7 @@
     "NOTICE"
   ],
   "dependencies": {
-    "@supersolutions/super-plot-web": "0.4.0"
+    "@supersolutions/super-plot-web": "0.1.0"
   },
   "peerDependencies": {
     "react": ">=18"
