@@ -3,7 +3,7 @@
 import { closest, toNumber } from './util/num.js'
 import { isSafeColor } from './util/color.js'
 import { isValueFormat } from './util/format.js'
-import { CAMERA_LIMITS } from './geo/view.js'
+import { CAMERA_LIMITS } from './geo/camera.js'
 import { toTime } from './util/time.js'
 
 export type Row = Record<string, unknown>

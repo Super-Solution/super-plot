@@ -5,7 +5,8 @@ import {
   resolveStrings, fillString, type UiStringKey, type UiStrings,
   type AxisInfo, type Camera, type Camera3d, type Issue, type Mark, type Measure, type PlotPlugin, type RenderOptions, type Scene, type Theme, type Tip
 } from '@supersolutions/super-plot-core/base'
-import { CanvasLayer, markCenter, nearestMark } from './canvas.js'
+import type * as Cv from './canvas.js'
+import { markCenter, nearestMark } from './marks.js'
 import { NAV_HEIGHT, navigable } from './navigable.js'
 import type * as Gl from './gl/index.js'
 import type * as MapCtl from './map-control.js'
@@ -90,7 +91,9 @@ export interface SuperPlotOptions extends Omit<RenderOptions, 'hidden' | 'measur
    * `svg` keeps every mark a DOM element (best for accessibility and styling), `canvas` draws pixels (fast for
    * tens of thousands of marks), `webgl` draws dots and maps on the GPU (falls back to canvas when the browser
    * cannot). `auto` (default) uses canvas above `canvasAbove` data marks, and WebGL on a hardware GPU above
-   * `webglAbove` data marks or for a 3D map (globe, tilt, columns, arcs, raised regions).
+   * `webglAbove` data marks or for a 3D map (globe, tilt, columns, arcs, raised regions). The canvas renderer is
+   * its own chunk, fetched the first time a plot on the page needs it: that first canvas frame comes a moment
+   * after the constructor returns (`await plot.ready()`).
    */
   renderer?: 'auto' | 'svg' | 'canvas' | 'webgl'
   /** Data mark count above which `auto` switches to canvas. Default 4000. */
@@ -200,6 +203,7 @@ const navChunk = chunk<typeof Nav>(() => import('./navigator.js'))
 const toolChunk = chunk<typeof Tools>(() => import('./toolbar.js'))
 const mapChunk = chunk<typeof MapCtl>(() => import('./map-control.js'))
 const transChunk = chunk<typeof Trans>(() => import('./transition.js'))
+const canvasChunk = chunk<typeof Cv>(() => import('./canvas.js'))
 let warnedGl = false
 
 /** What identifies "the same map" across setSpec: chart type and geography (a name, or inline). */
@@ -258,7 +262,9 @@ export class SuperPlot {
   private overlay: SVGGElement | null = null
   private highlighted: string | null = null
   private spec: unknown
-  private layer: CanvasLayer | null = null
+  private layer: Cv.CanvasLayer | null = null
+  /** The canvas chunk failed to load: draw this once on SVG (the next draw tries the chunk again). */
+  private canvasFailed = false
   /** WebGL failed or the context was lost: stay on canvas for this plot. */
   private glOff = false
   /** The viewer's camera, once they moved it (or `setCamera`). */
@@ -498,8 +504,10 @@ export class SuperPlot {
     return renderSvg(this.scene, { resolveVars: true, font: theme.font })
   }
 
-  /** PNG of what is on screen. `scale` is the pixel ratio (default: the display's). */
+  /** PNG of what is on screen. `scale` is the pixel ratio (default: the display's). Waits for `ready()` first. */
   async toPng(scale = this.host.ownerDocument.defaultView?.devicePixelRatio ?? 2): Promise<Blob> {
+    // A canvas chart whose renderer is still loading has nothing on screen yet.
+    await this.ready()
     this.syncCamera()
     const scene = this.scene
     if (!scene) throw new Error('Nothing to export: the spec is invalid.')
@@ -573,10 +581,12 @@ export class SuperPlot {
   }
 
   /**
-   * Settles once the code this plot loads on demand for what it shows now (the navigator strip, the toolbar,
-   * the map controls, the WebGL layer, the transition code) is loaded and drawn. Everything else is drawn by the constructor, `setSpec` and
-   * `setOptions` before they return. Never rejects: a part that failed to load is reported through `onIssues`
-   * (`load_failed`), and WebGL falls back to canvas.
+   * Settles once the code this plot loads on demand for what it shows now (the canvas renderer, the navigator
+   * strip, the toolbar, the map controls, the WebGL layer, the transition code) is loaded and drawn. An SVG chart
+   * is drawn by the constructor, `setSpec` and `setOptions` before they return; a chart that needs the canvas
+   * renderer is drawn when it arrives (the first time on a page), and until then the plot keeps what it showed.
+   * Never rejects: a part that failed to load is reported through `onIssues` (`load_failed`), a canvas chart is
+   * then drawn on SVG, and WebGL falls back to canvas.
    */
   async ready(): Promise<void> {
     while (this.pending.size) await Promise.all([...this.pending])
@@ -589,7 +599,7 @@ export class SuperPlot {
   }
 
   /** Load a chunk this plot needs (one request per plot at a time), then run `then` unless the plot was disposed. */
-  private need<T>(c: Chunk<T>, what: string, then: (m: T) => void): void {
+  private need<T>(c: Chunk<T>, what: string, then: (m: T) => void, failed?: () => void): void {
     if (this.loading.has(c)) return
     this.loading.add(c)
     this.track(c.load().then(m => {
@@ -597,7 +607,9 @@ export class SuperPlot {
       if (!this.disposed) then(m)
     }, e => {
       this.loading.delete(c)
-      if (!this.disposed) this.warn('load_failed', `The ${what} could not be loaded: ${e instanceof Error ? e.message : String(e)}.`, 'It is code split from the main bundle: check that its chunk file is served next to it.')
+      if (this.disposed) return
+      this.warn('load_failed', `The ${what} could not be loaded: ${e instanceof Error ? e.message : String(e)}.`, 'It is code split from the main bundle: check that its chunk file is served next to it.')
+      failed?.()
     }))
   }
 
@@ -783,6 +795,23 @@ export class SuperPlot {
       return this.render(enter, cause)
     }
     if (result.ok && this.options.navigator === true && (this.navRefused || (this.spec as { facet?: unknown } | null)?.facet)) result.issues.push(NAV_REFUSED)
+    const noCanvas = this.canvasFailed
+    this.canvasFailed = false
+    const want = result.ok ? this.rendererFor(result.scene, noCanvas) : null
+    if (want?.canvas && !canvasChunk.mod) {
+      // The canvas renderer is a chunk of its own, fetched the first time a plot needs it. Until it is here the
+      // screen keeps what it shows (the last drawing, or the server's markup) with the scene that drew it, and
+      // this draw runs again when it arrives: `ready()` waits for that. If it cannot be fetched, SVG draws it.
+      if (this.ssr) {
+        this.mount(this.ssr)
+        this.ssr = null
+      }
+      this.need(canvasChunk, 'canvas renderer', () => this.render(enter, cause), () => {
+        this.canvasFailed = true
+        this.render(enter, cause)
+      })
+      return
+    }
     this.glMoved = false
     this.hideTip()
     this.overlay = null
@@ -817,11 +846,8 @@ export class SuperPlot {
     this.issues = result.issues
     const theme = this.themeNow()
     const font = `var(--sp-font, ${theme.font})`
-    const marks = dataMarkCount(result.scene)
-    // A map keeps its context once it has one (tilting back to flat must not drop and re-create it).
-    const autoGl = (o.renderer ?? 'auto') === 'auto' && (marks > (o.webglAbove ?? 20000) || isDeepMap(result.scene) || (!!result.scene.geo && !!this.layer?.hasGl))
-    const wantGl = !this.glOff && (o.renderer === 'webgl' || (autoGl && this.hardwareGl()))
-    const wantCanvas = o.renderer === 'canvas' || o.renderer === 'webgl' || wantGl || (o.renderer !== 'svg' && marks > (o.canvasAbove ?? 4000))
+    const wantGl = want!.gl
+    const wantCanvas = want!.canvas
     if (this.ssr && wantCanvas) {
       // Server markup is SVG; this plot draws on canvas, with the real text measure.
       this.ssr = null
@@ -830,7 +856,7 @@ export class SuperPlot {
     this.setupMap(result.scene, theme)
     this.setupToolbar(result.scene, theme)
     if (wantCanvas) {
-      this.layer ??= CanvasLayer.create(this.host.ownerDocument, {
+      this.layer ??= canvasChunk.mod!.CanvasLayer.create(this.host.ownerDocument, {
         tipEnabled: () => this.tipEnabled(),
         showTip: (t, x, y, m) => this.showTip(t, x, y, m),
         placeTip: (x, y) => this.placeTip(x, y),
@@ -888,6 +914,17 @@ export class SuperPlot {
     const svgEl = this.root.querySelector('svg')
     this.afterDraw(result.scene, started, changed || enter, { svg: svgEl ?? undefined })
     if (plan && svgEl) this.playSvg(plan.plan, plan.conf, svgEl, font)
+  }
+
+  /** What draws `scene`: canvas above `canvasAbove` data marks (or when asked), WebGL on top of it when wanted. */
+  private rendererFor(scene: Scene, noCanvas: boolean): { canvas: boolean; gl: boolean } {
+    const o = this.options
+    if (noCanvas) return { canvas: false, gl: false }
+    const marks = dataMarkCount(scene)
+    // A map keeps its context once it has one (tilting back to flat must not drop and re-create it).
+    const autoGl = (o.renderer ?? 'auto') === 'auto' && (marks > (o.webglAbove ?? 20000) || isDeepMap(scene) || (!!scene.geo && !!this.layer?.hasGl))
+    const gl = !this.glOff && (o.renderer === 'webgl' || (autoGl && this.hardwareGl()))
+    return { gl, canvas: o.renderer === 'canvas' || o.renderer === 'webgl' || gl || (o.renderer !== 'svg' && marks > (o.canvasAbove ?? 4000)) }
   }
 
   // ---- transitions -------------------------------------------------------------------------

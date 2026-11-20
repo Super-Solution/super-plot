@@ -1,11 +1,14 @@
 // @vitest-environment jsdom
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { SuperPlot, type SelectEvent, type ZoomRange } from '@supersolutions/super-plot-web'
 import { compilePlot, type AxisInfo } from '@supersolutions/super-plot-core'
 import { pinchDomain } from '../../packages/bindings/web/src/interact'
 import { nearestMark, pathCenter } from '../../packages/bindings/web/src/canvas'
 import { CSS } from '../../packages/bindings/web/src/styles'
-import { stub2d } from './stub2d'
+import { stub2d, loadCanvasChunk } from './stub2d'
+
+// The canvas renderer is loaded on demand: load it once, so canvas plots below draw at once.
+beforeAll(loadCanvasChunk)
 
 const realGetContext = HTMLCanvasElement.prototype.getContext
 let host: HTMLDivElement

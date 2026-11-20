@@ -22,7 +22,7 @@
     "docs:spec": "node scripts/export-spec.mjs",
     "examples": "node scripts/examples.mjs",
     "showcase": "node scripts/showcase.mjs",
-    "gate": "npm run typecheck && npm test && npm run build && node scripts/export-conformance.mjs --check && node scripts/export-spec.mjs --check && npm run test:ports && npm run test:e2e",
+    "gate": "npm run typecheck && npm test && npm run build && node scripts/size.mjs --check && node scripts/export-conformance.mjs --check && node scripts/export-spec.mjs --check && npm run test:ports && npm run test:e2e",
     "test:e2e": "vitest run --config vitest.e2e.config.ts",
     "test:ports": "node scripts/ports.mjs",
     "fuzz:ports": "node scripts/ports.mjs --fuzz",

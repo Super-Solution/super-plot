@@ -625,4 +625,4 @@ export const flowMap: ChartDef = {
   }
 }
 
-export const isMapType = (type: string): boolean => type === 'choropleth' || type === 'bubble-map' || type === 'column-map' || type === 'flow-map'
+export { isMapType } from './kinds.js'

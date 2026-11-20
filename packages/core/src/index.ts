@@ -1,10 +1,20 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2026 SUPER SOLUTION LABS INC
-/** The whole of core with every built-in chart type registered. For a smaller bundle import `./base` and `./charts`. */
-import { registerChart } from './registry.js'
+/**
+ * The whole of core: every built-in chart type and transform step registered, and every entry point re-exported.
+ * For a smaller bundle import `./base` and register what you use (`./charts/basic` and the other groups,
+ * `./transforms`).
+ */
+import { registerCharts } from './registry.js'
+import { registerTransforms } from './transform.js'
 import { allCharts } from './charts.js'
+import { allTransforms } from './transforms.js'
 
-for (const def of allCharts) registerChart(def)
+registerCharts(allCharts)
+registerTransforms(allTransforms)
 
 export * from './base.js'
 export * from './charts.js'
+export * from './transforms.js'
+export * from './canvas.js'
+export * from './view.js'

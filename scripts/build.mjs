@@ -2,25 +2,35 @@
 // Copyright 2026 SUPER SOLUTION LABS INC
 import { build } from 'esbuild'
 import { execFileSync } from 'node:child_process'
-import { rmSync } from 'node:fs'
+import { readdirSync, rmSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 import { packages } from './packages.mjs'
+
+/** Every source module of a package (`.d.ts` files excluded). */
+function sources(dir) {
+  const out = []
+  for (const f of readdirSync(dir)) {
+    const p = join(dir, f)
+    if (statSync(p).isDirectory()) out.push(...sources(p))
+    else if (/\.tsx?$/.test(f) && !f.endsWith('.d.ts')) out.push(p)
+  }
+  return out
+}
 
 const noDts = process.argv.includes('--no-dts')
 for (const p of packages) {
   rmSync(join(p.dir, 'dist'), { recursive: true, force: true })
+  // One output file per source module, not a bundle: the user's bundler then sees the same files as the sources,
+  // so `sideEffects` and tree shaking drop what a page does not import, and a dynamic `import()` (the canvas,
+  // WebGL, navigator, toolbar, map-control and transition code) stays its own chunk in the user's build.
   await build({
-    entryPoints: Object.fromEntries(Object.entries(p.entries).map(([k, v]) => [k, join(p.dir, v)])),
+    entryPoints: sources(join(p.dir, 'src')),
     outdir: join(p.dir, 'dist'),
-    bundle: true,
+    outbase: join(p.dir, 'src'),
+    bundle: false,
     format: 'esm',
-    // Code loaded on demand (the WebGL layer) becomes its own chunk.
-    splitting: p.split === true,
-    chunkNames: 'chunks/[name]-[hash]',
     target: 'es2022',
     platform: 'neutral',
-    // Sibling packages and React are dependencies, never bundled in.
-    external: ['@supersolutions/*', 'react', 'react/jsx-runtime', 'earcut'],
     jsx: 'automatic',
     sourcemap: true,
     logLevel: 'warning'

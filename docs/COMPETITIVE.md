@@ -118,7 +118,7 @@ Status marks: ✅ built · 🚧 built with a stated limit · ⛔ refused on purp
 | Vue, Svelte, Angular | ✅ via the element | Documented and tested through properties and events; no extra packages (P: no wrapper on wrapper) |
 | theming via CSS variables | ✅ | `--sp-*`, shadcn `--chart-1..5`, Super Chart aliases |
 | plugin / hook API | ✅ | `afterCompile`, `afterDraw`, events |
-| tree-shaking | ✅ | `/base` + `/charts` (round 4) |
+| tree-shaking | ✅ | `/base` + `/charts` (round 4); chart groups (`/charts/basic` ...), transform steps registered like charts, the canvas renderer and the projections loaded on demand, a per-module `dist` and size budgets in the gate (package split, 2026-11-20) |
 | JSON spec and schema for agents | ✅ | One field DSL drives validation, JSON Schema, SPEC.md, the catalog and the Go/Python ports |
 | licence | ✅ | Apache-2.0, © SUPER SOLUTION LABS INC (same as super-chat and super-protocol) |
 

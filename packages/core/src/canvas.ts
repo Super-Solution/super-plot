@@ -4,9 +4,13 @@
  * Canvas output for a scene. It takes any object shaped like a 2D context (a browser canvas, node-canvas,
  * skia-canvas) and does not touch the DOM itself, so it lives next to the SVG renderer. A scene with
  * tens of thousands of marks is drawn here in a few milliseconds; the same scene also feeds `renderSvg`.
+ * Its own entry point, `@supersolutions/super-plot-core/canvas` (the package root re-exports it), so `/base` and
+ * the web binding's SVG path do not carry it.
  */
 import type { Mark, Scene } from './scene.js'
 import { PATTERN_OPACITY, patternAt } from './patterns.js'
+
+export { dataMarkCount } from './scene.js'
 
 /** The slice of CanvasRenderingContext2D that Super Plot uses. */
 export interface Canvas2D {
@@ -351,9 +355,3 @@ export function drawHover(ctx: Canvas2D, scene: Scene, index: number, o: DrawOpt
   ctx.restore()
 }
 
-/** How many marks the viewer can hover or select: what decides between SVG and canvas. */
-export const dataMarkCount = (scene: Scene): number => {
-  let n = 0
-  for (const m of scene.marks) if (m.role === 'data') n++
-  return n
-}

@@ -1,7 +1,11 @@
 // @vitest-environment jsdom
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { SuperPlot, type SelectEvent, type TipContent } from '@supersolutions/super-plot-web'
 import { chartCatalog, type Issue } from '@supersolutions/super-plot-core'
+import { loadCanvasChunk } from './stub2d'
+
+// The canvas renderer is loaded on demand: load it once, so canvas plots below draw at once.
+beforeAll(loadCanvasChunk)
 
 const bar = chartCatalog().find(c => c.type === 'bar')!.example
 let host: HTMLDivElement

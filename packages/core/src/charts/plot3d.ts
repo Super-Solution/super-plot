@@ -21,14 +21,12 @@ import { clip, fit } from '../util/text.js'
 import { tickFormatter } from '../util/format.js'
 import { fmtList, formatter, lead, seqLegend, seqScale } from './shared.js'
 import { CAMERA3D_LIMITS, makeView3d, project3d, type Projected3d, type Projection3d, type View3d, type View3dInput } from '../view3d.js'
+import { DROP_LINES_AUTO, MAX_SURFACE_SIDE, is3dType } from './kinds.js'
 
 type Spec = Record<string, any>
 type R = Record<string, unknown>
 
-/** A surface takes at most this many distinct x (and y) values: 200 x 200 = 40,000 cells. */
-export const MAX_SURFACE_SIDE = 200
-/** Above this many visible points, drop lines are left out unless the spec asks for them. */
-export const DROP_LINES_AUTO = 2000
+export { DROP_LINES_AUTO, MAX_SURFACE_SIDE, is3dType }
 
 const FIELDS_3D: FieldMap = {
   projection: { kind: 'enum', values: ['orthographic', 'perspective'], default: 'orthographic', desc: '`orthographic` (default): a size or length on screen does not change with depth. `perspective`: nearer is drawn larger, which reads as depth but makes sizes and distances impossible to compare.' },
@@ -494,5 +492,3 @@ export const surface: ChartDef = {
   }
 }
 
-/** True for the non-map 3D chart types. */
-export const is3dType = (type: string): boolean => type === 'scatter3d' || type === 'surface'

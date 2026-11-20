@@ -40,6 +40,46 @@
     "./adapters": {
       "types": "./dist/adapters.d.ts",
       "import": "./dist/adapters.js"
+    },
+    "./transforms": {
+      "types": "./dist/transforms.d.ts",
+      "import": "./dist/transforms.js"
+    },
+    "./canvas": {
+      "types": "./dist/canvas.d.ts",
+      "import": "./dist/canvas.js"
+    },
+    "./view": {
+      "types": "./dist/view.d.ts",
+      "import": "./dist/view.js"
+    },
+    "./charts/basic": {
+      "types": "./dist/groups/basic.d.ts",
+      "import": "./dist/groups/basic.js"
+    },
+    "./charts/business": {
+      "types": "./dist/groups/business.d.ts",
+      "import": "./dist/groups/business.js"
+    },
+    "./charts/stats": {
+      "types": "./dist/groups/stats.d.ts",
+      "import": "./dist/groups/stats.js"
+    },
+    "./charts/maps": {
+      "types": "./dist/groups/maps.d.ts",
+      "import": "./dist/groups/maps.js"
+    },
+    "./charts/hierarchy": {
+      "types": "./dist/groups/hierarchy.d.ts",
+      "import": "./dist/groups/hierarchy.js"
+    },
+    "./charts/3d": {
+      "types": "./dist/groups/3d.d.ts",
+      "import": "./dist/groups/3d.js"
+    },
+    "./charts/text": {
+      "types": "./dist/groups/text.d.ts",
+      "import": "./dist/groups/text.js"
     }
   },
   "typesVersions": {
@@ -55,6 +95,36 @@
       ],
       "adapters": [
         "./dist/adapters.d.ts"
+      ],
+      "transforms": [
+        "./dist/transforms.d.ts"
+      ],
+      "canvas": [
+        "./dist/canvas.d.ts"
+      ],
+      "view": [
+        "./dist/view.d.ts"
+      ],
+      "charts/basic": [
+        "./dist/groups/basic.d.ts"
+      ],
+      "charts/business": [
+        "./dist/groups/business.d.ts"
+      ],
+      "charts/stats": [
+        "./dist/groups/stats.d.ts"
+      ],
+      "charts/maps": [
+        "./dist/groups/maps.d.ts"
+      ],
+      "charts/hierarchy": [
+        "./dist/groups/hierarchy.d.ts"
+      ],
+      "charts/3d": [
+        "./dist/groups/3d.d.ts"
+      ],
+      "charts/text": [
+        "./dist/groups/text.d.ts"
       ]
     }
   },

@@ -9,7 +9,9 @@ const plot = new SuperPlot(host, spec, { theme: 'auto', onSelect, onIssues, onHi
 plot.setSpec(next); plot.setOptions({ theme: 'dark' }); plot.dispose()
 ```
 
-Dense charts switch to canvas by themselves (`renderer: 'auto'`, above `canvasAbove` data marks, default 4,000); force one with `renderer: 'svg' | 'canvas'`. Hover, tooltip, legend toggle, keyboard access and `toPng()` work the same on both; `toSvg()` always exports SVG. `plot.getRenderer()` says which one is showing.
+Dense charts switch to canvas by themselves (`renderer: 'auto'`, above `canvasAbove` data marks, default 4,000); force one with `renderer: 'svg' | 'canvas'`. Hover, tooltip, legend toggle, keyboard access and `toPng()` work the same on both; `toSvg()` always exports SVG. `plot.getRenderer()` says which one is showing. The canvas renderer is a chunk loaded on demand: the first canvas chart on a page is drawn a moment after the constructor returns (`await plot.ready()`), and until then the plot keeps what it showed.
+
+For a smaller bundle import `@supersolutions/super-plot-web/base` and register the charts you draw from core (`registerCharts(basicCharts)` from `@supersolutions/super-plot-core/charts/basic`, and the other groups); the package root registers every chart and transform step.
 
 An invalid spec shows a readable error panel (path, code, hint) instead of an empty box and calls `onIssues`.
 

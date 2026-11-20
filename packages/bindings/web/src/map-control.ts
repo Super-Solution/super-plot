@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2026 SUPER SOLUTION LABS INC
-import {
-  camera3dOf, clampCamera, clampCamera3d, dragCamera, dragCamera3d, makeView, makeView3d, zoomCamera, zoomCamera3d,
-  type Camera, type Camera3d, type Scene, type Theme, type UiStringKey, type View3d, type ViewParams
-} from '@supersolutions/super-plot-core/base'
+import { camera3dOf, clampCamera, clampCamera3d, type Camera, type Camera3d, type Scene, type Theme, type UiStringKey, type View3d, type ViewParams } from '@supersolutions/super-plot-core/base'
+import { dragCamera, dragCamera3d, makeView, makeView3d, zoomCamera, zoomCamera3d } from '@supersolutions/super-plot-core/view'
 
 // Loaded on demand (its own chunk) the first time a plot draws a map or a 3D chart: pages without them do not pay for it.
 
