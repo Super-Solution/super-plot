@@ -119,6 +119,21 @@ export const gallery: { id: string; note: string; spec: Record<string, unknown> 
     }
   },
   {
+    id: 'line-split', note: 'splitAt: the survey changed its wording in 2026-04, so the line is cut there instead of joining two definitions',
+    spec: {
+      type: 'line', title: 'Businesses using AI', subtitle: 'Percent (invented figures); the question changed in April', x: 'month', y: 'share', splitAt: ['2026-04-01'], format: 'fixed:1', yLabel: 'Percent',
+      annotations: [{ axis: 'x', value: '2026-04-01', label: 'New wording' }],
+      data: [['2026-01-01', 5.1], ['2026-02-01', 5.4], ['2026-03-01', 5.8], ['2026-04-01', 9.2], ['2026-05-01', 9.9], ['2026-06-01', 10.4]].map(([month, share]) => ({ month, share }))
+    }
+  },
+  {
+    id: 'line-bare', note: 'bare: marks only, the shape of a sparkline (set yDomain to fill the height)',
+    spec: {
+      type: 'line', title: 'Equity, last 12 weeks', x: 'week', y: 'equity', bare: true, yDomain: [96, 112], points: false,
+      data: [100, 99, 101, 103, 102, 105, 104, 107, 106, 109, 108, 111].map((equity, i) => ({ week: i + 1, equity }))
+    }
+  },
+  {
     id: 'bar-broken-axis', note: 'yBreak: one outlier cut short, with a zigzag gap, labels on both sides and real values in tooltips',
     spec: {
       type: 'bar', title: 'Requests by service', subtitle: 'Millions per day (invented figures); the axis is cut from 40 to 900', x: 'service', y: 'requests', yBreak: [40, 900], labels: true, yLabel: 'Requests (m)',

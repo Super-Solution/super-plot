@@ -187,6 +187,8 @@ export class ChartCtx<S extends Record<string, any> = Record<string, any>> {
     const h = this.height
     const ox = this.origin.x
     const oy = this.origin.y
+    // `bare`: no title, legend or source line, and no padding; the chart gets its whole box.
+    if (spec.bare === true) return { x: ox, y: oy, w: Math.max(1, w), h: Math.max(1, h) }
     let top = oy + pad
     let bottom = oy + h - pad
     let right = ox + w - pad

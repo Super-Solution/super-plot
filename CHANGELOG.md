@@ -10,6 +10,8 @@ All four npm packages (`@supersolutions/super-plot-core`, `-web`, `-react`, `-ch
 - `yReverse` and `rightReverse` on line charts: draw a value axis upside down. Refused together with `yBreak`.
 - `widths` on line charts: series name to line width in px (0.5 to 8).
 - `curves` on line charts: series name to `linear`, `smooth` or `step`, overriding `curve` for that series.
+- `splitAt` on line and area charts: x values at which lines are cut, so nothing is drawn across a change of definition.
+- `bare` on cartesian charts: marks only, no axes, labels, title or legend, so a chart can be a small trend in a table cell (a sparkline). A bare chart may be as small as 24 x 16 px.
 
 ## 0.1.0
 

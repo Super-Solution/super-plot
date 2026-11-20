@@ -263,7 +263,19 @@ function compileSeries(c: ChartCtx, area: boolean): { series: ReturnType<ChartCt
   const draw = [...visible]
   const yMin = yScale.domain[0]
   // Lines break at a missing value, unless `gaps: "connect"` joins over it.
-  const split = <T extends { y: number | null }>(pts: T[]): T[][] => (gaps === 'connect' ? [pts.filter(p => p.y !== null)].filter(r => r.length) : runs(pts))
+  const joined = <T extends { y: number | null }>(pts: T[]): T[][] => (gaps === 'connect' ? [pts.filter(p => p.y !== null)].filter(r => r.length) : runs(pts))
+  // `splitAt` cuts every line at those x values: the point at or after one starts a new piece, nothing is drawn across it.
+  const cutOf = new Map<number | string, number>()
+  {
+    const cuts = ((s.splitAt ?? []) as string[]).map(v => xKeyOf(v)).filter((v): v is number | string => v !== null)
+    let piece = 0
+    xs.forEach((x, i) => {
+      if (i > 0 && cuts.some(cv => (kind === 'category' ? cv === x : (x as number) >= (cv as number) && (xs[i - 1] as number) < (cv as number)))) piece++
+      cutOf.set(x, piece)
+    })
+  }
+  const split = <T extends { y: number | null; xv?: number | string }>(pts: T[]): T[][] =>
+    cutOf.size && s.splitAt ? joined(pts).flatMap(run => run.reduce<T[][]>((out, p, i) => (i > 0 && cutOf.get(p.xv!) !== cutOf.get(run[i - 1].xv!) ? out.push([p]) : out[out.length - 1].push(p), out), [[run[0]]])) : joined(pts)
   const widths = (s.widths ?? {}) as Record<string, number>
   const widthOf = (k: string): number => widths[k] ?? c.theme.lineWidth
   // `curves` gives a series its own curve; the others use `curve`.
@@ -278,7 +290,7 @@ function compileSeries(c: ChartCtx, area: boolean): { series: ReturnType<ChartCt
       const bp = xs.map(x => {
         const a = lowV.get(k)?.get(x)
         const b = highV.get(k)?.get(x)
-        return { px: px(x), y: a === undefined || b === undefined ? null : yScale.at(Math.max(a, logY ? yMin : -Infinity)), y1: b === undefined ? 0 : yScale.at(b) }
+        return { xv: x, px: px(x), y: a === undefined || b === undefined ? null : yScale.at(Math.max(a, logY ? yMin : -Infinity)), y1: b === undefined ? 0 : yScale.at(b) }
       })
       for (const run of split(bp)) {
         const top: Pt[] = decimate(run.map(p => [p.px, p.y1] as Pt), plot.w)
@@ -292,7 +304,7 @@ function compileSeries(c: ChartCtx, area: boolean): { series: ReturnType<ChartCt
       if (stack !== 'none') return { xv: x, px: px(x), y: yScale.at(upper.get(k)!.get(x) ?? 0), y0: yScale.at(lower.get(k)!.get(x) ?? 0), y1: yScale.at(upper.get(k)!.get(x) ?? 0) }
       return { xv: x, px: px(x), y: v === undefined ? null : ks.at(v) }
     })
-    const pr = stack !== 'none' ? runs(pts) : split(pts)
+    const pr = split(pts)
     for (const run of pr) {
       const top: Pt[] = decimate(run.map(p => [p.px, p.y as number] as Pt), plot.w)
       if (area) {
@@ -408,6 +420,7 @@ const SERIES_FIELDS: ChartDef['fields'] = {
   yDomain: { kind: 'domain', desc: 'Fix the vertical range, e.g. [0, 100]. Lines may start anywhere; areas always include 0.' },
   curve: { kind: 'enum', values: ['linear', 'smooth', 'step'], default: 'linear', desc: '`smooth` is monotone (never overshoots the data); `step` holds each value until the next point.' },
   ...dualFields('as lines'),
+  splitAt: { kind: 'values', max: 32, desc: 'x values at which lines are cut: the point at or after each one starts a new piece, and nothing is drawn across the cut (a change of definition, a series break). Dates as ISO strings; for a category x axis the category that starts the new piece. Markers, tooltips and the legend are unchanged.' },
   gaps: { kind: 'enum', values: ['break', 'connect', 'zero'], desc: 'Default break. What a missing or null y does: `break` leaves a gap in the line, `connect` joins the points on either side, `zero` draws it as 0 (the tooltip says "missing"). Stacked areas always count a missing value as 0.' },
   ...intervalFields('y', 'a shaded band behind each line (one band per series; with long-form `series`, not with several `y` columns)')
 }
