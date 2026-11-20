@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2026 SUPER SOLUTION LABS INC
-import type { Issue, Row } from './schema.js'
+import { DASH_PATTERNS, type Issue, type Row } from './schema.js'
 import type { AxisInfo, Mark, Rect, SceneGeo, SceneView3d, SeriesInfo, TextMark } from './scene.js'
 import type { RenderEnv } from './theme.js'
 import { cssVar, resolveVars, seriesVar } from './theme.js'
@@ -168,7 +168,11 @@ export class ChartCtx<S extends Record<string, any> = Record<string, any>> {
     if (keys.length > this.env.theme.palette.length) {
       this.warn('too_many_series', 'series', `${keys.length} series is more than the ${this.env.theme.palette.length} distinct palette colours; colours repeat.`, 'Group the smallest series into "Other", or split into small multiples.')
     }
-    return keys.map((key, i) => ({ key, label: clip(labels?.[key] ?? key, 60), color: this.seriesColor(key, i), hidden: this.hidden.has(key) }))
+    const dashes = (this.spec.dashes ?? {}) as Record<string, string>
+    return keys.map((key, i) => {
+      const dash = DASH_PATTERNS[dashes[key] ?? 'solid']
+      return { key, label: clip(labels?.[key] ?? key, 60), color: this.seriesColor(key, i), hidden: this.hidden.has(key), ...(dash ? { dash } : {}) }
+    })
   }
 
   /** Text mark with theme defaults. */
@@ -258,7 +262,10 @@ export class ChartCtx<S extends Record<string, any> = Record<string, any>> {
     const rowH = this.size + 12
     const cy = y + rowH / 2
     const dim = s.hidden ? 0.4 : 1
-    this.marks.push({ type: 'rect', role: 'legend', x, y: cy - 5, w: 10, h: 10, r: 2, fill: s.color, opacity: dim, series: s.key })
+    // A line drawn dashed gets a short dashed stroke for its swatch, so the legend shows how it is drawn.
+    this.marks.push(s.dash
+      ? { type: 'line', role: 'legend', x1: x, x2: x + 10, y1: cy, y2: cy, stroke: s.color, strokeWidth: 2, dash: s.dash, opacity: dim, series: s.key }
+      : { type: 'rect', role: 'legend', x, y: cy - 5, w: 10, h: 10, r: 2, fill: s.color, opacity: dim, series: s.key })
     const maxText = w - 16 - (trailing ? this.measure(trailing) + 12 : 0)
     this.marks.push(this.text(x + 16, cy, fit(s.label, maxText, this.size, this.env.measure), { role: 'legend', baseline: 'middle', fill: this.c('text'), opacity: dim, series: s.key }))
     if (trailing) this.marks.push(this.text(x + w, cy, trailing, { role: 'legend', baseline: 'middle', anchor: 'end', opacity: dim, series: s.key }))

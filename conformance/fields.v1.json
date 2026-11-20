@@ -1217,6 +1217,11 @@
           "desc": "Numeric column with the upper end of the interval on y; see `yLower`."
         },
         {
+          "name": "dashes",
+          "kind": "dashes",
+          "desc": "Series name to line style: `solid` (the default), `dashed`, `dotted` or `dashdot`, e.g. {\"Forecast\":\"dashed\"}. Use it to tell a projection, a target or a comparison from the measured series; the legend swatch shows the style, so it does not rely on colour alone."
+        },
+        {
           "name": "points",
           "kind": "boolean",
           "desc": "Force markers on (`true`) or off (`false`). Default: markers when there are few points, otherwise only the last point."

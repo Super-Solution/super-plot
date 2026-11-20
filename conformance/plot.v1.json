@@ -23433,6 +23433,119 @@
       "normalized": null
     },
     {
+      "name": "dashes ok",
+      "spec": {
+        "type": "line",
+        "x": "a",
+        "y": "b",
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "b": 2
+          }
+        ],
+        "dashes": {
+          "b": "dashed",
+          "c": "dotted",
+          "d": "dashdot",
+          "e": "solid"
+        }
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "line",
+        "x": "a",
+        "y": "b",
+        "dashes": {
+          "b": "dashed",
+          "c": "dotted",
+          "d": "dashdot",
+          "e": "solid"
+        },
+        "legend": "auto",
+        "tooltip": true,
+        "xType": "auto",
+        "curve": "linear"
+      }
+    },
+    {
+      "name": "dashes is an array",
+      "spec": {
+        "type": "line",
+        "x": "a",
+        "y": "b",
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "b": 2
+          }
+        ],
+        "dashes": [
+          "dashed"
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "bad_type",
+          "path": "dashes"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "dashes with bad values",
+      "spec": {
+        "type": "line",
+        "x": "a",
+        "y": "b",
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "b": 2
+          }
+        ],
+        "dashes": {
+          "b": "5 5",
+          "c": 7,
+          "d": "Dashed"
+        }
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "bad_dash",
+          "path": "dashes.b"
+        },
+        {
+          "severity": "error",
+          "code": "bad_dash",
+          "path": "dashes.c"
+        },
+        {
+          "severity": "error",
+          "code": "bad_dash",
+          "path": "dashes.d"
+        }
+      ],
+      "normalized": null
+    },
+    {
       "name": "annotations ok",
       "spec": {
         "type": "bar",

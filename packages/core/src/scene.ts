@@ -74,7 +74,7 @@ export interface TextMark extends MarkBase {
 
 export type Mark = RectMark | PathMark | CircleMark | LineMark | TextMark
 
-export interface SeriesInfo { key: string; label: string; color: string; hidden: boolean }
+export interface SeriesInfo { key: string; label: string; color: string; hidden: boolean; /** A `stroke-dasharray` when the spec gave the series a dashed, dotted or dash-dot line (`dashes`). */ dash?: string }
 
 export interface Scene {
   width: number

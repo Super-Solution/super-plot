@@ -895,6 +895,18 @@
           "type": "string",
           "description": "Numeric column with the upper end of the interval on y; see `yLower`. (name of a column in data)"
         },
+        "dashes": {
+          "type": "object",
+          "additionalProperties": {
+            "enum": [
+              "solid",
+              "dashed",
+              "dotted",
+              "dashdot"
+            ]
+          },
+          "description": "Series name to line style: `solid` (the default), `dashed`, `dotted` or `dashdot`, e.g. {\"Forecast\":\"dashed\"}. Use it to tell a projection, a target or a comparison from the measured series; the legend swatch shows the style, so it does not rely on colour alone."
+        },
         "points": {
           "type": "boolean",
           "description": "Force markers on (`true`) or off (`false`). Default: markers when there are few points, otherwise only the last point."

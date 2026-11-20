@@ -24,6 +24,9 @@ from .numeric import closest
 from .text import is_value_format
 from .transform import apply_transform, columns_of
 
+# The line styles a spec may name in `dashes` (the TypeScript reference's DASH_STYLES).
+DASH_STYLES = ("solid", "dashed", "dotted", "dashdot")
+
 with resources.files(__package__).joinpath("fields.v1.json").open("r", encoding="utf-8") as _f:
     _DEFS: dict[str, Any] = json.load(_f)
 
@@ -158,6 +161,16 @@ def _validate_field(name: str, d: dict[str, Any], value: Any, issues: list, colu
             else:
                 _add(issues, "error", "bad_color", f"colors.{k}", f"colors.{k} is not a plain CSS colour: {_show(v)}.", "Use #RRGGBB, rgb(), hsl(), a colour name or var(--token). url() and other syntax are refused.")
         return out
+    if kind == "dashes":
+        if not isinstance(value, dict):
+            return bad("bad_type", "dashes must be an object of series name to line style.")
+        out_d: dict[str, str] = {}
+        for k, v in value.items():
+            if isinstance(v, str) and v in DASH_STYLES:
+                out_d[k] = v
+            else:
+                _add(issues, "error", "bad_dash", f"dashes.{k}", f"dashes.{k} is not a line style: {_show(v)}.", "Use one of " + ", ".join(DASH_STYLES) + ".")
+        return out_d
     if kind == "annotations":
         return _annotations(name, value, issues)
     if kind == "geo":

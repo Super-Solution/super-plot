@@ -91,6 +91,13 @@ export const gallery: { id: string; note: string; spec: Record<string, unknown> 
     }
   },
   {
+    id: 'line-dashes', note: 'dashes: the plan is dashed, the measured series solid; the legend swatch is dashed too, so the two stay apart without colour',
+    spec: {
+      type: 'line', title: 'Revenue against plan', subtitle: 'Monthly, USD thousands (invented figures)', x: 'month', y: ['actual', 'plan'], format: 'compact', yLabel: 'Revenue', dashes: { plan: 'dashed' },
+      data: [['2026-01-01', 118, 120], ['2026-02-01', 126, 128], ['2026-03-01', 121, 136], ['2026-04-01', 139, 144], ['2026-05-01', 147, 152], ['2026-06-01', 152, 160]].map(([month, actual, plan]) => ({ month, actual, plan }))
+    }
+  },
+  {
     id: 'bar-broken-axis', note: 'yBreak: one outlier cut short, with a zigzag gap, labels on both sides and real values in tooltips',
     spec: {
       type: 'bar', title: 'Requests by service', subtitle: 'Millions per day (invented figures); the axis is cut from 40 to 900', x: 'service', y: 'requests', yBreak: [40, 900], labels: true, yLabel: 'Requests (m)',

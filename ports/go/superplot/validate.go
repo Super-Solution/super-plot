@@ -90,6 +90,15 @@ func ChartTypes() []string {
 	return out
 }
 
+// isDashStyle reports whether v is one of the line styles a spec may name in `dashes`.
+func isDashStyle(v string) bool {
+	switch v {
+	case "solid", "dashed", "dotted", "dashdot":
+		return true
+	}
+	return false
+}
+
 // IsSafeColor accepts only plain colour syntax: no url(), no ";", no quotes, nothing that could break out of an attribute.
 func IsSafeColor(v any) bool {
 	s, ok := v.(string)
@@ -270,6 +279,20 @@ func validateField(name string, d fieldDef, value any, issues *[]Issue, columns 
 				out[k] = jsTrim(m[k].(string))
 			} else {
 				add(issues, "error", "bad_color", "colors."+k, fmt.Sprintf("colors.%s is not a plain CSS colour: %s.", k, show(m[k])), "Use #RRGGBB, rgb(), hsl(), a colour name or var(--token). url() and other syntax are refused.")
+			}
+		}
+		return out
+	case "dashes":
+		m, ok := value.(map[string]any)
+		if !ok {
+			return bad("bad_type", "dashes must be an object of series name to line style.")
+		}
+		out := map[string]any{}
+		for _, k := range sortedKeys(m) {
+			if v, isString := m[k].(string); isString && isDashStyle(v) {
+				out[k] = v
+			} else {
+				add(issues, "error", "bad_dash", "dashes."+k, fmt.Sprintf("dashes.%s is not a line style: %s.", k, show(m[k])), "Use one of solid, dashed, dotted, dashdot.")
 			}
 		}
 		return out

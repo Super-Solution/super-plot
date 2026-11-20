@@ -2,6 +2,10 @@
 // Copyright 2026 SUPER SOLUTION LABS INC
 import { closest, toNumber } from './util/num.js'
 import { isSafeColor } from './util/color.js'
+
+/** The line styles a spec may name, and the stroke pattern each draws (a `stroke-dasharray`; solid has none). */
+export const DASH_STYLES = ['solid', 'dashed', 'dotted', 'dashdot'] as const
+export const DASH_PATTERNS: Readonly<Record<string, string | undefined>> = { solid: undefined, dashed: '6 4', dotted: '1 4', dashdot: '8 4 1 4' }
 import { isValueFormat } from './util/format.js'
 import { CAMERA_LIMITS } from './geo/camera.js'
 import { toTime } from './util/time.js'
@@ -22,6 +26,7 @@ export type FieldDef = { desc: string; required?: boolean } & (
   | { kind: 'string'; max?: number }
   | { kind: 'domain' }
   | { kind: 'colors' }
+  | { kind: 'dashes' }
   | { kind: 'annotations' }
   | { kind: 'format' }
   | { kind: 'bins'; default?: 'auto' | number }
@@ -177,6 +182,15 @@ export function validateField(name: string, def: FieldDef, value: unknown, ctx: 
       for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
         if (isSafeColor(v)) out[k] = (v as string).trim()
         else add(ctx, 'error', 'bad_color', `colors.${k}`, `colors.${k} is not a plain CSS colour: ${fmt(v)}.`, 'Use #RRGGBB, rgb(), hsl(), a colour name or var(--token). url() and other syntax are refused.')
+      }
+      return out
+    }
+    case 'dashes': {
+      if (!value || typeof value !== 'object' || Array.isArray(value)) return bad('bad_type', `dashes must be an object of series name to line style.`)
+      const out: Record<string, string> = {}
+      for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+        if (typeof v === 'string' && (DASH_STYLES as readonly string[]).includes(v)) out[k] = v
+        else add(ctx, 'error', 'bad_dash', `dashes.${k}`, `dashes.${k} is not a line style: ${fmt(v)}.`, `Use one of ${DASH_STYLES.join(', ')}.`)
       }
       return out
     }
@@ -367,6 +381,7 @@ export function fieldSchema(def: FieldDef): Record<string, unknown> {
     case 'domain': return { type: 'array', minItems: 2, maxItems: 2, items: { type: ['number', 'string', 'null'] }, description: d }
     case 'transform': return { type: 'array', maxItems: 10, items: { type: 'object', minProperties: 1, maxProperties: 1, properties: { filter: { type: 'object', required: ['field'] }, timeUnit: { type: 'object', required: ['field', 'unit'] }, aggregate: { type: 'object' }, sort: { type: 'object', required: ['field'] }, top: { type: 'object', required: ['n', 'by'] }, bin: { type: 'object', required: ['field'] }, window: { type: 'object', required: ['op', 'field', 'as'] }, fold: { type: 'object', required: ['fields'] }, index: { type: 'object', required: ['field'] } }, additionalProperties: false }, description: d }
     case 'colors': return { type: 'object', additionalProperties: { type: 'string', maxLength: 64 }, description: d }
+    case 'dashes': return { type: 'object', additionalProperties: { enum: [...DASH_STYLES] }, description: d }
     case 'annotations':
       return {
         type: 'array', maxItems: LIMITS.maxAnnotations, description: d,
@@ -411,6 +426,7 @@ export function fieldType(def: FieldDef): string {
     case 'domain': return '[min\\|null, max\\|null]'
     case 'transform': return 'array of steps'
     case 'colors': return 'object'
+    case 'dashes': return 'object'
     case 'annotations': return 'array'
     case 'format': return 'format string'
     case 'data': return 'array of rows'

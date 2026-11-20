@@ -296,7 +296,7 @@ function compileSeries(c: ChartCtx, area: boolean): { series: ReturnType<ChartCt
         // A stream graph's lowest layer floats too: outline its lower edge as well, or the shape reads lopsided.
         if (stack === 'center' && k === draw[0]) marks.push({ type: 'path', role: 'data', series: k, d: curvePath(bottom, curve), stroke: color, strokeWidth: c.theme.lineWidth, anim: 'draw', rows: all, ...(clipTo ? { clip: clipTo } : {}) })
       }
-      marks.push({ type: 'path', role: 'data', series: k, d: curvePath(top, curve), stroke: color, strokeWidth: c.theme.lineWidth, anim: 'draw', rows: all, ...(clipTo ? { clip: clipTo } : {}) })
+      marks.push({ type: 'path', role: 'data', series: k, d: curvePath(top, curve), stroke: color, strokeWidth: c.theme.lineWidth, anim: 'draw', rows: all, ...(series[si].dash ? { dash: series[si].dash } : {}), ...(clipTo ? { clip: clipTo } : {}) })
     }
     // Markers: every point when sparse, otherwise only the last one.
     const real = pts.filter(p => p.y !== null) as (Pnt & { y: number })[]
@@ -461,6 +461,7 @@ export const line: ChartDef = {
   ref: { x: ['x'], y: ['y'], extra: ['yRight'], series: 'series' },
   fields: {
     ...SERIES_FIELDS,
+    dashes: { kind: 'dashes', desc: 'Series name to line style: `solid` (the default), `dashed`, `dotted` or `dashdot`, e.g. {"Forecast":"dashed"}. Use it to tell a projection, a target or a comparison from the measured series; the legend swatch shows the style, so it does not rely on colour alone.' },
     points: { kind: 'boolean', desc: 'Force markers on (`true`) or off (`false`). Default: markers when there are few points, otherwise only the last point.' },
     yBreak: breakField('series of very different size share one axis; changes across the cut look smaller than they are.'),
     yScale: scaleField('y', 'growth, orders of magnitude'),
