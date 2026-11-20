@@ -170,9 +170,9 @@ describe('plugins', () => {
 describe('shadcn theme', () => {
   it('reads --chart-N for the first five series and keeps maths on plain colours', () => {
     const t = resolveTheme('shadcn')
-    expect(t.palette[0]).toBe('var(--chart-1, #2962FF)')
+    expect(t.palette[0]).toBe('var(--chart-1, #6C4AF2)')
     const s = compile({ type: 'bar', x: 'region', y: 'revenue', data: sales, labels: true }, { theme: 'shadcn' })
-    expect(s.series[0].color).toBe('var(--sp-series-1, var(--chart-1, #2962FF))')
+    expect(s.series[0].color).toBe('var(--sp-series-1, var(--chart-1, #6C4AF2))')
     expect(renderToSvg({ type: 'bar', x: 'region', y: 'revenue', data: sales }, { theme: 'shadcn' })).not.toContain('var(')
   })
 })

@@ -40,13 +40,13 @@ describe('waterfall', () => {
   it('gives increase, decrease and total their own legend entries and theme tokens', () => {
     const s = compile(spec)
     expect(s.series.map(x => [x.key, x.label])).toEqual([['increase', 'Increase'], ['decrease', 'Decrease'], ['total', 'Total']])
-    expect(s.series.map(x => x.color)).toEqual(['var(--sp-positive, #089981)', 'var(--sp-negative, #F23645)', 'var(--sp-text-muted, #5F6270)'])
+    expect(s.series.map(x => x.color)).toEqual(['var(--sp-positive, #12805C)', 'var(--sp-negative, #C2362B)', 'var(--sp-text-muted, #5F5F68)'])
     expect(s.marks.filter(m => m.role === 'legend' && m.legendKey).length).toBe(3)
     expect(compile({ ...spec, colors: { total: '#123456' } }).series[2].color).toBe('#123456')
   })
   it('tooltips, aria and datum carry the change and the running total', () => {
     const bar = tipped(compile(spec)).find(b => b.tip!.title === 'Costs')!
-    expect(bar.tip!.rows).toEqual([{ label: 'Decrease', value: '-50', color: 'var(--sp-negative, #F23645)' }, { label: 'Running total', value: '80' }])
+    expect(bar.tip!.rows).toEqual([{ label: 'Decrease', value: '-50', color: 'var(--sp-negative, #C2362B)' }, { label: 'Running total', value: '80' }])
     expect(bar.aria).toBe('Costs: decrease of 50, running total 80')
     expect(bar.datum).toEqual({ x: 'Costs', kind: 'decrease', change: -50, total: 80 })
   })
@@ -180,7 +180,7 @@ describe('bullet', () => {
     const s = compile(spec)
     const rs = ranges(s).slice(0, 3)
     expect(rs.map(r => r.opacity)).toEqual([0.34, 0.22, 0.1])
-    expect(rs.every(r => r.fill === 'var(--sp-text-muted, #5F6270)')).toBe(true)
+    expect(rs.every(r => r.fill === 'var(--sp-text-muted, #5F5F68)')).toBe(true)
     const vals = tipped(s)
     expect(vals.map(v => v.series)).toEqual(['v', 'v'])
     expect(vals[1].w / vals[0].w).toBeCloseTo(1.5, 5)

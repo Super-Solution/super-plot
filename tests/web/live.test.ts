@@ -88,12 +88,12 @@ describe('print', () => {
     const renders: RenderEvent[] = []
     new SuperPlot(host, bar, { width: 600, height: 400, animate: false, theme: 'dark', onRender: e => renders.push(e) })
     const bg = (): string => renders.at(-1)!.scene.background
-    expect(bg()).toContain('#131722')
+    expect(bg()).toContain('#17171A')
     window.dispatchEvent(new Event('beforeprint'))
     expect(bg()).toContain('#FFFFFF')
-    expect(host.querySelector('svg')!.innerHTML).not.toContain('#131722')
+    expect(host.querySelector('svg')!.innerHTML).not.toContain('#17171A')
     window.dispatchEvent(new Event('afterprint'))
-    expect(bg()).toContain('#131722')
+    expect(bg()).toContain('#17171A')
   })
 
   it('accessible-dark prints as accessible; light and printLight: false stay as they are', () => {
@@ -110,7 +110,7 @@ describe('print', () => {
     expect(renders).toHaveLength(n)
     p.setOptions({ theme: 'dark', printLight: false })
     window.dispatchEvent(new Event('beforeprint'))
-    expect(renders.at(-1)!.scene.background).toContain('#131722')
+    expect(renders.at(-1)!.scene.background).toContain('#17171A')
     window.dispatchEvent(new Event('afterprint'))
     p.dispose()
     // Disposed: the print listeners are gone.

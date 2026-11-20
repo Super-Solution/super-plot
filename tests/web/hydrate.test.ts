@@ -62,7 +62,7 @@ describe('hydration', () => {
     // Later draws (a new theme) replace it as usual, still measuring text like the server so labels do not jump.
     p.setOptions({ theme: 'dark' })
     expect(host.querySelector('svg')).not.toBe(server)
-    expect(host.querySelector('svg')!.innerHTML).toContain('#131722')
+    expect(host.querySelector('svg')!.innerHTML).toContain('#17171A')
     p.dispose()
   })
 

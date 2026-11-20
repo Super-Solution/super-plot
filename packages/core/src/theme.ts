@@ -34,13 +34,19 @@ export type ThemeInput = Partial<Omit<Theme, 'colors' | 'alias'>> & {
 }
 
 export const FONT_STACK =
-  '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif'
+  '"Inter", "Segoe UI Variable Text", "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, Roboto, "PingFang TC", "Microsoft JhengHei", "Noto Sans TC", "Noto Sans SC", system-ui, sans-serif'
 
 /**
- * Categorical palette: the TradingView set, ordered so neighbours differ in hue and in
- * colour-vision-deficiency simulation. Never cycled silently: series beyond the 8th produce a warning.
+ * Categorical palette of the Super Solution design system (super-dev-docs, `design-system.md`): the brand violet first, then
+ * seven hues ordered so neighbours stay apart under normal vision and under protan and deutan simulation (checked with
+ * the dataviz palette validator, adjacent pairs, both modes). Each mode has its own steps of the same eight hues. Never
+ * cycled silently: series beyond the 8th produce a warning.
  */
-export const PALETTE = ['#2962FF', '#FF9800', '#089981', '#9C27B0', '#00BCD4', '#F23645', '#FBC02D', '#E91E63']
+export const PALETTE = ['#6C4AF2', '#2FAE75', '#E76D3C', '#2E73D4', '#E6A41F', '#E8729E', '#008200', '#DC4749']
+export const PALETTE_DARK = ['#9379FF', '#259D6E', '#D65D32', '#408AE9', '#CC8300', '#DC4D7C', '#0FA000', '#E16B6A']
+
+/** The TradingView set Super Plot shipped with before it followed the design system: the `tradingview` preset. */
+export const PALETTE_TRADINGVIEW = ['#2962FF', '#FF9800', '#089981', '#9C27B0', '#00BCD4', '#F23645', '#FBC02D', '#E91E63']
 
 const BASE: Omit<Theme, 'name' | 'mode' | 'colors'> = {
   palette: PALETTE,
@@ -56,51 +62,53 @@ const BASE: Omit<Theme, 'name' | 'mode' | 'colors'> = {
 const LIGHT_COLORS: Record<string, string> = {
   background: '#FFFFFF',
   surface: '#FFFFFF',
-  text: '#131722',
-  'text-muted': '#5F6270',
-  grid: '#EEF0F5',
-  axis: '#D1D4DC',
-  border: '#D1D4DC',
-  positive: '#089981',
-  negative: '#F23645',
-  warning: '#FF9800',
-  info: '#2962FF',
-  other: '#A3A6AF',
-  'seq-low': '#E3ECFF',
-  'seq-high': '#2962FF',
-  'div-low': '#2962FF',
-  'div-mid': '#E6E8EE',
-  'div-high': '#FF9800',
-  land: '#E6E8EE',
-  ocean: '#F4F7FC',
-  nodata: '#D9DCE3'
+  text: '#111113',
+  'text-muted': '#5F5F68',
+  grid: '#E4E4E7',
+  axis: '#8A8A94',
+  border: '#E4E4E7',
+  accent: '#6C4AF2',
+  positive: '#12805C',
+  negative: '#C2362B',
+  warning: '#9A6400',
+  info: '#2B6CB0',
+  other: '#8A8A94',
+  'seq-low': '#ECE8FF',
+  'seq-high': '#6C4AF2',
+  'div-low': '#6C4AF2',
+  'div-mid': '#F2F2F4',
+  'div-high': '#C8590C',
+  land: '#E4E4E7',
+  ocean: '#F6F6F8',
+  nodata: '#D4D4D8'
 }
 
 const DARK_COLORS: Record<string, string> = {
-  background: '#131722',
-  surface: '#1E222D',
-  text: '#D1D4DC',
-  'text-muted': '#9EA3B0',
-  grid: '#232733',
-  axis: '#363A45',
-  border: '#363A45',
-  positive: '#089981',
-  negative: '#F23645',
-  warning: '#FF9800',
-  info: '#2962FF',
-  other: '#6B7080',
-  'seq-low': '#1C2744',
-  'seq-high': '#4C8DFF',
-  'div-low': '#4C8DFF',
-  'div-mid': '#3A3F4C',
-  'div-high': '#FFA726',
-  land: '#2A2E39',
-  ocean: '#161B26',
-  nodata: '#3A3F4C'
+  background: '#17171A',
+  surface: '#1D1D21',
+  text: '#F4F4F5',
+  'text-muted': '#A1A1AA',
+  grid: '#2A2A30',
+  axis: '#6B6B75',
+  border: '#2A2A30',
+  accent: '#A28CFF',
+  positive: '#4FD1A1',
+  negative: '#FF7B72',
+  warning: '#E0A53A',
+  info: '#6B9BFF',
+  other: '#6B6B75',
+  'seq-low': '#262050',
+  'seq-high': '#A28CFF',
+  'div-low': '#A28CFF',
+  'div-mid': '#2A2A30',
+  'div-high': '#E0702C',
+  land: '#2A2A30',
+  ocean: '#121215',
+  nodata: '#3A3A42'
 }
 
 export const light: Theme = freeze({ name: 'light', mode: 'light', colors: LIGHT_COLORS, ...BASE })
-export const dark: Theme = freeze({ name: 'dark', mode: 'dark', colors: DARK_COLORS, ...BASE })
+export const dark: Theme = freeze({ name: 'dark', mode: 'dark', colors: DARK_COLORS, ...BASE, palette: PALETTE_DARK })
 
 function freeze(t: Theme): Theme {
   return Object.freeze({ ...t, colors: Object.freeze({ ...t.colors }), palette: Object.freeze([...t.palette]) as string[], alias: Object.freeze({ ...t.alias }) }) as Theme
@@ -210,3 +218,22 @@ export interface RenderEnv {
   /** Maps: the viewer's camera, over the spec's. */
   camera?: Partial<import('./geo/view.js').Camera>
 }
+
+/**
+ * The look Super Plot had before it followed the design system: the TradingView palette and neutrals. For finance
+ * dashboards that sit beside Super Chart's own look. `theme: 'tradingview'` or `'tradingview-dark'`.
+ */
+const TRADINGVIEW_TOKENS = {
+  positive: '#089981', negative: '#F23645', warning: '#FF9800', info: '#2962FF', accent: '#2962FF', 'seq-high': '#2962FF', 'div-low': '#2962FF', 'div-high': '#FF9800', 'seq-low': '#E3ECFF'
+}
+registerTheme(createTheme('light', {
+  name: 'tradingview', palette: PALETTE_TRADINGVIEW,
+  colors: { ...TRADINGVIEW_TOKENS, text: '#131722', 'text-muted': '#5F6270', grid: '#EEF0F5', axis: '#D1D4DC', border: '#D1D4DC', other: '#A3A6AF', 'div-mid': '#E6E8EE', land: '#E6E8EE', ocean: '#F4F7FC', nodata: '#D9DCE3' }
+}))
+registerTheme(createTheme('dark', {
+  name: 'tradingview-dark', palette: PALETTE_TRADINGVIEW,
+  colors: {
+    ...TRADINGVIEW_TOKENS, background: '#131722', surface: '#1E222D', text: '#D1D4DC', 'text-muted': '#9EA3B0', grid: '#232733', axis: '#363A45', border: '#363A45', other: '#6B7080',
+    'seq-low': '#1C2744', 'seq-high': '#4C8DFF', 'div-low': '#4C8DFF', 'div-mid': '#3A3F4C', 'div-high': '#FFA726', land: '#2A2E39', ocean: '#161B26', nodata: '#3A3F4C'
+  }
+}))
