@@ -30,7 +30,7 @@ layer generic, so nothing in core or web knows about chat:
 
 - **The link** is the Super Protocol card-reference shell (`core/src/ref.ts`, Python `ref.py`, Go `ref.go`), a marked
   copy of protocol PR #6 checked against its own conformance cases (`conformance/card-ref.v1.json`, vendored, not
-  generated) until protocol 0.3.0 is published. The vocabulary (`key`, `x`, `y`, `series`) is Super Plot's.
+  generated). Core imports nothing, so the copy stays now that protocol 0.3.0 is published. The vocabulary (`key`, `x`, `y`, `series`) is Super Plot's.
 - **Rows are the link between data and pixels.** Every data mark lists the rows it draws (`Mark.rows`, indexes into the
   transformed data): a bar summed from three rows lists three, a line every row of its series, a pie's "Other" the rows
   it merged. Charts set them where they know them; `fillRows` in `context.ts` fills the rest from the series column,

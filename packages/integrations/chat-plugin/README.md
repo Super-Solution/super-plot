@@ -11,8 +11,9 @@ const plugin = createPlotChatPlugin({ plot: { toolbar: true } })
 ```
 
 **The card** (`super.plot`): `{ kind: "super.plot", id?, title?, height?, spec, alt }`. `spec` is a Super Plot spec,
-`alt` one or two sentences saying what it shows. The kind, its fields, `PLOT_LIMITS` and the validator's messages are
-a copy of super-protocol 0.3.0's; they become an import once 0.3.0 is published.
+`alt` one or two sentences saying what it shows. The kind, its fields, `PLOT_LIMITS` and the validator come from
+`@supersolutions/super-protocol` 0.3.0. A card the plugin cannot show reads "This chart can't be shown here." followed by
+its `alt`; the reason goes to the console.
 
 **References.** Text such as `[March was highest](ref:sales?x=2026-03)` points into the card whose `id` is `sales`.
 The handle's `ref(ref, event)` answers the host: `enter` (hover or focus on the link) highlights the match, `leave`
