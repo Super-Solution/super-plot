@@ -30,6 +30,7 @@ export type FieldDef = { desc: string; required?: boolean } & (
   | { kind: 'colors' }
   | { kind: 'dashes' }
   | { kind: 'widths' }
+  | { kind: 'enumMap'; values: readonly string[] }
   | { kind: 'annotations' }
   | { kind: 'format' }
   | { kind: 'bins'; default?: 'auto' | number }
@@ -200,6 +201,15 @@ export function validateField(name: string, def: FieldDef, value: unknown, ctx: 
       for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
         if (typeof v === 'number' && Number.isFinite(v) && v >= WIDTH_RANGE[0] && v <= WIDTH_RANGE[1]) out[k] = v
         else add(ctx, 'error', 'bad_width', `widths.${k}`, `widths.${k} is not a line width from ${WIDTH_RANGE[0]} to ${WIDTH_RANGE[1]} px: ${fmt(v)}.`, `Use a number of pixels from ${WIDTH_RANGE[0]} to ${WIDTH_RANGE[1]}.`)
+    case 'enumMap': {
+      if (!value || typeof value !== 'object' || Array.isArray(value)) return bad('bad_type', `${name} must be an object of series name to one of ${def.values.join(', ')}.`)
+      const out: Record<string, string> = {}
+      for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+        if (typeof v === 'string' && def.values.includes(v)) out[k] = v
+        else {
+          const near = typeof v === 'string' ? closest(v, def.values) : undefined
+          add(ctx, 'error', 'bad_enum', `${name}.${k}`, `${name}.${k} must be one of ${def.values.join(', ')}; got ${fmt(v)}.`, near ? `Did you mean "${near}"?` : undefined)
+        }
       }
       return out
     }
@@ -392,6 +402,7 @@ export function fieldSchema(def: FieldDef): Record<string, unknown> {
     case 'colors': return { type: 'object', additionalProperties: { type: 'string', maxLength: 64 }, description: d }
     case 'dashes': return { type: 'object', additionalProperties: { enum: [...DASH_STYLES] }, description: d }
     case 'widths': return { type: 'object', additionalProperties: { type: 'number', minimum: WIDTH_RANGE[0], maximum: WIDTH_RANGE[1] }, description: d }
+    case 'enumMap': return { type: 'object', additionalProperties: { enum: [...def.values] }, description: d }
     case 'annotations':
       return {
         type: 'array', maxItems: LIMITS.maxAnnotations, description: d,
@@ -438,6 +449,7 @@ export function fieldType(def: FieldDef): string {
     case 'colors': return 'object'
     case 'dashes': return 'object'
     case 'widths': return 'object'
+    case 'enumMap': return 'object'
     case 'annotations': return 'array'
     case 'format': return 'format string'
     case 'data': return 'array of rows'

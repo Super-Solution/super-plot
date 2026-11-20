@@ -183,6 +183,17 @@ def _validate_field(name: str, d: dict[str, Any], value: Any, issues: list, colu
             else:
                 _add(issues, "error", "bad_width", f"widths.{k}", f"widths.{k} is not a line width from 0.5 to 8 px: {_show(v)}.", "Use a number of pixels from 0.5 to 8.")
         return out_w
+    if kind == "enumMap":
+        if not isinstance(value, dict):
+            return bad("bad_type", f"{name} must be an object of series name to one of {', '.join(d['values'])}.")
+        out_e: dict[str, str] = {}
+        for k, v in value.items():
+            if isinstance(v, str) and v in d["values"]:
+                out_e[k] = v
+            else:
+                near_e = closest(v, d["values"]) if isinstance(v, str) else None
+                _add(issues, "error", "bad_enum", f"{name}.{k}", f"{name}.{k} must be one of {', '.join(d['values'])}; got {_show(v)}.", f'Did you mean "{near_e}"?' if near_e else None)
+        return out_e
     if kind == "annotations":
         return _annotations(name, value, issues)
     if kind == "geo":

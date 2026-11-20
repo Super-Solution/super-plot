@@ -103,6 +103,10 @@ export const gallery: { id: string; note: string; spec: Record<string, unknown> 
     spec: {
       type: 'line', title: 'Orders by channel and in total', subtitle: 'Monthly, thousands (invented figures)', x: 'month', y: ['total', 'web', 'store'], format: 'compact', yLabel: 'Orders', widths: { total: 3.5, web: 1.25, store: 1.25 },
       data: [['2026-01-01', 30, 18, 12], ['2026-02-01', 34, 20, 14], ['2026-03-01', 31, 17, 14], ['2026-04-01', 40, 23, 17], ['2026-05-01', 43, 25, 18], ['2026-06-01', 47, 27, 20]].map(([month, total, web, store]) => ({ month, total, web, store }))
+    id: 'line-curves', note: 'curves: the policy rate steps at each decision while the measured series stays smooth',
+    spec: {
+      type: 'line', title: 'Inflation and the policy rate', subtitle: 'Percent (invented figures)', x: 'month', y: ['inflation', 'rate'], curve: 'smooth', curves: { rate: 'step' }, format: 'fixed:1', yLabel: 'Percent',
+      data: [['2026-01-01', 3.1, 2.5], ['2026-02-01', 3.4, 2.5], ['2026-03-01', 3.8, 3], ['2026-04-01', 3.6, 3], ['2026-05-01', 3.2, 3.25], ['2026-06-01', 2.9, 3.25]].map(([month, inflation, rate]) => ({ month, inflation, rate }))
     }
   },
   {

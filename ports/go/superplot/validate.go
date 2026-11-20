@@ -305,6 +305,24 @@ func validateField(name string, d fieldDef, value any, issues *[]Issue, columns 
 			} else {
 				add(issues, "error", "bad_width", "widths."+k, fmt.Sprintf("widths.%s is not a line width from 0.5 to 8 px: %s.", k, show(m[k])), "Use a number of pixels from 0.5 to 8.")
 			}
+	case "enumMap":
+		m, ok := value.(map[string]any)
+		if !ok {
+			return bad("bad_type", fmt.Sprintf("%s must be an object of series name to one of %s.", name, strings.Join(d.Values, ", ")))
+		}
+		out := map[string]any{}
+		for _, k := range sortedKeys(m) {
+			if v, isString := m[k].(string); isString && contains(d.Values, v) {
+				out[k] = v
+				continue
+			}
+			hint := ""
+			if v, isString := m[k].(string); isString {
+				if near, found := closest(v, d.Values); found {
+					hint = fmt.Sprintf("Did you mean %q?", near)
+				}
+			}
+			add(issues, "error", "bad_enum", name+"."+k, fmt.Sprintf("%s.%s must be one of %s; got %s.", name, k, strings.Join(d.Values, ", "), show(m[k])), hint)
 		}
 		return out
 	case "annotations":

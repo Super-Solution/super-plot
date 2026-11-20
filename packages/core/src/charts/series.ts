@@ -61,7 +61,7 @@ function compileSeries(c: ChartCtx, area: boolean): { series: ReturnType<ChartCt
     xs = nums.slice(Math.max(0, a - 1), Math.min(nums.length, b + 2))
   }
   const stack = area ? ((s.stack ?? 'none') as string) : 'none'
-  const curve = (s.curve ?? 'linear') as Curve
+  const curveAll = (s.curve ?? 'linear') as Curve
   const xKeyOf = (raw: unknown): number | string | null => {
     const k = kind === 'category' ? xKey(raw) : kind === 'time' ? toTime(raw) : toNumber(raw)
     return logX && typeof k === 'number' && !(k > 0) ? null : k
@@ -266,11 +266,14 @@ function compileSeries(c: ChartCtx, area: boolean): { series: ReturnType<ChartCt
   const split = <T extends { y: number | null }>(pts: T[]): T[][] => (gaps === 'connect' ? [pts.filter(p => p.y !== null)].filter(r => r.length) : runs(pts))
   const widths = (s.widths ?? {}) as Record<string, number>
   const widthOf = (k: string): number => widths[k] ?? c.theme.lineWidth
+  // `curves` gives a series its own curve; the others use `curve`.
+  const curves = (s.curves ?? {}) as Record<string, Curve>
   // Areas: draw the first series first so later ones sit above.
   for (const k of draw) {
     const si = keys.indexOf(k)
     const all = c.rowsOf([...(rowsAt.get(k)?.values() ?? [])].flat())
     const color = series[si].color
+    const curve = curves[k] ?? curveAll
     if (band) {
       const bp = xs.map(x => {
         const a = lowV.get(k)?.get(x)
@@ -468,6 +471,7 @@ export const line: ChartDef = {
     yReverse: { kind: 'boolean', desc: 'Default false. Draw the left value axis upside down, larger values lower: for a measure where less is better (a rank, a latency, a price paid). The tick labels still read top to bottom, smallest first; say so in the axis title.' },
     rightReverse: { kind: 'boolean', desc: 'Default false. Draw the right value axis upside down, like `yReverse`. Needs `yRight`.' },
     widths: { kind: 'widths', desc: 'Series name to line width in px (0.5 to 8), e.g. {"Total":3,"Detail":1}. Unlisted series keep the theme\'s line width. Use it to give the headline series weight over its parts.' },
+    curves: { kind: 'enumMap', values: ['linear', 'smooth', 'step'], desc: 'Series name to curve, e.g. {"Target":"step"}: `linear`, `smooth` (monotone) or `step` (holds each value until the next point). Unlisted series use `curve`. Use it to draw a level that changes at dates (a target, a rate) as a step beside measured series.' },
     yBreak: breakField('series of very different size share one axis; changes across the cut look smaller than they are.'),
     yScale: scaleField('y', 'growth, orders of magnitude'),
     xScale: { ...scaleField('x', 'sizes, frequencies'), desc: `${scaleField('x', 'sizes, frequencies').desc} Only for a numeric x; dates and categories are refused.` }
