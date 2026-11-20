@@ -2,7 +2,7 @@
 // Copyright 2026 SUPER SOLUTION LABS INC
 // The single list of packages: build, check and release scripts all read this. `entries` are the public entry
 // points (`.` for index, `./<key>` otherwise); check-package holds each package.json `exports` to them.
-export const VERSION = '0.1.0'
+export const VERSION = '0.2.0'
 export const packages = [
   {
     dir: 'packages/core', name: '@supersolutions/super-plot-core', allowed: [],
