@@ -22,8 +22,8 @@ const cases = {
   'web base, no chart': [`import { SuperPlot } from '${web}/base'; new SuperPlot(document.body, {})`, 49],
   'web base+bar+line': [`import { SuperPlot } from '${web}/base'; import { registerChart } from '${core}/base'; import { bar, line } from '${core}/charts'; registerChart(bar); registerChart(line); new SuperPlot(document.body, {})`, 73],
   'web base+basic': [`import { SuperPlot } from '${web}/base'; import { registerCharts } from '${core}/base'; import { basicCharts } from '${core}/charts/basic'; registerCharts(basicCharts); new SuperPlot(document.body, {})`, 85.5],
-  'web full': [`import { SuperPlot } from '${web}'; new SuperPlot(document.body, {})`, 158.5],
-  'chat plugin': [`import { createPlotChatPlugin } from '@supersolutions/super-plot-chat-plugin'; console.log(createPlotChatPlugin())`, 164]
+  'web full': [`import { SuperPlot } from '${web}'; new SuperPlot(document.body, {})`, 159],
+  'chat plugin': [`import { createPlotChatPlugin } from '@supersolutions/super-plot-chat-plugin'; console.log(createPlotChatPlugin())`, 164.5]
 }
 
 const kb = n => (n / 1024).toFixed(1)

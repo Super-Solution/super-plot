@@ -293,6 +293,9 @@ func validateField(name string, d fieldDef, value any, issues *[]Issue, columns 
 				out[k] = v
 			} else {
 				add(issues, "error", "bad_dash", "dashes."+k, fmt.Sprintf("dashes.%s is not a line style: %s.", k, show(m[k])), "Use one of solid, dashed, dotted, dashdot.")
+			}
+		}
+		return out
 	case "widths":
 		m, ok := value.(map[string]any)
 		if !ok {
@@ -305,6 +308,8 @@ func validateField(name string, d fieldDef, value any, issues *[]Issue, columns 
 			} else {
 				add(issues, "error", "bad_width", "widths."+k, fmt.Sprintf("widths.%s is not a line width from 0.5 to 8 px: %s.", k, show(m[k])), "Use a number of pixels from 0.5 to 8.")
 			}
+		}
+		return out
 	case "enumMap":
 		m, ok := value.(map[string]any)
 		if !ok {

@@ -195,12 +195,18 @@ export function validateField(name: string, def: FieldDef, value: unknown, ctx: 
       for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
         if (typeof v === 'string' && (DASH_STYLES as readonly string[]).includes(v)) out[k] = v
         else add(ctx, 'error', 'bad_dash', `dashes.${k}`, `dashes.${k} is not a line style: ${fmt(v)}.`, `Use one of ${DASH_STYLES.join(', ')}.`)
+      }
+      return out
+    }
     case 'widths': {
       if (!value || typeof value !== 'object' || Array.isArray(value)) return bad('bad_type', `widths must be an object of series name to line width in px.`)
       const out: Record<string, number> = {}
       for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
         if (typeof v === 'number' && Number.isFinite(v) && v >= WIDTH_RANGE[0] && v <= WIDTH_RANGE[1]) out[k] = v
         else add(ctx, 'error', 'bad_width', `widths.${k}`, `widths.${k} is not a line width from ${WIDTH_RANGE[0]} to ${WIDTH_RANGE[1]} px: ${fmt(v)}.`, `Use a number of pixels from ${WIDTH_RANGE[0]} to ${WIDTH_RANGE[1]}.`)
+      }
+      return out
+    }
     case 'enumMap': {
       if (!value || typeof value !== 'object' || Array.isArray(value)) return bad('bad_type', `${name} must be an object of series name to one of ${def.values.join(', ')}.`)
       const out: Record<string, string> = {}

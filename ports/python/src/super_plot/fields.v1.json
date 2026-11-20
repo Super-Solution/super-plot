@@ -1237,6 +1237,21 @@
           "desc": "Default false. Draw the right value axis upside down, like `yReverse`. Needs `yRight`."
         },
         {
+          "name": "widths",
+          "kind": "widths",
+          "desc": "Series name to line width in px (0.5 to 8), e.g. {\"Total\":3,\"Detail\":1}. Unlisted series keep the theme's line width. Use it to give the headline series weight over its parts."
+        },
+        {
+          "name": "curves",
+          "kind": "enumMap",
+          "values": [
+            "linear",
+            "smooth",
+            "step"
+          ],
+          "desc": "Series name to curve, e.g. {\"Target\":\"step\"}: `linear`, `smooth` (monotone) or `step` (holds each value until the next point). Unlisted series use `curve`. Use it to draw a level that changes at dates (a target, a rate) as a step beside measured series."
+        },
+        {
           "name": "yBreak",
           "kind": "domain",
           "desc": "Cut the span [from, to] out of the value axis (a broken axis), so series of very different size share one axis; changes across the cut look smaller than they are. The cut is drawn as a zigzag gap across the axis and the plot, tick labels stay on both sides with the same units per pixel, and tooltips and the description give real values. Validation always adds an `axis_break` info issue with the hidden span; a value inside the span is a `break_hides_values` warning (drawn at the edge of the cut and marked). Refused on log and stacked axes and with `yRight`; zoom and brush on the broken axis are refused."

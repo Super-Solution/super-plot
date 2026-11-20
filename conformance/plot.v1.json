@@ -23546,6 +23546,349 @@
       "normalized": null
     },
     {
+      "name": "reverse axes ok",
+      "spec": {
+        "type": "line",
+        "x": "a",
+        "y": "b",
+        "yRight": "c",
+        "data": [
+          {
+            "a": "x",
+            "b": 1,
+            "c": 5
+          },
+          {
+            "a": "y",
+            "b": 2,
+            "c": 6
+          }
+        ],
+        "yReverse": true,
+        "rightReverse": true
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "info",
+          "code": "dual_axis",
+          "path": "yRight"
+        }
+      ],
+      "normalized": {
+        "type": "line",
+        "x": "a",
+        "y": "b",
+        "yRight": "c",
+        "yReverse": true,
+        "rightReverse": true,
+        "legend": "auto",
+        "tooltip": true,
+        "xType": "auto",
+        "curve": "linear"
+      }
+    },
+    {
+      "name": "reverse right axis without yRight",
+      "spec": {
+        "type": "line",
+        "x": "a",
+        "y": "b",
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "b": 2
+          }
+        ],
+        "rightReverse": true
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "right_axis_unused",
+          "path": "rightReverse"
+        }
+      ],
+      "normalized": {
+        "type": "line",
+        "x": "a",
+        "y": "b",
+        "rightReverse": true,
+        "legend": "auto",
+        "tooltip": true,
+        "xType": "auto",
+        "curve": "linear"
+      }
+    },
+    {
+      "name": "reverse with a break",
+      "spec": {
+        "type": "line",
+        "x": "a",
+        "y": "b",
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "b": 2
+          }
+        ],
+        "yReverse": true,
+        "yBreak": [
+          1.2,
+          1.8
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "break_refused",
+          "path": "yBreak"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "widths ok",
+      "spec": {
+        "type": "line",
+        "x": "a",
+        "y": "b",
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "b": 2
+          }
+        ],
+        "widths": {
+          "b": 3,
+          "c": 0.5,
+          "d": 8,
+          "e": 1.25
+        }
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "line",
+        "x": "a",
+        "y": "b",
+        "widths": {
+          "b": 3,
+          "c": 0.5,
+          "d": 8,
+          "e": 1.25
+        },
+        "legend": "auto",
+        "tooltip": true,
+        "xType": "auto",
+        "curve": "linear"
+      }
+    },
+    {
+      "name": "widths is an array",
+      "spec": {
+        "type": "line",
+        "x": "a",
+        "y": "b",
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "b": 2
+          }
+        ],
+        "widths": [
+          2
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "bad_type",
+          "path": "widths"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "widths with bad values",
+      "spec": {
+        "type": "line",
+        "x": "a",
+        "y": "b",
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "b": 2
+          }
+        ],
+        "widths": {
+          "b": 0.4,
+          "c": 8.5,
+          "d": "3",
+          "e": null
+        }
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "bad_width",
+          "path": "widths.b"
+        },
+        {
+          "severity": "error",
+          "code": "bad_width",
+          "path": "widths.c"
+        },
+        {
+          "severity": "error",
+          "code": "bad_width",
+          "path": "widths.d"
+        },
+        {
+          "severity": "error",
+          "code": "bad_width",
+          "path": "widths.e"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "curves ok",
+      "spec": {
+        "type": "line",
+        "x": "a",
+        "y": "b",
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "b": 2
+          }
+        ],
+        "curve": "smooth",
+        "curves": {
+          "b": "step",
+          "c": "linear",
+          "d": "smooth"
+        }
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "line",
+        "x": "a",
+        "y": "b",
+        "curve": "smooth",
+        "curves": {
+          "b": "step",
+          "c": "linear",
+          "d": "smooth"
+        },
+        "legend": "auto",
+        "tooltip": true,
+        "xType": "auto"
+      }
+    },
+    {
+      "name": "curves is an array",
+      "spec": {
+        "type": "line",
+        "x": "a",
+        "y": "b",
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "b": 2
+          }
+        ],
+        "curves": [
+          "step"
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "bad_type",
+          "path": "curves"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "curves with bad values",
+      "spec": {
+        "type": "line",
+        "x": "a",
+        "y": "b",
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "b": 2
+          }
+        ],
+        "curves": {
+          "b": "stepp",
+          "c": 3,
+          "d": "Smooth"
+        }
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "bad_enum",
+          "path": "curves.b"
+        },
+        {
+          "severity": "error",
+          "code": "bad_enum",
+          "path": "curves.c"
+        },
+        {
+          "severity": "error",
+          "code": "bad_enum",
+          "path": "curves.d"
+        }
+      ],
+      "normalized": null
+    },
+    {
       "name": "annotations ok",
       "spec": {
         "type": "bar",

@@ -95,14 +95,23 @@ export const gallery: { id: string; note: string; spec: Record<string, unknown> 
     spec: {
       type: 'line', title: 'Revenue against plan', subtitle: 'Monthly, USD thousands (invented figures)', x: 'month', y: ['actual', 'plan'], format: 'compact', yLabel: 'Revenue', dashes: { plan: 'dashed' },
       data: [['2026-01-01', 118, 120], ['2026-02-01', 126, 128], ['2026-03-01', 121, 136], ['2026-04-01', 139, 144], ['2026-05-01', 147, 152], ['2026-06-01', 152, 160]].map(([month, actual, plan]) => ({ month, actual, plan }))
+    }
+  },
+  {
     id: 'line-reversed-axis', note: 'yReverse: an axis drawn upside down for a measure where less is better; rank 1 is at the top',
     spec: {
       type: 'line', title: 'League table position', subtitle: 'Rank by month, 1 is best (invented figures)', x: 'month', y: 'rank', yReverse: true, yDomain: [1, 8], format: 'integer', yLabel: 'Rank',
       data: [['2026-01-01', 6], ['2026-02-01', 5], ['2026-03-01', 5], ['2026-04-01', 3], ['2026-05-01', 2], ['2026-06-01', 3]].map(([month, rank]) => ({ month, rank }))
+    }
+  },
+  {
     id: 'line-widths', note: 'widths: the total is drawn heavier than the series it is made of',
     spec: {
       type: 'line', title: 'Orders by channel and in total', subtitle: 'Monthly, thousands (invented figures)', x: 'month', y: ['total', 'web', 'store'], format: 'compact', yLabel: 'Orders', widths: { total: 3.5, web: 1.25, store: 1.25 },
       data: [['2026-01-01', 30, 18, 12], ['2026-02-01', 34, 20, 14], ['2026-03-01', 31, 17, 14], ['2026-04-01', 40, 23, 17], ['2026-05-01', 43, 25, 18], ['2026-06-01', 47, 27, 20]].map(([month, total, web, store]) => ({ month, total, web, store }))
+    }
+  },
+  {
     id: 'line-curves', note: 'curves: the policy rate steps at each decision while the measured series stays smooth',
     spec: {
       type: 'line', title: 'Inflation and the policy rate', subtitle: 'Percent (invented figures)', x: 'month', y: ['inflation', 'rate'], curve: 'smooth', curves: { rate: 'step' }, format: 'fixed:1', yLabel: 'Percent',

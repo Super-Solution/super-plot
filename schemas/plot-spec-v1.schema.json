@@ -919,6 +919,26 @@
           "type": "boolean",
           "description": "Default false. Draw the right value axis upside down, like `yReverse`. Needs `yRight`."
         },
+        "widths": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 0.5,
+            "maximum": 8
+          },
+          "description": "Series name to line width in px (0.5 to 8), e.g. {\"Total\":3,\"Detail\":1}. Unlisted series keep the theme's line width. Use it to give the headline series weight over its parts."
+        },
+        "curves": {
+          "type": "object",
+          "additionalProperties": {
+            "enum": [
+              "linear",
+              "smooth",
+              "step"
+            ]
+          },
+          "description": "Series name to curve, e.g. {\"Target\":\"step\"}: `linear`, `smooth` (monotone) or `step` (holds each value until the next point). Unlisted series use `curve`. Use it to draw a level that changes at dates (a target, a rate) as a step beside measured series."
+        },
         "yBreak": {
           "type": "array",
           "minItems": 2,
