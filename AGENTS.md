@@ -21,13 +21,15 @@ Read `docs/DESIGN.md` first. Then:
 | Add user-visible text | a key in `DEFAULT_STRINGS` (`packages/core/src/strings.ts`), read with `c.t(key)` (core) or `this.t(key)` (web) | INTEGRATION.md lists the keys |
 | Decide whether to copy a competitor feature | `docs/COMPETITIVE.md` (built / refused / open, with reasons) | sources in `docs/COMPETITORS-<date>.md`; method in super-dev-docs `docs/30-runbooks/competitive-review.md` |
 | Add or move an entry point (subpath) | the `entries` map in `scripts/packages.mjs` and the package's `package.json` `exports` (check-package holds them to each other); the aliases in `tsconfig.json` and `vitest.config.ts` (examples and showcase read `packages.mjs`) | a case in `scripts/size.mjs` with a budget; check-package's list of modules `/base` must not reach statically |
+| Change card references (`ref:` links), highlight or reveal | core: `packages/core/src/ref.ts` (a marked copy of the protocol's shell: change it only to follow the protocol), `resolve.ts` (`resolveRef`, `matchMarks`, `markRef`), each chart's `ref` shape and `Mark.rows`; web: `highlight`, `reveal` and the overlay in `packages/bindings/web/src/plot.ts` | port `resolveRef` to both `ports/`; `refCases` in `scripts/export-conformance.mjs`; `tests/core/refs.test.ts`, `tests/web/refs.test.tsx`, `tests/e2e/refs.e2e.ts`; INTEGRATION.md "References and agent annotations" |
+| Change the chat plugin (the `super.plot` card, its tools, agent annotations) | `packages/integrations/chat-plugin/src/index.ts`; `src/card.ts` is a marked copy of the protocol's card | `tests/plugin/plugin.test.ts`; the demo host in `examples/chat/`; the plugin's README |
 | Add a framework binding | new `packages/bindings/<name>` that calls `SuperPlot` from web | add it to `scripts/packages.mjs`; no logic of its own |
 
-Never edit `conformance/*.json`, `ports/*/**/fields.v1.json` or `docs/SPEC.md` by hand: they are generated (`npm run conformance`, `npm run docs:spec`).
+Never edit `conformance/*.json`, `ports/*/**/fields.v1.json` or `docs/SPEC.md` by hand: they are generated (`npm run conformance`, `npm run docs:spec`). Two files are vendored instead, copied from super-protocol and replaced only by a newer copy: `conformance/card-ref.v1.json` and `tests/plugin/plot-card.cases.json` (OPEN-DECISIONS 17).
 
 Rules (enforced by `npm run build`, which runs `scripts/check-package.mjs`):
 
-- `core` imports nothing and never touches the DOM. `web` imports only `core` and `earcut` (inside the lazily loaded WebGL chunk, `src/gl/`). `react` imports only `web` and `react`.
+- `core` imports nothing and never touches the DOM. `web` imports only `core` and `earcut` (inside the lazily loaded WebGL chunk, `src/gl/`). `react` imports only `web` and `react`. Integrations under `packages/integrations/` (the chat plugin) import only `core` (through `/base`), `web` and `@supersolutions/super-protocol`; core and web know nothing of chat.
 - Lockstep versions, exact pins. No charting dependencies.
 - Never print or embed secrets. Colours from specs go through `isSafeColor`; text through `escapeXml`; tooltips use `textContent`.
 - Do not add wrappers around `SuperPlot`: bindings pass props through.

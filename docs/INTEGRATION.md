@@ -45,16 +45,18 @@ measured on the built packages, as an app imports them). `npm run gate` fails wh
 
 | Import | What is in it | KB gzip |
 |---|---|---|
-| core `/base`, `renderToSvg`, no chart | validation, layout, SVG, themes, the transform loop; no chart, no step | 19.9 |
-| core `/base` + `bar`, `validatePlot` | | 23.9 |
-| core `/base` + `bar`, `renderToSvg` | | 34.4 |
-| core `/base` + `/charts/basic` | the nine everyday charts | 54.2 |
-| core `/base` + `/charts/basic` + `/transforms` | every transform step (5.2 KB more) | 59.4 |
-| core `.` (everything) | every chart and step, `/canvas`, `/view` | 124.9 |
-| web `/base`, no chart | `SuperPlot` (SVG path, hover, keyboard, zoom, brush, sync, sound, styles) | 40.3 |
-| web `/base` + bar + line | | 63.3 |
-| web `/base` + `/charts/basic` | | 75.8 |
-| web `.` (everything) | | 147.8 |
+| core `/base`, `renderToSvg`, no chart | validation, layout, SVG, themes, the transform loop; no chart, no step | 21.4 |
+| core `/base` + `bar`, `validatePlot` | | 25.2 |
+| core `/base` + `bar`, `renderToSvg` | | 36.2 |
+| core `/base` + `bar`, `resolveRef` | validation and the reference resolver, no drawing | 28.5 |
+| core `/base` + `/charts/basic` | the nine everyday charts | 56.6 |
+| core `/base` + `/charts/basic` + `/transforms` | every transform step (5.3 KB more) | 61.9 |
+| core `.` (everything) | every chart and step, `/canvas`, `/view` | 127.8 |
+| web `/base`, no chart | `SuperPlot` (SVG path, hover, keyboard, zoom, brush, sync, sound, references, styles) | 48.1 |
+| web `/base` + bar + line | | 71.5 |
+| web `/base` + `/charts/basic` | | 84.4 |
+| web `.` (everything) | | 157.0 |
+| chat plugin `.` | web `.`, the `super.plot` card and the agent tools | 162.3 |
 
 Core entry points that are not chart groups: `/charts` (every chart), `/transforms` (the steps, `TRANSFORM_DOCS`,
 `filterRow`, `bucket`), `/canvas` (`drawScene`, `drawHover`, `buildHitIndex`, `resolveColor`, `drawPatternTile`: draw
@@ -404,6 +406,7 @@ renderToSvg(spec, { locale: 'de', timeZone: 'Europe/Berlin', strings: { other: '
   | Sound | `soundPlaying` ("Playing {what}: {n} notes, left to right, higher pitch for higher values."), `soundPlayingOne`, `soundFinished` ("Finished playing {title}."), `soundStopped` |
   | Live data | `newPoint` / `newPoints` ("{n} new points"), `newRow` / `newRows` (charts without axes), `newsLatest` ("{count}; latest {mark}."), `newsCount` ("{count}.") |
   | Drill-down | `breadcrumbRoot` ("All"), `breadcrumbUp` ("Go up to {name}"), both written by core into the scene; `drillShowing` ("Showing {path}."), `drillShowingAll` |
+  | References | `refShowing` ("Showing {label}.", said by `reveal`) |
   | Navigator | `navOverview`, `navWindow`, `navStart`, `navEnd` (each with `{field}`, the x column), `navRange` ("{from} to {to}", the window's value text) |
 
   A change through `setOptions({ strings })` relabels the toolbar and map buttons in place (they keep keyboard focus) and rebuilds the table caption. A bad override is reported once by the compile (`unknown_string`, `bad_string`) and the binding keeps English for it. The navigator's dates in `aria-valuetext` follow `timeZone` too (UTC when it is unset or unknown).
@@ -422,6 +425,113 @@ Tools: `plot_catalog` (which chart, which fields, an example), `plot_schema`, `p
 All have `authority: 'read'`, `inputSchema` (JSON Schema) and `run(args)`, so they can be wrapped by any MCP server or
 tool registry in a few lines. Suggested agent loop: `plot_catalog` -> write spec -> `plot_validate` -> fix by `code` and `hint` -> `plot_render_svg`.
 
+## References and agent annotations
+
+A **card reference** lets text elsewhere (a chat message, a report, an agent's answer) point into a plot:
+`[March was highest](ref:sales?x=2026-03)`. Hovering or focusing the words highlights the matching marks; a click or
+Enter brings them into view. The link format is the Super Protocol card-reference shell (`parseCardRef`,
+`formatCardRef`, `CARD_REF_LIMITS`; a marked copy until protocol 0.3.0 is published):
+`ref:<target>?<name>=<value>&...`, the target being the card's id, a repeated name a list (`x=a&x=b`), values
+percent-encoded, at most 512 characters. What the names mean is Super Plot's own vocabulary:
+
+| Name | Matches | Values |
+|---|---|---|
+| `key` | annotations by their `key`, and rows by the spec's `key` column (compared as text) | any text |
+| `x` | the chart's category, position or time column(s), any of them (table below) | a number `5` or range `2..8` (either end may be left out: `..5`, `60..`); a date as an ISO prefix, the whole period (`2026` is the year, `2026-03` all of March, `2026-03-01T09:30`), or a range of them (`2026-01..2026-03` is the first quarter, end inclusive); a category as its text, or a range in data order (`Feb..Apr`) |
+| `y` | a value or range on the chart's value column(s), per point (each column of a wide `y` its own series); on charts marked *row* below, the row instead | numbers and ranges as above (a row: as `x`) |
+| `series` | legend entries: the series column, the legend column of a chart without one (a pie's slices), or a wide `y`'s column names | the series name |
+
+Names are ANDed, the values of one name ORed, and `ref:sales` alone is the whole plot. Matching runs on the data after
+`transform`, the same as what is drawn. Dates are UTC (`:` is written `%3A` inside a link).
+
+| Chart | `x` reads | `y` reads | `series` reads |
+|---|---|---|---|
+| bar, line, area | `x` | `y`, `line`, `yRight` | `series` (or a wide `y`'s columns) |
+| scatter, scatter3d, radar | `x` | `y` | `series` |
+| pie, donut, waffle | `label` | `value` | `label` |
+| histogram | `value` | | `series` |
+| box, violin | `x` | `y` | `x` |
+| heatmap, surface | `x` | `y` (row) | |
+| beeswarm | `x` | `y` (row) | `series` |
+| timeline | `start`..`end` (overlap) | `y` (row) | `series` |
+| calendar, waterfall, bullet | `x` | `value` / `y` | |
+| bump | `x` | `rank`, `y` | `series` |
+| treemap | `label` | `value` | `group` |
+| sunburst | any level of `path` | `value` | |
+| sankey, flow-map | `from`, `to` | `value` | (flow-map: `series`) |
+| funnel | `stage` | `value` | |
+| gauge | `label` | `value` | |
+| wordcloud | `text` | `value` | `series` |
+| choropleth | `region` | `value` | |
+| bubble-map, column-map | `region`, `label` | `size` / `value` | `series` |
+| parallel | | | `series` |
+
+(The machine-readable form is each chart's `ref` in `fields.v1.json`.)
+
+**Resolving** is plain data, in core and in both ports, with the same answer (conformance `refCases`, about 9,000 fuzzed
+references per seed):
+
+```ts
+import { resolveRef, matchMarks, markRef } from '@supersolutions/super-plot-core/base'
+resolveRef(spec, 'ref:sales?x=2026-01..2026-03')
+// { ok: true, rows: [0, 1, 2], points: [{ row: 0 }, { row: 1 }, { row: 2 }], series: ['sales'], keys: [], label: '3 points' }
+// or { ok: false, code, reason }
+```
+
+```python
+from super_plot import resolve_ref       # Go: superplot.ResolveRef(spec, ref, hidden)
+resolve_ref(spec, "ref:sales?x=2026-03")
+```
+
+Codes: `ref_invalid` (not a reference), `ref_spec_invalid` (the spec does not validate), `ref_param_unknown` (a name
+other than the four), `ref_param_unsupported` (this chart has nothing that name can read), `ref_bad_value` (a value
+its column cannot read), `ref_hidden_series` (everything it names is in series the viewer hid; `series` lists them)
+and `ref_no_match`. Every data mark lists the rows it draws (`Mark.rows`, indexes into the transformed data), so
+`matchMarks(scene, match)` gives any renderer the marks to outline, the line points to ring and the mark to focus;
+`markRef(spec, mark, target)` goes the other way.
+
+**In the browser:**
+
+```ts
+plot.highlight('ref:sales?x=2026-03')   // { ok: true, label } or { ok: false, code, reason }
+plot.highlight(null)                    // clear
+plot.reveal('ref:sales?x=2026-03')      // bring it into view and focus it
+new SuperPlot(el, spec, { refTarget: 'sales', onRefChange: ref => ... })   // the reference of the hovered mark
+```
+
+- `highlight` outlines each matched mark (an outline in the text colour over a halo in the background colour) and
+  dims the rest of the plot area under a veil; a line that draws more than matched is not outlined, its matched
+  points are ringed. It is one overlay drawn from the scene, so it is the same on SVG, canvas and WebGL. Exactly one
+  matched point shows its tooltip. It stays through resizes, new data and legend toggles (points in hidden series
+  are left out) until `highlight(null)` or **Escape** in the chart, which clears it before it does anything else.
+  The same call twice changes nothing. Above 200 marks the outline is thin with no halo; at most 2,000 are outlined.
+- `reveal` unhides the matched series (`onHiddenChange`), leaves a drill-down that hides the match (`onDrill`), zooms
+  out (`onZoom`) or puts a map back to its own view (`onCameraChange`) when the match is off screen, scrolls the
+  chart into view, highlights the match, moves keyboard focus to its first point (the mark on SVG, the canvas view's
+  cursor on canvas, the chart itself when no mark can take focus) and says `refShowing` ("Showing {label}.") in the
+  live region.
+- `onRefChange(ref | null)` reports the reference of the mark under the pointer or keyboard, once per change, with
+  `refTarget` (default `"plot"`) as its target; `reveal`'s own focus move is not reported. `<super-plot>` fires it as
+  `plot-ref` and has `highlight()` and `reveal()`; React passes `onRefChange` and `refTarget` through and the ref is
+  the instance.
+
+**Accessibility.** The highlight is a shape, never colour alone: an outline, a halo and a dimmed surround. In
+forced-colours mode the outline is `Highlight` and the veil `Canvas`; with `prefers-contrast: more` the veil is
+darker. Nothing animates, ever; under `prefers-reduced-motion` `reveal` scrolls without smooth scrolling. The
+overlay is `aria-hidden`: what matched is said in words (the `label`, the tooltip, the live region), and focus moves
+only on `reveal`, which a person asked for.
+
+**Agent annotations.** Any annotation may carry `key` (a stable id a reference names: `key=peak`), `note` (up to
+2,048 characters, shown as its tooltip) and `by`: `author` (default) or `assistant`. An assistant's annotation is
+drawn with `assistantMark` ("✦") before its label, its tooltip says `assistantNote` ("Added by the assistant"), and
+the description says "The assistant marked ...", so a reader always knows which marks are not the author's. A plot
+holds at most 256 annotations.
+
+**The chat plugin** (`@supersolutions/super-plot-chat-plugin`) puts this together for a chat host: the `super.plot`
+card, its handle's `ref(ref, 'enter' | 'leave' | 'activate')` (highlight, clear, reveal), and agent tools to read a
+plot, check a reference before writing it, highlight part of a plot and add or remove its own annotations. See its
+README; `examples/chat` is a demo host.
+
 ## Super Chat
 
 Today Super Chat has a built-in `chart` card. `fromChatChartCard(card)` converts it to a spec so the same data can be drawn by Super Plot:
@@ -433,8 +543,8 @@ const { ok, spec, notes } = fromChatChartCard(card)   // notes say what could no
 
 Not carried over, and reported in `notes`: series on the right axis, mixed series types beyond the first, candlesticks (use Super Chart).
 
-Proposal, not done: a `super-plot.chart` card kind in the Apache `super-protocol` (a card is `{ kind, spec }`), and a small chat-plugin
-package, mirroring Super Chart's chat plugin. This needs the owner's go because it changes a shared contract.
+The generic `super.plot` card (`{ kind: "super.plot", id?, title?, height?, spec, alt }`, super-protocol 0.3.0) is
+drawn by the chat plugin above, which also answers `ref:` links in messages and gives the agent its plot tools.
 
 ## Super Chart
 

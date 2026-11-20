@@ -23,6 +23,36 @@ spec (JSON) -> validatePlot (transform runs here) -> chart.compile(ctx) -> plugi
 - **`transform`** turns raw rows into the rows the chart reads (filter, timeUnit, aggregate, sort, top, bin, window, fold, index; at most 10 steps; no expressions), inside
   validation, so every later column check sees the output columns and an agent can send raw data plus "monthly average".
 
+## References and agent annotations
+
+Text outside a plot (a chat message, a report) can point into it: `ref:sales?x=2026-03`. The design keeps every
+layer generic, so nothing in core or web knows about chat:
+
+- **The link** is the Super Protocol card-reference shell (`core/src/ref.ts`, Python `ref.py`, Go `ref.go`), a marked
+  copy of protocol PR #6 checked against its own conformance cases (`conformance/card-ref.v1.json`, vendored, not
+  generated) until protocol 0.3.0 is published. The vocabulary (`key`, `x`, `y`, `series`) is Super Plot's.
+- **Rows are the link between data and pixels.** Every data mark lists the rows it draws (`Mark.rows`, indexes into the
+  transformed data): a bar summed from three rows lists three, a line every row of its series, a pie's "Other" the rows
+  it merged. Charts set them where they know them; `fillRows` in `context.ts` fills the rest from the series column,
+  so a chart that forgets cannot break references, only make them coarse. Each `ChartDef` says which fields a name
+  reads (`RefShape`, exported into `fields.v1.json`), so the ports read the same columns with no chart code.
+- **Resolving is data, not drawing**: `resolveRef(spec, ref)` (and `resolve_ref`, `ResolveRef`) answers with rows,
+  points, series, keys and a label, or a stable code. The ports are held to it by conformance (`refCases`, 143 cases) and
+  by the fuzzer (about 9,000 references per seed). `matchMarks(scene, match)` turns a match into marks for any
+  renderer; `markRef` is the reverse, for `onRefChange`.
+- **One overlay for every renderer.** The web binding draws the highlight as an `aria-hidden` SVG the size of the scene
+  over whatever drew the chart, from scene geometry, so SVG, canvas and WebGL look the same and no renderer changed.
+  It is redrawn after every draw (it survives resize, new data and legend toggles) and taken down while the GPU moves a
+  map (it comes back with the redraw at the end of the gesture).
+- **Generic calls, no chat wrapper**: `highlight(ref | null)`, `reveal(ref)`, `onRefChange`, `refTarget`. The chat side
+  lives in its own package (`packages/integrations/chat-plugin`), which mounts the protocol's `super.plot` card, maps
+  `enter`/`leave`/`activate` to those calls and adds the agent tools. Agent annotations are ordinary spec
+  annotations with `by: "assistant"`, so they are validated, drawn, described and exported like the author's.
+
+Accessibility: the highlight is a shape (outline over a halo, a dimmed surround), never colour alone; forced colours
+use `Highlight` and `Canvas`; nothing animates; focus moves only on `reveal`; what matched is said in words (label,
+tooltip, live region). Size: web `/base` grew 6.3 KB gzip with it (OPEN-DECISIONS).
+
 ## The eight principles, and where they live
 
 | # | Principle | How it is met |
@@ -34,7 +64,7 @@ spec (JSON) -> validatePlot (transform runs here) -> chart.compile(ctx) -> plugi
 | 5 | Rich features | Bar (grouped, stacked, normalized, horizontal, value labels), line and area (dates, stacking, smoothing, reference lines and bands, dense-data decimation), scatter (groups, bubbles, trend line), pie and donut (small slices merged into Other), histogram (auto bins, grouped overlay, mean line), box plot (outliers), heatmap, radar (several shapes on one scale), treemap (squarified, optional one-level groups), sankey (flows between stages, loops refused with the path of the loop). Lines over bars on the same axis (`line`), small multiples (`facet`, shared axes and legend, up to 12 panels), hexagon density for dense scatter (`density: "auto"` past 10,000 points, with a count legend and a warning that says so), data transforms, zoom and pan (`zoom`), interval brush (`brush`) with linked charts, live append. Tooltips, hover dimming, crosshair, legend toggle, keyboard access (SVG marks are focusable; on canvas the arrow keys step through marks with outline, tooltip and a spoken label), textures per series (`patterns`), a data table (`dataTable`), annotations, PNG and SVG export, `prefers-reduced-motion`. |
 | 6 | Beautiful default, easy to change | TradingView-aligned palette and neutrals, flat and quiet (thin grid, 4 px rounded bar ends, 2 px surface gaps). Three override levels, none needs a fork: CSS variables, a theme object, per-series `colors` in the spec. A colour-vision-safe preset ships too (`theme: 'accessible'` / `'accessible-dark'`: Okabe-Ito hues, blue and vermillion instead of green and red for up and down). A `shadcn` theme reads shadcn/ui's own tokens (`--chart-1` to `--chart-5`, `--card`, `--foreground`, `--border`, ...), so a shadcn project gets matching charts with no configuration. See [THEMING.md](THEMING.md). |
 | 7 | No useless wrappers | The React binding has no logic of its own. There is no `Chart` factory layer, no per-type component (`<BarChart>`): `type` is data. Public names are short (`SuperPlot`, `renderToSvg`, `validatePlot`). |
-| 8 | Easy with Super Kit | Super Chat's `chart` card converts with `fromChatChartCard` (core/adapters); candlesticks are refused to Super Chart. Tools use the same shape as the other Super tool lists. Theme tokens can alias Super Chart's. See [INTEGRATION.md](INTEGRATION.md). |
+| 8 | Easy with Super Kit | The protocol's generic `super.plot` card is drawn by `@supersolutions/super-plot-chat-plugin`, which also answers `ref:` links in messages (`highlight`, `reveal`) and gives the agent read, highlight and annotate tools. Super Chat's older `chart` card converts with `fromChatChartCard` (core/adapters); candlesticks are refused to Super Chart. Tools use the same shape as the other Super tool lists. Theme tokens can alias Super Chart's. See [INTEGRATION.md](INTEGRATION.md). |
 
 ### Integration method (P9 to P16)
 
@@ -161,6 +191,7 @@ Issues gained an `info` severity for these notes (drawn as asked; read this). Th
 - Hexagon density merges series into one count (a warning says so).
 - Maps: no boundaries ship, by design; no basemap tiles, labels or roads (this is a statistical map, not a slippy map). Static SVG/canvas maps recompile on every camera move, which gets slow for very detailed geographies: use WebGL (or simplify the file). On SVG, tall raised regions can overlap imperfectly at extreme tilts (painter's order per region); WebGL uses a depth buffer.
 - The ports (Go, Python) do not draw, and format numbers in English only. A native renderer in another language is a separate project (see OPEN-DECISIONS).
+- References: a line that draws more rows than matched is not outlined; its matched points are ringed only where the chart has hover columns (line, area), elsewhere the whole line is outlined. At most 2,000 marks are outlined. The outline of a text mark is its estimated box. `reveal` resets zoom rather than panning to the match, and puts a map back to its own view rather than flying to it.
 - Visual regression is opt-in (`E2E_VISUAL=1`): baselines are PNGs from one Chromium build and fonts, so they are not part of the default gate.
 
 ## Testing
@@ -169,7 +200,8 @@ Issues gained an `info` severity for these notes (drawn as asked; read this). Th
 |---|---|---|
 | Unit (vitest) | numbers, validation, every chart's scene, robustness against hostile specs, canvas drawing and hit index | `npm test` |
 | Web (vitest + jsdom) | tooltip, hover, legend toggle and keyboard, resize, errors, export | `npm test` |
-| Browser (Playwright, real Chromium) | the features page (brush linking two charts, Ctrl-wheel zoom and double-click reset on SVG and canvas, canvas keyboard steps with tooltip and spoken label, live data, data table), the gallery in light and dark, clicks and hover on every renderer, responsive widths, no console errors, 50k points on canvas and WebGL, WebGL maps against SVG pixels, GPU picking, drag, context-loss fallback, importing a boundary file | `npm run test:e2e` |
+| Plugin (vitest + jsdom) | the chat plugin: the card against the protocol's 64 conformance cases, the handle's `ref`, every tool and its errors, remounts | `npm test` |
+| Browser (Playwright, real Chromium) | references (links in the chat demo highlight and reveal on SVG and canvas, the outline on the bar it names, keyboard, Escape, forced colours, no animation, WebGL, reveal out of a zoom), the features page (brush linking two charts, Ctrl-wheel zoom and double-click reset on SVG and canvas, canvas keyboard steps with tooltip and spoken label, live data, data table), the gallery in light and dark, clicks and hover on every renderer, responsive widths, no console errors, 50k points on canvas and WebGL, WebGL maps against SVG pixels, GPU picking, drag, context-loss fallback, importing a boundary file | `npm run test:e2e` |
 | Visual regression (opt-in) | pixels of the gallery against stored baselines | `E2E_VISUAL=1 npm run test:e2e` (`E2E_VISUAL=update` to rewrite) |
 | Conformance | generated data is current; each port replays it | `npm run conformance`, `npm run test:ports` |
 | Differential fuzz | ~64,000 random numbers and 5,000 random specs per seed (about 45% with a transform), plus timeUnit buckets: ports against TypeScript | `npm run fuzz:ports` |

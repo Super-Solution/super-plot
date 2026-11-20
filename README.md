@@ -47,9 +47,10 @@ new SuperPlot(document.getElementById('chart')!, spec, { theme: 'auto', onSelect
 | `@supersolutions/super-plot-core` | Spec validation, layout to a serializable scene, SVG string, themes, agent tools. No DOM. | `.` (everything registered), `/base` (nothing registered), chart groups `/charts/basic`, `/charts/business`, `/charts/stats`, `/charts/maps`, `/charts/hierarchy`, `/charts/3d`, `/charts/text` (and `/charts`, every chart), `/transforms`, `/canvas`, `/view`, `/tools`, `/adapters` |
 | `@supersolutions/super-plot-web` | `SuperPlot` class (resize, tooltip, hover, legend toggle, zoom, pan, brush, live append, plugins, data table, PNG/SVG export; canvas and WebGL automatically for dense charts and 3D maps; map camera control) and the `<super-plot>` element. | `.`, `/base`, `/element`, `/global` (a `<script>` file) |
 | `@supersolutions/super-plot-react` | `<SuperPlot>`: a thin binding over the web class. | `.`, `/base` |
+| `@supersolutions/super-plot-chat-plugin` | A chat plugin: `super.plot` cards in a chat, links in the text that point into them (`ref:sales?x=2026-03`), and agent tools to read, highlight and annotate a plot. | `.` |
 
 Quick start and agents: the package roots (everything registered). For a page: `/base` plus the groups it draws,
-`registerCharts(basicCharts)`; the browser binding with the nine basic charts is 75.8 KB gzip against 147.8 KB for
+`registerCharts(basicCharts)`; the browser binding with the nine basic charts is 84.4 KB gzip against 157.0 KB for
 everything ([INTEGRATION](docs/INTEGRATION.md#import-only-what-you-use) has the table).
 
 Other languages ([`ports/`](ports/README.md)): **Go and Python** validate a spec, write its plain-language description and compute the shared numbers, identical to TypeScript (they do not draw).
@@ -81,6 +82,7 @@ The version numbers below were local milestones only; nothing was published unde
 | 4 | 0.3.0 | Transforms, zoom and brush, facets, live data, plugins, per-chart imports |
 | 5 | 0.4.0 | The competitor review: 12 more chart types, log scales, intervals, sync, toolbar, i18n and more |
 | 6 | 0.4.0 | Gauge, word cloud, 3D, dual and broken axes, `index`, data transitions |
+| 7 | 0.1.0 | Card references (`resolveRef`, `highlight`, `reveal`), agent annotations, the chat plugin |
 
 ## Licence
 
