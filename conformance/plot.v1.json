@@ -24139,6 +24139,116 @@
       "normalized": null
     },
     {
+      "name": "notes ok",
+      "spec": {
+        "type": "line",
+        "x": "a",
+        "y": "b",
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "b": 2
+          }
+        ],
+        "notes": {
+          "b": "b_note",
+          "c": "c_note"
+        }
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "line",
+        "x": "a",
+        "y": "b",
+        "notes": {
+          "b": "b_note",
+          "c": "c_note"
+        },
+        "legend": "auto",
+        "tooltip": true,
+        "bare": false,
+        "xType": "auto",
+        "curve": "linear"
+      }
+    },
+    {
+      "name": "notes is a list",
+      "spec": {
+        "type": "line",
+        "x": "a",
+        "y": "b",
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "b": 2
+          }
+        ],
+        "notes": [
+          "b_note"
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "bad_type",
+          "path": "notes"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "notes with bad entries",
+      "spec": {
+        "type": "line",
+        "x": "a",
+        "y": "b",
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "b": 2
+          }
+        ],
+        "notes": {
+          "b": 3,
+          "c": "",
+          "d": null
+        }
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "bad_type",
+          "path": "notes.b"
+        },
+        {
+          "severity": "error",
+          "code": "bad_type",
+          "path": "notes.c"
+        },
+        {
+          "severity": "error",
+          "code": "bad_type",
+          "path": "notes.d"
+        }
+      ],
+      "normalized": null
+    },
+    {
       "name": "bare ok",
       "spec": {
         "type": "line",

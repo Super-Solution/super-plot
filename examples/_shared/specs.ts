@@ -134,6 +134,13 @@ export const gallery: { id: string; note: string; spec: Record<string, unknown> 
     }
   },
   {
+    id: 'line-notes', note: 'notes: a column of text per point appears in the tooltip, here the reason a quarter has no figure',
+    spec: {
+      type: 'line', title: 'Revenue by quarter', subtitle: 'Millions (invented figures); hover the gap', x: 'quarter', y: ['revenue'], notes: { revenue: 'why' }, format: 'compact', yLabel: 'USD',
+      data: [['2026-Q1', 410, ''], ['2026-Q2', null, 'Not given: one company has not filed'], ['2026-Q3', 455, 'restated'], ['2026-Q4', 470, '']].map(([quarter, revenue, why]) => ({ quarter, revenue, why }))
+    }
+  },
+  {
     id: 'line-bare', note: 'bare: marks only, the shape of a sparkline (set yDomain to fill the height)',
     spec: {
       type: 'line', title: 'Equity, last 12 weeks', x: 'week', y: 'equity', bare: true, yDomain: [96, 112], points: false,
