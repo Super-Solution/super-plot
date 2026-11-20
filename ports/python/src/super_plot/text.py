@@ -21,7 +21,7 @@ from ._js import is_finite_number
 
 _CTX = Context(prec=500)
 _NBSP = " "
-_FORMAT_RE = re.compile(r"(auto|compact|integer|percent|fixed:\d{1,2}|currency:[A-Za-z]{3})")
+_FORMAT_RE = re.compile(r"(auto|compact|integer|percent(:\d)?|fixed:\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\u0000-\u001f]{1,16})?")
 _MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 _SUFFIX = ["", "K", "M", "B", "T"]
 
@@ -90,10 +90,10 @@ def _percent(v: float, max_frac: int) -> str:
     return _plain(_shortest(v).scaleb(2, context=_CTX), 0, max_frac) + "%"
 
 
-def _currency(v: float, code: str, max_frac: int) -> str:
+def _currency(v: float, code: str, max_frac: int, compact: bool = False, narrow: bool = False) -> str:
     info = _CURRENCIES.get(code.upper(), {"symbol": code.upper(), "digits": 2})
-    symbol = info["symbol"]
-    body = _plain(_shortest(v), min(info["digits"], max_frac), max_frac)
+    symbol = info.get("narrow", info["symbol"]) if narrow else info["symbol"]
+    body = _compact(v) if compact else _plain(_shortest(v), min(info["digits"], max_frac), max_frac)
     # CLDR currency spacing: a symbol ending in a letter or punctuation ("CHF", "Cg.") is separated from the number,
     # one ending in a symbol character ("$", "CN¥") is not.
     sep = _NBSP if symbol and unicodedata.category(symbol[-1])[0] not in "SZ" else ""
@@ -101,20 +101,30 @@ def _currency(v: float, code: str, max_frac: int) -> str:
 
 
 def value_formatter(fmt: str | None = None) -> Callable[[float], str]:
-    """Formatter for a single value. Grammar: auto | compact | integer | percent | fixed:N | currency:CODE."""
-    f = fmt or "auto"
+    """Formatter for a single value. Grammar: auto | compact | integer | percent | percent:N | fixed:N |
+    currency:CODE[:compact][:narrow], then an optional ~suffix printed after the value."""
+    base, tilde, suffix = (fmt or "auto").partition("~")
+    one = _base_formatter(base)
+    return (lambda v: one(v) + suffix) if tilde and suffix else one
+
+
+def _base_formatter(f: str) -> Callable[[float], str]:
     if f == "compact":
         return lambda v: _signed(v, _compact(v))
     if f == "integer":
         return lambda v: _signed(v, _plain(_shortest(v), 0, 0))
+    if f.startswith("percent:"):
+        d = int(f[8:])
+        return lambda v: _signed(v, _plain(_shortest(v).scaleb(2, context=_CTX), d, d) + "%")
     if f == "percent":
         return lambda v: _signed(v, _percent(v, 2 if abs(v) < 0.1 else 1))
     if f.startswith("fixed:"):
         n = int(f[6:])
         return lambda v: _signed(v, _plain(_shortest(v), n, n))
     if f.startswith("currency:"):
-        code = f[9:]
-        return lambda v: _signed(v, _currency(v, code, 0 if abs(v) >= 1000 else 2))
+        code, *flags = f[9:].split(":")
+        compact, narrow = "compact" in flags, "narrow" in flags
+        return lambda v: _signed(v, _currency(v, code, 0 if abs(v) >= 1000 else 2, compact, narrow))
 
     def auto(v: float) -> str:
         a = abs(v)

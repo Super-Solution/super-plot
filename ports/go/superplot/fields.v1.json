@@ -54,650 +54,812 @@
   "currencies": {
     "AED": {
       "symbol": "AED",
+      "narrow": "AED",
       "digits": 2
     },
     "AFN": {
       "symbol": "AFN",
+      "narrow": "؋",
       "digits": 0
     },
     "ALL": {
       "symbol": "ALL",
+      "narrow": "ALL",
       "digits": 0
     },
     "AMD": {
       "symbol": "AMD",
+      "narrow": "֏",
       "digits": 2
     },
     "ANG": {
       "symbol": "ANG",
+      "narrow": "ANG",
       "digits": 2
     },
     "AOA": {
       "symbol": "AOA",
+      "narrow": "Kz",
       "digits": 2
     },
     "ARS": {
       "symbol": "ARS",
+      "narrow": "$",
       "digits": 2
     },
     "AUD": {
       "symbol": "A$",
+      "narrow": "$",
       "digits": 2
     },
     "AWG": {
       "symbol": "AWG",
+      "narrow": "AWG",
       "digits": 2
     },
     "AZN": {
       "symbol": "AZN",
+      "narrow": "₼",
       "digits": 2
     },
     "BAM": {
       "symbol": "BAM",
+      "narrow": "KM",
       "digits": 2
     },
     "BBD": {
       "symbol": "BBD",
+      "narrow": "$",
       "digits": 2
     },
     "BDT": {
       "symbol": "BDT",
+      "narrow": "৳",
       "digits": 2
     },
     "BGN": {
       "symbol": "BGN",
+      "narrow": "BGN",
       "digits": 2
     },
     "BHD": {
       "symbol": "BHD",
+      "narrow": "BHD",
       "digits": 3
     },
     "BIF": {
       "symbol": "BIF",
+      "narrow": "BIF",
       "digits": 0
     },
     "BMD": {
       "symbol": "BMD",
+      "narrow": "$",
       "digits": 2
     },
     "BND": {
       "symbol": "BND",
+      "narrow": "$",
       "digits": 2
     },
     "BOB": {
       "symbol": "BOB",
+      "narrow": "Bs",
       "digits": 2
     },
     "BRL": {
       "symbol": "R$",
+      "narrow": "R$",
       "digits": 2
     },
     "BSD": {
       "symbol": "BSD",
+      "narrow": "$",
       "digits": 2
     },
     "BTN": {
       "symbol": "BTN",
+      "narrow": "BTN",
       "digits": 2
     },
     "BWP": {
       "symbol": "BWP",
+      "narrow": "P",
       "digits": 2
     },
     "BYN": {
       "symbol": "BYN",
+      "narrow": "BYN",
       "digits": 2
     },
     "BZD": {
       "symbol": "BZD",
+      "narrow": "$",
       "digits": 2
     },
     "CAD": {
       "symbol": "CA$",
+      "narrow": "$",
       "digits": 2
     },
     "CDF": {
       "symbol": "CDF",
+      "narrow": "CDF",
       "digits": 2
     },
     "CHF": {
       "symbol": "CHF",
+      "narrow": "CHF",
       "digits": 2
     },
     "CLP": {
       "symbol": "CLP",
+      "narrow": "$",
       "digits": 0
     },
     "CNY": {
       "symbol": "CN¥",
+      "narrow": "¥",
       "digits": 2
     },
     "COP": {
       "symbol": "COP",
+      "narrow": "$",
       "digits": 2
     },
     "CRC": {
       "symbol": "CRC",
+      "narrow": "₡",
       "digits": 2
     },
     "CUC": {
       "symbol": "CUC",
+      "narrow": "$",
       "digits": 2
     },
     "CUP": {
       "symbol": "CUP",
+      "narrow": "$",
       "digits": 2
     },
     "CVE": {
       "symbol": "CVE",
+      "narrow": "CVE",
       "digits": 2
     },
     "CZK": {
       "symbol": "CZK",
+      "narrow": "Kč",
       "digits": 2
     },
     "DJF": {
       "symbol": "DJF",
+      "narrow": "DJF",
       "digits": 0
     },
     "DKK": {
       "symbol": "DKK",
+      "narrow": "kr",
       "digits": 2
     },
     "DOP": {
       "symbol": "DOP",
+      "narrow": "$",
       "digits": 2
     },
     "DZD": {
       "symbol": "DZD",
+      "narrow": "DZD",
       "digits": 2
     },
     "EGP": {
       "symbol": "EGP",
+      "narrow": "E£",
       "digits": 2
     },
     "ERN": {
       "symbol": "ERN",
+      "narrow": "ERN",
       "digits": 2
     },
     "ETB": {
       "symbol": "ETB",
+      "narrow": "ETB",
       "digits": 2
     },
     "EUR": {
       "symbol": "€",
+      "narrow": "€",
       "digits": 2
     },
     "FJD": {
       "symbol": "FJD",
+      "narrow": "$",
       "digits": 2
     },
     "FKP": {
       "symbol": "FKP",
+      "narrow": "£",
       "digits": 2
     },
     "GBP": {
       "symbol": "£",
+      "narrow": "£",
       "digits": 2
     },
     "GEL": {
       "symbol": "GEL",
+      "narrow": "₾",
       "digits": 2
     },
     "GHS": {
       "symbol": "GHS",
+      "narrow": "GH₵",
       "digits": 2
     },
     "GIP": {
       "symbol": "GIP",
+      "narrow": "£",
       "digits": 2
     },
     "GMD": {
       "symbol": "GMD",
+      "narrow": "GMD",
       "digits": 2
     },
     "GNF": {
       "symbol": "GNF",
+      "narrow": "FG",
       "digits": 0
     },
     "GTQ": {
       "symbol": "GTQ",
+      "narrow": "Q",
       "digits": 2
     },
     "GYD": {
       "symbol": "GYD",
+      "narrow": "$",
       "digits": 2
     },
     "HKD": {
       "symbol": "HK$",
+      "narrow": "$",
       "digits": 2
     },
     "HNL": {
       "symbol": "HNL",
+      "narrow": "L",
       "digits": 2
     },
     "HRK": {
       "symbol": "HRK",
+      "narrow": "kn",
       "digits": 2
     },
     "HTG": {
       "symbol": "HTG",
+      "narrow": "HTG",
       "digits": 2
     },
     "HUF": {
       "symbol": "HUF",
+      "narrow": "Ft",
       "digits": 2
     },
     "IDR": {
       "symbol": "IDR",
+      "narrow": "Rp",
       "digits": 2
     },
     "ILS": {
       "symbol": "₪",
+      "narrow": "₪",
       "digits": 2
     },
     "INR": {
       "symbol": "₹",
+      "narrow": "₹",
       "digits": 2
     },
     "IQD": {
       "symbol": "IQD",
+      "narrow": "IQD",
       "digits": 0
     },
     "IRR": {
       "symbol": "IRR",
+      "narrow": "IRR",
       "digits": 0
     },
     "ISK": {
       "symbol": "ISK",
+      "narrow": "kr",
       "digits": 0
     },
     "JMD": {
       "symbol": "JMD",
+      "narrow": "$",
       "digits": 2
     },
     "JOD": {
       "symbol": "JOD",
+      "narrow": "JOD",
       "digits": 3
     },
     "JPY": {
       "symbol": "¥",
+      "narrow": "¥",
       "digits": 0
     },
     "KES": {
       "symbol": "KES",
+      "narrow": "KES",
       "digits": 2
     },
     "KGS": {
       "symbol": "KGS",
+      "narrow": "⃀",
       "digits": 2
     },
     "KHR": {
       "symbol": "KHR",
+      "narrow": "៛",
       "digits": 2
     },
     "KMF": {
       "symbol": "KMF",
+      "narrow": "CF",
       "digits": 0
     },
     "KPW": {
       "symbol": "KPW",
+      "narrow": "₩",
       "digits": 0
     },
     "KRW": {
       "symbol": "₩",
+      "narrow": "₩",
       "digits": 0
     },
     "KWD": {
       "symbol": "KWD",
+      "narrow": "KWD",
       "digits": 3
     },
     "KYD": {
       "symbol": "KYD",
+      "narrow": "$",
       "digits": 2
     },
     "KZT": {
       "symbol": "KZT",
+      "narrow": "₸",
       "digits": 2
     },
     "LAK": {
       "symbol": "LAK",
+      "narrow": "₭",
       "digits": 0
     },
     "LBP": {
       "symbol": "LBP",
+      "narrow": "L£",
       "digits": 0
     },
     "LKR": {
       "symbol": "LKR",
+      "narrow": "Rs",
       "digits": 2
     },
     "LRD": {
       "symbol": "LRD",
+      "narrow": "$",
       "digits": 2
     },
     "LSL": {
       "symbol": "LSL",
+      "narrow": "LSL",
       "digits": 2
     },
     "LYD": {
       "symbol": "LYD",
+      "narrow": "LYD",
       "digits": 3
     },
     "MAD": {
       "symbol": "MAD",
+      "narrow": "MAD",
       "digits": 2
     },
     "MDL": {
       "symbol": "MDL",
+      "narrow": "MDL",
       "digits": 2
     },
     "MGA": {
       "symbol": "MGA",
+      "narrow": "Ar",
       "digits": 0
     },
     "MKD": {
       "symbol": "MKD",
+      "narrow": "MKD",
       "digits": 2
     },
     "MMK": {
       "symbol": "MMK",
+      "narrow": "K",
       "digits": 0
     },
     "MNT": {
       "symbol": "MNT",
+      "narrow": "₮",
       "digits": 2
     },
     "MOP": {
       "symbol": "MOP",
+      "narrow": "MOP",
       "digits": 2
     },
     "MRU": {
       "symbol": "MRU",
+      "narrow": "MRU",
       "digits": 2
     },
     "MUR": {
       "symbol": "MUR",
+      "narrow": "Rs",
       "digits": 2
     },
     "MVR": {
       "symbol": "MVR",
+      "narrow": "MVR",
       "digits": 2
     },
     "MWK": {
       "symbol": "MWK",
+      "narrow": "MWK",
       "digits": 2
     },
     "MXN": {
       "symbol": "MX$",
+      "narrow": "$",
       "digits": 2
     },
     "MYR": {
       "symbol": "MYR",
+      "narrow": "RM",
       "digits": 2
     },
     "MZN": {
       "symbol": "MZN",
+      "narrow": "MZN",
       "digits": 2
     },
     "NAD": {
       "symbol": "NAD",
+      "narrow": "$",
       "digits": 2
     },
     "NGN": {
       "symbol": "NGN",
+      "narrow": "₦",
       "digits": 2
     },
     "NIO": {
       "symbol": "NIO",
+      "narrow": "C$",
       "digits": 2
     },
     "NOK": {
       "symbol": "NOK",
+      "narrow": "kr",
       "digits": 2
     },
     "NPR": {
       "symbol": "NPR",
+      "narrow": "Rs",
       "digits": 2
     },
     "NZD": {
       "symbol": "NZ$",
+      "narrow": "$",
       "digits": 2
     },
     "OMR": {
       "symbol": "OMR",
+      "narrow": "OMR",
       "digits": 3
     },
     "PAB": {
       "symbol": "PAB",
+      "narrow": "PAB",
       "digits": 2
     },
     "PEN": {
       "symbol": "PEN",
+      "narrow": "PEN",
       "digits": 2
     },
     "PGK": {
       "symbol": "PGK",
+      "narrow": "PGK",
       "digits": 2
     },
     "PHP": {
       "symbol": "₱",
+      "narrow": "₱",
       "digits": 2
     },
     "PKR": {
       "symbol": "PKR",
+      "narrow": "Rs",
       "digits": 2
     },
     "PLN": {
       "symbol": "PLN",
+      "narrow": "zł",
       "digits": 2
     },
     "PYG": {
       "symbol": "PYG",
+      "narrow": "₲",
       "digits": 0
     },
     "QAR": {
       "symbol": "QAR",
+      "narrow": "QAR",
       "digits": 2
     },
     "RON": {
       "symbol": "RON",
+      "narrow": "lei",
       "digits": 2
     },
     "RSD": {
       "symbol": "RSD",
+      "narrow": "RSD",
       "digits": 0
     },
     "RUB": {
       "symbol": "RUB",
+      "narrow": "₽",
       "digits": 2
     },
     "RWF": {
       "symbol": "RWF",
+      "narrow": "RF",
       "digits": 0
     },
     "SAR": {
       "symbol": "SAR",
+      "narrow": "SAR",
       "digits": 2
     },
     "SBD": {
       "symbol": "SBD",
+      "narrow": "$",
       "digits": 2
     },
     "SCR": {
       "symbol": "SCR",
+      "narrow": "SCR",
       "digits": 2
     },
     "SDG": {
       "symbol": "SDG",
+      "narrow": "SDG",
       "digits": 2
     },
     "SEK": {
       "symbol": "SEK",
+      "narrow": "kr",
       "digits": 2
     },
     "SGD": {
       "symbol": "SGD",
+      "narrow": "$",
       "digits": 2
     },
     "SHP": {
       "symbol": "SHP",
+      "narrow": "£",
       "digits": 2
     },
     "SLE": {
       "symbol": "SLE",
+      "narrow": "SLE",
       "digits": 2
     },
     "SLL": {
       "symbol": "SLL",
+      "narrow": "SLL",
       "digits": 0
     },
     "SOS": {
       "symbol": "SOS",
+      "narrow": "SOS",
       "digits": 0
     },
     "SRD": {
       "symbol": "SRD",
+      "narrow": "$",
       "digits": 2
     },
     "SSP": {
       "symbol": "SSP",
+      "narrow": "£",
       "digits": 2
     },
     "STN": {
       "symbol": "STN",
+      "narrow": "Db",
       "digits": 2
     },
     "SVC": {
       "symbol": "SVC",
+      "narrow": "SVC",
       "digits": 2
     },
     "SYP": {
       "symbol": "SYP",
+      "narrow": "£",
       "digits": 0
     },
     "SZL": {
       "symbol": "SZL",
+      "narrow": "SZL",
       "digits": 2
     },
     "THB": {
       "symbol": "THB",
+      "narrow": "฿",
       "digits": 2
     },
     "TJS": {
       "symbol": "TJS",
+      "narrow": "TJS",
       "digits": 2
     },
     "TMT": {
       "symbol": "TMT",
+      "narrow": "TMT",
       "digits": 2
     },
     "TND": {
       "symbol": "TND",
+      "narrow": "TND",
       "digits": 3
     },
     "TOP": {
       "symbol": "TOP",
+      "narrow": "T$",
       "digits": 2
     },
     "TRY": {
       "symbol": "TRY",
+      "narrow": "₺",
       "digits": 2
     },
     "TTD": {
       "symbol": "TTD",
+      "narrow": "$",
       "digits": 2
     },
     "TWD": {
       "symbol": "NT$",
+      "narrow": "$",
       "digits": 2
     },
     "TZS": {
       "symbol": "TZS",
+      "narrow": "TZS",
       "digits": 2
     },
     "UAH": {
       "symbol": "UAH",
+      "narrow": "₴",
       "digits": 2
     },
     "UGX": {
       "symbol": "UGX",
+      "narrow": "UGX",
       "digits": 0
     },
     "USD": {
       "symbol": "$",
+      "narrow": "$",
       "digits": 2
     },
     "UYU": {
       "symbol": "UYU",
+      "narrow": "$",
       "digits": 2
     },
     "UZS": {
       "symbol": "UZS",
+      "narrow": "UZS",
       "digits": 2
     },
     "VES": {
       "symbol": "VES",
+      "narrow": "VES",
       "digits": 2
     },
     "VND": {
       "symbol": "₫",
+      "narrow": "₫",
       "digits": 0
     },
     "VUV": {
       "symbol": "VUV",
+      "narrow": "VUV",
       "digits": 0
     },
     "WST": {
       "symbol": "WST",
+      "narrow": "WST",
       "digits": 2
     },
     "XAF": {
       "symbol": "FCFA",
+      "narrow": "FCFA",
       "digits": 0
     },
     "XCD": {
       "symbol": "EC$",
+      "narrow": "$",
       "digits": 2
     },
     "XCG": {
       "symbol": "Cg.",
+      "narrow": "Cg.",
       "digits": 2
     },
     "XDR": {
       "symbol": "XDR",
+      "narrow": "XDR",
       "digits": 2
     },
     "XOF": {
       "symbol": "F CFA",
+      "narrow": "F CFA",
       "digits": 0
     },
     "XPF": {
       "symbol": "CFPF",
+      "narrow": "CFPF",
       "digits": 0
     },
     "XSU": {
       "symbol": "XSU",
+      "narrow": "XSU",
       "digits": 2
     },
     "YER": {
       "symbol": "YER",
+      "narrow": "YER",
       "digits": 0
     },
     "ZAR": {
       "symbol": "ZAR",
+      "narrow": "R",
       "digits": 2
     },
     "ZMW": {
       "symbol": "ZMW",
+      "narrow": "ZK",
       "digits": 2
     },
     "ZWG": {
       "symbol": "ZWG",
+      "narrow": "ZWG",
       "digits": 2
     },
     "ZWL": {
       "symbol": "ZWL",
+      "narrow": "ZWL",
       "digits": 2
     }
   },
@@ -781,7 +943,7 @@
         {
           "name": "format",
           "kind": "format",
-          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
         },
         {
           "name": "colors",
@@ -1059,7 +1221,7 @@
         {
           "name": "format",
           "kind": "format",
-          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
         },
         {
           "name": "colors",
@@ -1383,7 +1545,7 @@
         {
           "name": "format",
           "kind": "format",
-          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
         },
         {
           "name": "colors",
@@ -1667,7 +1829,7 @@
         {
           "name": "format",
           "kind": "format",
-          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
         },
         {
           "name": "colors",
@@ -1939,7 +2101,7 @@
         {
           "name": "format",
           "kind": "format",
-          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
         },
         {
           "name": "colors",
@@ -2092,7 +2254,7 @@
         {
           "name": "format",
           "kind": "format",
-          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
         },
         {
           "name": "colors",
@@ -2242,7 +2404,7 @@
         {
           "name": "format",
           "kind": "format",
-          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
         },
         {
           "name": "colors",
@@ -2442,7 +2604,7 @@
         {
           "name": "format",
           "kind": "format",
-          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
         },
         {
           "name": "colors",
@@ -2635,7 +2797,7 @@
         {
           "name": "format",
           "kind": "format",
-          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
         },
         {
           "name": "colors",
@@ -2840,7 +3002,7 @@
         {
           "name": "format",
           "kind": "format",
-          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
         },
         {
           "name": "colors",
@@ -2983,7 +3145,7 @@
         {
           "name": "format",
           "kind": "format",
-          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
         },
         {
           "name": "colors",
@@ -3111,7 +3273,7 @@
         {
           "name": "format",
           "kind": "format",
-          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
         },
         {
           "name": "colors",
@@ -3310,7 +3472,7 @@
         {
           "name": "format",
           "kind": "format",
-          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
         },
         {
           "name": "colors",
@@ -3511,7 +3673,7 @@
         {
           "name": "format",
           "kind": "format",
-          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
         },
         {
           "name": "colors",
@@ -3713,7 +3875,7 @@
         {
           "name": "format",
           "kind": "format",
-          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
         },
         {
           "name": "colors",
@@ -3917,7 +4079,7 @@
         {
           "name": "format",
           "kind": "format",
-          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
         },
         {
           "name": "colors",
@@ -4058,7 +4220,7 @@
         {
           "name": "format",
           "kind": "format",
-          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
         },
         {
           "name": "colors",
@@ -4189,7 +4351,7 @@
         {
           "name": "format",
           "kind": "format",
-          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
         },
         {
           "name": "colors",
@@ -4317,7 +4479,7 @@
         {
           "name": "format",
           "kind": "format",
-          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
         },
         {
           "name": "colors",
@@ -4432,7 +4594,7 @@
         {
           "name": "format",
           "kind": "format",
-          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
         },
         {
           "name": "colors",
@@ -4546,7 +4708,7 @@
         {
           "name": "format",
           "kind": "format",
-          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
         },
         {
           "name": "colors",
@@ -4678,7 +4840,7 @@
         {
           "name": "format",
           "kind": "format",
-          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
         },
         {
           "name": "colors",
@@ -4819,7 +4981,7 @@
         {
           "name": "format",
           "kind": "format",
-          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
         },
         {
           "name": "colors",
@@ -5010,7 +5172,7 @@
         {
           "name": "format",
           "kind": "format",
-          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
         },
         {
           "name": "colors",
@@ -5167,7 +5329,7 @@
         {
           "name": "format",
           "kind": "format",
-          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
         },
         {
           "name": "colors",
@@ -5297,7 +5459,7 @@
         {
           "name": "format",
           "kind": "format",
-          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
         },
         {
           "name": "colors",
@@ -5493,7 +5655,7 @@
         {
           "name": "format",
           "kind": "format",
-          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
         },
         {
           "name": "colors",
@@ -5676,7 +5838,7 @@
         {
           "name": "format",
           "kind": "format",
-          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
         },
         {
           "name": "colors",
@@ -5860,7 +6022,7 @@
         {
           "name": "format",
           "kind": "format",
-          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
         },
         {
           "name": "colors",
@@ -6045,7 +6207,7 @@
         {
           "name": "format",
           "kind": "format",
-          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
         },
         {
           "name": "colors",
@@ -6231,7 +6393,7 @@
         {
           "name": "format",
           "kind": "format",
-          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+          "desc": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
         },
         {
           "name": "colors",
