@@ -62,10 +62,11 @@ describe('chat plugin demo host', () => {
     await page.close()
   })
 
-  it('a link that names nothing becomes plain text with its reason for screen readers', async () => {
+  it('a link that names nothing is plain text from the start, with its reason for screen readers', async () => {
     const page = await open('/chat/')
-    await page.locator('a.ref >> text=week 40').dispatchEvent('mouseover')
     await expect.poll(() => page.locator('.plain-ref').count()).toBe(1)
+    expect(await page.locator('a.ref >> text=week 40').count()).toBe(0)
+    expect(await page.locator('.plain-ref').innerText()).toContain('week 40')
     expect(await page.locator('.plain-ref .sr').innerText()).toMatch(/nothing|no row|match/i)
     await page.close()
   })

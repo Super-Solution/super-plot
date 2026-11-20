@@ -113,6 +113,18 @@ thread.addEventListener('click', e => {
 
 // ---- the agent's tools ------------------------------------------------------------------------
 const tool = (name: string, input?: unknown): Promise<unknown> => plugin.tools.find(t => t.name === name)!.run(input, {})
+
+// Check every link once the cards are drawn (read only, nothing lights up), so a link that names nothing is plain
+// text from the start instead of turning into text when the reader reaches it.
+for (const a of document.querySelectorAll<HTMLElement>('a.ref')) {
+  const p = parseCardRef(a.dataset.ref!)
+  if (!p.ok) { plain(a, p.error); continue }
+  if (!handles.has(p.ref.target)) { plain(a, `No card "${p.ref.target}" in this conversation.`); continue }
+  void tool('plot_resolve', { card: p.ref.target, ref: a.dataset.ref }).then(r => {
+    const res = r as { ok: boolean, reason?: string }
+    if (!res.ok && a.isConnected) plain(a, res.reason ?? 'It names nothing in the plot.')
+  }, () => {})
+}
 const out = document.getElementById('tool-out')!
 const calls: Record<string, () => Promise<unknown>> = {
   annotate: () => tool('plot_annotate', { card: 'sales', annotations: [{ key: 'peak', x: '2026-03', y: 90, label: 'Peak', note: 'March: the spring campaign launched on the 2nd.' }, { key: 'mean', axis: 'y', value: 60, label: 'Mean', tone: 'info' }] }),
