@@ -22,8 +22,9 @@
       "@supersolutions/super-plot-web/element": ["packages/bindings/web/src/element-entry.ts"],
       "@supersolutions/super-plot-web/base": ["packages/bindings/web/src/base.ts"],
       "@supersolutions/super-plot-react/base": ["packages/bindings/react/src/base.tsx"],
-      "@supersolutions/super-plot-react": ["packages/bindings/react/src/index.tsx"]
+      "@supersolutions/super-plot-react": ["packages/bindings/react/src/index.tsx"],
+      "@supersolutions/super-plot-chat-plugin": ["packages/integrations/chat-plugin/src/index.ts"]
     }
   },
-  "include": ["packages/*/src", "packages/bindings/*/src", "tests", "examples/**/*.ts", "examples/**/*.tsx"]
+  "include": ["packages/*/src", "packages/bindings/*/src", "packages/integrations/*/src", "tests", "examples/**/*.ts", "examples/**/*.tsx"]
 }

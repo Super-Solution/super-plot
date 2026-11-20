@@ -65,7 +65,7 @@ for (const p of packages) {
 // on demand or registered separately (it is what keeps `npm run size` honest; import only types from them).
 const resolveDist = (from, spec) => {
   if (spec.startsWith('.')) return join(dirname(from), spec)
-  const m = spec.match(/^(@supersolutions\/super-plot-[a-z]+)(?:\/(.+))?$/)
+  const m = spec.match(/^(@supersolutions\/super-plot-[a-z-]+)(?:\/(.+))?$/)
   const pkg = m && packages.find(q => q.name === m[1])
   if (!pkg) return null
   const src = pkg.entries[m[2] ?? 'index']

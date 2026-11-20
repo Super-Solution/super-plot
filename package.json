@@ -8,7 +8,8 @@
   "author": "SUPER SOLUTION LABS INC",
   "workspaces": [
     "packages/core",
-    "packages/bindings/*"
+    "packages/bindings/*",
+    "packages/integrations/*"
   ],
   "engines": {
     "node": ">=22"

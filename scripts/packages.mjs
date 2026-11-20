@@ -14,5 +14,9 @@ export const packages = [
     }
   },
   { dir: 'packages/bindings/web', name: '@supersolutions/super-plot-web', entries: { index: 'src/index.ts', base: 'src/base.ts', element: 'src/element-entry.ts' }, allowed: ['@supersolutions/super-plot-core', 'earcut'], global: 'src/global.ts' },
-  { dir: 'packages/bindings/react', name: '@supersolutions/super-plot-react', entries: { index: 'src/index.tsx', base: 'src/base.tsx' }, allowed: ['@supersolutions/super-plot-web', 'react'] }
+  { dir: 'packages/bindings/react', name: '@supersolutions/super-plot-react', entries: { index: 'src/index.tsx', base: 'src/base.tsx' }, allowed: ['@supersolutions/super-plot-web', 'react'] },
+  {
+    dir: 'packages/integrations/chat-plugin', name: '@supersolutions/super-plot-chat-plugin', entries: { index: 'src/index.ts' },
+    allowed: ['@supersolutions/super-plot-core', '@supersolutions/super-plot-web', '@supersolutions/super-protocol']
+  }
 ]

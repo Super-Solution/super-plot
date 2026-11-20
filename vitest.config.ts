@@ -25,7 +25,8 @@ export default defineConfig({
       '@supersolutions/super-plot-web/base': p('./packages/bindings/web/src/base.ts'),
       '@supersolutions/super-plot-web': p('./packages/bindings/web/src/index.ts'),
       '@supersolutions/super-plot-react/base': p('./packages/bindings/react/src/base.tsx'),
-      '@supersolutions/super-plot-react': p('./packages/bindings/react/src/index.tsx')
+      '@supersolutions/super-plot-react': p('./packages/bindings/react/src/index.tsx'),
+      '@supersolutions/super-plot-chat-plugin': p('./packages/integrations/chat-plugin/src/index.ts')
     }
   },
   test: { include: ['tests/**/*.test.{ts,tsx}'], environment: 'node' }
