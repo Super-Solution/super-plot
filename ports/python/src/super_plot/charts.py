@@ -155,7 +155,7 @@ def _interval_check(spec: Spec, rows: list[dict], issues: Issues, axis: str) -> 
 # ------------------------------------------------------------------------- two value axes, broken axis
 # Mirrors `packages/core/src/charts/valueaxes.ts`.
 
-_RIGHT_ONLY = ["yRightLabel", "rightDomain", "formatRight"]
+_RIGHT_ONLY = ["yRightLabel", "rightDomain", "formatRight", "rightReverse"]
 
 
 def _right_cols(spec: Spec) -> list[str]:
@@ -498,7 +498,8 @@ def _check_series(spec: Spec, rows: list[dict], issues: Issues, area: bool) -> N
                 else "the left axis is logarithmic; a log and a linear axis on one plot cannot be compared at all." if not area and spec.get("yScale") == "log" else None)
     if not area:
         _break_check(spec, issues, _line_values(spec), False,
-                     "a log axis already compresses large values; cutting a span out of it as well would hide by how much." if spec.get("yScale") == "log"
+                     "the left axis is drawn upside down; a cut in it would be read the wrong way round." if spec.get("yReverse")
+                     else "a log axis already compresses large values; cutting a span out of it as well would hide by how much." if spec.get("yScale") == "log"
                      else "with a right axis, a break on the left one would make the two scales even harder to compare." if _right_cols(spec) else None)
     if multi and spec.get("series"):
         _issue(issues, "warning", "series_ignored", "series", "`series` is ignored when `y` lists several columns.")

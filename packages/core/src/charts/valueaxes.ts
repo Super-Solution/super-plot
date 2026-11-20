@@ -35,7 +35,7 @@ export const breakField = (what: string): FieldDef => ({
 /** The columns of `yRight`, as a list. */
 export const rightCols = (spec: Record<string, any>): string[] => (spec.yRight === undefined ? [] : Array.isArray(spec.yRight) ? spec.yRight : [spec.yRight])
 
-const RIGHT_ONLY = ['yRightLabel', 'rightDomain', 'formatRight'] as const
+const RIGHT_ONLY = ['yRightLabel', 'rightDomain', 'formatRight', 'rightReverse'] as const
 
 const say = (v: number): string => String(Math.round(v * 1e6) / 1e6)
 

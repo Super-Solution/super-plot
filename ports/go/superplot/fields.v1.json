@@ -828,6 +828,12 @@
           "desc": "Split into small multiples: one panel per value of this column (at most 12), sharing axes, colours and one legend."
         },
         {
+          "name": "bare",
+          "kind": "boolean",
+          "default": false,
+          "desc": "Default false. Draw only the marks: no axes, tick labels, grid, axis titles, title, subtitle, legend or source line, and almost no padding, so the plot fills its box. For a small trend inside a table cell or card (a sparkline). The title and description still name the chart for screen readers, and the tooltip still works. Fix the range with `yDomain` when the line should fill the height."
+        },
+        {
           "name": "zoom",
           "kind": "enum",
           "values": [
@@ -1100,6 +1106,12 @@
           "desc": "Split into small multiples: one panel per value of this column (at most 12), sharing axes, colours and one legend."
         },
         {
+          "name": "bare",
+          "kind": "boolean",
+          "default": false,
+          "desc": "Default false. Draw only the marks: no axes, tick labels, grid, axis titles, title, subtitle, legend or source line, and almost no padding, so the plot fills its box. For a small trend inside a table cell or card (a sparkline). The title and description still name the chart for screen readers, and the tooltip still works. Fix the range with `yDomain` when the line should fill the height."
+        },
+        {
           "name": "zoom",
           "kind": "enum",
           "values": [
@@ -1195,6 +1207,12 @@
           "desc": "Value format of the right axis, its tick labels and its series in tooltips (default: `format`). Needs `yRight`."
         },
         {
+          "name": "splitAt",
+          "kind": "values",
+          "max": 32,
+          "desc": "x values at which lines are cut: the point at or after each one starts a new piece, and nothing is drawn across the cut (a change of definition, a series break). Dates as ISO strings; for a category x axis the category that starts the new piece. Markers, tooltips and the legend are unchanged."
+        },
+        {
           "name": "gaps",
           "kind": "enum",
           "values": [
@@ -1217,9 +1235,39 @@
           "desc": "Numeric column with the upper end of the interval on y; see `yLower`."
         },
         {
+          "name": "dashes",
+          "kind": "dashes",
+          "desc": "Series name to line style: `solid` (the default), `dashed`, `dotted` or `dashdot`, e.g. {\"Forecast\":\"dashed\"}. Use it to tell a projection, a target or a comparison from the measured series; the legend swatch shows the style, so it does not rely on colour alone."
+        },
+        {
           "name": "points",
           "kind": "boolean",
           "desc": "Force markers on (`true`) or off (`false`). Default: markers when there are few points, otherwise only the last point."
+        },
+        {
+          "name": "yReverse",
+          "kind": "boolean",
+          "desc": "Default false. Draw the left value axis upside down, larger values lower: for a measure where less is better (a rank, a latency, a price paid). The tick labels still read top to bottom, smallest first; say so in the axis title."
+        },
+        {
+          "name": "rightReverse",
+          "kind": "boolean",
+          "desc": "Default false. Draw the right value axis upside down, like `yReverse`. Needs `yRight`."
+        },
+        {
+          "name": "widths",
+          "kind": "widths",
+          "desc": "Series name to line width in px (0.5 to 8), e.g. {\"Total\":3,\"Detail\":1}. Unlisted series keep the theme's line width. Use it to give the headline series weight over its parts."
+        },
+        {
+          "name": "curves",
+          "kind": "enumMap",
+          "values": [
+            "linear",
+            "smooth",
+            "step"
+          ],
+          "desc": "Series name to curve, e.g. {\"Target\":\"step\"}: `linear`, `smooth` (monotone) or `step` (holds each value until the next point). Unlisted series use `curve`. Use it to draw a level that changes at dates (a target, a rate) as a step beside measured series."
         },
         {
           "name": "yBreak",
@@ -1371,6 +1419,12 @@
           "desc": "Split into small multiples: one panel per value of this column (at most 12), sharing axes, colours and one legend."
         },
         {
+          "name": "bare",
+          "kind": "boolean",
+          "default": false,
+          "desc": "Default false. Draw only the marks: no axes, tick labels, grid, axis titles, title, subtitle, legend or source line, and almost no padding, so the plot fills its box. For a small trend inside a table cell or card (a sparkline). The title and description still name the chart for screen readers, and the tooltip still works. Fix the range with `yDomain` when the line should fill the height."
+        },
+        {
           "name": "zoom",
           "kind": "enum",
           "values": [
@@ -1464,6 +1518,12 @@
           "name": "formatRight",
           "kind": "format",
           "desc": "Value format of the right axis, its tick labels and its series in tooltips (default: `format`). Needs `yRight`."
+        },
+        {
+          "name": "splitAt",
+          "kind": "values",
+          "max": 32,
+          "desc": "x values at which lines are cut: the point at or after each one starts a new piece, and nothing is drawn across the cut (a change of definition, a series break). Dates as ISO strings; for a category x axis the category that starts the new piece. Markers, tooltips and the legend are unchanged."
         },
         {
           "name": "gaps",
@@ -1630,6 +1690,12 @@
           "kind": "column",
           "role": "any",
           "desc": "Split into small multiples: one panel per value of this column (at most 12), sharing axes, colours and one legend."
+        },
+        {
+          "name": "bare",
+          "kind": "boolean",
+          "default": false,
+          "desc": "Default false. Draw only the marks: no axes, tick labels, grid, axis titles, title, subtitle, legend or source line, and almost no padding, so the plot fills its box. For a small trend inside a table cell or card (a sparkline). The title and description still name the chart for screen readers, and the tooltip still works. Fix the range with `yDomain` when the line should fill the height."
         },
         {
           "name": "zoom",
@@ -2201,6 +2267,12 @@
           "desc": "Split into small multiples: one panel per value of this column (at most 12), sharing axes, colours and one legend."
         },
         {
+          "name": "bare",
+          "kind": "boolean",
+          "default": false,
+          "desc": "Default false. Draw only the marks: no axes, tick labels, grid, axis titles, title, subtitle, legend or source line, and almost no padding, so the plot fills its box. For a small trend inside a table cell or card (a sparkline). The title and description still name the chart for screen readers, and the tooltip still works. Fix the range with `yDomain` when the line should fill the height."
+        },
+        {
           "name": "zoom",
           "kind": "enum",
           "values": [
@@ -2395,6 +2467,12 @@
           "desc": "Split into small multiples: one panel per value of this column (at most 12), sharing axes, colours and one legend."
         },
         {
+          "name": "bare",
+          "kind": "boolean",
+          "default": false,
+          "desc": "Default false. Draw only the marks: no axes, tick labels, grid, axis titles, title, subtitle, legend or source line, and almost no padding, so the plot fills its box. For a small trend inside a table cell or card (a sparkline). The title and description still name the chart for screen readers, and the tooltip still works. Fix the range with `yDomain` when the line should fill the height."
+        },
+        {
           "name": "zoom",
           "kind": "enum",
           "values": [
@@ -2580,6 +2658,12 @@
           "kind": "column",
           "role": "any",
           "desc": "Split into small multiples: one panel per value of this column (at most 12), sharing axes, colours and one legend."
+        },
+        {
+          "name": "bare",
+          "kind": "boolean",
+          "default": false,
+          "desc": "Default false. Draw only the marks: no axes, tick labels, grid, axis titles, title, subtitle, legend or source line, and almost no padding, so the plot fills its box. For a small trend inside a table cell or card (a sparkline). The title and description still name the chart for screen readers, and the tooltip still works. Fix the range with `yDomain` when the line should fill the height."
         },
         {
           "name": "zoom",
@@ -3052,6 +3136,12 @@
           "desc": "Split into small multiples: one panel per value of this column (at most 12), sharing axes, colours and one legend."
         },
         {
+          "name": "bare",
+          "kind": "boolean",
+          "default": false,
+          "desc": "Default false. Draw only the marks: no axes, tick labels, grid, axis titles, title, subtitle, legend or source line, and almost no padding, so the plot fills its box. For a small trend inside a table cell or card (a sparkline). The title and description still name the chart for screen readers, and the tooltip still works. Fix the range with `yDomain` when the line should fill the height."
+        },
+        {
           "name": "zoom",
           "kind": "enum",
           "values": [
@@ -3243,6 +3333,12 @@
           "kind": "column",
           "role": "any",
           "desc": "Split into small multiples: one panel per value of this column (at most 12), sharing axes, colours and one legend."
+        },
+        {
+          "name": "bare",
+          "kind": "boolean",
+          "default": false,
+          "desc": "Default false. Draw only the marks: no axes, tick labels, grid, axis titles, title, subtitle, legend or source line, and almost no padding, so the plot fills its box. For a small trend inside a table cell or card (a sparkline). The title and description still name the chart for screen readers, and the tooltip still works. Fix the range with `yDomain` when the line should fill the height."
         },
         {
           "name": "zoom",
@@ -3440,6 +3536,12 @@
           "desc": "Split into small multiples: one panel per value of this column (at most 12), sharing axes, colours and one legend."
         },
         {
+          "name": "bare",
+          "kind": "boolean",
+          "default": false,
+          "desc": "Default false. Draw only the marks: no axes, tick labels, grid, axis titles, title, subtitle, legend or source line, and almost no padding, so the plot fills its box. For a small trend inside a table cell or card (a sparkline). The title and description still name the chart for screen readers, and the tooltip still works. Fix the range with `yDomain` when the line should fill the height."
+        },
+        {
           "name": "zoom",
           "kind": "enum",
           "values": [
@@ -3634,6 +3736,12 @@
           "kind": "column",
           "role": "any",
           "desc": "Split into small multiples: one panel per value of this column (at most 12), sharing axes, colours and one legend."
+        },
+        {
+          "name": "bare",
+          "kind": "boolean",
+          "default": false,
+          "desc": "Default false. Draw only the marks: no axes, tick labels, grid, axis titles, title, subtitle, legend or source line, and almost no padding, so the plot fills its box. For a small trend inside a table cell or card (a sparkline). The title and description still name the chart for screen readers, and the tooltip still works. Fix the range with `yDomain` when the line should fill the height."
         },
         {
           "name": "zoom",
@@ -4734,6 +4842,12 @@
           "kind": "column",
           "role": "any",
           "desc": "Split into small multiples: one panel per value of this column (at most 12), sharing axes, colours and one legend."
+        },
+        {
+          "name": "bare",
+          "kind": "boolean",
+          "default": false,
+          "desc": "Default false. Draw only the marks: no axes, tick labels, grid, axis titles, title, subtitle, legend or source line, and almost no padding, so the plot fills its box. For a small trend inside a table cell or card (a sparkline). The title and description still name the chart for screen readers, and the tooltip still works. Fix the range with `yDomain` when the line should fill the height."
         },
         {
           "name": "zoom",

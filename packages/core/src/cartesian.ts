@@ -21,6 +21,8 @@ export interface Axis {
   grid: boolean
   /** Ticks for an axis `length` px long. */
   ticks(length: number): AxisTick[]
+  /** A value axis drawn upside down: larger values lower (`yReverse`, `rightReverse`). */
+  reverse?: boolean
 }
 
 /**
@@ -61,11 +63,14 @@ export function layoutCartesian(c: ChartCtx, area: Rect, x: Axis, y: Axis, extra
   const xTicks = x.ticks(plotW)
   const xl = xLabelLayout(c, x, xTicks, plotW)
   const bottomH = xl.height + labelPad + titleH(x)
-  const plot: Rect = { x: left, y: area.y + xTop, w: plotW, h: Math.max(40, area.h - xTop - bottomH) }
+  // `bare`: no axes at all; the plot takes the whole area, less a margin for the stroke and the last marker.
+  const bare = c.spec.bare === true
+  const m = 4
+  const plot: Rect = bare ? { x: area.x + m, y: area.y + m, w: Math.max(1, area.w - 2 * m), h: Math.max(1, area.h - 2 * m) } : { x: left, y: area.y + xTop, w: plotW, h: Math.max(40, area.h - xTop - bottomH) }
 
   x.scale.range = [plot.x, plot.x + plot.w]
-  y.scale.range = y.scale.kind === 'band' ? [plot.y, plot.y + plot.h] : [plot.y + plot.h, plot.y]
-  if (right) right.scale.range = [plot.y + plot.h, plot.y]
+  y.scale.range = y.scale.kind === 'band' || y.reverse ? [plot.y, plot.y + plot.h] : [plot.y + plot.h, plot.y]
+  if (right) right.scale.range = right.reverse ? [plot.y, plot.y + plot.h] : [plot.y + plot.h, plot.y]
   const info = (a: Axis, field: unknown, ink?: string): AxisInfo => {
     const s = a.scale
     const f = typeof field === 'string' ? { field } : {}
@@ -77,6 +82,7 @@ export function layoutCartesian(c: ChartCtx, area: Rect, x: Axis, y: Axis, extra
   // A horizontal chart draws its value axis along x: a break there is on the x axis.
   c.axes = { plot: { ...plot }, x: info(x, c.axisFields?.x ?? c.spec.x), y: info(y, c.axisFields?.y ?? (typeof c.spec.y === 'string' ? c.spec.y : undefined), right ? ink.left : undefined) }
   if (right) c.axes.y2 = info(right, c.axisFields?.y2, ink.right)
+  if (bare) return plot
   const yTicks = y.ticks(plot.h)
 
   const grid = c.c('grid')

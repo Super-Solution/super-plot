@@ -697,7 +697,9 @@ func checkSeries(s spec, rows []row, issues *[]Issue, area bool) {
 	dualCheck(s, issues, ys, refused, "")
 	if !area {
 		refused = ""
-		if str(s, "yScale") == "log" {
+		if s["yReverse"] == true {
+			refused = "the left axis is drawn upside down; a cut in it would be read the wrong way round."
+		} else if str(s, "yScale") == "log" {
 			refused = "a log axis already compresses large values; cutting a span out of it as well would hide by how much."
 		} else if len(rightCols(s)) > 0 {
 			refused = "with a right axis, a break on the left one would make the two scales even harder to compare."

@@ -61,7 +61,7 @@ function compileSeries(c: ChartCtx, area: boolean): { series: ReturnType<ChartCt
     xs = nums.slice(Math.max(0, a - 1), Math.min(nums.length, b + 2))
   }
   const stack = area ? ((s.stack ?? 'none') as string) : 'none'
-  const curve = (s.curve ?? 'linear') as Curve
+  const curveAll = (s.curve ?? 'linear') as Curve
   const xKeyOf = (raw: unknown): number | string | null => {
     const k = kind === 'category' ? xKey(raw) : kind === 'time' ? toTime(raw) : toNumber(raw)
     return logX && typeof k === 'number' && !(k > 0) ? null : k
@@ -228,13 +228,13 @@ function compileSeries(c: ChartCtx, area: boolean): { series: ReturnType<ChartCt
   }
   // A stream graph's vertical position has no zero: the middle is half of each total. Tick values would read as
   // amounts that do not exist, so the axis shows no ticks or gridlines; the tooltip gives each value and the total.
-  const yAxis: Axis = stack === 'center' ? { scale: yScale, title: s.yLabel, grid: false, ticks: () => [] } : valueAxis(c, yScale, { title: s.yLabel, vertical: true, format: yfmt })
+  const yAxis: Axis = stack === 'center' ? { scale: yScale, title: s.yLabel, grid: false, ticks: () => [] } : { ...valueAxis(c, yScale, { title: s.yLabel, vertical: true, format: yfmt }), ...(s.yReverse ? { reverse: true } : {}) }
 
   const frame = c.frame({ series, autoSide: 'top' })
   let extras = {}
   if (rScale) {
     c.axisFields = { ...(c.axisFields ?? {}), y2: keysR.length === 1 ? keysR[0] : undefined }
-    const rightAxis = valueAxis(c, rScale, { title: s.yRightLabel, vertical: true, format: s.formatRight ?? s.format, grid: false })
+    const rightAxis: Axis = { ...valueAxis(c, rScale, { title: s.yRightLabel, vertical: true, format: s.formatRight ?? s.format, grid: false }), ...(s.rightReverse ? { reverse: true } : {}) }
     const ink = {
       ...(keysL.length === 1 ? { left: axisInk(c, keysL[0], 0, series[0].color) } : {}),
       ...(keysR.length === 1 ? { right: axisInk(c, keysR[0], keysL.length, series[keysL.length].color) } : {})
@@ -263,17 +263,34 @@ function compileSeries(c: ChartCtx, area: boolean): { series: ReturnType<ChartCt
   const draw = [...visible]
   const yMin = yScale.domain[0]
   // Lines break at a missing value, unless `gaps: "connect"` joins over it.
-  const split = <T extends { y: number | null }>(pts: T[]): T[][] => (gaps === 'connect' ? [pts.filter(p => p.y !== null)].filter(r => r.length) : runs(pts))
+  const joined = <T extends { y: number | null }>(pts: T[]): T[][] => (gaps === 'connect' ? [pts.filter(p => p.y !== null)].filter(r => r.length) : runs(pts))
+  // `splitAt` cuts every line at those x values: the point at or after one starts a new piece, nothing is drawn across it.
+  const cutOf = new Map<number | string, number>()
+  {
+    const cuts = ((s.splitAt ?? []) as string[]).map(v => xKeyOf(v)).filter((v): v is number | string => v !== null)
+    let piece = 0
+    xs.forEach((x, i) => {
+      if (i > 0 && cuts.some(cv => (kind === 'category' ? cv === x : (x as number) >= (cv as number) && (xs[i - 1] as number) < (cv as number)))) piece++
+      cutOf.set(x, piece)
+    })
+  }
+  const split = <T extends { y: number | null; xv?: number | string }>(pts: T[]): T[][] =>
+    cutOf.size && s.splitAt ? joined(pts).flatMap(run => run.reduce<T[][]>((out, p, i) => (i > 0 && cutOf.get(p.xv!) !== cutOf.get(run[i - 1].xv!) ? out.push([p]) : out[out.length - 1].push(p), out), [[run[0]]])) : joined(pts)
+  const widths = (s.widths ?? {}) as Record<string, number>
+  const widthOf = (k: string): number => widths[k] ?? c.theme.lineWidth
+  // `curves` gives a series its own curve; the others use `curve`.
+  const curves = (s.curves ?? {}) as Record<string, Curve>
   // Areas: draw the first series first so later ones sit above.
   for (const k of draw) {
     const si = keys.indexOf(k)
     const all = c.rowsOf([...(rowsAt.get(k)?.values() ?? [])].flat())
     const color = series[si].color
+    const curve = curves[k] ?? curveAll
     if (band) {
       const bp = xs.map(x => {
         const a = lowV.get(k)?.get(x)
         const b = highV.get(k)?.get(x)
-        return { px: px(x), y: a === undefined || b === undefined ? null : yScale.at(Math.max(a, logY ? yMin : -Infinity)), y1: b === undefined ? 0 : yScale.at(b) }
+        return { xv: x, px: px(x), y: a === undefined || b === undefined ? null : yScale.at(Math.max(a, logY ? yMin : -Infinity)), y1: b === undefined ? 0 : yScale.at(b) }
       })
       for (const run of split(bp)) {
         const top: Pt[] = decimate(run.map(p => [p.px, p.y1] as Pt), plot.w)
@@ -287,7 +304,7 @@ function compileSeries(c: ChartCtx, area: boolean): { series: ReturnType<ChartCt
       if (stack !== 'none') return { xv: x, px: px(x), y: yScale.at(upper.get(k)!.get(x) ?? 0), y0: yScale.at(lower.get(k)!.get(x) ?? 0), y1: yScale.at(upper.get(k)!.get(x) ?? 0) }
       return { xv: x, px: px(x), y: v === undefined ? null : ks.at(v) }
     })
-    const pr = stack !== 'none' ? runs(pts) : split(pts)
+    const pr = split(pts)
     for (const run of pr) {
       const top: Pt[] = decimate(run.map(p => [p.px, p.y as number] as Pt), plot.w)
       if (area) {
@@ -296,7 +313,7 @@ function compileSeries(c: ChartCtx, area: boolean): { series: ReturnType<ChartCt
         // A stream graph's lowest layer floats too: outline its lower edge as well, or the shape reads lopsided.
         if (stack === 'center' && k === draw[0]) marks.push({ type: 'path', role: 'data', series: k, d: curvePath(bottom, curve), stroke: color, strokeWidth: c.theme.lineWidth, anim: 'draw', rows: all, ...(clipTo ? { clip: clipTo } : {}) })
       }
-      marks.push({ type: 'path', role: 'data', series: k, d: curvePath(top, curve), stroke: color, strokeWidth: c.theme.lineWidth, anim: 'draw', rows: all, ...(clipTo ? { clip: clipTo } : {}) })
+      marks.push({ type: 'path', role: 'data', series: k, d: curvePath(top, curve), stroke: color, strokeWidth: widthOf(k), anim: 'draw', rows: all, ...(series[si].dash ? { dash: series[si].dash } : {}), ...(clipTo ? { clip: clipTo } : {}) })
     }
     // Markers: every point when sparse, otherwise only the last one.
     const real = pts.filter(p => p.y !== null) as (Pnt & { y: number })[]
@@ -403,6 +420,7 @@ const SERIES_FIELDS: ChartDef['fields'] = {
   yDomain: { kind: 'domain', desc: 'Fix the vertical range, e.g. [0, 100]. Lines may start anywhere; areas always include 0.' },
   curve: { kind: 'enum', values: ['linear', 'smooth', 'step'], default: 'linear', desc: '`smooth` is monotone (never overshoots the data); `step` holds each value until the next point.' },
   ...dualFields('as lines'),
+  splitAt: { kind: 'values', max: 32, desc: 'x values at which lines are cut: the point at or after each one starts a new piece, and nothing is drawn across the cut (a change of definition, a series break). Dates as ISO strings; for a category x axis the category that starts the new piece. Markers, tooltips and the legend are unchanged.' },
   gaps: { kind: 'enum', values: ['break', 'connect', 'zero'], desc: 'Default break. What a missing or null y does: `break` leaves a gap in the line, `connect` joins the points on either side, `zero` draws it as 0 (the tooltip says "missing"). Stacked areas always count a missing value as 0.' },
   ...intervalFields('y', 'a shaded band behind each line (one band per series; with long-form `series`, not with several `y` columns)')
 }
@@ -415,7 +433,7 @@ const seriesCheck = (area: boolean): NonNullable<ChartDef['check']> => (spec, ct
     left,
     refused: area && stacked ? 'a stacked area adds its series together, and a series on another scale cannot be part of that sum.' : !area && spec.yScale === 'log' ? 'the left axis is logarithmic; a log and a linear axis on one plot cannot be compared at all.' : undefined
   })
-  if (!area) breakCheck(spec, ctx, { values: lineValues(spec), bars: false, refused: spec.yScale === 'log' ? 'a log axis already compresses large values; cutting a span out of it as well would hide by how much.' : rightCols(spec).length ? 'with a right axis, a break on the left one would make the two scales even harder to compare.' : undefined })
+  if (!area) breakCheck(spec, ctx, { values: lineValues(spec), bars: false, refused: spec.yReverse ? 'the left axis is drawn upside down; a cut in it would be read the wrong way round.' : spec.yScale === 'log' ? 'a log axis already compresses large values; cutting a span out of it as well would hide by how much.' : rightCols(spec).length ? 'with a right axis, a break on the left one would make the two scales even harder to compare.' : undefined })
   if (multi && spec.series) {
     ctx.issues.push({ severity: 'warning', code: 'series_ignored', path: 'series', message: '`series` is ignored when `y` lists several columns.' })
   }
@@ -461,7 +479,12 @@ export const line: ChartDef = {
   ref: { x: ['x'], y: ['y'], extra: ['yRight'], series: 'series' },
   fields: {
     ...SERIES_FIELDS,
+    dashes: { kind: 'dashes', desc: 'Series name to line style: `solid` (the default), `dashed`, `dotted` or `dashdot`, e.g. {"Forecast":"dashed"}. Use it to tell a projection, a target or a comparison from the measured series; the legend swatch shows the style, so it does not rely on colour alone.' },
     points: { kind: 'boolean', desc: 'Force markers on (`true`) or off (`false`). Default: markers when there are few points, otherwise only the last point.' },
+    yReverse: { kind: 'boolean', desc: 'Default false. Draw the left value axis upside down, larger values lower: for a measure where less is better (a rank, a latency, a price paid). The tick labels still read top to bottom, smallest first; say so in the axis title.' },
+    rightReverse: { kind: 'boolean', desc: 'Default false. Draw the right value axis upside down, like `yReverse`. Needs `yRight`.' },
+    widths: { kind: 'widths', desc: 'Series name to line width in px (0.5 to 8), e.g. {"Total":3,"Detail":1}. Unlisted series keep the theme\'s line width. Use it to give the headline series weight over its parts.' },
+    curves: { kind: 'enumMap', values: ['linear', 'smooth', 'step'], desc: 'Series name to curve, e.g. {"Target":"step"}: `linear`, `smooth` (monotone) or `step` (holds each value until the next point). Unlisted series use `curve`. Use it to draw a level that changes at dates (a target, a rate) as a step beside measured series.' },
     yBreak: breakField('series of very different size share one axis; changes across the cut look smaller than they are.'),
     yScale: scaleField('y', 'growth, orders of magnitude'),
     xScale: { ...scaleField('x', 'sizes, frequencies'), desc: `${scaleField('x', 'sizes, frequencies').desc} Only for a numeric x; dates and categories are refused.` }

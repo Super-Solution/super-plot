@@ -82,8 +82,10 @@ export function compilePlot(input: unknown, options: RenderOptions = {}): Compil
   const fields = fieldsOf(def)
   const theme = resolveTheme(options.theme, options.prefersDark)
   const locale = options.locale ?? 'en'
-  const width = Math.round(clamp(options.width ?? 640, 120, 4000))
-  const height = Math.round(clamp(options.height ?? defaultHeight(spec.type, width), 100, 4000))
+  // A bare chart (a sparkline) may be small: it has no labels to fit.
+  const bare = spec.bare === true
+  const width = Math.round(clamp(options.width ?? 640, bare ? 24 : 120, 4000))
+  const height = Math.round(clamp(options.height ?? defaultHeight(spec.type, width), bare ? 16 : 100, 4000))
   const issues = [...v.issues]
   const timeZone = renderTimeZone(options.timeZone, issues)
   const strings = resolveStrings(options.strings, issues)

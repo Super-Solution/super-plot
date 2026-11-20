@@ -24,6 +24,11 @@ from .numeric import closest
 from .text import is_value_format
 from .transform import apply_transform, columns_of
 
+# The line styles a spec may name in `dashes` (the TypeScript reference's DASH_STYLES).
+DASH_STYLES = ("solid", "dashed", "dotted", "dashdot")
+# The range of a series' line width in px (`widths`), as in the TypeScript reference.
+WIDTH_RANGE = (0.5, 8)
+
 with resources.files(__package__).joinpath("fields.v1.json").open("r", encoding="utf-8") as _f:
     _DEFS: dict[str, Any] = json.load(_f)
 
@@ -158,6 +163,37 @@ def _validate_field(name: str, d: dict[str, Any], value: Any, issues: list, colu
             else:
                 _add(issues, "error", "bad_color", f"colors.{k}", f"colors.{k} is not a plain CSS colour: {_show(v)}.", "Use #RRGGBB, rgb(), hsl(), a colour name or var(--token). url() and other syntax are refused.")
         return out
+    if kind == "dashes":
+        if not isinstance(value, dict):
+            return bad("bad_type", "dashes must be an object of series name to line style.")
+        out_d: dict[str, str] = {}
+        for k, v in value.items():
+            if isinstance(v, str) and v in DASH_STYLES:
+                out_d[k] = v
+            else:
+                _add(issues, "error", "bad_dash", f"dashes.{k}", f"dashes.{k} is not a line style: {_show(v)}.", "Use one of " + ", ".join(DASH_STYLES) + ".")
+        return out_d
+    if kind == "widths":
+        if not isinstance(value, dict):
+            return bad("bad_type", "widths must be an object of series name to line width in px.")
+        out_w: dict[str, Any] = {}
+        for k, v in value.items():
+            if is_finite_number(v) and WIDTH_RANGE[0] <= v <= WIDTH_RANGE[1]:
+                out_w[k] = v
+            else:
+                _add(issues, "error", "bad_width", f"widths.{k}", f"widths.{k} is not a line width from 0.5 to 8 px: {_show(v)}.", "Use a number of pixels from 0.5 to 8.")
+        return out_w
+    if kind == "enumMap":
+        if not isinstance(value, dict):
+            return bad("bad_type", f"{name} must be an object of series name to one of {', '.join(d['values'])}.")
+        out_e: dict[str, str] = {}
+        for k, v in value.items():
+            if isinstance(v, str) and v in d["values"]:
+                out_e[k] = v
+            else:
+                near_e = closest(v, d["values"]) if isinstance(v, str) else None
+                _add(issues, "error", "bad_enum", f"{name}.{k}", f"{name}.{k} must be one of {', '.join(d['values'])}; got {_show(v)}.", f'Did you mean "{near_e}"?' if near_e else None)
+        return out_e
     if kind == "annotations":
         return _annotations(name, value, issues)
     if kind == "geo":

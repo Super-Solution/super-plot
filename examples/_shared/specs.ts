@@ -91,6 +91,49 @@ export const gallery: { id: string; note: string; spec: Record<string, unknown> 
     }
   },
   {
+    id: 'line-dashes', note: 'dashes: the plan is dashed, the measured series solid; the legend swatch is dashed too, so the two stay apart without colour',
+    spec: {
+      type: 'line', title: 'Revenue against plan', subtitle: 'Monthly, USD thousands (invented figures)', x: 'month', y: ['actual', 'plan'], format: 'compact', yLabel: 'Revenue', dashes: { plan: 'dashed' },
+      data: [['2026-01-01', 118, 120], ['2026-02-01', 126, 128], ['2026-03-01', 121, 136], ['2026-04-01', 139, 144], ['2026-05-01', 147, 152], ['2026-06-01', 152, 160]].map(([month, actual, plan]) => ({ month, actual, plan }))
+    }
+  },
+  {
+    id: 'line-reversed-axis', note: 'yReverse: an axis drawn upside down for a measure where less is better; rank 1 is at the top',
+    spec: {
+      type: 'line', title: 'League table position', subtitle: 'Rank by month, 1 is best (invented figures)', x: 'month', y: 'rank', yReverse: true, yDomain: [1, 8], format: 'integer', yLabel: 'Rank',
+      data: [['2026-01-01', 6], ['2026-02-01', 5], ['2026-03-01', 5], ['2026-04-01', 3], ['2026-05-01', 2], ['2026-06-01', 3]].map(([month, rank]) => ({ month, rank }))
+    }
+  },
+  {
+    id: 'line-widths', note: 'widths: the total is drawn heavier than the series it is made of',
+    spec: {
+      type: 'line', title: 'Orders by channel and in total', subtitle: 'Monthly, thousands (invented figures)', x: 'month', y: ['total', 'web', 'store'], format: 'compact', yLabel: 'Orders', widths: { total: 3.5, web: 1.25, store: 1.25 },
+      data: [['2026-01-01', 30, 18, 12], ['2026-02-01', 34, 20, 14], ['2026-03-01', 31, 17, 14], ['2026-04-01', 40, 23, 17], ['2026-05-01', 43, 25, 18], ['2026-06-01', 47, 27, 20]].map(([month, total, web, store]) => ({ month, total, web, store }))
+    }
+  },
+  {
+    id: 'line-curves', note: 'curves: the policy rate steps at each decision while the measured series stays smooth',
+    spec: {
+      type: 'line', title: 'Inflation and the policy rate', subtitle: 'Percent (invented figures)', x: 'month', y: ['inflation', 'rate'], curve: 'smooth', curves: { rate: 'step' }, format: 'fixed:1', yLabel: 'Percent',
+      data: [['2026-01-01', 3.1, 2.5], ['2026-02-01', 3.4, 2.5], ['2026-03-01', 3.8, 3], ['2026-04-01', 3.6, 3], ['2026-05-01', 3.2, 3.25], ['2026-06-01', 2.9, 3.25]].map(([month, inflation, rate]) => ({ month, inflation, rate }))
+    }
+  },
+  {
+    id: 'line-split', note: 'splitAt: the survey changed its wording in 2026-04, so the line is cut there instead of joining two definitions',
+    spec: {
+      type: 'line', title: 'Businesses using AI', subtitle: 'Percent (invented figures); the question changed in April', x: 'month', y: 'share', splitAt: ['2026-04-01'], format: 'fixed:1', yLabel: 'Percent',
+      annotations: [{ axis: 'x', value: '2026-04-01', label: 'New wording' }],
+      data: [['2026-01-01', 5.1], ['2026-02-01', 5.4], ['2026-03-01', 5.8], ['2026-04-01', 9.2], ['2026-05-01', 9.9], ['2026-06-01', 10.4]].map(([month, share]) => ({ month, share }))
+    }
+  },
+  {
+    id: 'line-bare', note: 'bare: marks only, the shape of a sparkline (set yDomain to fill the height)',
+    spec: {
+      type: 'line', title: 'Equity, last 12 weeks', x: 'week', y: 'equity', bare: true, yDomain: [96, 112], points: false,
+      data: [100, 99, 101, 103, 102, 105, 104, 107, 106, 109, 108, 111].map((equity, i) => ({ week: i + 1, equity }))
+    }
+  },
+  {
     id: 'bar-broken-axis', note: 'yBreak: one outlier cut short, with a zigzag gap, labels on both sides and real values in tooltips',
     spec: {
       type: 'bar', title: 'Requests by service', subtitle: 'Millions per day (invented figures); the axis is cut from 40 to 900', x: 'service', y: 'requests', yBreak: [40, 900], labels: true, yLabel: 'Requests (m)',

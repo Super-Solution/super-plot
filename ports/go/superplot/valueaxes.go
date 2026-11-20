@@ -11,7 +11,7 @@ import (
 // Two value axes (yRight) and a broken value axis (yBreak): their checks and the sentences they add to a
 // description. Mirrors packages/core/src/charts/valueaxes.ts.
 
-var rightOnly = []string{"yRightLabel", "rightDomain", "formatRight"}
+var rightOnly = []string{"yRightLabel", "rightDomain", "formatRight", "rightReverse"}
 
 // rightCols are the columns of yRight, as a list.
 func rightCols(s spec) []string {

@@ -3654,6 +3654,7 @@
         "yLabel": "Revenue (USD m)",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -3766,6 +3767,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "xType": "auto",
         "curve": "linear"
       },
@@ -3865,7 +3867,8 @@
         "xType": "linear",
         "yLabel": "Generation (TWh)",
         "legend": "auto",
-        "tooltip": true
+        "tooltip": true,
+        "bare": false
       },
       "describe": "Stacked area chart \"Energy mix\". 4 series (Solar, Wind, Hydro, Gas) over a numeric x axis. Solar: from 12 at 2018 to 104 at 2025 (766.7%); peak 104 at 2025, low 12 at 2018. Wind: from 30 at 2018 to 75 at 2025 (150.0%); peak 75 at 2025, low 30 at 2018. Hydro: from 40 at 2018 to 41 at 2025 (2.5%); peak 43 at 2024, low 38 at 2022. Gas: from 60 at 2018 to 31 at 2025 (-48.3%); peak 60 at 2018, low 31 at 2025."
     },
@@ -3986,6 +3989,7 @@
         "yLabel": "Signups",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "xType": "auto"
       },
       "describe": "Scatter plot \"Ad spend vs. signups\". 12 points of signups against spend, in 3 groups (Search, Social, Video). Correlation 0.71 (strong positive). signups ranges from 150 to 720."
@@ -4711,6 +4715,7 @@
         "xLabel": "Response time (ms)",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "bins": "auto",
         "mode": "count"
       },
@@ -5099,6 +5104,7 @@
         "yLabel": "Days",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "outliers": true,
         "orientation": "vertical"
       },
@@ -5847,6 +5853,7 @@
         "yLabel": "Minutes",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "inner": "box",
         "points": "none",
         "orientation": "vertical"
@@ -7489,6 +7496,7 @@
         "yLabel": "USD m",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "connectors": true,
         "orientation": "vertical"
       },
@@ -7561,6 +7569,7 @@
         "scale": "each",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "orientation": "horizontal"
       },
       "describe": "Bullet chart \"Q3 against plan\". 4 measures (Revenue (USD k), Profit (%), New customers, Satisfaction (1-5)) against targets, with ranges poor, fair, good, each on its own scale. Revenue (USD k): 270 against 250 (108% of target), in good. Profit (%): 22.5 against 26 (86.5% of target), in fair. New customers: 1,640 against 2,000 (82% of target), in fair. Satisfaction (1-5): 4.4 against 4.5 (97.8% of target), in good."
@@ -7738,6 +7747,7 @@
         "series": "language",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "rankBy": "desc",
         "curve": "smooth",
         "labels": true
@@ -7827,6 +7837,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "labels": false,
         "xType": "auto"
       },
@@ -9342,7 +9353,8 @@
         "label": "id",
         "xLabel": "Response time (ms)",
         "legend": "auto",
-        "tooltip": true
+        "tooltip": true,
+        "bare": false
       },
       "describe": "Beeswarm plot \"Response time by region\". 120 values of ms, one dot each, in 3 groups by region (Europe, Americas, Asia). Overall median 87, range 41 to 269. Europe: 40 values, median 75.5, range 41 to 228. Americas: 40 values, median 84, range 54 to 259. Asia: 40 values, median 98.5, range 66 to 269."
     },
@@ -22043,6 +22055,7 @@
         "y": "b",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -22098,6 +22111,7 @@
         "key": "id",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -22137,6 +22151,7 @@
         "key": "b",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -22230,6 +22245,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "xType": "auto",
         "curve": "linear"
       }
@@ -22494,6 +22510,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "xType": "auto",
         "curve": "linear"
       }
@@ -22899,6 +22916,7 @@
         "y": "b",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -23050,6 +23068,7 @@
         "title": "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -23083,6 +23102,7 @@
         "version": 1,
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -23172,6 +23192,7 @@
         "format": "currency:eur",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -23211,6 +23232,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -23348,6 +23370,7 @@
         },
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -23433,6 +23456,625 @@
       "normalized": null
     },
     {
+      "name": "dashes ok",
+      "spec": {
+        "type": "line",
+        "x": "a",
+        "y": "b",
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "b": 2
+          }
+        ],
+        "dashes": {
+          "b": "dashed",
+          "c": "dotted",
+          "d": "dashdot",
+          "e": "solid"
+        }
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "line",
+        "x": "a",
+        "y": "b",
+        "dashes": {
+          "b": "dashed",
+          "c": "dotted",
+          "d": "dashdot",
+          "e": "solid"
+        },
+        "legend": "auto",
+        "tooltip": true,
+        "bare": false,
+        "xType": "auto",
+        "curve": "linear"
+      }
+    },
+    {
+      "name": "dashes is an array",
+      "spec": {
+        "type": "line",
+        "x": "a",
+        "y": "b",
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "b": 2
+          }
+        ],
+        "dashes": [
+          "dashed"
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "bad_type",
+          "path": "dashes"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "dashes with bad values",
+      "spec": {
+        "type": "line",
+        "x": "a",
+        "y": "b",
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "b": 2
+          }
+        ],
+        "dashes": {
+          "b": "5 5",
+          "c": 7,
+          "d": "Dashed"
+        }
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "bad_dash",
+          "path": "dashes.b"
+        },
+        {
+          "severity": "error",
+          "code": "bad_dash",
+          "path": "dashes.c"
+        },
+        {
+          "severity": "error",
+          "code": "bad_dash",
+          "path": "dashes.d"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "reverse axes ok",
+      "spec": {
+        "type": "line",
+        "x": "a",
+        "y": "b",
+        "yRight": "c",
+        "data": [
+          {
+            "a": "x",
+            "b": 1,
+            "c": 5
+          },
+          {
+            "a": "y",
+            "b": 2,
+            "c": 6
+          }
+        ],
+        "yReverse": true,
+        "rightReverse": true
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "info",
+          "code": "dual_axis",
+          "path": "yRight"
+        }
+      ],
+      "normalized": {
+        "type": "line",
+        "x": "a",
+        "y": "b",
+        "yRight": "c",
+        "yReverse": true,
+        "rightReverse": true,
+        "legend": "auto",
+        "tooltip": true,
+        "bare": false,
+        "xType": "auto",
+        "curve": "linear"
+      }
+    },
+    {
+      "name": "reverse right axis without yRight",
+      "spec": {
+        "type": "line",
+        "x": "a",
+        "y": "b",
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "b": 2
+          }
+        ],
+        "rightReverse": true
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "right_axis_unused",
+          "path": "rightReverse"
+        }
+      ],
+      "normalized": {
+        "type": "line",
+        "x": "a",
+        "y": "b",
+        "rightReverse": true,
+        "legend": "auto",
+        "tooltip": true,
+        "bare": false,
+        "xType": "auto",
+        "curve": "linear"
+      }
+    },
+    {
+      "name": "reverse with a break",
+      "spec": {
+        "type": "line",
+        "x": "a",
+        "y": "b",
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "b": 2
+          }
+        ],
+        "yReverse": true,
+        "yBreak": [
+          1.2,
+          1.8
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "break_refused",
+          "path": "yBreak"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "widths ok",
+      "spec": {
+        "type": "line",
+        "x": "a",
+        "y": "b",
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "b": 2
+          }
+        ],
+        "widths": {
+          "b": 3,
+          "c": 0.5,
+          "d": 8,
+          "e": 1.25
+        }
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "line",
+        "x": "a",
+        "y": "b",
+        "widths": {
+          "b": 3,
+          "c": 0.5,
+          "d": 8,
+          "e": 1.25
+        },
+        "legend": "auto",
+        "tooltip": true,
+        "bare": false,
+        "xType": "auto",
+        "curve": "linear"
+      }
+    },
+    {
+      "name": "widths is an array",
+      "spec": {
+        "type": "line",
+        "x": "a",
+        "y": "b",
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "b": 2
+          }
+        ],
+        "widths": [
+          2
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "bad_type",
+          "path": "widths"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "widths with bad values",
+      "spec": {
+        "type": "line",
+        "x": "a",
+        "y": "b",
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "b": 2
+          }
+        ],
+        "widths": {
+          "b": 0.4,
+          "c": 8.5,
+          "d": "3",
+          "e": null
+        }
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "bad_width",
+          "path": "widths.b"
+        },
+        {
+          "severity": "error",
+          "code": "bad_width",
+          "path": "widths.c"
+        },
+        {
+          "severity": "error",
+          "code": "bad_width",
+          "path": "widths.d"
+        },
+        {
+          "severity": "error",
+          "code": "bad_width",
+          "path": "widths.e"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "curves ok",
+      "spec": {
+        "type": "line",
+        "x": "a",
+        "y": "b",
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "b": 2
+          }
+        ],
+        "curve": "smooth",
+        "curves": {
+          "b": "step",
+          "c": "linear",
+          "d": "smooth"
+        }
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "line",
+        "x": "a",
+        "y": "b",
+        "curve": "smooth",
+        "curves": {
+          "b": "step",
+          "c": "linear",
+          "d": "smooth"
+        },
+        "legend": "auto",
+        "tooltip": true,
+        "bare": false,
+        "xType": "auto"
+      }
+    },
+    {
+      "name": "curves is an array",
+      "spec": {
+        "type": "line",
+        "x": "a",
+        "y": "b",
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "b": 2
+          }
+        ],
+        "curves": [
+          "step"
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "bad_type",
+          "path": "curves"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "curves with bad values",
+      "spec": {
+        "type": "line",
+        "x": "a",
+        "y": "b",
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "b": 2
+          }
+        ],
+        "curves": {
+          "b": "stepp",
+          "c": 3,
+          "d": "Smooth"
+        }
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "bad_enum",
+          "path": "curves.b"
+        },
+        {
+          "severity": "error",
+          "code": "bad_enum",
+          "path": "curves.c"
+        },
+        {
+          "severity": "error",
+          "code": "bad_enum",
+          "path": "curves.d"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "splitAt ok",
+      "spec": {
+        "type": "line",
+        "x": "a",
+        "y": "b",
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "b": 2
+          }
+        ],
+        "splitAt": [
+          "x",
+          3,
+          "2026-03-01"
+        ]
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "line",
+        "x": "a",
+        "y": "b",
+        "splitAt": [
+          "x",
+          "3",
+          "2026-03-01"
+        ],
+        "legend": "auto",
+        "tooltip": true,
+        "bare": false,
+        "xType": "auto",
+        "curve": "linear"
+      }
+    },
+    {
+      "name": "splitAt is not a list",
+      "spec": {
+        "type": "line",
+        "x": "a",
+        "y": "b",
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "b": 2
+          }
+        ],
+        "splitAt": "x"
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "bad_type",
+          "path": "splitAt"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "splitAt with a bad value",
+      "spec": {
+        "type": "line",
+        "x": "a",
+        "y": "b",
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "b": 2
+          }
+        ],
+        "splitAt": [
+          "x",
+          true
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "bad_type",
+          "path": "splitAt[1]"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "bare ok",
+      "spec": {
+        "type": "line",
+        "x": "a",
+        "y": "b",
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "b": 2
+          }
+        ],
+        "bare": true
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "line",
+        "x": "a",
+        "y": "b",
+        "bare": true,
+        "legend": "auto",
+        "tooltip": true,
+        "xType": "auto",
+        "curve": "linear"
+      }
+    },
+    {
+      "name": "bare is not a boolean",
+      "spec": {
+        "type": "line",
+        "x": "a",
+        "y": "b",
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "b": 2
+          }
+        ],
+        "bare": "yes"
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "bad_type",
+          "path": "bare"
+        }
+      ],
+      "normalized": null
+    },
+    {
       "name": "annotations ok",
       "spec": {
         "type": "bar",
@@ -23483,6 +24125,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -24725,6 +25368,7 @@
         "series": "a",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -24764,6 +25408,7 @@
         "stack": "stack",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "orientation": "vertical",
         "sort": "none",
         "labels": false
@@ -25036,6 +25681,7 @@
         "y": "v",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -25067,6 +25713,7 @@
         "y": "v",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "xType": "auto",
         "curve": "linear"
       }
@@ -25107,6 +25754,7 @@
         "series": "d",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "xType": "auto",
         "curve": "linear"
       }
@@ -25198,6 +25846,7 @@
         "trend": "linear",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "xType": "auto"
       }
     },
@@ -25433,6 +26082,7 @@
         "mode": "density",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "showMean": false
       }
     },
@@ -25459,6 +26109,7 @@
         "y": "b",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "outliers": true,
         "orientation": "vertical"
       }
@@ -26107,6 +26758,7 @@
         "points": "all",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "outliers": true,
         "orientation": "vertical"
       }
@@ -26144,6 +26796,7 @@
         "outliers": false,
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "orientation": "vertical"
       }
     },
@@ -26178,6 +26831,7 @@
         "patterns": true,
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "outliers": true,
         "orientation": "vertical"
       }
@@ -26247,6 +26901,7 @@
         "y": "b",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "inner": "box",
         "points": "none",
         "orientation": "vertical"
@@ -36683,6 +37338,7 @@
         "total": "t",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "labels": false,
         "connectors": true,
         "orientation": "vertical"
@@ -36739,6 +37395,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "labels": false,
         "connectors": true,
         "orientation": "vertical"
@@ -36864,6 +37521,7 @@
         "total": "a",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "labels": false,
         "connectors": true,
         "orientation": "vertical"
@@ -36912,6 +37570,7 @@
         "start": 5,
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "labels": false,
         "connectors": true,
         "orientation": "vertical"
@@ -36952,6 +37611,7 @@
         "y": "b",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "labels": false,
         "connectors": true,
         "orientation": "vertical"
@@ -37308,6 +37968,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "orientation": "horizontal",
         "scale": "shared"
       }
@@ -37352,6 +38013,7 @@
         "value": "b",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "orientation": "horizontal",
         "scale": "shared"
       }
@@ -37393,6 +38055,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "orientation": "horizontal",
         "scale": "shared"
       }
@@ -37467,6 +38130,7 @@
         "rankBy": "asc",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "curve": "smooth",
         "labels": true
       }
@@ -37588,6 +38252,7 @@
         "patterns": true,
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "curve": "smooth",
         "labels": true
       }
@@ -37624,6 +38289,7 @@
         "y": "v",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "rankBy": "desc",
         "curve": "smooth",
         "labels": true
@@ -37754,6 +38420,7 @@
         "series": "s",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "rankBy": "desc",
         "curve": "smooth",
         "labels": true
@@ -37896,7 +38563,8 @@
         "x": "b",
         "y": "a",
         "legend": "auto",
-        "tooltip": true
+        "tooltip": true,
+        "bare": false
       }
     },
     {
@@ -42204,6 +42872,7 @@
         "patterns": true,
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -42345,6 +43014,7 @@
         "facet": "g",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -42528,6 +43198,7 @@
         "zoom": "x",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "xType": "auto",
         "curve": "linear"
       }
@@ -42577,6 +43248,7 @@
         "brush": "xy",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "trend": "none",
         "xType": "auto"
       }
@@ -42628,6 +43300,7 @@
         "facet": "g",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -42765,6 +43438,7 @@
         "zoom": "none",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "bins": "auto",
         "mode": "count",
         "showMean": false
@@ -42856,6 +43530,7 @@
         "line": "t",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -42911,6 +43586,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -43057,6 +43733,7 @@
         "line": "w",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -43158,6 +43835,7 @@
         "orientation": "horizontal",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "sort": "none",
         "labels": false
@@ -43224,6 +43902,7 @@
         "stack": "normalize",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "orientation": "vertical",
         "sort": "none",
         "labels": false
@@ -43274,6 +43953,7 @@
         "stack": "stack",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "orientation": "vertical",
         "sort": "none",
         "labels": false
@@ -43368,6 +44048,7 @@
         "series": "g",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "trend": "none",
         "xType": "auto"
       }
@@ -43415,6 +44096,7 @@
         "density": "auto",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "trend": "none",
         "xType": "auto"
       }
@@ -43512,6 +44194,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "xType": "auto",
         "curve": "linear"
       }
@@ -43565,6 +44248,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "xType": "auto",
         "curve": "linear"
       }
@@ -43618,6 +44302,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "xType": "auto",
         "curve": "linear",
         "stack": "none"
@@ -43680,6 +44365,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "trend": "none",
         "xType": "auto"
       }
@@ -43741,6 +44427,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "xType": "auto",
         "curve": "linear"
       }
@@ -43788,6 +44475,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "curve": "linear"
       }
     },
@@ -43816,6 +44504,7 @@
         "y": "v",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -44182,6 +44871,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -44278,6 +44968,7 @@
         "yScale": "log",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "xType": "auto",
         "curve": "linear"
       }
@@ -44323,6 +45014,7 @@
         "yScale": "log",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "xType": "auto",
         "curve": "linear"
       }
@@ -44400,6 +45092,7 @@
         "yScale": "log",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "trend": "none",
         "xType": "auto"
       }
@@ -44627,6 +45320,7 @@
         "yScale": "linear",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -44815,6 +45509,7 @@
         "gaps": "zero",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "xType": "auto",
         "curve": "linear"
       }
@@ -44870,6 +45565,7 @@
         "yUpper": "t",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "xType": "auto",
         "curve": "linear"
       }
@@ -45024,6 +45720,7 @@
         "yUpper": "t",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "xType": "auto",
         "curve": "linear"
       }
@@ -45088,6 +45785,7 @@
         "yUpper": "t",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "xType": "auto",
         "curve": "linear"
       }
@@ -45143,6 +45841,7 @@
         "yUpper": "t",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -45207,6 +45906,7 @@
         "yUpper": "t",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "orientation": "vertical",
         "sort": "none",
         "labels": false
@@ -45247,6 +45947,7 @@
         "yUpper": "v",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "trend": "none",
         "xType": "auto"
       }
@@ -45398,6 +46099,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "xType": "auto",
         "curve": "linear"
       }
@@ -45467,6 +46169,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -45765,6 +46468,7 @@
         "gaps": "connect",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "xType": "auto",
         "curve": "linear"
       }
@@ -45812,6 +46516,7 @@
         "gaps": "zero",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "xType": "auto",
         "curve": "linear",
         "stack": "none"
@@ -45950,6 +46655,7 @@
         "trendBandwidth": 0.5,
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "xType": "auto"
       }
     },
@@ -46002,6 +46708,7 @@
         "trendBandwidth": 0.5,
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "trend": "none",
         "xType": "auto"
       }
@@ -46096,6 +46803,7 @@
         "labels": true,
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none"
@@ -46158,6 +46866,7 @@
         "stack": "normalize",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "orientation": "vertical",
         "sort": "none",
         "labels": false
@@ -46268,6 +46977,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "xType": "auto",
         "curve": "linear"
       }
@@ -46332,6 +47042,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -46387,6 +47098,7 @@
         "yRight": "t",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "xType": "auto",
         "curve": "linear",
         "stack": "none"
@@ -46633,6 +47345,7 @@
         "orientation": "horizontal",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "sort": "none",
         "labels": false
@@ -46695,6 +47408,7 @@
         "stack": "normalize",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "orientation": "vertical",
         "sort": "none",
         "labels": false
@@ -46813,6 +47527,7 @@
         "yRightLabel": "x",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "xType": "auto",
         "curve": "linear"
       }
@@ -46915,6 +47630,7 @@
         "brush": "xy",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "xType": "auto",
         "curve": "linear"
       }
@@ -46962,6 +47678,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -47020,6 +47737,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -47143,6 +47861,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -47200,6 +47919,7 @@
         "y": "v",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -47445,6 +48165,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "sort": "none",
         "labels": false
@@ -47493,6 +48214,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "xType": "auto",
         "curve": "linear"
       }
@@ -47532,6 +48254,7 @@
         "y": "n",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "xType": "auto",
         "curve": "linear"
       }
@@ -53622,6 +54345,7 @@
         "transform": [],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -53742,6 +54466,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -53863,6 +54588,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -53961,6 +54687,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -54054,6 +54781,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -54145,6 +54873,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -54359,6 +55088,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -54461,6 +55191,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -54572,6 +55303,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -54675,6 +55407,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -54773,6 +55506,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -54881,6 +55615,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -55001,6 +55736,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -55105,6 +55841,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -55230,6 +55967,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -55355,6 +56093,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -55480,6 +56219,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -55605,6 +56345,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -55730,6 +56471,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -55853,6 +56595,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "xType": "auto",
         "curve": "linear"
       },
@@ -55964,6 +56707,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -56074,6 +56818,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -56190,6 +56935,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -56306,6 +57052,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -56422,6 +57169,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -56538,6 +57286,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -56654,6 +57403,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -56784,6 +57534,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -56924,6 +57675,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -57032,6 +57784,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -57104,6 +57857,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -57166,6 +57920,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -57248,6 +58003,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -57406,6 +58162,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -57556,6 +58313,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -57680,6 +58438,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -57777,6 +58536,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -57980,6 +58740,7 @@
         "series": "region",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -58090,6 +58851,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -58258,6 +59020,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -58339,6 +59102,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -58453,6 +59217,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -58576,6 +59341,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -58702,6 +59468,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -58819,6 +59586,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -58924,6 +59692,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -59091,6 +59860,7 @@
         "title": "Monthly revenue",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -59326,6 +60096,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "xType": "auto",
         "curve": "linear"
       },
@@ -59514,6 +60285,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -59644,6 +60416,7 @@
         "facet": "region",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -59824,6 +60597,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -59930,6 +60704,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -62272,6 +63047,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -64084,6 +64860,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -64242,6 +65019,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -64343,6 +65121,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -64453,6 +65232,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -64550,6 +65330,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -65171,6 +65952,7 @@
         "series": "region",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -65303,6 +66085,7 @@
         "series": "region",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -65435,6 +66218,7 @@
         "series": "region",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -65567,6 +66351,7 @@
         "series": "region",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -65699,6 +66484,7 @@
         "series": "region",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -65831,6 +66617,7 @@
         "series": "region",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -65963,6 +66750,7 @@
         "series": "region",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -66095,6 +66883,7 @@
         "series": "region",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -66221,6 +67010,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -66354,6 +67144,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -66486,6 +67277,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -66619,6 +67411,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -66750,6 +67543,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -66887,6 +67681,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -67017,6 +67812,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -67141,6 +67937,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -67726,6 +68523,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -67912,6 +68710,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "xType": "auto",
         "curve": "linear"
       },
@@ -68671,6 +69470,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "xType": "auto",
         "curve": "linear"
       },
@@ -68785,6 +69585,7 @@
         "series": "region",
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -68913,6 +69714,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -69027,6 +69829,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "xType": "auto",
         "curve": "linear"
       },
@@ -69129,6 +69932,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "curve": "linear"
       },
       "rows": [
@@ -69249,6 +70053,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "curve": "linear"
       },
       "rows": [
@@ -69336,6 +70141,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "curve": "linear"
       },
       "rows": [
@@ -69513,6 +70319,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -69640,6 +70447,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
@@ -70721,6 +71529,7 @@
         ],
         "legend": "auto",
         "tooltip": true,
+        "bare": false,
         "stack": "none",
         "orientation": "vertical",
         "sort": "none",
