@@ -1,7 +1,7 @@
 {
   "name": "super-plot-workspace",
   "private": true,
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Super Plot monorepo: statistical charts for people and agents (core, web, react).",
   "type": "module",
   "license": "Apache-2.0",
