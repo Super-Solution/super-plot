@@ -70,8 +70,8 @@
         },
         "format": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent|fixed:\\d{1,2}|currency:[A-Za-z]{3})$",
-          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
         },
         "colors": {
           "type": "object",
@@ -419,7 +419,7 @@
         },
         "formatRight": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent|fixed:\\d{1,2}|currency:[A-Za-z]{3})$",
+          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
           "description": "Value format of the right axis, its tick labels and its series in tooltips (default: `format`). Needs `yRight`."
         },
         "yBreak": {
@@ -538,8 +538,8 @@
         },
         "format": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent|fixed:\\d{1,2}|currency:[A-Za-z]{3})$",
-          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
         },
         "colors": {
           "type": "object",
@@ -886,7 +886,7 @@
         },
         "formatRight": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent|fixed:\\d{1,2}|currency:[A-Za-z]{3})$",
+          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
           "description": "Value format of the right axis, its tick labels and its series in tooltips (default: `format`). Needs `yRight`."
         },
         "splitAt": {
@@ -1077,8 +1077,8 @@
         },
         "format": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent|fixed:\\d{1,2}|currency:[A-Za-z]{3})$",
-          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
         },
         "colors": {
           "type": "object",
@@ -1425,7 +1425,7 @@
         },
         "formatRight": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent|fixed:\\d{1,2}|currency:[A-Za-z]{3})$",
+          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
           "description": "Value format of the right axis, its tick labels and its series in tooltips (default: `format`). Needs `yRight`."
         },
         "splitAt": {
@@ -1562,8 +1562,8 @@
         },
         "format": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent|fixed:\\d{1,2}|currency:[A-Za-z]{3})$",
-          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
         },
         "colors": {
           "type": "object",
@@ -1983,8 +1983,8 @@
         },
         "format": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent|fixed:\\d{1,2}|currency:[A-Za-z]{3})$",
-          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
         },
         "colors": {
           "type": "object",
@@ -2178,8 +2178,8 @@
         },
         "format": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent|fixed:\\d{1,2}|currency:[A-Za-z]{3})$",
-          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
         },
         "colors": {
           "type": "object",
@@ -2372,8 +2372,8 @@
         },
         "format": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent|fixed:\\d{1,2}|currency:[A-Za-z]{3})$",
-          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
         },
         "colors": {
           "type": "object",
@@ -2732,8 +2732,8 @@
         },
         "format": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent|fixed:\\d{1,2}|currency:[A-Za-z]{3})$",
-          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
         },
         "colors": {
           "type": "object",
@@ -3086,8 +3086,8 @@
         },
         "format": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent|fixed:\\d{1,2}|currency:[A-Za-z]{3})$",
-          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
         },
         "colors": {
           "type": "object",
@@ -3452,8 +3452,8 @@
         },
         "format": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent|fixed:\\d{1,2}|currency:[A-Za-z]{3})$",
-          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
         },
         "colors": {
           "type": "object",
@@ -3647,8 +3647,8 @@
         },
         "format": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent|fixed:\\d{1,2}|currency:[A-Za-z]{3})$",
-          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
         },
         "colors": {
           "type": "object",
@@ -3831,8 +3831,8 @@
         },
         "format": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent|fixed:\\d{1,2}|currency:[A-Za-z]{3})$",
-          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
         },
         "colors": {
           "type": "object",
@@ -4206,8 +4206,8 @@
         },
         "format": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent|fixed:\\d{1,2}|currency:[A-Za-z]{3})$",
-          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
         },
         "colors": {
           "type": "object",
@@ -4574,8 +4574,8 @@
         },
         "format": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent|fixed:\\d{1,2}|currency:[A-Za-z]{3})$",
-          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
         },
         "colors": {
           "type": "object",
@@ -4936,8 +4936,8 @@
         },
         "format": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent|fixed:\\d{1,2}|currency:[A-Za-z]{3})$",
-          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
         },
         "colors": {
           "type": "object",
@@ -5296,8 +5296,8 @@
         },
         "format": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent|fixed:\\d{1,2}|currency:[A-Za-z]{3})$",
-          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
         },
         "colors": {
           "type": "object",
@@ -5491,8 +5491,8 @@
         },
         "format": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent|fixed:\\d{1,2}|currency:[A-Za-z]{3})$",
-          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
         },
         "colors": {
           "type": "object",
@@ -5674,8 +5674,8 @@
         },
         "format": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent|fixed:\\d{1,2}|currency:[A-Za-z]{3})$",
-          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
         },
         "colors": {
           "type": "object",
@@ -5866,8 +5866,8 @@
         },
         "format": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent|fixed:\\d{1,2}|currency:[A-Za-z]{3})$",
-          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
         },
         "colors": {
           "type": "object",
@@ -6032,8 +6032,8 @@
         },
         "format": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent|fixed:\\d{1,2}|currency:[A-Za-z]{3})$",
-          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
         },
         "colors": {
           "type": "object",
@@ -6200,8 +6200,8 @@
         },
         "format": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent|fixed:\\d{1,2}|currency:[A-Za-z]{3})$",
-          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
         },
         "colors": {
           "type": "object",
@@ -6377,8 +6377,8 @@
         },
         "format": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent|fixed:\\d{1,2}|currency:[A-Za-z]{3})$",
-          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
         },
         "colors": {
           "type": "object",
@@ -6559,8 +6559,8 @@
         },
         "format": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent|fixed:\\d{1,2}|currency:[A-Za-z]{3})$",
-          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
         },
         "colors": {
           "type": "object",
@@ -6910,8 +6910,8 @@
         },
         "format": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent|fixed:\\d{1,2}|currency:[A-Za-z]{3})$",
-          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
         },
         "colors": {
           "type": "object",
@@ -7110,8 +7110,8 @@
         },
         "format": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent|fixed:\\d{1,2}|currency:[A-Za-z]{3})$",
-          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
         },
         "colors": {
           "type": "object",
@@ -7286,8 +7286,8 @@
         },
         "format": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent|fixed:\\d{1,2}|currency:[A-Za-z]{3})$",
-          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
         },
         "colors": {
           "type": "object",
@@ -7515,8 +7515,8 @@
         },
         "format": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent|fixed:\\d{1,2}|currency:[A-Za-z]{3})$",
-          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
         },
         "colors": {
           "type": "object",
@@ -7746,8 +7746,8 @@
         },
         "format": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent|fixed:\\d{1,2}|currency:[A-Za-z]{3})$",
-          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
         },
         "colors": {
           "type": "object",
@@ -8018,8 +8018,8 @@
         },
         "format": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent|fixed:\\d{1,2}|currency:[A-Za-z]{3})$",
-          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
         },
         "colors": {
           "type": "object",
@@ -8281,8 +8281,8 @@
         },
         "format": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent|fixed:\\d{1,2}|currency:[A-Za-z]{3})$",
-          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
         },
         "colors": {
           "type": "object",
@@ -8543,8 +8543,8 @@
         },
         "format": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent|fixed:\\d{1,2}|currency:[A-Za-z]{3})$",
-          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE."
+          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
         },
         "colors": {
           "type": "object",

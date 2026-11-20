@@ -424,6 +424,11 @@ const VALIDATION = [
   ['version ok', { type: 'bar', x: 'a', y: 'b', data: B, version: 1 }],
   ['version wrong', { type: 'bar', x: 'a', y: 'b', data: B, version: 2 }],
   ['bad format', { type: 'bar', x: 'a', y: 'b', data: B, format: 'money' }],
+  ['format modifiers and suffix', { type: 'bar', x: 'a', y: 'b', data: B, format: 'currency:USD:compact:narrow~/yr' }],
+  ['format with modifiers in the wrong order', { type: 'bar', x: 'a', y: 'b', data: B, format: 'currency:USD:narrow:compact' }],
+  ['format with an empty suffix', { type: 'bar', x: 'a', y: 'b', data: B, format: 'integer~' }],
+  ['format with a long suffix', { type: 'bar', x: 'a', y: 'b', data: B, format: 'integer~12345678901234567' }],
+  ['format percent:N', { type: 'bar', x: 'a', y: 'b', data: B, format: 'percent:1' }],
   ['good formats', { type: 'bar', x: 'a', y: 'b', data: B, format: 'currency:eur' }],
   ['domain ok with null', { type: 'bar', x: 'a', y: 'b', data: B, yDomain: [null, 10] }],
   ['domain reversed', { type: 'bar', x: 'a', y: 'b', data: B, yDomain: [10, 1] }],
@@ -594,7 +599,7 @@ const VALIDATION = [
 
 // Number formats, English. Values include ties, tiny numbers, negatives and magnitude roll-over.
 const FORMAT_VALUES = [0, 1, -1, 0.5, 1.005, 2.675, 0.125, 0.285, 12.5, 99.995, 999, 999.5, 999.95, 1000, 1234, 1234.5, 9999.99, 12345.678, 99999, 999499, 999500, 999999, 1000000, 1234567, 15000000, 999999999, 2.5e9, 7.1e12, 3.3e14, 1.2e15, 123456789012345680000, 0.00001, -0.00001, 0.0004, 0.00049, 0.07, 0.0999, 0.1, 0.1234, 0.9999, 5e-7, -12.34, -1234.5, -999999, 48200, 21800, 5400000, 1324, 463]
-const FORMATS = ['auto', 'compact', 'integer', 'percent', 'fixed:0', 'fixed:2', 'fixed:3', 'currency:USD', 'currency:EUR', 'currency:JPY', 'currency:TWD', 'currency:CHF', 'currency:KWD', 'currency:xyz']
+const FORMATS = ['auto', 'compact', 'integer', 'percent', 'fixed:0', 'fixed:2', 'fixed:3', 'currency:USD', 'currency:EUR', 'currency:JPY', 'currency:TWD', 'currency:CHF', 'currency:KWD', 'currency:xyz', 'percent:0', 'percent:1', 'percent:3', 'currency:USD:compact', 'currency:USD:narrow', 'currency:USD:compact:narrow', 'currency:CAD:narrow', 'currency:CAD:compact:narrow', 'currency:CHF:compact', 'currency:JPY:compact:narrow', 'integer~ days', 'fixed:1~%', 'currency:USD:compact~/yr']
 const formats = []
 for (const format of FORMATS) {
   for (const value of FORMAT_VALUES) formats.push({ in: { format, value }, out: core.valueFormatter(format, 'en')(value) })
@@ -998,7 +1003,8 @@ const datePeriods = ['2026', '2024', '2026-02', '2024-02', '2026-03-15', '2026-0
 const currencies = Object.fromEntries(CURRENCY_CODES.map(code => {
   const nf = new Intl.NumberFormat('en', { style: 'currency', currency: code })
   const symbol = nf.formatToParts(1).find(p => p.type === 'currency').value
-  return [code, { symbol, digits: currencyDigits(code) }]
+  const narrow = new Intl.NumberFormat('en', { style: 'currency', currency: code, currencyDisplay: 'narrowSymbol' }).formatToParts(1).find(p => p.type === 'currency').value
+  return [code, { symbol, narrow, digits: currencyDigits(code) }]
 }))
 
 const fields = {

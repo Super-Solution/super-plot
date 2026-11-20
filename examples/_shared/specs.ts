@@ -141,6 +141,13 @@ export const gallery: { id: string; note: string; spec: Record<string, unknown> 
     }
   },
   {
+    id: 'line-units', note: 'format: compact narrow dollars and a unit suffix, so a chart can say $1.2B and 92 days',
+    spec: {
+      type: 'line', title: 'Revenue and inventory days', subtitle: 'Invented figures', x: 'quarter', y: ['revenue'], yRight: ['days'], format: 'currency:USD:compact:narrow', formatRight: 'integer~ days', yLabel: 'Revenue', yRightLabel: 'Days of inventory',
+      data: [['2026Q1', 41.2e9, 88], ['2026Q2', 44.8e9, 91], ['2026Q3', 47.5e9, 95], ['2026Q4', 52.1e9, 92]].map(([quarter, revenue, days]) => ({ quarter, revenue, days }))
+    }
+  },
+  {
     id: 'line-bare', note: 'bare: marks only, the shape of a sparkline (set yDomain to fill the height)',
     spec: {
       type: 'line', title: 'Equity, last 12 weeks', x: 'week', y: 'equity', bare: true, yDomain: [96, 112], points: false,

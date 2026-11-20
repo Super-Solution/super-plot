@@ -8,7 +8,7 @@ export const DASH_STYLES = ['solid', 'dashed', 'dotted', 'dashdot'] as const
 export const DASH_PATTERNS: Readonly<Record<string, string | undefined>> = { solid: undefined, dashed: '6 4', dotted: '1 4', dashdot: '8 4 1 4' }
 /** The range of a series' line width in px (`widths`). */
 export const WIDTH_RANGE = [0.5, 8] as const
-import { isValueFormat } from './util/format.js'
+import { FORMAT_PATTERN, isValueFormat } from './util/format.js'
 import { CAMERA_LIMITS } from './geo/camera.js'
 import { toTime } from './util/time.js'
 
@@ -88,7 +88,7 @@ export const COMMON_FIELDS: FieldMap = {
   source: { kind: 'string', max: 160, desc: 'Source line shown small under the chart.' },
   legend: { kind: 'enum', values: ['auto', 'top', 'bottom', 'right', 'none'], default: 'auto', desc: 'Legend placement. `auto` hides it for a single series and picks a side from the available width.' },
   tooltip: { kind: 'boolean', default: true, desc: 'Show a hover tooltip (web binding only).' },
-  format: { kind: 'format', desc: 'Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE.' },
+  format: { kind: 'format', desc: 'Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol ("$", not "US$"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days.' },
   colors: { kind: 'colors', desc: 'Series (or slice/category) name to CSS colour, e.g. {"Revenue":"#2962FF"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours.' },
   transform: { kind: 'transform', desc: 'Data steps run before the chart reads its columns, in order (at most 10): filter, timeUnit, aggregate, sort, top, bin (round bins: start and end columns), window (running sum, mean, count, rank, pctChange, lag, lead, movingMean, per group, in a sort order), fold (wide columns to key/value rows) and index (rescale each group so its value at a base point is 100). No expressions. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output.' },
   patterns: { kind: 'boolean', desc: 'Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print.' },
@@ -168,7 +168,7 @@ export function validateField(name: string, def: FieldDef, value: unknown, ctx: 
       return bad('bad_enum', `${name} must be one of ${def.values.join(', ')}; got ${fmt(value)}.`, near ? `Did you mean "${near}"?` : undefined)
     }
     case 'format':
-      return isValueFormat(value) ? value : bad('bad_format', `format ${fmt(value)} is not recognised.`, 'Use auto, compact, integer, percent, fixed:N (N is 0-20) or currency:USD.')
+      return isValueFormat(value) ? value : bad('bad_format', `format ${fmt(value)} is not recognised.`, 'Use auto, compact, integer, percent, percent:N, fixed:N (N is 0-20) or currency:USD (add :compact or :narrow); a ~suffix may follow, e.g. integer~ days.')
     case 'bins': {
       if (value === 'auto') return value
       if (typeof value === 'number' && Number.isInteger(value) && value >= 1 && value <= 200) return value
@@ -426,7 +426,7 @@ export function fieldSchema(def: FieldDef): Record<string, unknown> {
     case 'boolean': return { type: 'boolean', ...(def.default !== undefined ? { default: def.default } : {}), description: d }
     case 'number': return { type: def.integer ? 'integer' : 'number', ...(def.min !== undefined ? { minimum: def.min } : {}), ...(def.max !== undefined ? { maximum: def.max } : {}), ...(def.default !== undefined ? { default: def.default } : {}), description: d }
     case 'enum': return { enum: [...def.values], ...(def.default !== undefined ? { default: def.default } : {}), description: d }
-    case 'format': return { type: 'string', pattern: '^(auto|compact|integer|percent|fixed:\\d{1,2}|currency:[A-Za-z]{3})$', description: d }
+    case 'format': return { type: 'string', pattern: FORMAT_PATTERN, description: d }
     case 'bins': return { oneOf: [{ const: 'auto' }, { type: 'integer', minimum: 1, maximum: 200 }], default: def.default ?? 'auto', description: d }
     case 'domain': return { type: 'array', minItems: 2, maxItems: 2, items: { type: ['number', 'string', 'null'] }, description: d }
     case 'transform': return { type: 'array', maxItems: 10, items: { type: 'object', minProperties: 1, maxProperties: 1, properties: { filter: { type: 'object', required: ['field'] }, timeUnit: { type: 'object', required: ['field', 'unit'] }, aggregate: { type: 'object' }, sort: { type: 'object', required: ['field'] }, top: { type: 'object', required: ['n', 'by'] }, bin: { type: 'object', required: ['field'] }, window: { type: 'object', required: ['op', 'field', 'as'] }, fold: { type: 'object', required: ['fields'] }, index: { type: 'object', required: ['field'] } }, additionalProperties: false }, description: d }

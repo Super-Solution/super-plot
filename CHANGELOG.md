@@ -2,6 +2,12 @@
 
 All four npm packages (`@supersolutions/super-plot-core`, `-web`, `-react`, `-chat-plugin`) share one version.
 
+## Unreleased
+
+### Added
+
+- Number formats: `currency:CODE:compact` ($1.2B), `:narrow` for the narrow currency symbol ("$", not "US$" in Chinese), `percent:N` (exactly N decimals) and a `~suffix` after any format (`integer~ days` shows 92 days). Validation, JSON Schema, the Python and Go ports (and the currency table, which now carries narrow symbols) and conformance cases are in step.
+
 ## 0.4.0 (2026-11-21)
 
 ### Added

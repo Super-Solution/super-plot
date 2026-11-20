@@ -44,6 +44,7 @@ type tables struct {
 	Camera     map[string][2]float64 `json:"camera"`
 	Currencies map[string]struct {
 		Symbol string `json:"symbol"`
+		Narrow string `json:"narrow"`
 		Digits int    `json:"digits"`
 	} `json:"currencies"`
 	Charts []struct {
@@ -61,9 +62,10 @@ var data = func() tables {
 	return t
 }()
 
-var formatRe = regexp.MustCompile(`^(auto|compact|integer|percent|fixed:\d{1,2}|currency:[A-Za-z]{3})$`)
+var formatRe = regexp.MustCompile(`^(auto|compact|integer|percent(:\d)?|fixed:\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\x00-\x1f]{1,16})?$`)
 
-// IsValueFormat reports whether s is a format string: auto | compact | integer | percent | fixed:N | currency:CODE.
+// IsValueFormat reports whether s is a format string: auto | compact | integer | percent | percent:N | fixed:N |
+// currency:CODE[:compact][:narrow], then an optional ~suffix.
 func IsValueFormat(s string) bool { return formatRe.MatchString(s) }
 
 // decimal is the shortest round-trip decimal of a number: value = 0.d1d2d3... x 10^pt.
@@ -206,13 +208,21 @@ func percent(v float64, maxFrac int) string {
 	return plain(d, 0, maxFrac, true) + "%"
 }
 
-func currency(v float64, code string, maxFrac int) string {
+func currency(v float64, code string, maxFrac int, compactBody, narrow bool) string {
 	code = strings.ToUpper(code)
 	info, ok := data.Currencies[code]
 	if !ok {
-		info.Symbol, info.Digits = code, 2
+		info.Symbol, info.Narrow, info.Digits = code, code, 2
 	}
-	body := plain(shortest(v), min(info.Digits, maxFrac), maxFrac, true)
+	if narrow && info.Narrow != "" {
+		info.Symbol = info.Narrow
+	}
+	var body string
+	if compactBody {
+		body = compact(v)
+	} else {
+		body = plain(shortest(v), min(info.Digits, maxFrac), maxFrac, true)
+	}
 	// CLDR currency spacing: a symbol ending in a letter or punctuation ("CHF", "Cg.") is separated from the
 	// number, one ending in a symbol character ("$", "CN¥") is not.
 	sep := ""
@@ -225,10 +235,18 @@ func currency(v float64, code string, maxFrac int) string {
 	return info.Symbol + sep + body
 }
 
-// ValueFormatter returns a formatter for single values. format: auto | compact | integer | percent | fixed:N |
-// currency:CODE; empty means auto.
+// ValueFormatter returns a formatter for single values. format: auto | compact | integer | percent | percent:N |
+// fixed:N | currency:CODE[:compact][:narrow], then an optional ~suffix printed after the value; empty means auto.
 func ValueFormatter(format string) func(float64) string {
-	f := format
+	base, suffix, hasSuffix := strings.Cut(format, "~")
+	one := baseFormatter(base)
+	if hasSuffix && suffix != "" {
+		return func(v float64) string { return one(v) + suffix }
+	}
+	return one
+}
+
+func baseFormatter(f string) func(float64) string {
 	if f == "" {
 		f = "auto"
 	}
@@ -237,6 +255,15 @@ func ValueFormatter(format string) func(float64) string {
 		return func(v float64) string { return signed(v, compact(v)) }
 	case f == "integer":
 		return func(v float64) string { return signed(v, plain(shortest(v), 0, 0, true)) }
+	case strings.HasPrefix(f, "percent:"):
+		n, _ := strconv.Atoi(f[8:])
+		return func(v float64) string {
+			d := shortest(v)
+			if !d.isZero() {
+				d.pt += 2
+			}
+			return signed(v, plain(d, n, n, true)+"%")
+		}
 	case f == "percent":
 		return func(v float64) string {
 			mf := 1
@@ -249,13 +276,19 @@ func ValueFormatter(format string) func(float64) string {
 		n, _ := strconv.Atoi(f[6:])
 		return func(v float64) string { return signed(v, plain(shortest(v), n, n, true)) }
 	case strings.HasPrefix(f, "currency:"):
-		code := f[9:]
+		parts := strings.Split(f[9:], ":")
+		code := parts[0]
+		isCompact, isNarrow := false, false
+		for _, flag := range parts[1:] {
+			isCompact = isCompact || flag == "compact"
+			isNarrow = isNarrow || flag == "narrow"
+		}
 		return func(v float64) string {
 			mf := 2
 			if math.Abs(v) >= 1000 {
 				mf = 0
 			}
-			return signed(v, currency(v, code, mf))
+			return signed(v, currency(v, code, mf, isCompact, isNarrow))
 		}
 	}
 	return func(v float64) string {
