@@ -6,14 +6,14 @@ import { linearScale, niceLinear } from '../scale.js'
 import { drawAnnotations, layoutCartesian, valueAxis } from '../cartesian.js'
 import { distinct } from '../data.js'
 import { mean, quantile, toNumber } from '../util/num.js'
-import { binCounts, binEdges } from '../util/bins.js'
+import { binCounts, binEdges, binIndex } from '../util/bins.js'
 import { formatPercent } from '../util/format.js'
 import { fmtList, formatter, lead } from './shared.js'
 import { refuseLog, zeroBaselineScale } from './extras.js'
 
 export { binEdges, binCounts }
 
-function groups(spec: Record<string, any>): Map<string, number[]> {
+function groups(spec: Record<string, any>, rows?: Map<string, Record<string, unknown>[]>): Map<string, number[]> {
   const g = new Map<string, number[]>()
   for (const r of spec.data as Record<string, unknown>[]) {
     const v = toNumber(r[spec.value])
@@ -22,6 +22,11 @@ function groups(spec: Record<string, any>): Map<string, number[]> {
     let a = g.get(k)
     if (!a) g.set(k, (a = []))
     a.push(v)
+    if (rows) {
+      const l = rows.get(k)
+      if (l) l.push(r)
+      else rows.set(k, [r])
+    }
   }
   return g
 }
@@ -29,7 +34,8 @@ function groups(spec: Record<string, any>): Map<string, number[]> {
 function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
   const s = c.spec
   c.axisFields = { x: s.value }
-  const g = groups(s)
+  const src = new Map<string, Record<string, unknown>[]>()
+  const g = groups(s, src)
   const keys = [...g.keys()]
   const series = c.makeSeries(keys)
   const visible = keys.filter(k => !c.hidden.has(k))
@@ -60,6 +66,11 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
     const si = keys.indexOf(k)
     const h = heights.get(k)!
     const n = g.get(k)!.length
+    const inBin: Record<string, unknown>[][] = edges.slice(1).map(() => [])
+    g.get(k)!.forEach((v, j) => {
+      const b = binIndex(v, edges)
+      if (b >= 0) inBin[b].push(src.get(k)![j])
+    })
     h.forEach((v, i) => {
       if (v <= 0) return
       const x0 = xScale.at(edges[i]) + inset
@@ -71,7 +82,7 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
       c.marks.push({
         type: 'rect', role: 'data', series: k, x: x0, y, w, h: plot.y + plot.h - y, r: [r, r, 0, 0], fill: series[si].color, opacity: overlap ? 0.6 : 1, anim: 'y',
         tip: { title: c.t('binRange', { from: xf(edges[i]), to: xf(edges[i + 1]) }), rows: [{ label: overlap ? series[si].label : c.t('count'), value: String(count), color: series[si].color }, { label: c.t('share'), value: formatPercent(count / n, c.locale) }] },
-        aria: c.t('binAria', { from: xf(edges[i]), to: xf(edges[i + 1]), count }), datum: { from: edges[i], to: edges[i + 1], count, series: k }
+        aria: c.t('binAria', { from: xf(edges[i]), to: xf(edges[i + 1]), count }), datum: { from: edges[i], to: edges[i + 1], count, series: k }, rows: c.rowsOf(inBin[i])
       })
     })
   }
@@ -94,6 +105,7 @@ export const histogram: ChartDef = {
   summary: 'Shows how one measure is distributed by counting values into equal-width bins.',
   useWhen: 'Understanding the shape, centre and spread of a single numeric column (response times, prices, ages). Compare groups with `series` (up to 3 overlap legibly) or use a box plot to compare many. Not for comparing categories.',
   cartesian: true,
+  ref: { x: ['value'], series: 'series' },
   fields: {
     value: { kind: 'column', role: 'number', required: true, desc: 'Numeric column to bin.' },
     series: { kind: 'column', role: 'any', desc: 'Column that splits the values into overlaid histograms sharing one set of bins.' },

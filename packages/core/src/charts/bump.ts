@@ -141,6 +141,7 @@ function compile(c: ChartCtx): { series: SeriesInfo[] } {
   const texts: Mark[] = []
   const r = Math.max(2.5, Math.min(5, stepY / 4))
   const smooth = s.curve !== 'linear'
+  const seriesCol: string | undefined = Array.isArray(s.y) ? undefined : s.series
   for (const k of visible) {
     const si = m.keys.indexOf(k)
     const color = series[si].color
@@ -174,7 +175,8 @@ function compile(c: ChartCtx): { series: SeriesInfo[] } {
         type: 'circle', role: 'data', series: k, cx: px, cy: py, r, fill: color, stroke: c.c('background'), strokeWidth: 2, anim: 'fade',
         tip: { title: xTitle(p.x), rows: tipRows },
         aria: `${label}, ${xTitle(p.x)}: ${c.t('rankAria', { rank: r2(p.rank) })}${value !== undefined ? `, ${fmt(value)}` : ''}${move ? `, ${move}` : ''}`,
-        datum: { x: p.x, series: k, rank: p.rank, ...(value !== undefined ? { value } : {}) }
+        datum: { x: p.x, series: k, rank: p.rank, ...(value !== undefined ? { value } : {}) },
+        rows: c.rowsBy([s.x, seriesCol], [p.x, k])
       })
       prev = p.rank
     }
@@ -191,6 +193,7 @@ export const bump: ChartDef = {
   summary: 'Shows how the rank of each series changes along an ordered x: rank 1 on top, one line per series, labelled at its end.',
   useWhen: 'Rankings over time or rounds (league tables, top products per month) for 3 to 8 series, when the order matters more than the gaps between values. Use a line chart when the values themselves matter.',
   cartesian: true,
+  ref: { x: ['x'], y: ['rank', 'y'], series: 'series' },
   fields: {
     x: { kind: 'column', role: 'x', required: true, desc: 'Column for the ordered steps (rounds, years, dates). Numbers and dates are sorted; categories keep the data order.' },
     series: { kind: 'column', role: 'any', desc: 'Column naming the series (long-form data). Not needed when `y` lists several columns.' },

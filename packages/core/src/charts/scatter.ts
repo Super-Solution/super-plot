@@ -15,7 +15,7 @@ import { formatter, lead } from './shared.js'
 import { loess } from '../util/loess.js'
 import { intervalCheck, intervalFields, intervalText, logDomain, logNonPositive, refuseLog, scaleField } from './extras.js'
 
-interface P { x: number; y: number; s: string; size: number | null; name: string | null; ylo?: number; yhi?: number; xlo?: number; xhi?: number }
+interface P { row: Record<string, unknown>; x: number; y: number; s: string; size: number | null; name: string | null; ylo?: number; yhi?: number; xlo?: number; xhi?: number }
 
 /** `density: "auto"` switches to hexagons above this many visible points. */
 export const DENSITY_AUTO = 10_000
@@ -25,7 +25,7 @@ function hexbin(c: ChartCtx, pts: P[], xs: LinearScale, ys: LinearScale, plot: R
   const R = c.compact ? 6 : 7
   const dx = Math.sqrt(3) * R
   const dy = 1.5 * R
-  const bins = new Map<string, { i: number; j: number; n: number }>()
+  const bins = new Map<string, { i: number; j: number; n: number; rows: P['row'][] }>()
   for (const p of pts) {
     const px = xs.at(p.x) - plot.x
     const py = ys.at(p.y) - plot.y
@@ -47,8 +47,10 @@ function hexbin(c: ChartCtx, pts: P[], xs: LinearScale, ys: LinearScale, plot: R
     }
     const key = `${pi},${pj}`
     const b = bins.get(key)
-    if (b) b.n++
-    else bins.set(key, { i: pi, j: pj, n: 1 })
+    if (b) {
+      b.n++
+      b.rows.push(p.row)
+    } else bins.set(key, { i: pi, j: pj, n: 1, rows: [p.row] })
   }
   const max = Math.max(1, ...[...bins.values()].map(b => b.n))
   const low = tokenValue(c.theme, 'seq-low')
@@ -65,7 +67,7 @@ function hexbin(c: ChartCtx, pts: P[], xs: LinearScale, ys: LinearScale, plot: R
     const x0 = xs.invert(cx - dx / 2), x1 = xs.invert(cx + dx / 2)
     const y0 = ys.invert(cy + R), y1 = ys.invert(cy - R)
     const fill = color(b.n)
-    c.marks.push({ type: 'path', role: 'data', d, fill, clip: 'plot', anim: 'fade', tip: { title: c.t(b.n === 1 ? 'pointCountOne' : 'pointCount', { n: count.format(b.n) }), rows: [{ label: String(c.spec.x), value: `${fmt(x0)} – ${fmt(x1)}` }, { label: String(c.spec.y), value: `${fmt(y0)} – ${fmt(y1)}` }] }, aria: c.t('binNearAria', { n: count.format(b.n), x: String(c.spec.x), xValue: fmt((x0 + x1) / 2), y: String(c.spec.y), yValue: fmt((y0 + y1) / 2) }), datum: { count: b.n, x: [x0, x1], y: [y0, y1] } })
+    c.marks.push({ type: 'path', role: 'data', d, fill, clip: 'plot', anim: 'fade', tip: { title: c.t(b.n === 1 ? 'pointCountOne' : 'pointCount', { n: count.format(b.n) }), rows: [{ label: String(c.spec.x), value: `${fmt(x0)} – ${fmt(x1)}` }, { label: String(c.spec.y), value: `${fmt(y0)} – ${fmt(y1)}` }] }, aria: c.t('binNearAria', { n: count.format(b.n), x: String(c.spec.x), xValue: fmt((x0 + x1) / 2), y: String(c.spec.y), yValue: fmt((y0 + y1) / 2) }), datum: { count: b.n, x: [x0, x1], y: [y0, y1] }, rows: c.rowsOf(b.rows) })
   }
   if (rampW) {
     const x = plot.x + plot.w + 22
@@ -91,7 +93,7 @@ function points(spec: Record<string, any>): { pts: P[]; kind: 'linear' | 'time' 
     const x = kind === 'time' ? toTime(r[spec.x]) : toNumber(r[spec.x])
     const y = toNumber(r[spec.y])
     if (x === null || y === null || (logX && !(x > 0)) || (logY && !(y > 0))) continue
-    const p: P = { x, y, s: spec.series ? String(r[spec.series] ?? '') : String(spec.y), size: spec.size ? toNumber(r[spec.size]) : null, name: spec.label ? String(r[spec.label] ?? '') : null }
+    const p: P = { row: r, x, y, s: spec.series ? String(r[spec.series] ?? '') : String(spec.y), size: spec.size ? toNumber(r[spec.size]) : null, name: spec.label ? String(r[spec.label] ?? '') : null }
     if (yi) {
       const a = toNumber(r[spec.yLower])
       const b = toNumber(r[spec.yUpper])
@@ -182,19 +184,20 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
       ...(s.size && p.size !== null ? [{ label: String(s.size), value: fmt(p.size), color: undefined as unknown as string }] : [])
     ]
     const tip = { title: clip(p.name ?? (keys.length > 1 ? series[si].label : ''), 60) || undefined, rows }
+    const own = c.rowsOf([p.row])
     const datum = { x: p.x, y: p.y, series: p.s, ...(p.ylo !== undefined ? { yLower: p.ylo, yUpper: p.yhi } : {}), ...(p.xlo !== undefined ? { xLower: p.xlo, xUpper: p.xhi } : {}) }
     if (p.ylo !== undefined) {
       const y0 = yPx(p.ylo), y1 = yPx(p.yhi!)
-      bars.push({ type: 'line', role: 'data', series: p.s, x1: cx, x2: cx, y1: y0, y2: y1, stroke: color, strokeWidth: 1.25, anim: 'fade' })
-      for (const [v, e] of [[p.ylo, y0], [p.yhi!, y1]] as const) if (!logY || v > 0) bars.push({ type: 'line', role: 'data', series: p.s, x1: cx - cap, x2: cx + cap, y1: e, y2: e, stroke: color, strokeWidth: 1.25, anim: 'fade' })
+      bars.push({ type: 'line', role: 'data', series: p.s, x1: cx, x2: cx, y1: y0, y2: y1, stroke: color, strokeWidth: 1.25, anim: 'fade', rows: own })
+      for (const [v, e] of [[p.ylo, y0], [p.yhi!, y1]] as const) if (!logY || v > 0) bars.push({ type: 'line', role: 'data', series: p.s, x1: cx - cap, x2: cx + cap, y1: e, y2: e, stroke: color, strokeWidth: 1.25, anim: 'fade', rows: own })
     }
     if (p.xlo !== undefined) {
       const x0 = xPx(p.xlo), x1 = xPx(p.xhi!)
-      bars.push({ type: 'line', role: 'data', series: p.s, x1: x0, x2: x1, y1: cy, y2: cy, stroke: color, strokeWidth: 1.25, anim: 'fade' })
-      for (const [v, e] of [[p.xlo, x0], [p.xhi!, x1]] as const) if (!logX || v > 0) bars.push({ type: 'line', role: 'data', series: p.s, x1: e, x2: e, y1: cy - cap, y2: cy + cap, stroke: color, strokeWidth: 1.25, anim: 'fade' })
+      bars.push({ type: 'line', role: 'data', series: p.s, x1: x0, x2: x1, y1: cy, y2: cy, stroke: color, strokeWidth: 1.25, anim: 'fade', rows: own })
+      for (const [v, e] of [[p.xlo, x0], [p.xhi!, x1]] as const) if (!logX || v > 0) bars.push({ type: 'line', role: 'data', series: p.s, x1: e, x2: e, y1: cy - cap, y2: cy + cap, stroke: color, strokeWidth: 1.25, anim: 'fade', rows: own })
     }
-    dots.push({ type: 'circle', role: 'data', series: p.s, cx, cy, r, fill: color, opacity: dense && p.size === null ? (n > 20000 ? 0.5 : 0.6) : p.size !== null || show.length > 200 ? 0.62 : 0.85, ...(dense && p.size === null ? {} : { stroke: c.c('background'), strokeWidth: 1.5 }), tip, ...(withAria ? { aria: `${p.name ?? ''} ${s.x} ${xfmt(p.x)}${xInt}, ${s.y} ${fmt(p.y)}${yInt}`.trim() } : {}), anim: 'fade', datum })
-    if (hitOk && r < 8) hits.push({ type: 'circle', role: 'hit', series: p.s, cx, cy, r: 10, fill: 'transparent', tip, datum })
+    dots.push({ type: 'circle', role: 'data', series: p.s, cx, cy, r, fill: color, opacity: dense && p.size === null ? (n > 20000 ? 0.5 : 0.6) : p.size !== null || show.length > 200 ? 0.62 : 0.85, ...(dense && p.size === null ? {} : { stroke: c.c('background'), strokeWidth: 1.5 }), tip, ...(withAria ? { aria: `${p.name ?? ''} ${s.x} ${xfmt(p.x)}${xInt}, ${s.y} ${fmt(p.y)}${yInt}`.trim() } : {}), anim: 'fade', datum, rows: own })
+    if (hitOk && r < 8) hits.push({ type: 'circle', role: 'hit', series: p.s, cx, cy, r: 10, fill: 'transparent', tip, datum, rows: own })
   }
   const trend: Mark[] = []
   // Fits run in the axes' own space (log10 on a log axis), so the drawn curve is the fit of what is shown.
@@ -233,6 +236,7 @@ export const scatter: ChartDef = {
   summary: 'Plots each row as a point by two numbers to show relationships, clusters and outliers; optional bubble size and trend line.',
   useWhen: 'Asking whether two measures move together, or finding outliers. Add `size` for a third measure (bubble), `series` for groups, `trend: "linear"` for the fit. Not for ordered time series (use line) or part-to-whole.',
   cartesian: true,
+  ref: { x: ['x'], y: ['y'], series: 'series' },
   fields: {
     x: { kind: 'column', role: 'x', required: true, desc: 'Numeric (or date) column for the horizontal position.' },
     y: { kind: 'column', role: 'number', required: true, desc: 'Numeric column for the vertical position.' },

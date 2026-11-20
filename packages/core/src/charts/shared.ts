@@ -78,10 +78,27 @@ export function seqLegend(c: ChartCtx, x: number, y0: number, h: number, lo: num
   c.marks.push(c.text(x + 18, y0 + h - 4, c.format(lo), { role: 'legend', baseline: 'middle', size: c.size - 1 }))
 }
 
-/** The labelled point annotations, as one sentence for the description ("" when there are none). */
+const BY_ASSISTANT = ' (added by the assistant)'
+
+/**
+ * The annotations, for the description ("" when there is nothing to say): one sentence for the labelled points
+ * ("Marked: ..."), each one an assistant added (`by: "assistant"`) said so; and one for the reference lines and
+ * bands an assistant added ("The assistant marked ..."), since a reader must know which marks are not the author's.
+ * At most five of each are named.
+ */
 export function pointNotes(spec: Record<string, any>): string {
-  const pts = ((spec.annotations ?? []) as Record<string, unknown>[]).filter(a => !('axis' in a) && typeof a.label === 'string')
-  if (!pts.length) return ''
-  const list = pts.slice(0, 5).map(a => `"${clip(String(a.label), 40)}" at ${clip(String(a.x), 30)}, ${clip(String(a.y), 30)}`)
-  return ` Marked: ${list.join('; ')}${pts.length > 5 ? ` and ${pts.length - 5} more` : ''}.`
+  const all = (spec.annotations ?? []) as Record<string, unknown>[]
+  const pts = all.filter(a => !('axis' in a) && typeof a.label === 'string')
+  const more = (n: number): string => (n > 5 ? ` and ${n - 5} more` : '')
+  let out = ''
+  if (pts.length) {
+    const list = pts.slice(0, 5).map(a => `"${clip(String(a.label), 40)}" at ${clip(String(a.x), 30)}, ${clip(String(a.y), 30)}${a.by === 'assistant' ? BY_ASSISTANT : ''}`)
+    out += ` Marked: ${list.join('; ')}${more(pts.length)}.`
+  }
+  const lines = all.filter(a => 'axis' in a && a.by === 'assistant')
+  if (lines.length) {
+    const list = lines.slice(0, 5).map(a => `${typeof a.label === 'string' && a.label ? `"${clip(a.label, 40)}" at ` : ''}${String(a.axis)} ${clip(String(a.value), 30)}${a.to !== undefined ? ` to ${clip(String(a.to), 30)}` : ''}`)
+    out += ` The assistant marked ${list.join('; ')}${more(lines.length)}.`
+  }
+  return out
 }

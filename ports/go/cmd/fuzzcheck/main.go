@@ -49,6 +49,7 @@ func main() {
 			Describe   *string         `json:"describe"`
 			Rows       []any           `json:"rows"` // what the chart reads after transform; absent without one
 		} `json:"specs"`
+		Refs [][]json.RawMessage `json:"refs"` // [spec index, ref, hidden or null, what resolveRef answered]
 	}
 	b, err := os.ReadFile(os.Args[1])
 	if err == nil {
@@ -221,7 +222,25 @@ func main() {
 			}
 		}
 	}
-	fmt.Printf("go: %d numeric cases, %d specs, %d mismatches\n", len(d.Out)+len(d.Ticks)+len(d.Bins)+len(d.Buckets)+len(d.Logs)+len(d.Densities)+len(d.Fits)+len(d.BinSteps)+len(d.Waffles)+len(d.Durations)+len(d.Exacts)+len(d.Clouds), len(d.Specs), bad)
+	for _, c := range d.Refs {
+		var i int
+		var ref string
+		var hidden []string
+		var want any
+		for j, into := range []any{&i, &ref, &hidden, &want} {
+			if err := json.Unmarshal(c[j], into); err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				os.Exit(2)
+			}
+		}
+		gb, _ := json.Marshal(sp.ResolveRef([]byte(d.Specs[i].Spec), ref, hidden))
+		var got any
+		_ = json.Unmarshal(gb, &got)
+		if !reflect.DeepEqual(got, want) {
+			report("REF", i, ref, hidden, string(gb), string(c[3]))
+		}
+	}
+	fmt.Printf("go: %d numeric cases, %d specs, %d refs, %d mismatches\n", len(d.Out)+len(d.Ticks)+len(d.Bins)+len(d.Buckets)+len(d.Logs)+len(d.Densities)+len(d.Fits)+len(d.BinSteps)+len(d.Waffles)+len(d.Durations)+len(d.Exacts)+len(d.Clouds), len(d.Specs), len(d.Refs), bad)
 	if bad > 0 {
 		os.Exit(1)
 	}

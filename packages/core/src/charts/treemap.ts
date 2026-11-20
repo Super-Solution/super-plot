@@ -14,7 +14,7 @@ import type { HierarchyNode } from './sunburst.js'
 
 const MAX_TILES = 150
 
-interface Tile { label: string; group: string; value: number }
+interface Tile { label: string; group: string; value: number; rows?: Record<string, unknown>[] }
 interface Box { x: number; y: number; w: number; h: number }
 
 function tiles(spec: Record<string, any>): Tile[] {
@@ -26,8 +26,10 @@ function tiles(spec: Record<string, any>): Tile[] {
     const label = String(r[spec.label] ?? '')
     const k = `${group}\u0000${label}`
     const t = sums.get(k)
-    if (t) t.value += v
-    else sums.set(k, { label, group, value: v })
+    if (t) {
+      t.value += v
+      t.rows!.push(r)
+    } else sums.set(k, { label, group, value: v, rows: [r] })
   }
   return [...sums.values()]
 }
@@ -104,7 +106,7 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
   if (all.length > MAX_TILES) {
     const keep = [...all].sort((a, b) => b.value - a.value)
     const rest = keep.slice(MAX_TILES - 1)
-    all = [...keep.slice(0, MAX_TILES - 1), { label: c.t('other'), group: s.group ? c.t('other') : '', value: rest.reduce((q, t) => q + t.value, 0) }]
+    all = [...keep.slice(0, MAX_TILES - 1), { label: c.t('other'), group: s.group ? c.t('other') : '', value: rest.reduce((q, t) => q + t.value, 0), rows: rest.flatMap(t => t.rows ?? []) }]
     c.warn('many_tiles', 'data', `More than ${MAX_TILES} tiles: the smallest were merged into "Other".`)
   }
   // Colours come from the whole tree's groups, so a focused group keeps its colour.
@@ -129,6 +131,7 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
       type: 'rect', role: 'data', series: grouped ? t.group : undefined, x: b.x + gap / 2, y: b.y + gap / 2, w, h, r: Math.min(3, w / 4, h / 4), fill, anim: 'fade',
       tip: { title: clip(t.label, 60), rows: [...(grouped ? [{ label: String(s.group), value: clip(t.group, 40) }] : []), { label: String(s.value), value: fmt(t.value), color: fill }, { label: c.t('share'), value: formatPercent(share, c.locale) }] },
       aria: `${t.label}${grouped ? ` (${t.group})` : ''}: ${fmt(t.value)}, ${formatPercent(share, c.locale)}`, datum: { label: t.label, group: grouped ? t.group : undefined, value: t.value },
+      rows: c.rowsOf(t.rows ?? []),
       // A tile stands for its group when drilling down.
       ...(grouped && !focus ? { drill: [t.group] } : {})
     })
@@ -168,6 +171,7 @@ export const treemap: ChartDef = {
   summary: 'Shows parts of a whole as nested rectangles whose area is the value; an optional group splits it into coloured blocks.',
   useWhen: 'Many parts (10-100) of one whole where size ranking matters more than exact values, with an optional one-level grouping (sector > company, region > product). Not for few parts (use a bar or pie) or for values that can be negative.',
   cartesian: false,
+  ref: { x: ['label'], y: ['value'], series: 'group' },
   fields: {
     label: { kind: 'column', role: 'any', required: true, desc: 'Column naming each tile.' },
     value: { kind: 'column', role: 'number', required: true, desc: 'Numeric column giving each tile\'s area. Rows with the same group and label are summed; zero and negative values are skipped.' },

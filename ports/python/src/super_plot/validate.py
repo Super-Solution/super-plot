@@ -15,7 +15,7 @@ from importlib import resources
 from typing import Any
 
 from ._js import clip as _clip  # noqa: F401  (re-exported for symmetry with the reference)
-from ._js import is_finite_number, is_number, js_string, to_number, ulen, uslice
+from ._js import is_finite_number, is_number, js_string, key_string, to_number, ulen, uslice
 from .charts import CHECKS as _CHECKS, DESCRIBE as _DESCRIBE, MAP_CHECKS, point_notes
 from .charts_more import CHECKS_MORE, DESCRIBE_MORE
 from .geo import CAMERA_RANGE, Geography, js_trim, resolve_geo
@@ -31,8 +31,9 @@ LIMITS: dict[str, int] = _DEFS["limits"]
 CHECKS = {**_CHECKS, **CHECKS_MORE}
 DESCRIBE = {**_DESCRIBE, **DESCRIBE_MORE}
 _CHARTS: dict[str, dict[str, dict[str, Any]]] = {c["type"]: {f["name"]: f for f in c["fields"]} for c in _DEFS["charts"]}
-_ANNOTATION_KEYS = ["axis", "value", "to", "label", "tone"]
-_POINT_ANNOTATION_KEYS = ["x", "y", "label", "tone"]
+_ANNOTATION_KEYS = ["axis", "value", "to", "label", "tone", "key", "note", "by"]
+_POINT_ANNOTATION_KEYS = ["x", "y", "label", "tone", "key", "note", "by"]
+_ANNOTATION_BY = ["author", "assistant"]
 _TONES = ["neutral", "positive", "negative", "warning", "info"]
 _HEX = re.compile(r"#(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})", re.I)
 _FUNC = re.compile(r"(?:rgb|rgba|hsl|hsla)\(\s*[0-9.%\s,/-]+\)", re.I)
@@ -263,6 +264,7 @@ def _annotations(name: str, value: Any, issues: list) -> Any:
     if len(value) > LIMITS["maxAnnotations"]:
         return _add(issues, "error", "too_many", name, f"At most {LIMITS['maxAnnotations']} annotations.")
     out: list[dict[str, Any]] = []
+    keys0: set[str] = set()
     for i, a in enumerate(value):
         p = f"annotations[{i}]"
         if not isinstance(a, dict):
@@ -284,6 +286,30 @@ def _annotations(name: str, value: Any, issues: list) -> Any:
                 return False
             return True
 
+        def extra() -> dict[str, Any] | None:
+            # `key`, `note`, `by`: the same on both forms. Mirrors `extra` in schema.ts (the key counts once it is good).
+            kept: dict[str, Any] = {}
+            if "key" in a:
+                k = a["key"]
+                if not isinstance(k, str) or not js_trim(k) or ulen(k) > LIMITS["maxKey"]:
+                    _add(issues, "error", "bad_type", f"{p}.key", f"{p}.key must be a non-empty string of at most {LIMITS['maxKey']} characters.", 'A short stable id, e.g. "launch".')
+                    return None
+                if k in keys0:
+                    _add(issues, "error", "duplicate", f"{p}.key", f"{p}.key is used by another annotation.", "Keys name one annotation each.")
+                    return None
+                keys0.add(k)
+            if "by" in a and not (isinstance(a["by"], str) and a["by"] in _ANNOTATION_BY):
+                _add(issues, "error", "bad_enum", f"{p}.by", f"{p}.by must be one of {', '.join(_ANNOTATION_BY)}.")
+                return None
+            if "note" in a:
+                if not isinstance(a["note"], str):
+                    _add(issues, "error", "bad_type", f"{p}.note", f"{p}.note must be a string.")
+                    return None
+                if ulen(a["note"]) > LIMITS["maxNote"]:
+                    _add(issues, "warning", "string_truncated", f"{p}.note", f"{p}.note will be cut to {LIMITS['maxNote']} characters.")
+                    kept["note"] = uslice(a["note"], LIMITS["maxNote"])
+            return kept
+
         if point:
             wrong = False
             for k in ("x", "y"):
@@ -300,7 +326,10 @@ def _annotations(name: str, value: Any, issues: list) -> Any:
             if not isinstance(a.get("label"), str) or not js_trim(a["label"]):
                 _add(issues, "error", "missing_required", f"{p}.label", f'{p} is a point annotation and needs a short "label".', 'E.g. {"x":"2026-03-01","y":120,"label":"Launch"}.')
                 continue
-            out.append({**a, "label": uslice(a["label"], 80)})
+            more = extra()
+            if more is None:
+                continue
+            out.append({**a, "label": uslice(a["label"], 80), **more})
             continue
         if a.get("axis") not in ("x", "y") or not isinstance(a.get("axis"), str):
             _add(issues, "error", "bad_enum", f"{p}.axis", f'{p}.axis must be "x" or "y".', "For a labelled point, leave out axis and give x, y and label.")
@@ -309,7 +338,9 @@ def _annotations(name: str, value: Any, issues: list) -> Any:
         elif "to" in a and not (isinstance(a["to"], str) or is_number(a["to"])):
             _add(issues, "error", "bad_type", f"{p}.to", f"{p}.to must be a number or a string.")
         elif tone_and_label():
-            out.append({**a, **({"label": uslice(a["label"], 80)} if isinstance(a.get("label"), str) else {})})
+            more = extra()
+            if more is not None:
+                out.append({**a, **({"label": uslice(a["label"], 80)} if isinstance(a.get("label"), str) else {}), **more})
     return out
 
 
@@ -424,6 +455,8 @@ def validate_plot(spec: Any) -> Validation:
             out[key] = _default(d)
     if data_ok:
         out["data"] = data
+    if data_ok and isinstance(out.get("key"), str):
+        check_keys(data, out["key"], issues)
     if not any(i["severity"] == "error" for i in issues):
         if chart in CHECKS:
             CHECKS[chart](out, valid_rows, issues)
@@ -432,6 +465,26 @@ def validate_plot(spec: Any) -> Validation:
 
     ok = not any(i["severity"] == "error" for i in issues)
     return Validation(ok, issues, out if ok else None)
+
+
+def check_keys(rows: list[dict], column: str, issues: list) -> None:
+    """Warn when rows have no id in the `key` column, or repeat one. Mirrors `checkKeys` in validate.ts."""
+    seen: set[str] = set()
+    missing = repeated = 0
+    for r in rows:
+        v = r.get(column)
+        if v is None or v == "":
+            missing += 1
+            continue
+        k = key_string(v)
+        if k in seen:
+            repeated += 1
+        else:
+            seen.add(k)
+    if missing:
+        _add(issues, "warning", "key_missing", "key", f'{missing} of {len(rows)} rows have no "{column}" value; a reference cannot name them.', "Give every row an id, or pick another key column.")
+    if repeated:
+        _add(issues, "warning", "key_duplicate", "key", f'{repeated} rows repeat an id of "{column}"; a reference to that id matches every row that has it.', "Ids should be unique: pick a column that names one row each.")
 
 
 def require_valid(spec: Any) -> dict[str, Any]:

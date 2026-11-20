@@ -10,7 +10,7 @@ import { toNumber } from '../util/num.js'
 import { clip } from '../util/text.js'
 import { formatter, lead, fmtList } from './shared.js'
 
-interface Part { key: string; value: number; other?: boolean }
+interface Part { key: string; value: number; other?: boolean; merged?: string[] }
 
 /** Cell counts a waffle accepts: multiples of 10 from 50 to 400. */
 export const WAFFLE_CELLS = { min: 50, max: 400, step: 10 } as const
@@ -68,7 +68,7 @@ function parts(spec: Record<string, any>): { all: Part[]; order: string[]; skipp
     const keep = new Set([...all].sort((a, b) => b.value - a.value).slice(0, max - 1).map(p => p.key))
     const rest = all.filter(p => !keep.has(p.key))
     merged = rest.length
-    all = [...all.filter(p => keep.has(p.key)), { key: 'Other', value: rest.reduce((q, p) => q + p.value, 0), other: true }]
+    all = [...all.filter(p => keep.has(p.key)), { key: 'Other', value: rest.reduce((q, p) => q + p.value, 0), other: true, merged: rest.map(p => p.key) }]
   }
   return { all, order, skipped, merged }
 }
@@ -122,7 +122,8 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
       type: 'path', role: 'data', series: p.key, d, fill: info.color, anim: 'fade',
       tip: { title: clip(p.key, 60), rows: [{ label: String(s.value), value: c.format(p.value), color: info.color }, { label: 'Share', value: pct(p.value) }, { label: 'Cells', value: `${n} of ${cells}` }] },
       aria: `${p.key}: ${c.format(p.value)} (${pct(p.value)}), ${n} of ${cells} cells`,
-      datum: { label: p.key, value: p.value, cells: n, share: p.value / total }
+      datum: { label: p.key, value: p.value, cells: n, share: p.value / total },
+      rows: [...new Set((p.merged ?? [p.key]).flatMap(k => c.rowsBy([s.label], [k])))].sort((x, y) => x - y)
     })
   })
   return { series }
@@ -149,6 +150,7 @@ export const waffle: ChartDef = {
   summary: 'Shows each category\'s share of a whole as a count of squares in a fixed grid (100 by default, so one square is 1%).',
   useWhen: 'Few (2-8) parts of one whole when readers should be able to count the share ("37 in 100"), or to compare several wholes with `facet`. Easier to read exactly than a pie. Not for many parts (use a bar or treemap), negative values, or tiny shares under one cell.',
   cartesian: false,
+  ref: { x: ['label'], y: ['value'], legend: 'label' },
   fields: {
     label: { kind: 'column', role: 'any', required: true, desc: 'Column naming each category (as on a pie). Rows with the same label are summed.' },
     value: { kind: 'column', role: 'number', required: true, desc: 'Numeric column giving each category\'s size. Negatives are skipped.' },

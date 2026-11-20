@@ -59,6 +59,8 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
     c.marks.push(c.text(x, y + (sin > 0.5 ? c.size * 0.4 : sin < -0.5 ? -c.size * 0.2 : 0), fit(a, labelW, c.size, c.env.measure), { role: 'axis-label', anchor, baseline: 'middle', fill: c.c('text') }))
   })
 
+  const ys = Array.isArray(s.y) ? s.y : [s.y]
+  const seriesCol: string | undefined = ys.length > 1 || !s.series ? undefined : s.series
   for (const k of visible) {
     const info = series.find(x => x.key === k)!
     const vals = axes.map(a => m.get(a)?.get(k) ?? 0)
@@ -70,7 +72,8 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
       c.marks.push({
         type: 'circle', role: 'data', series: k, cx: r2(x), cy: r2(y), r: 3.5, fill: info.color, stroke: c.c('background'), strokeWidth: 1.5,
         tip: { title: clip(a, 60), rows: [{ label: clip(k, 40), value: c.format(vals[i]), color: info.color }] },
-        aria: `${a}, ${k}: ${c.format(vals[i])}`, datum: { axis: a, series: k, value: vals[i] }
+        aria: `${a}, ${k}: ${c.format(vals[i])}`, datum: { axis: a, series: k, value: vals[i] },
+        rows: c.rowsBy([s.x, seriesCol], [a, k])
       })
     })
   }
@@ -83,6 +86,7 @@ export const radar: ChartDef = {
   summary: 'Compares a few items across several measures on spokes around a centre; each item is a closed shape.',
   useWhen: 'Comparing 1-4 items across 4-10 measures that share one scale (skills, product scorecards). The shape is easy to read, exact values are not: use a bar chart when precision matters, and avoid it for measures on different scales or for many items.',
   cartesian: false,
+  ref: { x: ['x'], y: ['y'], series: 'series' },
   fields: {
     x: { kind: 'column', role: 'any', required: true, desc: 'Column naming each spoke (the measures). 3 to 16 distinct values.' },
     y: { kind: 'columns', role: 'number', required: true, desc: 'Numeric column for the distance along the spoke. Several columns give one shape per column (wide-form data).' },

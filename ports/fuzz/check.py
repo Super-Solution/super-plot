@@ -9,7 +9,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "python" / "src"))
 from super_plot import (  # noqa: E402
     bin_counts, bin_edges, box_stats, cloud_layout, density_peaks, describe_plot, format_value, kde, linear_ticks, loess, log_ticks, nice_domain,
-    nice_log_domain, silverman, time_bucket, transform_bin_edges, validate_plot, waffle_cells,
+    nice_log_domain, resolve_ref, silverman, time_bucket, transform_bin_edges, validate_plot, waffle_cells,
 )
 from super_plot.text import format_duration, format_exact  # noqa: E402
 
@@ -89,5 +89,9 @@ for i, c in enumerate(d["specs"]):
             problems.append(f"describe {describe_plot(c['spec'])!r} != {c['describe']!r}")
     if problems:
         report("SPEC", i, c["spec"]["type"], problems)
-print(f"python: {sum(len(d[k]) for k in d if k != 'specs')} numeric cases, {len(d['specs'])} specs, {bad} mismatches")
+for i, ref, hidden, want in d["refs"]:
+    got = resolve_ref(d["specs"][i]["spec"], ref, hidden)
+    if got != want:
+        report("REF", i, d["specs"][i]["spec"]["type"], ref, hidden, got, want)
+print(f"python: {sum(len(d[k]) for k in d if k not in ('specs', 'refs'))} numeric cases, {len(d['specs'])} specs, {len(d['refs'])} refs, {bad} mismatches")
 sys.exit(1 if bad else 0)

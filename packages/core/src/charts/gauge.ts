@@ -21,6 +21,8 @@ export interface GaugeItem {
   target: number | null
   /** Bands in order along the arc, from `min`; each ends at its column's threshold (sorted ascending). */
   bands: GaugeBand[]
+  /** The row it came from. */
+  row?: Record<string, unknown>
 }
 
 export interface GaugeScale {
@@ -72,7 +74,7 @@ export function gaugeItems(spec: Record<string, any>): { items: GaugeItem[]; ext
     const sorted = [...given].sort((a, b) => a[1] - b[1])
     // Tones follow the column order (worst first), not the sorted order, so a band keeps its meaning.
     const toneOf = new Map(names.map((n, j) => [n, order[j]]))
-    items.push({ key, value: toNumber(r[spec.value]), target: typeof spec.target === 'string' ? toNumber(r[spec.target]) : null, bands: [] })
+    items.push({ row: r, key, value: toNumber(r[spec.value]), target: typeof spec.target === 'string' ? toNumber(r[spec.target]) : null, bands: [] })
     let prev = -Infinity
     for (const [n, t] of sorted) {
       items[items.length - 1].bands.push({ name: n, from: prev, to: t, tone: toneOf.get(n) ?? 'warning' })
@@ -214,18 +216,19 @@ function compile(c: ChartCtx): { series: SeriesInfo[] } {
       const room = anchor === 'middle' ? Math.max(24, (b1 - b0) * R) : Math.max(24, cw / 2 - R - 6)
       marks.push(c.text(cx + (R + 4) * cos, cy + (R + 4) * sin, fit(clip(b.name, 16), room, small, c.env.measure), { role: 'label', size: small, anchor, baseline: sin < -0.25 ? 'alphabetic' : sin > 0.25 ? 'hanging' : 'middle', fill: c.c('text-muted') }))
     }
+    const rows = c.rowsOf(it.row ? [it.row] : [])
     // The value: a filled arc whose length is the value's share of the range, always from `min`.
     if (it.value !== null && !c.hidden.has(vKey)) {
       const av = at(it.value)
-      if (av > a0 + 1e-9) marks.push({ type: 'path', role: 'data', series: vKey, d: arc(cx, cy, inner, outer, a0, av), fill: vColor, anim: 'fade', datum: datumOf(it) })
+      if (av > a0 + 1e-9) marks.push({ type: 'path', role: 'data', series: vKey, d: arc(cx, cy, inner, outer, a0, av), fill: vColor, anim: 'fade', datum: datumOf(it), rows })
     }
     if (it.target !== null && tKey && !c.hidden.has(tKey)) {
       const ta = at(it.target)
-      marks.push({ type: 'line', role: 'data', series: tKey, x1: r2(cx + (inner - 3) * Math.cos(ta)), y1: r2(cy + (inner - 3) * Math.sin(ta)), x2: r2(cx + (outer + 3) * Math.cos(ta)), y2: r2(cy + (outer + 3) * Math.sin(ta)), stroke: tColor, strokeWidth: 3 })
+      marks.push({ type: 'line', role: 'data', series: tKey, x1: r2(cx + (inner - 3) * Math.cos(ta)), y1: r2(cy + (inner - 3) * Math.sin(ta)), x2: r2(cx + (outer + 3) * Math.cos(ta)), y2: r2(cy + (outer + 3) * Math.sin(ta)), stroke: tColor, strokeWidth: 3, rows })
     }
     // One transparent shape over the whole track carries the tooltip, the spoken name and the datum, so the
     // gauge answers hover and keyboard focus even when its value is at the minimum (no filled arc).
-    marks.push({ type: 'path', role: 'data', d: arc(cx, cy, inner, outer, a0, a1), fill: 'transparent', tip: tipOf(it), aria: ariaOf(it), datum: datumOf(it) })
+    marks.push({ type: 'path', role: 'data', d: arc(cx, cy, inner, outer, a0, a1), fill: 'transparent', tip: tipOf(it), aria: ariaOf(it), datum: datumOf(it), rows })
 
     // The number, printed truthfully even when the arc is clamped.
     const numberY = span <= Math.PI * 1.1 ? cy - big * 0.45 : cy
@@ -315,6 +318,7 @@ export const gauge: ChartDef = {
   summary: 'Shows one value (or up to six, one per row) as the filled length of an arc between a minimum and a maximum, with an optional target tick and named status bands.',
   useWhen: 'A single headline value against a known range or capacity (utilisation, a score out of 100), on a dashboard where the arc shape is expected. A stat tile reads faster for a lone number, and a one-row `bullet` chart compares a value with a target and ranges more precisely in less space; use a `bullet` or `bar` chart to compare more than a few measures. Always give `max`: a derived one only says "the top of the data".',
   cartesian: false,
+  ref: { x: ['label'], y: ['value'] },
   fields: {
     value: { kind: 'column', role: 'number', required: true, desc: 'Numeric column with the value of each gauge. A value outside `min`..`max` is clamped on the arc but printed as it is.' },
     label: { kind: 'column', role: 'any', desc: 'Column naming each gauge; required with more than one row (one gauge per row, at most 6, in data order).' },

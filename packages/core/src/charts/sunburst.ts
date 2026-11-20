@@ -138,6 +138,7 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
       tip: { title: clip(name, 80), rows },
       aria: `${n.path.join(' > ')}: ${fmt(n.value)}${d > 1 ? `, ${c.t('shareOfParentAria', { share: pct(shareParent), parent: n.path[n.path.length - 2] })}` : ''}, ${c.t('shareOfTotalAria', { share: pct(shareTotal) })}`,
       datum: { path: n.path, value: n.value, depth: d },
+      ...(n.other ? {} : { rows: c.rowsBy(levels.slice(0, n.path.length), n.path) }),
       ...(n.children.length ? { drill: n.path } : {})
     })
     if (s.labels !== false) {
@@ -198,6 +199,7 @@ export const sunburst: ChartDef = {
   summary: 'Shows a hierarchy as rings: the first level in the middle ring, each level outside it split by its share of the parent.',
   useWhen: 'Parts of a whole across 2 to 4 levels (region > country > city, department > team), when the nesting matters as much as the sizes. Ring area distorts comparisons; for exact sizes use a treemap or a bar chart. Not for values that can be negative.',
   cartesian: false,
+  ref: { x: ['path'], y: ['value'] },
   fields: {
     path: { kind: 'columns', role: 'any', min: 1, max: MAX_LEVELS, required: true, desc: `Columns that form the hierarchy, outermost group first, e.g. ["region","country","city"] (1 to ${MAX_LEVELS} levels). A row whose level is empty stops there and still counts toward its parents.` },
     value: { kind: 'column', role: 'number', required: true, desc: 'Numeric column giving each row\'s size. Rows on the same path are summed; zero and negative values are skipped.' },

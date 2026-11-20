@@ -54,24 +54,27 @@ export function checkPoints(spec: Record<string, any>, ctx: Pick<ValidateCtx, 'i
 }
 
 /** One dot per observation (`outliers` null) or per outlier; `spread(v)` is how far, in px either side of the centre, a dot may sit. */
-export function pointMarks(c: ChartCtx, o: { key: string; values: number[]; outliers: number[] | null; mid: number; at: (v: number) => number; horizontal: boolean; color: string; spread: (v: number) => number; column: string }): Mark[] {
+export function pointMarks(c: ChartCtx, o: { key: string; values: number[]; outliers: number[] | null; mid: number; at: (v: number) => number; horizontal: boolean; color: string; spread: (v: number) => number; column: string; rows?: Record<string, unknown>[] }): Mark[] {
   const fmt = c.format
   const out: Mark[] = []
+  // The row behind each value (`rows` is parallel to `values`); an outlier lists every row with its value.
+  const rowsOf = (v: number, i?: number): number[] => (!o.rows ? [] : i !== undefined ? c.rowsOf([o.rows[i]]) : c.rowsOf(o.rows.filter((_, j) => o.values[j] === v)))
   if (o.outliers) {
     for (const v of o.outliers) {
-      out.push({ type: 'circle', role: 'data', series: o.key, cx: o.horizontal ? o.at(v) : o.mid, cy: o.horizontal ? o.mid : o.at(v), r: 3.5, fill: c.c('background'), stroke: o.color, strokeWidth: 1.5, tip: { title: c.t('outlier', { name: clip(o.key, 40) }), rows: [{ label: o.column, value: fmt(v) }] }, aria: `${c.t('outlier', { name: o.key })} ${fmt(v)}`, datum: { group: o.key, value: v } })
+      out.push({ type: 'circle', role: 'data', series: o.key, cx: o.horizontal ? o.at(v) : o.mid, cy: o.horizontal ? o.mid : o.at(v), r: 3.5, fill: c.c('background'), stroke: o.color, strokeWidth: 1.5, tip: { title: c.t('outlier', { name: clip(o.key, 40) }), rows: [{ label: o.column, value: fmt(v) }] }, aria: `${c.t('outlier', { name: o.key })} ${fmt(v)}`, datum: { group: o.key, value: v }, rows: rowsOf(v) })
     }
     return out
   }
   o.values.forEach((v, i) => {
     const off = jitter(i) * 2 * o.spread(v)
     const p = o.at(v)
-    out.push({ type: 'circle', role: 'data', series: o.key, cx: o.horizontal ? p : o.mid + off, cy: o.horizontal ? o.mid + off : p, r: 2.5, fill: o.color, opacity: 0.55, tip: { title: clip(o.key, 40), rows: [{ label: o.column, value: fmt(v) }] }, aria: `${o.key} ${fmt(v)}`, datum: { group: o.key, value: v } })
+    out.push({ type: 'circle', role: 'data', series: o.key, cx: o.horizontal ? p : o.mid + off, cy: o.horizontal ? o.mid + off : p, r: 2.5, fill: o.color, opacity: 0.55, tip: { title: clip(o.key, 40), rows: [{ label: o.column, value: fmt(v) }] }, aria: `${o.key} ${fmt(v)}`, datum: { group: o.key, value: v }, rows: rowsOf(v, i) })
   })
   return out
 }
 
-export function groups(spec: Record<string, any>): Map<string, number[]> {
+/** Values by group, in row order; `rows`, when given, collects the row behind each value in the same order. */
+export function groups(spec: Record<string, any>, rows?: Map<string, Record<string, unknown>[]>): Map<string, number[]> {
   const g = new Map<string, number[]>()
   for (const r of spec.data as Record<string, unknown>[]) {
     const v = toNumber(r[spec.y])
@@ -80,13 +83,19 @@ export function groups(spec: Record<string, any>): Map<string, number[]> {
     let a = g.get(k)
     if (!a) g.set(k, (a = []))
     a.push(v)
+    if (rows) {
+      const l = rows.get(k)
+      if (l) l.push(r)
+      else rows.set(k, [r])
+    }
   }
   return g
 }
 
 function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
   const s = c.spec
-  const g = groups(s)
+  const src = new Map<string, Record<string, unknown>[]>()
+  const g = groups(s, src)
   const keys = [...g.keys()]
   const stats = new Map(keys.map(k => [k, boxStats(g.get(k)!)!]))
   const horizontal = s.orientation === 'horizontal'
@@ -131,7 +140,7 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
     out.push(seg(st.lowWhisker, st.lowWhisker, boxW * 0.25), seg(st.highWhisker, st.highWhisker, boxW * 0.25))
     out.push(rect(st.q1, st.q3, { fill: col, opacity: 0.22, stroke: col, strokeWidth: 1.5, r: 3, tip, aria: c.t('boxAria', { name: k, median: fmt(st.median), q1: fmt(st.q1), q3: fmt(st.q3) }), anim: horizontal ? 'x' : 'y', datum: { group: k, ...st } }))
     out.push(seg(st.median, st.median, boxW / 2, c.theme.lineWidth + 0.5))
-    if (showOut) out.push(...pointMarks(c, { key: k, values: g.get(k)!, outliers: mode === 'all' ? null : st.outliers, mid, at: P, horizontal, color: col, spread: () => boxW * 0.4, column: String(s.y) }))
+    if (showOut) out.push(...pointMarks(c, { key: k, values: g.get(k)!, outliers: mode === 'all' ? null : st.outliers, mid, at: P, horizontal, color: col, spread: () => boxW * 0.4, column: String(s.y), rows: src.get(k) }))
   }
   c.marks.push(...out, ...hits)
   return { series: [] }
@@ -143,6 +152,7 @@ export const box: ChartDef = {
   summary: 'Summarises the distribution of a number for each group: median, quartiles, whiskers and outliers.',
   useWhen: 'Comparing the spread and centre of one measure across many groups, where overlaid histograms would be too busy. Needs ~10+ values per group to be meaningful.',
   cartesian: true,
+  ref: { x: ['x'], y: ['y'], legend: 'x' },
   fields: {
     x: { kind: 'column', role: 'any', desc: 'Column that defines the groups (one box each). Omit for a single box.' },
     y: { kind: 'column', role: 'number', required: true, desc: 'Numeric column whose distribution is summarised.' },

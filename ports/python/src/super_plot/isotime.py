@@ -8,7 +8,7 @@ from typing import Any
 
 from ._js import is_number
 
-_ISO = re.compile(r"(\d{4})-(\d{2})(?:-(\d{2})(?:[T ](\d{2}):(\d{2})(?::(\d{2})(?:\.(\d+))?)?(Z|[+-]\d{2}:?\d{2})?)?)?")
+_ISO = re.compile(r"(\d{4})-(\d{2})(?:-(\d{2})(?:[T ](\d{2}):(\d{2})(?::(\d{2})(?:\.(\d+))?)?(Z|[+-]\d{2}:?\d{2})?)?)?", re.ASCII)
 
 
 def _days_from_civil(y: int, m: int, d: int) -> int:

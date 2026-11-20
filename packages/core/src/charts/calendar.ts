@@ -23,7 +23,7 @@ const DATE_ONLY = /^\s*\d{4}-\d{2}(?:-\d{2})?\s*$/
  * date or a numeric value are skipped. With a `timeZone` other than UTC an instant (a timestamp, or an ISO string
  * with a time) counts on its local day there; a date-only string is already a calendar day and keeps it.
  */
-export function calendarDays(rows: Record<string, unknown>[], x: string, value: string, timeZone = 'UTC'): Map<number, number> {
+export function calendarDays(rows: Record<string, unknown>[], x: string, value: string, timeZone = 'UTC', src?: Map<number, Record<string, unknown>[]>): Map<number, number> {
   const out = new Map<number, number>()
   for (const r of rows) {
     const raw = r[x]
@@ -32,6 +32,7 @@ export function calendarDays(rows: Record<string, unknown>[], x: string, value: 
     if (t === null || v === null) continue
     const d = Math.floor((typeof raw === 'string' && DATE_ONLY.test(raw) ? t : toWall(t, timeZone)) / DAY)
     out.set(d, (out.get(d) ?? 0) + v)
+    if (src) src.set(d, [...(src.get(d) ?? []), r])
   }
   return out
 }
@@ -43,7 +44,8 @@ function years(days: Map<number, number>): { all: number[]; shown: number[] } {
 
 function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
   const s = c.spec
-  const days = calendarDays(s.data, s.x, s.value, c.timeZone)
+  const src = new Map<number, Record<string, unknown>[]>()
+  const days = calendarDays(s.data, s.x, s.value, c.timeZone, src)
   const { shown } = years(days)
   const kept = [...days].filter(([d]) => shown.includes(yearOf(d)))
   const vals = kept.map(([, v]) => v)
@@ -126,7 +128,7 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
       c.marks.push({
         type: 'rect', role: 'data', x, y, w, h: w, r, fill, anim: 'fade',
         tip: { title: date, rows: [{ label: String(s.value), value: fmt(v), color: fill }, { label: c.t('weekday'), value: formatWeekday(d * DAY, 'long', c.locale) }] },
-        aria: `${date}: ${fmt(v)}`, datum: { date: iso(d), value: v }
+        aria: `${date}: ${fmt(v)}`, datum: { date: iso(d), value: v }, rows: c.rowsOf(src.get(d) ?? [])
       })
     }
     y0 = top + 7 * cell + gapY
@@ -149,6 +151,7 @@ export const calendar: ChartDef = {
   summary: 'One cell per day, weeks as columns and weekdays as rows, coloured by a number: a year of activity at a glance.',
   useWhen: 'Daily values over months or years where weekly rhythm and streaks matter (commits, sales per day, sleep, energy use). Days without data stay empty, distinct from zero. Not for a few weeks (use a bar or line chart) or more than 5 years.',
   cartesian: false,
+  ref: { x: ['x'], y: ['value'] },
   fields: {
     x: { kind: 'column', role: 'x', required: true, desc: 'Date column: ISO dates ("2026-03-14") or epoch milliseconds. A time of day is dropped and rows on the same day are summed. Instants (timestamps, ISO strings with a time) count on their day in the render time zone (UTC by default); date-only strings keep their date.' },
     value: { kind: 'column', role: 'number', required: true, desc: 'Numeric column giving each day\'s colour.' },

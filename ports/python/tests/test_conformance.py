@@ -14,9 +14,16 @@ from super_plot import (
     density_peaks, kde, loess, log_ticks, nice_log_domain, silverman, transform_bin_edges, waffle_cells,
     GeographyError, get_geography, match_region, register_geography, unregister_geography,
     apply_transform, time_bucket, cloud_layout,
+    parse_card_ref, format_card_ref, resolve_ref, date_period,
 )
 
 DATA = json.loads((Path(__file__).resolve().parents[3] / "conformance" / "plot.v1.json").read_text(encoding="utf-8"))
+# A copy of super-protocol's own card reference cases (`{"undefined": true}` stands for JavaScript undefined).
+CARD_REF = json.loads((Path(__file__).resolve().parents[3] / "conformance" / "card-ref.v1.json").read_text(encoding="utf-8"))
+
+
+def undefined(v):
+    return None if isinstance(v, dict) and v == {"undefined": True} else v
 
 
 def same(a, b, path="") -> None:
@@ -222,6 +229,25 @@ class Conformance(unittest.TestCase):
         with self.assertRaises(PlotSpecError) as cm:
             require_valid({"type": "bar", "x": "nope", "y": "v", "stak": 1, "data": [{"a": 1, "v": 1}]})
         self.assertGreaterEqual(len(cm.exception.issues), 2)
+
+    def test_card_ref_parse(self):
+        self.assertTrue(CARD_REF["card_ref_parse"])
+        for c in CARD_REF["card_ref_parse"]:
+            same(parse_card_ref(undefined(c["value"])), c["expect"], repr(c["value"]))
+
+    def test_card_ref_format(self):
+        self.assertTrue(CARD_REF["card_ref_format"])
+        for c in CARD_REF["card_ref_format"]:
+            same(format_card_ref(undefined(c["value"])), c["expect"], repr(c["value"]))
+
+    def test_date_periods(self):
+        for c in DATA["datePeriods"]:
+            same(date_period(c["in"]), c["out"], c["in"])
+
+    def test_ref_cases(self):
+        self.assertTrue(DATA["refCases"])
+        for c in DATA["refCases"]:
+            same(resolve_ref(c["spec"], c["ref"], c.get("hidden")), c["out"], c["name"])
 
 
 if __name__ == "__main__":

@@ -3,6 +3,7 @@
 import type { ChartCtx } from '../context.js'
 import type { ChartDef } from '../registry.js'
 import type { Mark, Tip } from '../scene.js'
+import type { Row } from '../schema.js'
 import { bandScale, linearScale, logScale, niceLinear, niceLog, type LinearScale } from '../scale.js'
 import { bandAxis, drawAnnotations, layoutCartesian, valueAxis, warnZoneDates, type Axis } from '../cartesian.js'
 import { detectXKind, distinct, observations, xKey, type XKind } from '../data.js'
@@ -76,10 +77,20 @@ function compileSeries(c: ChartCtx, area: boolean): { series: ReturnType<ChartCt
     if (!row) m.set(sk, (row = new Map()))
     row.set(k, (row.get(k) ?? 0) + v)
   }
+  // The rows behind each value (`Mark.rows`).
+  const rowsAt = new Map<string, Map<number | string, Row[]>>()
+  const keep = (sk: string, k: number | string, row: Row): void => {
+    let m = rowsAt.get(sk)
+    if (!m) rowsAt.set(sk, (m = new Map()))
+    const l = m.get(k)
+    if (l) l.push(row)
+    else m.set(k, [row])
+  }
   for (const o of obs) {
     const k = xKeyOf(o.x)
     if (k === null || o.y === null || (logY && !(o.y > 0))) continue
     addTo(val, o.s, k, o.y)
+    keep(o.s, k, o.row)
     if (band) {
       const a = toNumber(o.row[s.yLower])
       const b = toNumber(o.row[s.yUpper])
@@ -93,6 +104,7 @@ function compileSeries(c: ChartCtx, area: boolean): { series: ReturnType<ChartCt
     const k = xKeyOf(o.x)
     if (k === null || o.y === null || !rightSet.has(o.s)) continue
     addTo(val, o.s, k, o.y)
+    keep(o.s, k, o.row)
   }
   // `gaps: "zero"` draws a missing value as 0 (stacked areas always do).
   const valueAt = (k: string, x: number | string): number | undefined => val.get(k)?.get(x) ?? (gaps === 'zero' && !logY ? 0 : undefined)
@@ -255,6 +267,7 @@ function compileSeries(c: ChartCtx, area: boolean): { series: ReturnType<ChartCt
   // Areas: draw the first series first so later ones sit above.
   for (const k of draw) {
     const si = keys.indexOf(k)
+    const all = c.rowsOf([...(rowsAt.get(k)?.values() ?? [])].flat())
     const color = series[si].color
     if (band) {
       const bp = xs.map(x => {
@@ -265,7 +278,7 @@ function compileSeries(c: ChartCtx, area: boolean): { series: ReturnType<ChartCt
       for (const run of split(bp)) {
         const top: Pt[] = decimate(run.map(p => [p.px, p.y1] as Pt), plot.w)
         const bottom: Pt[] = decimate(run.map(p => [p.px, p.y as number] as Pt), plot.w)
-        bands.push({ type: 'path', role: 'data', series: k, d: run.length > 1 ? areaPath(top, bottom, curve) : `M${Math.round(run[0].px * 100) / 100} ${Math.round(run[0].y1 * 100) / 100}V${Math.round((run[0].y as number) * 100) / 100}`, fill: color, stroke: run.length > 1 ? undefined : color, strokeWidth: run.length > 1 ? undefined : 2, opacity: 0.14, anim: 'fade', ...(clipTo ? { clip: clipTo } : {}) })
+        bands.push({ type: 'path', role: 'data', series: k, d: run.length > 1 ? areaPath(top, bottom, curve) : `M${Math.round(run[0].px * 100) / 100} ${Math.round(run[0].y1 * 100) / 100}V${Math.round((run[0].y as number) * 100) / 100}`, fill: color, stroke: run.length > 1 ? undefined : color, strokeWidth: run.length > 1 ? undefined : 2, opacity: 0.14, anim: 'fade', rows: all, ...(clipTo ? { clip: clipTo } : {}) })
       }
     }
     const ks = scaleOf(k)
@@ -279,11 +292,11 @@ function compileSeries(c: ChartCtx, area: boolean): { series: ReturnType<ChartCt
       const top: Pt[] = decimate(run.map(p => [p.px, p.y as number] as Pt), plot.w)
       if (area) {
         const bottom: Pt[] = decimate(run.map(p => [p.px, stack !== 'none' ? p.y0! : ks.at(Math.max(ks.domain[0], Math.min(0, ks.domain[1])))] as Pt), plot.w)
-        marks.push({ type: 'path', role: 'data', series: k, d: areaPath(top, bottom, curve), fill: color, opacity: 0.16, anim: 'fade', ...(clipTo ? { clip: clipTo } : {}) })
+        marks.push({ type: 'path', role: 'data', series: k, d: areaPath(top, bottom, curve), fill: color, opacity: 0.16, anim: 'fade', rows: all, ...(clipTo ? { clip: clipTo } : {}) })
         // A stream graph's lowest layer floats too: outline its lower edge as well, or the shape reads lopsided.
-        if (stack === 'center' && k === draw[0]) marks.push({ type: 'path', role: 'data', series: k, d: curvePath(bottom, curve), stroke: color, strokeWidth: c.theme.lineWidth, anim: 'draw', ...(clipTo ? { clip: clipTo } : {}) })
+        if (stack === 'center' && k === draw[0]) marks.push({ type: 'path', role: 'data', series: k, d: curvePath(bottom, curve), stroke: color, strokeWidth: c.theme.lineWidth, anim: 'draw', rows: all, ...(clipTo ? { clip: clipTo } : {}) })
       }
-      marks.push({ type: 'path', role: 'data', series: k, d: curvePath(top, curve), stroke: color, strokeWidth: c.theme.lineWidth, anim: 'draw', ...(clipTo ? { clip: clipTo } : {}) })
+      marks.push({ type: 'path', role: 'data', series: k, d: curvePath(top, curve), stroke: color, strokeWidth: c.theme.lineWidth, anim: 'draw', rows: all, ...(clipTo ? { clip: clipTo } : {}) })
     }
     // Markers: every point when sparse, otherwise only the last one.
     const real = pts.filter(p => p.y !== null) as (Pnt & { y: number })[]
@@ -291,7 +304,7 @@ function compileSeries(c: ChartCtx, area: boolean): { series: ReturnType<ChartCt
     const show = s.points === true || (!dense && s.points !== false && !area) ? real : real.length && !area && s.points !== false ? [real[real.length - 1]] : []
     for (const p of show) {
       if (p.px < plot.x - 0.5 || p.px > plot.x + plot.w + 0.5 || p.y < plot.y - 0.5 || p.y > plot.y + plot.h + 0.5) continue
-      marks.push({ type: 'circle', role: 'data', series: k, cx: p.px, cy: p.y, r: 4, fill: color, stroke: c.c('background'), strokeWidth: 2, anim: 'fade' })
+      marks.push({ type: 'circle', role: 'data', series: k, cx: p.px, cy: p.y, r: 4, fill: color, stroke: c.c('background'), strokeWidth: 2, anim: 'fade', rows: c.rowsOf(rowsAt.get(k)?.get(p.xv) ?? []) })
     }
     // A value inside the cut of a broken axis sits in the gap: a dashed ring on top of the gap marks it.
     if (broken) for (const x of xs) {
@@ -328,9 +341,9 @@ function compileSeries(c: ChartCtx, area: boolean): { series: ReturnType<ChartCt
       const v = stack === 'none' ? valueAt(k, x) : val.get(k)?.get(x)
       if (v === undefined) return []
       const y = stack !== 'none' ? yScale.at(upper.get(k)!.get(x) ?? 0) : scaleOf(k).at(v)
-      return [{ x: cx[i], y, color: series[keys.indexOf(k)].color }]
+      return [{ x: cx[i], y, color: series[keys.indexOf(k)].color, series: k }]
     })
-    hits.push({ type: 'rect', role: 'hit', x: left, y: plot.y, w: Math.max(1, right - left), h: plot.h, fill: 'transparent', tip: { title: xTitle(x), rows }, guide: { x1: cx[i], y1: plot.y, x2: cx[i], y2: plot.y + plot.h }, focus, aria: `${xTitle(x)}: ${rows.map(r => `${r.label} ${r.value}`).join(', ')}`, datum: { x } })
+    hits.push({ type: 'rect', role: 'hit', x: left, y: plot.y, w: Math.max(1, right - left), h: plot.h, fill: 'transparent', tip: { title: xTitle(x), rows }, guide: { x1: cx[i], y1: plot.y, x2: cx[i], y2: plot.y + plot.h }, focus, aria: `${xTitle(x)}: ${rows.map(r => `${r.label} ${r.value}`).join(', ')}`, datum: { x }, rows: c.rowsOf(visible.flatMap(k => rowsAt.get(k)?.get(x) ?? [])) })
   })
   c.marks.push(...bands, ...marks, ...(broken ? drawBreak(c, plot, yScale, true) : []), ...cut, ...hits)
   return { series }
@@ -445,6 +458,7 @@ export const line: ChartDef = {
   summary: 'Shows how one or more numbers change along an ordered x axis, usually time.',
   useWhen: 'Trends over time or any ordered numeric x, up to ~8 series. Use area for cumulative or part-to-whole over time, bar for comparing separate categories, scatter when both axes are measurements. For prices (OHLC, indicators, drawings) use Super Chart.',
   cartesian: true,
+  ref: { x: ['x'], y: ['y'], extra: ['yRight'], series: 'series' },
   fields: {
     ...SERIES_FIELDS,
     points: { kind: 'boolean', desc: 'Force markers on (`true`) or off (`false`). Default: markers when there are few points, otherwise only the last point.' },
@@ -480,6 +494,7 @@ export const areaChart: ChartDef = {
   summary: 'A line chart with the area under it filled; stacked areas show how parts add up over time.',
   useWhen: 'Volume or cumulative quantity over time, and composition over time (`stack: "stack"` or `"normalize"`). Avoid overlapping unstacked areas for more than 2 series; use lines instead.',
   cartesian: true,
+  ref: { x: ['x'], y: ['y'], extra: ['yRight'], series: 'series' },
   fields: {
     ...SERIES_FIELDS,
     stack: { kind: 'enum', values: ['none', 'stack', 'normalize', 'center'], default: 'none', desc: '`stack` adds series on top of each other; `normalize` shows each series as a share of 100%; `center` is a stream graph: the stack is centred on a middle line (each x starts at minus half its total), so the outline shows how the total and its parts flow over time. A centred stack has no zero, so its value axis shows no ticks; the tooltip gives every value and the total.' },

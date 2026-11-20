@@ -101,6 +101,9 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
     }
   }
   const lollipop = s.mark === 'lollipop' && stack === 'none'
+  // The rows behind a bar: its category, and its series where a series column splits them (long form).
+  const ys = Array.isArray(s.y) ? s.y : [s.y]
+  const seriesCol: string | undefined = ys.length > 1 || !s.series ? undefined : s.series
 
   // Value extent.
   let lo = 0
@@ -268,9 +271,11 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
         const visTotal = visible.reduce((q, kk) => q + (row?.get(kk) ?? 0), 0)
         tipRows.push({ label: c.t('total'), value: fmt(visTotal), color: undefined as unknown as string })
       }
+      const rows = c.rowsBy([s.x, seriesCol], [cat, k])
       const common = {
         role: 'data' as const,
         series: k,
+        rows,
         fill: color,
         anim: (v < 0 ? 'fade' : horizontal ? 'x' : 'y') as 'x' | 'y' | 'fade',
         tip: { title: clip(cat, 60), rows: hidden ? tipRows.map(t => ({ ...t, value: c.t('inBreak', { value: t.value }) })) : tipRows },
@@ -290,8 +295,8 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
         // Stem from the baseline, dot at the value: the same length as the bar, far less ink.
         const dotR = Math.max(3, Math.min(6, barW / 2))
         bars.push(horizontal
-          ? { type: 'line', role: 'data', series: k, x1: p0, x2: p1, y1: mid, y2: mid, stroke: color, strokeWidth: 2, anim: 'x' }
-          : { type: 'line', role: 'data', series: k, x1: mid, x2: mid, y1: p0, y2: p1, stroke: color, strokeWidth: 2, anim: 'y' })
+          ? { type: 'line', role: 'data', series: k, rows, x1: p0, x2: p1, y1: mid, y2: mid, stroke: color, strokeWidth: 2, anim: 'x' }
+          : { type: 'line', role: 'data', series: k, rows, x1: mid, x2: mid, y1: p0, y2: p1, stroke: color, strokeWidth: 2, anim: 'y' })
         // A dot inside the cut is drawn hollow over it, so it is not hidden by the gap.
         if (hidden) cut.push({ type: 'circle', cx: horizontal ? p1 : mid, cy: horizontal ? mid : p1, r: dotR, ...common, fill: c.c('background'), stroke: color, strokeWidth: 2, anim: 'fade' })
         else bars.push({ type: 'circle', cx: horizontal ? p1 : mid, cy: horizontal ? mid : p1, r: dotR, stroke: c.c('background'), strokeWidth: 1.5, ...common, anim: 'fade' })
@@ -356,11 +361,11 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
       const v = lineVal.get(k)!.get(cat)
       return v === undefined ? [] : [{ cat, v, x: catScale.at(cat), y: sc.at(v) }]
     })
-    if (pts.length > 1) overlay.push({ type: 'path', role: 'data', series: k, d: pts.map((p, i) => `${i ? 'L' : 'M'}${Math.round(p.x * 100) / 100} ${Math.round(p.y * 100) / 100}`).join(''), stroke: color, strokeWidth: c.theme.lineWidth, anim: 'draw' })
+    if (pts.length > 1) overlay.push({ type: 'path', role: 'data', series: k, rows: c.rowsBy([], []), d: pts.map((p, i) => `${i ? 'L' : 'M'}${Math.round(p.x * 100) / 100} ${Math.round(p.y * 100) / 100}`).join(''), stroke: color, strokeWidth: c.theme.lineWidth, anim: 'draw' })
     for (const p of pts) {
       const hid = !right && inBreak(p.v)
       const value = hid ? c.t('inBreak', { value: f(p.v) }) : f(p.v)
-      ;(hid ? cut : overlay).push({ type: 'circle', role: 'data', series: k, cx: p.x, cy: p.y, r: 4, fill: hid ? c.c('background') : color, stroke: hid ? color : c.c('background'), strokeWidth: 2, anim: 'fade', tip: { title: clip(p.cat, 60), rows: [{ label: series[si].label, value, color }] }, aria: `${p.cat}, ${series[si].label}: ${value}`, datum: { x: p.cat, series: k, value: p.v } })
+      ;(hid ? cut : overlay).push({ type: 'circle', role: 'data', series: k, rows: c.rowsBy([s.x], [p.cat]), cx: p.x, cy: p.y, r: 4, fill: hid ? c.c('background') : color, stroke: hid ? color : c.c('background'), strokeWidth: 2, anim: 'fade', tip: { title: clip(p.cat, 60), rows: [{ label: series[si].label, value, color }] }, aria: `${p.cat}, ${series[si].label}: ${value}`, datum: { x: p.cat, series: k, value: p.v } })
     }
   })
   if (broken) c.marks.push(...bars, ...whiskers, ...overlay, ...drawBreak(c, plot, valueScale, !horizontal), ...cut, ...labels)
@@ -382,6 +387,7 @@ export const bar: ChartDef = {
   summary: 'Compares a number across categories with one bar per category (grouped, stacked or 100% stacked).',
   useWhen: 'Comparing sizes across a handful to a few dozen categories, or parts of a whole per category (stacked). Use a line for ordered time; use a histogram to show how one measure is distributed; avoid for more than ~40 categories.',
   cartesian: true,
+  ref: { x: ['x'], y: ['y'], extra: ['line', 'yRight'], series: 'series' },
   fields: {
     x: { kind: 'column', role: 'any', required: true, desc: 'Column holding the category of each bar.' },
     y: { kind: 'columns', role: 'number', required: true, desc: 'Numeric column for bar length. Several columns give one series per column (wide-form data).' },

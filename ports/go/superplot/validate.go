@@ -58,8 +58,9 @@ func (e *SpecError) Error() string {
 }
 
 var (
-	annotationKeys = []string{"axis", "value", "to", "label", "tone"}
-	pointKeys      = []string{"x", "y", "label", "tone"}
+	annotationKeys = []string{"axis", "value", "to", "label", "tone", "key", "note", "by"}
+	pointKeys      = []string{"x", "y", "label", "tone", "key", "note", "by"}
+	annotationBy   = []string{"author", "assistant"}
 	cameraKeys     = []string{"lng", "lat", "zoom", "pitch", "bearing"}
 	tones          = []string{"neutral", "positive", "negative", "warning", "info"}
 	hexRe          = regexp.MustCompile(`(?i)^#(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$`)
@@ -451,6 +452,7 @@ func validateAnnotations(name string, value any, issues *[]Issue) any {
 		return nil
 	}
 	out := []any{}
+	keys0 := map[string]bool{}
 	for i, item := range list {
 		p := fmt.Sprintf("annotations[%d]", i)
 		a, ok := item.(map[string]any)
@@ -485,13 +487,54 @@ func validateAnnotations(name string, value any, issues *[]Issue) any {
 			}
 			return true
 		}
+		// key, note, by: the same on both forms. Mirrors extra in schema.ts (the key counts once it is good).
+		extra := func() (map[string]any, bool) {
+			kept := map[string]any{}
+			if v, given := a["key"]; given {
+				k, isStr := v.(string)
+				if !isStr || jsTrim(k) == "" || ulen(k) > data.Limits["maxKey"] {
+					add(issues, "error", "bad_type", p+".key", fmt.Sprintf("%s.key must be a non-empty string of at most %d characters.", p, data.Limits["maxKey"]), `A short stable id, e.g. "launch".`)
+					return nil, false
+				}
+				if keys0[k] {
+					add(issues, "error", "duplicate", p+".key", p+".key is used by another annotation.", "Keys name one annotation each.")
+					return nil, false
+				}
+				keys0[k] = true
+			}
+			if v, given := a["by"]; given {
+				if b, isStr := v.(string); !isStr || !contains(annotationBy, b) {
+					add(issues, "error", "bad_enum", p+".by", p+".by must be one of "+strings.Join(annotationBy, ", ")+".")
+					return nil, false
+				}
+			}
+			if v, given := a["note"]; given {
+				n, isStr := v.(string)
+				if !isStr {
+					add(issues, "error", "bad_type", p+".note", p+".note must be a string.")
+					return nil, false
+				}
+				if ulen(n) > data.Limits["maxNote"] {
+					add(issues, "warning", "string_truncated", p+".note", fmt.Sprintf("%s.note will be cut to %d characters.", p, data.Limits["maxNote"]))
+					kept["note"] = uslice(n, data.Limits["maxNote"])
+				}
+			}
+			return kept, true
+		}
 		keep := func() {
+			more, good := extra()
+			if !good {
+				return
+			}
 			c := map[string]any{}
 			for k, v := range a {
 				c[k] = v
 			}
 			if s, ok := a["label"].(string); ok {
 				c["label"] = uslice(s, 80)
+			}
+			for k, v := range more {
+				c[k] = v
 			}
 			out = append(out, c)
 		}
@@ -732,6 +775,9 @@ func ValidatePlot(input any) Validation {
 	if dataOK {
 		out["data"] = rowsAny
 	}
+	if col, isStr := out["key"].(string); dataOK && isStr {
+		checkKeys(rows, col, &issues)
+	}
 	hasError := func() bool {
 		for _, i := range issues {
 			if i.Severity == "error" {
@@ -773,4 +819,29 @@ func DescribePlot(input any) (string, error) {
 		return d, nil
 	}
 	return describers[spec["type"].(string)](spec) + pointNotes(spec), nil
+}
+
+// checkKeys warns when rows have no id in the `key` column, or repeat one. Mirrors checkKeys in validate.ts.
+func checkKeys(rows []map[string]any, column string, issues *[]Issue) {
+	seen := map[string]bool{}
+	missing, repeated := 0, 0
+	for _, r := range rows {
+		v, present := r[column]
+		if s, isStr := v.(string); !present || v == nil || (isStr && s == "") {
+			missing++
+			continue
+		}
+		k := keyString(v)
+		if seen[k] {
+			repeated++
+		} else {
+			seen[k] = true
+		}
+	}
+	if missing > 0 {
+		add(issues, "warning", "key_missing", "key", fmt.Sprintf("%d of %d rows have no %q value; a reference cannot name them.", missing, len(rows), column), "Give every row an id, or pick another key column.")
+	}
+	if repeated > 0 {
+		add(issues, "warning", "key_duplicate", "key", fmt.Sprintf("%d rows repeat an id of %q; a reference to that id matches every row that has it.", repeated, column), "Ids should be unique: pick a column that names one row each.")
+	}
 }

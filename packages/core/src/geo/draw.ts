@@ -199,10 +199,10 @@ export function graticulePath(v: ViewParams): string {
 
 // ---- items ---------------------------------------------------------------------------------
 
-export interface RegionDraw extends Omit<GeoRegionItem, 'mark'> { tip?: Tip; aria?: string; datum?: unknown; series?: string; bbox: [number, number, number, number]; center: [number, number] }
-export interface PointDraw extends Omit<GeoPointItem, 'mark'> { tip?: Tip; aria?: string; datum?: unknown; series?: string }
-export interface ColumnDraw extends Omit<GeoColumnItem, 'mark'> { tip?: Tip; aria?: string; datum?: unknown; series?: string }
-export interface ArcDraw extends Omit<GeoArcItem, 'mark'> { tip?: Tip; aria?: string; datum?: unknown; series?: string }
+export interface RegionDraw extends Omit<GeoRegionItem, 'mark'> { tip?: Tip; aria?: string; datum?: unknown; rows?: number[]; series?: string; bbox: [number, number, number, number]; center: [number, number] }
+export interface PointDraw extends Omit<GeoPointItem, 'mark'> { tip?: Tip; aria?: string; datum?: unknown; rows?: number[]; series?: string }
+export interface ColumnDraw extends Omit<GeoColumnItem, 'mark'> { tip?: Tip; aria?: string; datum?: unknown; rows?: number[]; series?: string }
+export interface ArcDraw extends Omit<GeoArcItem, 'mark'> { tip?: Tip; aria?: string; datum?: unknown; rows?: number[]; series?: string }
 
 export interface GeoDraw {
   view: ViewParams
@@ -246,7 +246,7 @@ export function drawGeo(c: ChartCtx, g: GeoDraw): SceneGeo {
   raised.sort((a, b) => depth(a.center[0], a.center[1]) - depth(b.center[0], b.center[1]))
   for (const r of raised) {
     const walls = wallsPath(v, r.polygons, r.height)
-    if (walls) push({ type: 'path', role: 'data', d: walls, fill: shade(r.fill, 0.28), stroke: shade(r.fill, 0.4), strokeWidth: 0.5, series: r.series })
+    if (walls) push({ type: 'path', role: 'data', d: walls, fill: shade(r.fill, 0.28), stroke: shade(r.fill, 0.4), strokeWidth: 0.5, rows: r.rows, series: r.series })
     const d = regionPath(v, r.polygons, r.height, r.bbox)
     const mark = d ? push(regionMark(r, d)) : -1
     geo.regions.push(item(r, mark))
@@ -263,11 +263,11 @@ export function drawGeo(c: ChartCtx, g: GeoDraw): SceneGeo {
     const hw = col.width / 2
     let mark: number
     if (len < 1) {
-      mark = push({ type: 'circle', role: 'data', cx: base.x, cy: base.y, r: hw, fill: col.fill, tip: col.tip, aria: col.aria, datum: col.datum, series: col.series })
+      mark = push({ type: 'circle', role: 'data', cx: base.x, cy: base.y, r: hw, fill: col.fill, tip: col.tip, aria: col.aria, datum: col.datum, rows: col.rows, series: col.series })
     } else {
       const nx = (-dy / len) * hw, ny = (dx / len) * hw
       const d = `M${f(base.x + nx)} ${f(base.y + ny)}L${f(top.x + nx)} ${f(top.y + ny)}L${f(top.x - nx)} ${f(top.y - ny)}L${f(base.x - nx)} ${f(base.y - ny)}Z`
-      mark = push({ type: 'path', role: 'data', d, fill: col.fill, stroke: shade(col.fill, 0.25), strokeWidth: 0.5, tip: col.tip, aria: col.aria, datum: col.datum, series: col.series, anim: 'fade' })
+      mark = push({ type: 'path', role: 'data', d, fill: col.fill, stroke: shade(col.fill, 0.25), strokeWidth: 0.5, tip: col.tip, aria: col.aria, datum: col.datum, rows: col.rows, series: col.series, anim: 'fade' })
     }
     colMarks.set(col, mark)
   }
@@ -278,9 +278,9 @@ export function drawGeo(c: ChartCtx, g: GeoDraw): SceneGeo {
     const d = arcPath(v, a.from, a.to, a.height)
     let mark = -1
     if (d.d) {
-      push({ type: 'path', role: 'data', d: d.d, stroke: a.stroke, strokeWidth: a.width, opacity: a.opacity, series: a.series, anim: 'draw' })
+      push({ type: 'path', role: 'data', d: d.d, stroke: a.stroke, strokeWidth: a.width, opacity: a.opacity, rows: a.rows, series: a.series, anim: 'draw' })
       // The tooltip lives on a hit target at the top of the arc: an open stroke has no inside to hover.
-      if (d.apex) mark = push({ type: 'circle', role: 'data', cx: d.apex[0], cy: d.apex[1], r: Math.max(5, a.width + 3), fill: a.stroke, opacity: 0.001, tip: a.tip, aria: a.aria, datum: a.datum, series: a.series })
+      if (d.apex) mark = push({ type: 'circle', role: 'data', cx: d.apex[0], cy: d.apex[1], r: Math.max(5, a.width + 3), fill: a.stroke, opacity: 0.001, tip: a.tip, aria: a.aria, datum: a.datum, rows: a.rows, series: a.series })
     }
     geo.arcs.push({ from: a.from, to: a.to, height: a.height, width: a.width, stroke: a.stroke, opacity: a.opacity, mark })
   }
@@ -289,14 +289,14 @@ export function drawGeo(c: ChartCtx, g: GeoDraw): SceneGeo {
   for (const p of g.points) {
     const q = project(v, p.lng, p.lat)
     let mark = -1
-    if (q.visible && !(v.kind === 'globe' && q.z < 0)) mark = push({ type: 'circle', role: 'data', cx: q.x, cy: q.y, r: p.r, fill: p.fill, stroke: p.stroke, strokeWidth: p.stroke ? 1 : undefined, opacity: p.opacity, tip: p.tip, aria: p.aria, datum: p.datum, series: p.series, anim: 'fade' })
+    if (q.visible && !(v.kind === 'globe' && q.z < 0)) mark = push({ type: 'circle', role: 'data', cx: q.x, cy: q.y, r: p.r, fill: p.fill, stroke: p.stroke, strokeWidth: p.stroke ? 1 : undefined, opacity: p.opacity, tip: p.tip, aria: p.aria, datum: p.datum, rows: p.rows, series: p.series, anim: 'fade' })
     geo.points.push({ lng: p.lng, lat: p.lat, r: p.r, fill: p.fill, stroke: p.stroke, opacity: p.opacity, mark })
   }
   return geo
 }
 
 function regionMark(r: RegionDraw, d: string): PathMark {
-  return { type: 'path', role: r.tip ? 'data' : 'background', d, fill: r.fill, stroke: r.stroke, strokeWidth: r.strokeWidth, rule: 'evenodd', ...(r.dashed ? { dash: '3 2' } : {}), ...(r.tip ? { tip: r.tip, aria: r.aria, datum: r.datum, anim: 'fade' as const } : {}), ...(r.series !== undefined ? { series: r.series } : {}) }
+  return { type: 'path', role: r.tip ? 'data' : 'background', d, fill: r.fill, stroke: r.stroke, strokeWidth: r.strokeWidth, rule: 'evenodd', ...(r.dashed ? { dash: '3 2' } : {}), ...(r.tip ? { tip: r.tip, aria: r.aria, datum: r.datum, rows: r.rows, anim: 'fade' as const } : {}), ...(r.series !== undefined ? { series: r.series } : {}) }
 }
 
 function item(r: RegionDraw, mark: number): GeoRegionItem {

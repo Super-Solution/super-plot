@@ -65,7 +65,7 @@ export interface Issue {
   hint?: string
 }
 
-export const LIMITS = { maxRows: 50_000, maxString: 200, maxSeries: 8, maxAnnotations: 50, maxCategories: 500 }
+export const LIMITS = { maxRows: 50_000, maxString: 200, maxSeries: 8, maxAnnotations: 256, maxCategories: 500, maxKey: 128, maxNote: 2048 }
 
 /** Fields shared by every chart. */
 export const COMMON_FIELDS: FieldMap = {
@@ -80,21 +80,24 @@ export const COMMON_FIELDS: FieldMap = {
   format: { kind: 'format', desc: 'Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), fixed:N, currency:CODE.' },
   colors: { kind: 'colors', desc: 'Series (or slice/category) name to CSS colour, e.g. {"Revenue":"#2962FF"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours.' },
   transform: { kind: 'transform', desc: 'Data steps run before the chart reads its columns, in order (at most 10): filter, timeUnit, aggregate, sort, top, bin (round bins: start and end columns), window (running sum, mean, count, rank, pctChange, lag, lead, movingMean, per group, in a sort order), fold (wide columns to key/value rows) and index (rescale each group so its value at a base point is 100). No expressions. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output.' },
-  patterns: { kind: 'boolean', desc: 'Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print.' }
+  patterns: { kind: 'boolean', desc: 'Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print.' },
+  key: { kind: 'column', role: 'any', desc: 'Column that identifies each row (an id, read after `transform`). A reference names rows by it (`key=<id>`, see `resolveRef`); every row should have one, and each only once (`key_missing`, `key_duplicate` warnings).' }
 }
 
 /** Extra fields for charts on a pair of axes. */
 export const CARTESIAN_FIELDS: FieldMap = {
   xLabel: { kind: 'string', max: 80, desc: 'Title of the horizontal axis.' },
   yLabel: { kind: 'string', max: 80, desc: 'Title of the vertical axis (include the unit).' },
-  annotations: { kind: 'annotations', desc: 'Reference marks: {axis:"y", value:100, label:"Target"} draws a line; add `to` for a band. {x:"2026-03-01", y:120, label:"Launch"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date).' },
+  annotations: { kind: 'annotations', desc: 'Reference marks: {axis:"y", value:100, label:"Target"} draws a line; add `to` for a band. {x:"2026-03-01", y:120, label:"Launch"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date). Either form takes `key` (a stable id, unique in the list, so a reference can point at it: `key=launch`), `note` (a longer explanation, at most 2,048 characters, shown as the mark\'s tooltip) and `by` (`author`, the default, or `assistant`: added by an assistant, drawn with a mark before the label and said so in the description).' },
   facet: { kind: 'column', role: 'any', desc: 'Split into small multiples: one panel per value of this column (at most 12), sharing axes, colours and one legend.' },
   zoom: { kind: 'enum', values: ['none', 'x', 'xy'], desc: 'Default none. Let the viewer zoom and pan a continuous axis (web binding): Ctrl/⌘-scroll or pinch to zoom, drag to pan, double-click or 0 to reset. Scatter, line and area.' },
   brush: { kind: 'enum', values: ['none', 'x', 'xy'], desc: 'Default none. Let the viewer drag out a range to select (web binding). The selection comes back as a filter step, ready for `transform`. With `zoom` too, Shift-drag pans.' }
 }
 
-const ANNOTATION_KEYS = ['axis', 'value', 'to', 'label', 'tone']
-const POINT_ANNOTATION_KEYS = ['x', 'y', 'label', 'tone']
+const ANNOTATION_KEYS = ['axis', 'value', 'to', 'label', 'tone', 'key', 'note', 'by']
+const POINT_ANNOTATION_KEYS = ['x', 'y', 'label', 'tone', 'key', 'note', 'by']
+/** Who added an annotation (`by`): the spec's author, or an assistant (drawn with a mark, and said in the description). */
+export const ANNOTATION_BY = ['author', 'assistant'] as const
 export const CAMERA_KEYS = ['lng', 'lat', 'zoom', 'pitch', 'bearing'] as const
 const CAMERA_RANGE: Record<(typeof CAMERA_KEYS)[number], readonly [number, number]> = { lng: [-180, 180], lat: [-90, 90], zoom: CAMERA_LIMITS.zoom, pitch: CAMERA_LIMITS.pitch, bearing: CAMERA_LIMITS.bearing }
 const TONES = ['neutral', 'positive', 'negative', 'warning', 'info']
@@ -108,6 +111,8 @@ export interface ValidateCtx {
 const add = (ctx: ValidateCtx, severity: Issue['severity'], code: string, path: string, message: string, hint?: string): void => {
   ctx.issues.push({ severity, code, path, message, ...(hint ? { hint } : {}) })
 }
+
+const clipKey = (k: string): string => (k.length > 40 ? k.slice(0, 39) + '…' : k)
 
 const fmt = (v: unknown): string => {
   const s = typeof v === 'string' ? JSON.stringify(v) : JSON.stringify(v) ?? String(v)
@@ -179,6 +184,7 @@ export function validateField(name: string, def: FieldDef, value: unknown, ctx: 
       if (!Array.isArray(value)) return bad('bad_type', 'annotations must be an array.')
       if (value.length > LIMITS.maxAnnotations) return bad('too_many', `At most ${LIMITS.maxAnnotations} annotations.`)
       const out: unknown[] = []
+      const keys0 = new Set<string>()
       value.forEach((a, i) => {
         const p = `annotations[${i}]`
         if (!a || typeof a !== 'object' || Array.isArray(a)) return add(ctx, 'error', 'bad_type', p, `${p} must be an object.`)
@@ -197,6 +203,24 @@ export function validateField(name: string, def: FieldDef, value: unknown, ctx: 
           if (o.label !== undefined && typeof o.label !== 'string') { add(ctx, 'error', 'bad_type', `${p}.label`, `${p}.label must be a string.`); return false }
           return true
         }
+        // `key`, `note`, `by`: the same on both forms. Returns the fields to keep (note cut to its limit), or null.
+        const extra = (): Record<string, unknown> | null => {
+          const kept: Record<string, unknown> = {}
+          if (o.key !== undefined) {
+            if (typeof o.key !== 'string' || !o.key.trim() || o.key.length > LIMITS.maxKey) { add(ctx, 'error', 'bad_type', `${p}.key`, `${p}.key must be a non-empty string of at most ${LIMITS.maxKey} characters.`, 'A short stable id, e.g. "launch".'); return null }
+            if (keys0.has(o.key)) { add(ctx, 'error', 'duplicate', `${p}.key`, `${p}.key "${clipKey(o.key)}" is used by another annotation.`, 'Keys name one annotation each.'); return null }
+            keys0.add(o.key)
+          }
+          if (o.by !== undefined && !ANNOTATION_BY.includes(o.by as never)) { add(ctx, 'error', 'bad_enum', `${p}.by`, `${p}.by must be one of ${ANNOTATION_BY.join(', ')}.`); return null }
+          if (o.note !== undefined) {
+            if (typeof o.note !== 'string') { add(ctx, 'error', 'bad_type', `${p}.note`, `${p}.note must be a string.`); return null }
+            if (o.note.length > LIMITS.maxNote) {
+              add(ctx, 'warning', 'string_truncated', `${p}.note`, `${p}.note is ${o.note.length} characters; it will be cut to ${LIMITS.maxNote}.`)
+              kept.note = o.note.slice(0, LIMITS.maxNote)
+            }
+          }
+          return kept
+        }
         if (point) {
           for (const k of ['x', 'y'] as const) {
             if (o[k] === undefined) return add(ctx, 'error', 'missing_required', `${p}.${k}`, `${p} is a point annotation and needs "${k}".`, 'Give both x and y in the units of their axis: a category name, a number or an ISO date.')
@@ -204,14 +228,18 @@ export function validateField(name: string, def: FieldDef, value: unknown, ctx: 
           }
           if (!tone() || !label()) return
           if (typeof o.label !== 'string' || !o.label.trim()) return add(ctx, 'error', 'missing_required', `${p}.label`, `${p} is a point annotation and needs a short "label".`, 'E.g. {"x":"2026-03-01","y":120,"label":"Launch"}.')
-          out.push({ ...o, label: o.label.slice(0, 80) })
+          const more = extra()
+          if (!more) return
+          out.push({ ...o, label: o.label.slice(0, 80), ...more })
           return
         }
         if (o.axis !== 'x' && o.axis !== 'y') return add(ctx, 'error', 'bad_enum', `${p}.axis`, `${p}.axis must be "x" or "y".`, 'For a labelled point, leave out axis and give x, y and label.')
         if (!(typeof o.value === 'string' || typeof o.value === 'number')) return add(ctx, 'error', 'bad_type', `${p}.value`, `${p}.value must be a number or a string.`)
         if (o.to !== undefined && !(typeof o.to === 'string' || typeof o.to === 'number')) return add(ctx, 'error', 'bad_type', `${p}.to`, `${p}.to must be a number or a string.`)
         if (!tone() || !label()) return
-        out.push({ ...o, ...(typeof o.label === 'string' ? { label: o.label.slice(0, 80) } : {}) })
+        const more = extra()
+        if (!more) return
+        out.push({ ...o, ...(typeof o.label === 'string' ? { label: o.label.slice(0, 80) } : {}), ...more })
       })
       return out
     }
@@ -318,6 +346,12 @@ export function validateField(name: string, def: FieldDef, value: unknown, ctx: 
   }
 }
 
+const ANNOTATION_EXTRA = {
+  key: { type: 'string', minLength: 1, maxLength: LIMITS.maxKey, description: 'Stable id, unique among the annotations: a reference points at it (key=<id>).' },
+  note: { type: 'string', maxLength: LIMITS.maxNote, description: 'A longer explanation, shown as the tooltip of the mark.' },
+  by: { enum: [...ANNOTATION_BY], description: 'Who added it: author (default) or assistant (drawn with a mark, and said in the description).' }
+}
+
 /** Does this value, as the JSON Schema for one field. */
 export function fieldSchema(def: FieldDef): Record<string, unknown> {
   const d = def.desc
@@ -340,11 +374,11 @@ export function fieldSchema(def: FieldDef): Record<string, unknown> {
           oneOf: [
             {
               type: 'object', additionalProperties: false, required: ['axis', 'value'],
-              properties: { axis: { enum: ['x', 'y'] }, value: { type: ['number', 'string'] }, to: { type: ['number', 'string'] }, label: { type: 'string', maxLength: 80 }, tone: { enum: TONES } }
+              properties: { axis: { enum: ['x', 'y'] }, value: { type: ['number', 'string'] }, to: { type: ['number', 'string'] }, label: { type: 'string', maxLength: 80 }, tone: { enum: TONES }, ...ANNOTATION_EXTRA }
             },
             {
               type: 'object', additionalProperties: false, required: ['x', 'y', 'label'],
-              properties: { x: { type: ['number', 'string'] }, y: { type: ['number', 'string'] }, label: { type: 'string', minLength: 1, maxLength: 80 }, tone: { enum: TONES } }
+              properties: { x: { type: ['number', 'string'] }, y: { type: ['number', 'string'] }, label: { type: 'string', minLength: 1, maxLength: 80 }, tone: { enum: TONES }, ...ANNOTATION_EXTRA }
             }
           ]
         }

@@ -112,7 +112,7 @@ export function cloudLayout(words: readonly CloudWord[], width: number, height: 
   })
 }
 
-export interface CloudEntry { text: string; value: number; series: string | undefined }
+export interface CloudEntry { text: string; value: number; series: string | undefined; rows?: Row[] }
 
 /**
  * The words of a cloud: rows with the same `text` are summed (the first row's `series` names the word's group);
@@ -132,8 +132,10 @@ export function cloudWords(spec: Record<string, any>): { words: CloudEntry[]; to
       continue
     }
     const e = sums.get(text)
-    if (e) e.value += v
-    else sums.set(text, { text, value: v, series: typeof spec.series === 'string' ? String(r[spec.series] ?? '') : undefined })
+    if (e) {
+      e.value += v
+      e.rows?.push(r)
+    } else sums.set(text, { text, value: v, series: typeof spec.series === 'string' ? String(r[spec.series] ?? '') : undefined, rows: [r] })
   }
   const all = [...sums.values()].filter(e => e.value > 0)
   const ranked = all.map((e, i) => ({ e, i })).sort((a, b) => b.e.value - a.e.value || a.i - b.i).map(x => x.e)
@@ -203,10 +205,11 @@ function compile(c: ChartCtx): { series: SeriesInfo[] } {
     const tip = { title: clip(w.text, 60), rows }
     const aria = c.t('wordAria', { word: clip(w.text, 60), value: f(w.value), rank: i + 1, n }) + (grouped && key ? `, ${clip(key, 60)}` : '')
     const datum = { text: w.text, value: w.value, rank: i + 1, ...(grouped ? { series: key } : {}) }
+    const own = c.rowsOf(w.rows ?? [])
     const cx = area.x + b.x + b.w / 2
     const cy = area.y + b.y + b.h / 2
-    texts.push(c.text(cx, cy, w.text, { role: 'data', series: key, size: sizes[i], weight: 500, fill, anchor: 'middle', baseline: 'middle', ...(b.rotate ? { rotate: -90 } : {}), anim: 'fade', tip, aria, datum }))
-    hits.push({ type: 'rect', role: 'hit', x: area.x + b.x, y: area.y + b.y, w: b.w, h: b.h, fill: 'transparent', series: key, tip, aria, datum })
+    texts.push(c.text(cx, cy, w.text, { role: 'data', series: key, size: sizes[i], weight: 500, fill, anchor: 'middle', baseline: 'middle', ...(b.rotate ? { rotate: -90 } : {}), anim: 'fade', tip, aria, datum, rows: own }))
+    hits.push({ type: 'rect', role: 'hit', x: area.x + b.x, y: area.y + b.y, w: b.w, h: b.h, fill: 'transparent', series: key, tip, aria, datum, rows: own })
   })
   // Words in value order (the keyboard's order on SVG), then their hover boxes on top.
   c.marks.push(...texts, ...hits)
@@ -247,6 +250,7 @@ export const wordcloud: ChartDef = {
   summary: 'Shows words or short phrases sized by a value (a count, a weight), packed on a spiral with the largest in the middle.',
   useWhen: 'A first impression of which terms dominate a text or a set of tags, when the exact order matters less than the gist. Font size is a weak cue: long words look bigger than short ones of the same value and neighbours are hard to compare. To compare values, or for an audience that must read them, use a sorted horizontal bar chart (`type: "bar"`, `orientation: "horizontal"`, `sort: "desc"`).',
   cartesian: false,
+  ref: { x: ['text'], y: ['value'], series: 'series' },
   fields: {
     text: { kind: 'column', role: 'any', required: true, desc: 'Column holding each word or short phrase. Rows with the same text are summed.' },
     value: { kind: 'column', role: 'number', required: true, desc: 'Numeric column sizing each word (font size grows with its square root). Values at or below zero are left out. At most the 150 largest words are drawn.' },

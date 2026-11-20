@@ -27,9 +27,17 @@ export interface MarkBase {
   /** Guide line shown while a `hit` mark is hovered. */
   guide?: { x1: number; y1: number; x2: number; y2: number }
   /** Points to highlight while a `hit` mark is hovered (one per series at the hovered x). */
-  focus?: { x: number; y: number; color: string }[]
+  focus?: { x: number; y: number; color: string; series?: string }[]
   /** Free-form payload handed to `onSelect`: the source row(s) of this mark. */
   datum?: unknown
+  /**
+   * The rows this mark draws: indexes into the spec's data after `transform` (`validatePlot(spec).spec.data`), in
+   * order. A bar summed from three rows lists all three; a line lists every row of its series. References
+   * (`resolveRef`, `matchMarks`) and anything else that links data to pixels read it.
+   */
+  rows?: number[]
+  /** Annotations: the annotation's `key`, on each mark it draws. */
+  key?: string
   /**
    * Drill-down (treemap, sunburst): the `focus` path that activating this mark shows. On a data mark it is the
    * group itself (go down); on a breadcrumb item (`role: 'label'`, a transparent rect) an ancestor (go up).

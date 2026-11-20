@@ -4,8 +4,10 @@
     "maxRows": 50000,
     "maxString": 200,
     "maxSeries": 8,
-    "maxAnnotations": 50,
-    "maxCategories": 500
+    "maxAnnotations": 256,
+    "maxCategories": 500,
+    "maxKey": 128,
+    "maxNote": 2048
   },
   "geoLimits": {
     "maxRegions": 5000,
@@ -702,6 +704,19 @@
   "charts": [
     {
       "type": "bar",
+      "ref": {
+        "x": [
+          "x"
+        ],
+        "y": [
+          "y"
+        ],
+        "extra": [
+          "line",
+          "yRight"
+        ],
+        "series": "series"
+      },
       "fields": [
         {
           "name": "type",
@@ -784,6 +799,12 @@
           "desc": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
         },
         {
+          "name": "key",
+          "kind": "column",
+          "role": "any",
+          "desc": "Column that identifies each row (an id, read after `transform`). A reference names rows by it (`key=<id>`, see `resolveRef`); every row should have one, and each only once (`key_missing`, `key_duplicate` warnings)."
+        },
+        {
           "name": "xLabel",
           "kind": "string",
           "max": 80,
@@ -798,7 +819,7 @@
         {
           "name": "annotations",
           "kind": "annotations",
-          "desc": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date)."
+          "desc": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date). Either form takes `key` (a stable id, unique in the list, so a reference can point at it: `key=launch`), `note` (a longer explanation, at most 2,048 characters, shown as the mark's tooltip) and `by` (`author`, the default, or `assistant`: added by an assistant, drawn with a mark before the label and said so in the description)."
         },
         {
           "name": "facet",
@@ -956,6 +977,18 @@
     },
     {
       "type": "line",
+      "ref": {
+        "x": [
+          "x"
+        ],
+        "y": [
+          "y"
+        ],
+        "extra": [
+          "yRight"
+        ],
+        "series": "series"
+      },
       "fields": [
         {
           "name": "type",
@@ -1038,6 +1071,12 @@
           "desc": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
         },
         {
+          "name": "key",
+          "kind": "column",
+          "role": "any",
+          "desc": "Column that identifies each row (an id, read after `transform`). A reference names rows by it (`key=<id>`, see `resolveRef`); every row should have one, and each only once (`key_missing`, `key_duplicate` warnings)."
+        },
+        {
           "name": "xLabel",
           "kind": "string",
           "max": 80,
@@ -1052,7 +1091,7 @@
         {
           "name": "annotations",
           "kind": "annotations",
-          "desc": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date)."
+          "desc": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date). Either form takes `key` (a stable id, unique in the list, so a reference can point at it: `key=launch`), `note` (a longer explanation, at most 2,048 characters, shown as the mark's tooltip) and `by` (`author`, the default, or `assistant`: added by an assistant, drawn with a mark before the label and said so in the description)."
         },
         {
           "name": "facet",
@@ -1209,6 +1248,18 @@
     },
     {
       "type": "area",
+      "ref": {
+        "x": [
+          "x"
+        ],
+        "y": [
+          "y"
+        ],
+        "extra": [
+          "yRight"
+        ],
+        "series": "series"
+      },
       "fields": [
         {
           "name": "type",
@@ -1291,6 +1342,12 @@
           "desc": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
         },
         {
+          "name": "key",
+          "kind": "column",
+          "role": "any",
+          "desc": "Column that identifies each row (an id, read after `transform`). A reference names rows by it (`key=<id>`, see `resolveRef`); every row should have one, and each only once (`key_missing`, `key_duplicate` warnings)."
+        },
+        {
           "name": "xLabel",
           "kind": "string",
           "max": 80,
@@ -1305,7 +1362,7 @@
         {
           "name": "annotations",
           "kind": "annotations",
-          "desc": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date)."
+          "desc": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date). Either form takes `key` (a stable id, unique in the list, so a reference can point at it: `key=launch`), `note` (a longer explanation, at most 2,048 characters, shown as the mark's tooltip) and `by` (`author`, the default, or `assistant`: added by an assistant, drawn with a mark before the label and said so in the description)."
         },
         {
           "name": "facet",
@@ -1455,6 +1512,15 @@
     },
     {
       "type": "scatter",
+      "ref": {
+        "x": [
+          "x"
+        ],
+        "y": [
+          "y"
+        ],
+        "series": "series"
+      },
       "fields": [
         {
           "name": "type",
@@ -1537,6 +1603,12 @@
           "desc": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
         },
         {
+          "name": "key",
+          "kind": "column",
+          "role": "any",
+          "desc": "Column that identifies each row (an id, read after `transform`). A reference names rows by it (`key=<id>`, see `resolveRef`); every row should have one, and each only once (`key_missing`, `key_duplicate` warnings)."
+        },
+        {
           "name": "xLabel",
           "kind": "string",
           "max": 80,
@@ -1551,7 +1623,7 @@
         {
           "name": "annotations",
           "kind": "annotations",
-          "desc": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date)."
+          "desc": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date). Either form takes `key` (a stable id, unique in the list, so a reference can point at it: `key=launch`), `note` (a longer explanation, at most 2,048 characters, shown as the mark's tooltip) and `by` (`author`, the default, or `assistant`: added by an assistant, drawn with a mark before the label and said so in the description)."
         },
         {
           "name": "facet",
@@ -1706,6 +1778,15 @@
     },
     {
       "type": "pie",
+      "ref": {
+        "x": [
+          "label"
+        ],
+        "y": [
+          "value"
+        ],
+        "legend": "label"
+      },
       "fields": [
         {
           "name": "type",
@@ -1788,6 +1869,12 @@
           "desc": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
         },
         {
+          "name": "key",
+          "kind": "column",
+          "role": "any",
+          "desc": "Column that identifies each row (an id, read after `transform`). A reference names rows by it (`key=<id>`, see `resolveRef`); every row should have one, and each only once (`key_missing`, `key_duplicate` warnings)."
+        },
+        {
           "name": "label",
           "kind": "column",
           "role": "any",
@@ -1844,6 +1931,15 @@
     },
     {
       "type": "donut",
+      "ref": {
+        "x": [
+          "label"
+        ],
+        "y": [
+          "value"
+        ],
+        "legend": "label"
+      },
       "fields": [
         {
           "name": "type",
@@ -1926,6 +2022,12 @@
           "desc": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
         },
         {
+          "name": "key",
+          "kind": "column",
+          "role": "any",
+          "desc": "Column that identifies each row (an id, read after `transform`). A reference names rows by it (`key=<id>`, see `resolveRef`); every row should have one, and each only once (`key_missing`, `key_duplicate` warnings)."
+        },
+        {
           "name": "label",
           "kind": "column",
           "role": "any",
@@ -1982,6 +2084,12 @@
     },
     {
       "type": "histogram",
+      "ref": {
+        "x": [
+          "value"
+        ],
+        "series": "series"
+      },
       "fields": [
         {
           "name": "type",
@@ -2064,6 +2172,12 @@
           "desc": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
         },
         {
+          "name": "key",
+          "kind": "column",
+          "role": "any",
+          "desc": "Column that identifies each row (an id, read after `transform`). A reference names rows by it (`key=<id>`, see `resolveRef`); every row should have one, and each only once (`key_missing`, `key_duplicate` warnings)."
+        },
+        {
           "name": "xLabel",
           "kind": "string",
           "max": 80,
@@ -2078,7 +2192,7 @@
         {
           "name": "annotations",
           "kind": "annotations",
-          "desc": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date)."
+          "desc": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date). Either form takes `key` (a stable id, unique in the list, so a reference can point at it: `key=launch`), `note` (a longer explanation, at most 2,048 characters, shown as the mark's tooltip) and `by` (`author`, the default, or `assistant`: added by an assistant, drawn with a mark before the label and said so in the description)."
         },
         {
           "name": "facet",
@@ -2161,6 +2275,15 @@
     },
     {
       "type": "box",
+      "ref": {
+        "x": [
+          "x"
+        ],
+        "y": [
+          "y"
+        ],
+        "legend": "x"
+      },
       "fields": [
         {
           "name": "type",
@@ -2243,6 +2366,12 @@
           "desc": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
         },
         {
+          "name": "key",
+          "kind": "column",
+          "role": "any",
+          "desc": "Column that identifies each row (an id, read after `transform`). A reference names rows by it (`key=<id>`, see `resolveRef`); every row should have one, and each only once (`key_missing`, `key_duplicate` warnings)."
+        },
+        {
           "name": "xLabel",
           "kind": "string",
           "max": 80,
@@ -2257,7 +2386,7 @@
         {
           "name": "annotations",
           "kind": "annotations",
-          "desc": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date)."
+          "desc": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date). Either form takes `key` (a stable id, unique in the list, so a reference can point at it: `key=launch`), `note` (a longer explanation, at most 2,048 characters, shown as the mark's tooltip) and `by` (`author`, the default, or `assistant`: added by an assistant, drawn with a mark before the label and said so in the description)."
         },
         {
           "name": "facet",
@@ -2333,6 +2462,15 @@
     },
     {
       "type": "violin",
+      "ref": {
+        "x": [
+          "x"
+        ],
+        "y": [
+          "y"
+        ],
+        "legend": "x"
+      },
       "fields": [
         {
           "name": "type",
@@ -2415,6 +2553,12 @@
           "desc": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
         },
         {
+          "name": "key",
+          "kind": "column",
+          "role": "any",
+          "desc": "Column that identifies each row (an id, read after `transform`). A reference names rows by it (`key=<id>`, see `resolveRef`); every row should have one, and each only once (`key_missing`, `key_duplicate` warnings)."
+        },
+        {
           "name": "xLabel",
           "kind": "string",
           "max": 80,
@@ -2429,7 +2573,7 @@
         {
           "name": "annotations",
           "kind": "annotations",
-          "desc": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date)."
+          "desc": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date). Either form takes `key` (a stable id, unique in the list, so a reference can point at it: `key=launch`), `note` (a longer explanation, at most 2,048 characters, shown as the mark's tooltip) and `by` (`author`, the default, or `assistant`: added by an assistant, drawn with a mark before the label and said so in the description)."
         },
         {
           "name": "facet",
@@ -2517,6 +2661,15 @@
     },
     {
       "type": "heatmap",
+      "ref": {
+        "x": [
+          "x"
+        ],
+        "y": [
+          "y"
+        ],
+        "yRow": true
+      },
       "fields": [
         {
           "name": "type",
@@ -2599,6 +2752,12 @@
           "desc": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
         },
         {
+          "name": "key",
+          "kind": "column",
+          "role": "any",
+          "desc": "Column that identifies each row (an id, read after `transform`). A reference names rows by it (`key=<id>`, see `resolveRef`); every row should have one, and each only once (`key_missing`, `key_duplicate` warnings)."
+        },
+        {
           "name": "x",
           "kind": "column",
           "role": "any",
@@ -2646,6 +2805,14 @@
     },
     {
       "type": "calendar",
+      "ref": {
+        "x": [
+          "x"
+        ],
+        "y": [
+          "value"
+        ]
+      },
       "fields": [
         {
           "name": "type",
@@ -2728,6 +2895,12 @@
           "desc": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
         },
         {
+          "name": "key",
+          "kind": "column",
+          "role": "any",
+          "desc": "Column that identifies each row (an id, read after `transform`). A reference names rows by it (`key=<id>`, see `resolveRef`); every row should have one, and each only once (`key_missing`, `key_duplicate` warnings)."
+        },
+        {
           "name": "x",
           "kind": "column",
           "role": "x",
@@ -2760,6 +2933,14 @@
     },
     {
       "type": "waterfall",
+      "ref": {
+        "x": [
+          "x"
+        ],
+        "y": [
+          "y"
+        ]
+      },
       "fields": [
         {
           "name": "type",
@@ -2842,6 +3023,12 @@
           "desc": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
         },
         {
+          "name": "key",
+          "kind": "column",
+          "role": "any",
+          "desc": "Column that identifies each row (an id, read after `transform`). A reference names rows by it (`key=<id>`, see `resolveRef`); every row should have one, and each only once (`key_missing`, `key_duplicate` warnings)."
+        },
+        {
           "name": "xLabel",
           "kind": "string",
           "max": 80,
@@ -2856,7 +3043,7 @@
         {
           "name": "annotations",
           "kind": "annotations",
-          "desc": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date)."
+          "desc": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date). Either form takes `key` (a stable id, unique in the list, so a reference can point at it: `key=launch`), `note` (a longer explanation, at most 2,048 characters, shown as the mark's tooltip) and `by` (`author`, the default, or `assistant`: added by an assistant, drawn with a mark before the label and said so in the description)."
         },
         {
           "name": "facet",
@@ -2939,6 +3126,14 @@
     },
     {
       "type": "bullet",
+      "ref": {
+        "x": [
+          "x"
+        ],
+        "y": [
+          "value"
+        ]
+      },
       "fields": [
         {
           "name": "type",
@@ -3021,6 +3216,12 @@
           "desc": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
         },
         {
+          "name": "key",
+          "kind": "column",
+          "role": "any",
+          "desc": "Column that identifies each row (an id, read after `transform`). A reference names rows by it (`key=<id>`, see `resolveRef`); every row should have one, and each only once (`key_missing`, `key_duplicate` warnings)."
+        },
+        {
           "name": "xLabel",
           "kind": "string",
           "max": 80,
@@ -3035,7 +3236,7 @@
         {
           "name": "annotations",
           "kind": "annotations",
-          "desc": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date)."
+          "desc": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date). Either form takes `key` (a stable id, unique in the list, so a reference can point at it: `key=launch`), `note` (a longer explanation, at most 2,048 characters, shown as the mark's tooltip) and `by` (`author`, the default, or `assistant`: added by an assistant, drawn with a mark before the label and said so in the description)."
         },
         {
           "name": "facet",
@@ -3118,6 +3319,16 @@
     },
     {
       "type": "bump",
+      "ref": {
+        "x": [
+          "x"
+        ],
+        "y": [
+          "rank",
+          "y"
+        ],
+        "series": "series"
+      },
       "fields": [
         {
           "name": "type",
@@ -3200,6 +3411,12 @@
           "desc": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
         },
         {
+          "name": "key",
+          "kind": "column",
+          "role": "any",
+          "desc": "Column that identifies each row (an id, read after `transform`). A reference names rows by it (`key=<id>`, see `resolveRef`); every row should have one, and each only once (`key_missing`, `key_duplicate` warnings)."
+        },
+        {
           "name": "xLabel",
           "kind": "string",
           "max": 80,
@@ -3214,7 +3431,7 @@
         {
           "name": "annotations",
           "kind": "annotations",
-          "desc": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date)."
+          "desc": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date). Either form takes `key` (a stable id, unique in the list, so a reference can point at it: `key=launch`), `note` (a longer explanation, at most 2,048 characters, shown as the mark's tooltip) and `by` (`author`, the default, or `assistant`: added by an assistant, drawn with a mark before the label and said so in the description)."
         },
         {
           "name": "facet",
@@ -3297,6 +3514,17 @@
     },
     {
       "type": "timeline",
+      "ref": {
+        "span": [
+          "start",
+          "end"
+        ],
+        "y": [
+          "y"
+        ],
+        "yRow": true,
+        "series": "series"
+      },
       "fields": [
         {
           "name": "type",
@@ -3379,6 +3607,12 @@
           "desc": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
         },
         {
+          "name": "key",
+          "kind": "column",
+          "role": "any",
+          "desc": "Column that identifies each row (an id, read after `transform`). A reference names rows by it (`key=<id>`, see `resolveRef`); every row should have one, and each only once (`key_missing`, `key_duplicate` warnings)."
+        },
+        {
           "name": "xLabel",
           "kind": "string",
           "max": 80,
@@ -3393,7 +3627,7 @@
         {
           "name": "annotations",
           "kind": "annotations",
-          "desc": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date)."
+          "desc": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date). Either form takes `key` (a stable id, unique in the list, so a reference can point at it: `key=launch`), `note` (a longer explanation, at most 2,048 characters, shown as the mark's tooltip) and `by` (`author`, the default, or `assistant`: added by an assistant, drawn with a mark before the label and said so in the description)."
         },
         {
           "name": "facet",
@@ -3480,6 +3714,15 @@
     },
     {
       "type": "radar",
+      "ref": {
+        "x": [
+          "x"
+        ],
+        "y": [
+          "y"
+        ],
+        "series": "series"
+      },
       "fields": [
         {
           "name": "type",
@@ -3562,6 +3805,12 @@
           "desc": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
         },
         {
+          "name": "key",
+          "kind": "column",
+          "role": "any",
+          "desc": "Column that identifies each row (an id, read after `transform`). A reference names rows by it (`key=<id>`, see `resolveRef`); every row should have one, and each only once (`key_missing`, `key_duplicate` warnings)."
+        },
+        {
           "name": "x",
           "kind": "column",
           "role": "any",
@@ -3606,6 +3855,15 @@
     },
     {
       "type": "treemap",
+      "ref": {
+        "x": [
+          "label"
+        ],
+        "y": [
+          "value"
+        ],
+        "series": "group"
+      },
       "fields": [
         {
           "name": "type",
@@ -3688,6 +3946,12 @@
           "desc": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
         },
         {
+          "name": "key",
+          "kind": "column",
+          "role": "any",
+          "desc": "Column that identifies each row (an id, read after `transform`). A reference names rows by it (`key=<id>`, see `resolveRef`); every row should have one, and each only once (`key_missing`, `key_duplicate` warnings)."
+        },
+        {
           "name": "label",
           "kind": "column",
           "role": "any",
@@ -3723,6 +3987,14 @@
     },
     {
       "type": "sunburst",
+      "ref": {
+        "x": [
+          "path"
+        ],
+        "y": [
+          "value"
+        ]
+      },
       "fields": [
         {
           "name": "type",
@@ -3805,6 +4077,12 @@
           "desc": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
         },
         {
+          "name": "key",
+          "kind": "column",
+          "role": "any",
+          "desc": "Column that identifies each row (an id, read after `transform`). A reference names rows by it (`key=<id>`, see `resolveRef`); every row should have one, and each only once (`key_missing`, `key_duplicate` warnings)."
+        },
+        {
           "name": "path",
           "kind": "columns",
           "role": "any",
@@ -3836,6 +4114,15 @@
     },
     {
       "type": "sankey",
+      "ref": {
+        "x": [
+          "from",
+          "to"
+        ],
+        "y": [
+          "value"
+        ]
+      },
       "fields": [
         {
           "name": "type",
@@ -3918,6 +4205,12 @@
           "desc": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
         },
         {
+          "name": "key",
+          "kind": "column",
+          "role": "any",
+          "desc": "Column that identifies each row (an id, read after `transform`). A reference names rows by it (`key=<id>`, see `resolveRef`); every row should have one, and each only once (`key_missing`, `key_duplicate` warnings)."
+        },
+        {
           "name": "from",
           "kind": "column",
           "role": "any",
@@ -3942,6 +4235,9 @@
     },
     {
       "type": "parallel",
+      "ref": {
+        "series": "series"
+      },
       "fields": [
         {
           "name": "type",
@@ -4024,6 +4320,12 @@
           "desc": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
         },
         {
+          "name": "key",
+          "kind": "column",
+          "role": "any",
+          "desc": "Column that identifies each row (an id, read after `transform`). A reference names rows by it (`key=<id>`, see `resolveRef`); every row should have one, and each only once (`key_missing`, `key_duplicate` warnings)."
+        },
+        {
           "name": "dimensions",
           "kind": "columns",
           "role": "number",
@@ -4042,6 +4344,14 @@
     },
     {
       "type": "funnel",
+      "ref": {
+        "x": [
+          "stage"
+        ],
+        "y": [
+          "value"
+        ]
+      },
       "fields": [
         {
           "name": "type",
@@ -4124,6 +4434,12 @@
           "desc": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
         },
         {
+          "name": "key",
+          "kind": "column",
+          "role": "any",
+          "desc": "Column that identifies each row (an id, read after `transform`). A reference names rows by it (`key=<id>`, see `resolveRef`); every row should have one, and each only once (`key_missing`, `key_duplicate` warnings)."
+        },
+        {
           "name": "stage",
           "kind": "column",
           "role": "any",
@@ -4159,6 +4475,15 @@
     },
     {
       "type": "waffle",
+      "ref": {
+        "x": [
+          "label"
+        ],
+        "y": [
+          "value"
+        ],
+        "legend": "label"
+      },
       "fields": [
         {
           "name": "type",
@@ -4241,6 +4566,12 @@
           "desc": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
         },
         {
+          "name": "key",
+          "kind": "column",
+          "role": "any",
+          "desc": "Column that identifies each row (an id, read after `transform`). A reference names rows by it (`key=<id>`, see `resolveRef`); every row should have one, and each only once (`key_missing`, `key_duplicate` warnings)."
+        },
+        {
           "name": "label",
           "kind": "column",
           "role": "any",
@@ -4284,6 +4615,16 @@
     },
     {
       "type": "beeswarm",
+      "ref": {
+        "x": [
+          "x"
+        ],
+        "y": [
+          "y"
+        ],
+        "yRow": true,
+        "series": "series"
+      },
       "fields": [
         {
           "name": "type",
@@ -4366,6 +4707,12 @@
           "desc": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
         },
         {
+          "name": "key",
+          "kind": "column",
+          "role": "any",
+          "desc": "Column that identifies each row (an id, read after `transform`). A reference names rows by it (`key=<id>`, see `resolveRef`); every row should have one, and each only once (`key_missing`, `key_duplicate` warnings)."
+        },
+        {
           "name": "xLabel",
           "kind": "string",
           "max": 80,
@@ -4380,7 +4727,7 @@
         {
           "name": "annotations",
           "kind": "annotations",
-          "desc": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date)."
+          "desc": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date). Either form takes `key` (a stable id, unique in the list, so a reference can point at it: `key=launch`), `note` (a longer explanation, at most 2,048 characters, shown as the mark's tooltip) and `by` (`author`, the default, or `assistant`: added by an assistant, drawn with a mark before the label and said so in the description)."
         },
         {
           "name": "facet",
@@ -4455,6 +4802,14 @@
     },
     {
       "type": "gauge",
+      "ref": {
+        "x": [
+          "label"
+        ],
+        "y": [
+          "value"
+        ]
+      },
       "fields": [
         {
           "name": "type",
@@ -4537,6 +4892,12 @@
           "desc": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
         },
         {
+          "name": "key",
+          "kind": "column",
+          "role": "any",
+          "desc": "Column that identifies each row (an id, read after `transform`). A reference names rows by it (`key=<id>`, see `resolveRef`); every row should have one, and each only once (`key_missing`, `key_duplicate` warnings)."
+        },
+        {
           "name": "value",
           "kind": "column",
           "role": "number",
@@ -4597,6 +4958,15 @@
     },
     {
       "type": "wordcloud",
+      "ref": {
+        "x": [
+          "text"
+        ],
+        "y": [
+          "value"
+        ],
+        "series": "series"
+      },
       "fields": [
         {
           "name": "type",
@@ -4679,6 +5049,12 @@
           "desc": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
         },
         {
+          "name": "key",
+          "kind": "column",
+          "role": "any",
+          "desc": "Column that identifies each row (an id, read after `transform`). A reference names rows by it (`key=<id>`, see `resolveRef`); every row should have one, and each only once (`key_missing`, `key_duplicate` warnings)."
+        },
+        {
           "name": "text",
           "kind": "column",
           "role": "any",
@@ -4712,6 +5088,15 @@
     },
     {
       "type": "scatter3d",
+      "ref": {
+        "x": [
+          "x"
+        ],
+        "y": [
+          "y"
+        ],
+        "series": "series"
+      },
       "fields": [
         {
           "name": "type",
@@ -4792,6 +5177,12 @@
           "name": "patterns",
           "kind": "boolean",
           "desc": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
+        },
+        {
+          "name": "key",
+          "kind": "column",
+          "role": "any",
+          "desc": "Column that identifies each row (an id, read after `transform`). A reference names rows by it (`key=<id>`, see `resolveRef`); every row should have one, and each only once (`key_missing`, `key_duplicate` warnings)."
         },
         {
           "name": "x",
@@ -4893,6 +5284,15 @@
     },
     {
       "type": "surface",
+      "ref": {
+        "x": [
+          "x"
+        ],
+        "y": [
+          "y"
+        ],
+        "yRow": true
+      },
       "fields": [
         {
           "name": "type",
@@ -4973,6 +5373,12 @@
           "name": "patterns",
           "kind": "boolean",
           "desc": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
+        },
+        {
+          "name": "key",
+          "kind": "column",
+          "role": "any",
+          "desc": "Column that identifies each row (an id, read after `transform`). A reference names rows by it (`key=<id>`, see `resolveRef`); every row should have one, and each only once (`key_missing`, `key_duplicate` warnings)."
         },
         {
           "name": "x",
@@ -5062,6 +5468,14 @@
     },
     {
       "type": "choropleth",
+      "ref": {
+        "x": [
+          "region"
+        ],
+        "y": [
+          "value"
+        ]
+      },
       "fields": [
         {
           "name": "type",
@@ -5142,6 +5556,12 @@
           "name": "patterns",
           "kind": "boolean",
           "desc": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
+        },
+        {
+          "name": "key",
+          "kind": "column",
+          "role": "any",
+          "desc": "Column that identifies each row (an id, read after `transform`). A reference names rows by it (`key=<id>`, see `resolveRef`); every row should have one, and each only once (`key_missing`, `key_duplicate` warnings)."
         },
         {
           "name": "geo",
@@ -5230,6 +5650,16 @@
     },
     {
       "type": "bubble-map",
+      "ref": {
+        "x": [
+          "region",
+          "label"
+        ],
+        "y": [
+          "size"
+        ],
+        "series": "series"
+      },
       "fields": [
         {
           "name": "type",
@@ -5310,6 +5740,12 @@
           "name": "patterns",
           "kind": "boolean",
           "desc": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
+        },
+        {
+          "name": "key",
+          "kind": "column",
+          "role": "any",
+          "desc": "Column that identifies each row (an id, read after `transform`). A reference names rows by it (`key=<id>`, see `resolveRef`); every row should have one, and each only once (`key_missing`, `key_duplicate` warnings)."
         },
         {
           "name": "geo",
@@ -5399,6 +5835,16 @@
     },
     {
       "type": "column-map",
+      "ref": {
+        "x": [
+          "region",
+          "label"
+        ],
+        "y": [
+          "value"
+        ],
+        "series": "series"
+      },
       "fields": [
         {
           "name": "type",
@@ -5479,6 +5925,12 @@
           "name": "patterns",
           "kind": "boolean",
           "desc": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
+        },
+        {
+          "name": "key",
+          "kind": "column",
+          "role": "any",
+          "desc": "Column that identifies each row (an id, read after `transform`). A reference names rows by it (`key=<id>`, see `resolveRef`); every row should have one, and each only once (`key_missing`, `key_duplicate` warnings)."
         },
         {
           "name": "geo",
@@ -5569,6 +6021,16 @@
     },
     {
       "type": "flow-map",
+      "ref": {
+        "x": [
+          "from",
+          "to"
+        ],
+        "y": [
+          "value"
+        ],
+        "series": "series"
+      },
       "fields": [
         {
           "name": "type",
@@ -5649,6 +6111,12 @@
           "name": "patterns",
           "kind": "boolean",
           "desc": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
+        },
+        {
+          "name": "key",
+          "kind": "column",
+          "role": "any",
+          "desc": "Column that identifies each row (an id, read after `transform`). A reference names rows by it (`key=<id>`, see `resolveRef`); every row should have one, and each only once (`key_missing`, `key_duplicate` warnings)."
         },
         {
           "name": "geo",

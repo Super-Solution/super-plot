@@ -122,20 +122,21 @@ function compile(c: ChartCtx): { series: SeriesInfo[] } {
       prev = t
     })
     const tip = tipOf(r)
+    const rows = c.rowsBy([c.spec.x], [r.key])
     if (r.value !== null && !c.hidden.has(vKey)) {
-      out.push(seg(base, r.value, Math.max(4, thick / 3), { series: vKey, fill: vColor, tip, aria: ariaOf(r), datum: datumOf(r), anim: horizontal ? 'x' : 'y', r: 1 }))
+      out.push(seg(base, r.value, Math.max(4, thick / 3), { series: vKey, fill: vColor, tip, aria: ariaOf(r), datum: datumOf(r), rows, anim: horizontal ? 'x' : 'y', r: 1 }))
     }
     if (r.target !== null && tKey && !c.hidden.has(tKey)) {
       const p = P(r.target)
       const half = (thick * 0.72) / 2
       out.push(horizontal
-        ? { type: 'line', role: 'data', series: tKey, x1: p, x2: p, y1: mid - half, y2: mid + half, stroke: tColor, strokeWidth: 3 }
-        : { type: 'line', role: 'data', series: tKey, x1: mid - half, x2: mid + half, y1: p, y2: p, stroke: tColor, strokeWidth: 3 })
+        ? { type: 'line', role: 'data', series: tKey, x1: p, x2: p, y1: mid - half, y2: mid + half, stroke: tColor, strokeWidth: 3, rows }
+        : { type: 'line', role: 'data', series: tKey, x1: mid - half, x2: mid + half, y1: p, y2: p, stroke: tColor, strokeWidth: 3, rows })
     }
     // The whole row answers hover with every number, not only the thin value bar.
     out.push(horizontal
-      ? { type: 'rect', role: 'hit', x: Math.min(P(d0), P(d1)), y: slot.a, w: Math.abs(P(d1) - P(d0)), h: slot.b - slot.a, fill: 'transparent', tip, aria: ariaOf(r), datum: datumOf(r) }
-      : { type: 'rect', role: 'hit', x: slot.a, y: Math.min(P(d0), P(d1)), w: slot.b - slot.a, h: Math.abs(P(d1) - P(d0)), fill: 'transparent', tip, aria: ariaOf(r), datum: datumOf(r) })
+      ? { type: 'rect', role: 'hit', x: Math.min(P(d0), P(d1)), y: slot.a, w: Math.abs(P(d1) - P(d0)), h: slot.b - slot.a, fill: 'transparent', tip, aria: ariaOf(r), datum: datumOf(r), rows }
+      : { type: 'rect', role: 'hit', x: slot.a, y: Math.min(P(d0), P(d1)), w: slot.b - slot.a, h: Math.abs(P(d1) - P(d0)), fill: 'transparent', tip, aria: ariaOf(r), datum: datumOf(r), rows })
   }
 
   const area = c.frame({ series, autoSide: 'top' })
@@ -195,6 +196,7 @@ export const bullet: ChartDef = {
   summary: 'Compares one value per measure with its target, against qualitative ranges (poor, fair, good): a compact replacement for a gauge.',
   useWhen: 'A few to ~15 KPIs, each with a target and optional thresholds, in little space. Use `scale: "each"` when the measures have different units. Use a bar chart when there is no target or range; use a stat tile for a single number.',
   cartesian: true,
+  ref: { x: ['x'], y: ['value'] },
   fields: {
     x: { kind: 'column', role: 'any', required: true, desc: 'Column holding the name of each measure (one bullet per row, in data order).' },
     value: { kind: 'column', role: 'number', required: true, desc: 'Numeric column with the actual value, drawn as the bar.' },

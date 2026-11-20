@@ -5,6 +5,7 @@ import { LIMITS, fieldDefault, validateField } from './schema.js'
 import { chartTypes, fieldsOf, getChart } from './registry.js'
 import { closest } from './util/num.js'
 import { applyTransform, columnsOf } from './transform.js'
+import { xKey } from './data.js'
 
 export interface ValidationResult {
   /** No errors (warnings are allowed). */
@@ -100,8 +101,35 @@ export function validatePlot(input: unknown): ValidationResult {
     }
   }
   if (dataOk) out.data = data
+  if (dataOk && typeof out.key === 'string') checkKeys(data, out.key, issues)
   if (!issues.some(i => i.severity === 'error')) def.check?.(out, ctx)
 
   const ok = !issues.some(i => i.severity === 'error')
   return ok ? { ok, issues, spec: out } : { ok, issues }
+}
+
+/**
+ * The `key` column names rows for references: every row should have an id (`key_missing`, a warning: references
+ * cannot name that row) and no id should repeat (`key_duplicate`, a warning: a reference to it matches each such
+ * row). Ids are compared as text (`String(value)`); null, undefined and "" are missing.
+ */
+export function checkKeys(rows: readonly Row[], column: string, issues: Issue[]): void {
+  const seen = new Set<string>()
+  let missing = 0
+  let repeated = 0
+  let first: string | null = null
+  for (const r of rows) {
+    const v = r[column]
+    if (v === null || v === undefined || v === '') {
+      missing++
+      continue
+    }
+    const id = xKey(v)
+    if (seen.has(id)) {
+      repeated++
+      if (first === null) first = id
+    } else seen.add(id)
+  }
+  if (missing) issues.push({ severity: 'warning', code: 'key_missing', path: 'key', message: `${missing} of ${rows.length} rows have no "${column}" value; a reference cannot name them.`, hint: 'Give every row an id, or pick another key column.' })
+  if (repeated) issues.push({ severity: 'warning', code: 'key_duplicate', path: 'key', message: `${repeated} rows repeat an id of "${column}" (first: "${first!.length > 40 ? first!.slice(0, 39) + '…' : first}"); a reference to that id matches every row that has it.`, hint: 'Ids should be unique: pick a column that names one row each.' })
 }

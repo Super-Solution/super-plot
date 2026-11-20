@@ -193,30 +193,59 @@ func values(rows []row, col string) []any {
 	return out
 }
 
-// pointNotes are the labelled point annotations, as one sentence for the description. Mirrors pointNotes.
+// pointNotes are the labelled points ("Marked: ...") and the lines and bands an assistant added, for the
+// description. Mirrors pointNotes.
 func pointNotes(s spec) string {
 	list, _ := s["annotations"].([]any)
-	var items []string
-	n := 0
+	more := func(n int) string {
+		if n > 5 {
+			return fmt.Sprintf(" and %d more", n-5)
+		}
+		return ""
+	}
+	var items, marks []string
+	n, m := 0, 0
 	for _, item := range list {
 		a, _ := item.(map[string]any)
 		label, isStr := a["label"].(string)
-		if _, line := a["axis"]; line || !isStr {
+		_, line := a["axis"]
+		if line {
+			if a["by"] != "assistant" {
+				continue
+			}
+			m++
+			if m <= 5 {
+				head, tail := "", ""
+				if isStr && label != "" {
+					head = fmt.Sprintf("\"%s\" at ", clip(label, 40))
+				}
+				if to, has := a["to"]; has {
+					tail = " to " + clip(jsString(to), 30)
+				}
+				marks = append(marks, fmt.Sprintf("%s%s %s%s", head, jsString(a["axis"]), clip(jsString(a["value"]), 30), tail))
+			}
+			continue
+		}
+		if !isStr {
 			continue
 		}
 		n++
 		if n <= 5 {
-			items = append(items, fmt.Sprintf("\"%s\" at %s, %s", clip(label, 40), clip(jsString(a["x"]), 30), clip(jsString(a["y"]), 30)))
+			by := ""
+			if a["by"] == "assistant" {
+				by = " (added by the assistant)"
+			}
+			items = append(items, fmt.Sprintf("\"%s\" at %s, %s%s", clip(label, 40), clip(jsString(a["x"]), 30), clip(jsString(a["y"]), 30), by))
 		}
 	}
-	if n == 0 {
-		return ""
+	out := ""
+	if n > 0 {
+		out += fmt.Sprintf(" Marked: %s%s.", strings.Join(items, "; "), more(n))
 	}
-	more := ""
-	if n > 5 {
-		more = fmt.Sprintf(" and %d more", n-5)
+	if m > 0 {
+		out += fmt.Sprintf(" The assistant marked %s%s.", strings.Join(marks, "; "), more(m))
 	}
-	return fmt.Sprintf(" Marked: %s%s.", strings.Join(items, "; "), more)
+	return out
 }
 
 // --- log scales, intervals (packages/core/src/charts/extras.ts) -------------------------------------------

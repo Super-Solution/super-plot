@@ -74,12 +74,27 @@ def _stable_desc(items: list[Any], key: Callable[[Any], float]) -> list[Any]:
 
 
 def point_notes(spec: Spec) -> str:
-    """The labelled point annotations, as one sentence for the description. Mirrors `pointNotes`."""
-    pts = [a for a in spec.get("annotations") or [] if "axis" not in a and isinstance(a.get("label"), str)]
-    if not pts:
-        return ""
-    items = [f'"{clip(a["label"], 40)}" at {clip(js_string(a.get("x")), 30)}, {clip(js_string(a.get("y")), 30)}' for a in pts[:5]]
-    return f" Marked: {'; '.join(items)}{f' and {len(pts) - 5} more' if len(pts) > 5 else ''}."
+    """The labelled points ("Marked: ...") and the lines and bands an assistant added, for the description. Mirrors `pointNotes`."""
+    every = spec.get("annotations") or []
+    pts = [a for a in every if "axis" not in a and isinstance(a.get("label"), str)]
+
+    def more(n: int) -> str:
+        return f" and {n - 5} more" if n > 5 else ""
+
+    out = ""
+    if pts:
+        items = [f'"{clip(a["label"], 40)}" at {clip(js_string(a.get("x")), 30)}, {clip(js_string(a.get("y")), 30)}{" (added by the assistant)" if a.get("by") == "assistant" else ""}' for a in pts[:5]]
+        out += f" Marked: {'; '.join(items)}{more(len(pts))}."
+    lines = [a for a in every if "axis" in a and a.get("by") == "assistant"]
+    if lines:
+        items = []
+        for a in lines[:5]:
+            lab = a.get("label")
+            head = f'"{clip(lab, 40)}" at ' if isinstance(lab, str) and lab else ""
+            tail = f" to {clip(js_string(a['to']), 30)}" if "to" in a else ""
+            items.append(f"{head}{js_string(a.get('axis'))} {clip(js_string(a.get('value')), 30)}{tail}")
+        out += f" The assistant marked {'; '.join(items)}{more(len(lines))}."
+    return out
 
 
 # ------------------------------------------------------------------------------- log scales, intervals

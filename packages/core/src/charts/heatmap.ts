@@ -47,7 +47,7 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
   const ch = yScale.bandwidth
   for (const q of cs) {
     const fill = color(q.v)
-    c.marks.push({ type: 'rect', role: 'data', x: xScale.start(q.x), y: yScale.start(q.y), w: cw, h: ch, r: Math.min(3, cw / 4, ch / 4), fill, anim: 'fade', tip: { title: `${clip(q.x, 40)} / ${clip(q.y, 40)}`, rows: [{ label: String(s.value), value: fmt(q.v), color: fill }] }, aria: `${q.x}, ${q.y}: ${fmt(q.v)}`, datum: { x: q.x, y: q.y, value: q.v } })
+    c.marks.push({ type: 'rect', role: 'data', x: xScale.start(q.x), y: yScale.start(q.y), w: cw, h: ch, r: Math.min(3, cw / 4, ch / 4), fill, anim: 'fade', tip: { title: `${clip(q.x, 40)} / ${clip(q.y, 40)}`, rows: [{ label: String(s.value), value: fmt(q.v), color: fill }] }, aria: `${q.x}, ${q.y}: ${fmt(q.v)}`, datum: { x: q.x, y: q.y, value: q.v }, rows: c.rowsBy([s.x, s.y], [q.x, q.y]) })
     if (s.labels !== false) {
       const t = fmt(q.v)
       if (cw > c.measure(t, c.size - 1) + 6 && ch > c.size + 2) {
@@ -70,6 +70,7 @@ export const heatmap: ChartDef = {
   summary: 'Colours a grid of cells by a number: one axis per category, darker means larger.',
   useWhen: 'Spotting patterns across two categorical dimensions (weekday x hour, product x region, correlation matrix). Order the categories meaningfully in the data. Not for few cells, where a bar chart is clearer.',
   cartesian: false,
+  ref: { x: ['x'], y: ['y'], yRow: true },
   fields: {
     x: { kind: 'column', role: 'any', required: true, desc: 'Column for the horizontal categories.' },
     y: { kind: 'column', role: 'any', required: true, desc: 'Column for the vertical categories (first value at the top).' },

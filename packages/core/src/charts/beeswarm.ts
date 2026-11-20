@@ -10,7 +10,7 @@ import { extent, quantile, r2, toNumber } from '../util/num.js'
 import { clip } from '../util/text.js'
 import { formatter, lead, fmtList } from './shared.js'
 
-interface P { i: number; x: number; g: string; s: string; size: number | null; name: string | null }
+interface P { row: Record<string, unknown>; i: number; x: number; g: string; s: string; size: number | null; name: string | null }
 
 /** A beeswarm draws one dot per row; past this many visible dots an evenly spaced sample is drawn. */
 export const BEESWARM_MAX = 2000
@@ -66,7 +66,7 @@ function points(spec: Record<string, any>): P[] {
   ;(spec.data as Record<string, unknown>[]).forEach((r, i) => {
     const x = toNumber(r[spec.x])
     if (x === null) return
-    pts.push({ i, x, g: spec.y ? String(r[spec.y] ?? '') : '', s: spec.series ? String(r[spec.series] ?? '') : String(spec.x), size: spec.size ? toNumber(r[spec.size]) : null, name: spec.label ? String(r[spec.label] ?? '') : null })
+    pts.push({ row: r, i, x, g: spec.y ? String(r[spec.y] ?? '') : '', s: spec.series ? String(r[spec.series] ?? '') : String(spec.x), size: spec.size ? toNumber(r[spec.size]) : null, name: spec.label ? String(r[spec.label] ?? '') : null })
   })
   return pts
 }
@@ -146,7 +146,8 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
         ...(r >= 3 ? { stroke: c.c('background'), strokeWidth: 1 } : {}),
         tip: { title, rows }, anim: 'fade',
         aria: `${[p.name, s.y ? lane : '', keys.length > 1 && s.series ? series[si].label : ''].filter(Boolean).join(', ')}${p.name || s.y || (keys.length > 1 && s.series) ? ': ' : ''}${s.x} ${fmt(p.x)}`,
-        datum: { x: p.x, ...(s.y ? { y: lane } : {}), ...(s.series ? { series: p.s } : {}), ...(p.size !== null ? { size: p.size } : {}), ...(p.name !== null ? { label: p.name } : {}), row: p.i }
+        datum: { x: p.x, ...(s.y ? { y: lane } : {}), ...(s.series ? { series: p.s } : {}), ...(p.size !== null ? { size: p.size } : {}), ...(p.name !== null ? { label: p.name } : {}), row: p.i },
+        rows: c.rowsOf([p.row])
       })
     })
   }
@@ -178,6 +179,7 @@ export const beeswarm: ChartDef = {
   summary: 'Places one dot per row along a number axis, pushed aside so no dot hides another; optional lanes per group.',
   useWhen: 'Showing every value of one measure (tens to about 2,000 rows) so readers see clusters, gaps and individual outliers, optionally compared across a few groups. Use a histogram, violin or box plot for more values or to read a summary; a scatter plot when there are two measures.',
   cartesian: true,
+  ref: { x: ['x'], y: ['y'], yRow: true, series: 'series' },
   fields: {
     x: { kind: 'column', role: 'number', required: true, desc: 'Numeric column for the horizontal position: one dot per row.' },
     y: { kind: 'column', role: 'any', desc: 'Column that splits the dots into lanes, one swarm per value. Omit for a single swarm.' },

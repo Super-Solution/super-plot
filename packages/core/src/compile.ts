@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2026 SUPER SOLUTION LABS INC
-import { ChartCtx } from './context.js'
+import { ChartCtx, indexRows } from './context.js'
 import { fieldsOf, getChart, type ChartDef } from './registry.js'
 import type { AxisInfo, Mark, Rect, Scene, SceneAxes, SeriesInfo } from './scene.js'
 import { escapeXml, renderSvg, svgKey, type SvgOptions } from './svg.js'
@@ -77,6 +77,7 @@ export function compilePlot(input: unknown, options: RenderOptions = {}): Compil
   const v = validatePlot(input)
   if (!v.ok || !v.spec) return { ok: false, issues: v.issues }
   let spec = v.spec
+  indexRows(spec.data)
   const def = getChart(spec.type)!
   const fields = fieldsOf(def)
   const theme = resolveTheme(options.theme, options.prefersDark)
@@ -108,6 +109,7 @@ export function compilePlot(input: unknown, options: RenderOptions = {}): Compil
   } else {
     const ctx = new ChartCtx(spec, env, width, height, hidden, issues)
     ;({ series } = def.compile(ctx))
+    ctx.fillRows(def.ref)
     marks = ctx.marks
     clips = ctx.clips
     geo = ctx.geo
@@ -288,6 +290,7 @@ function facet(def: ChartDef, spec: Record<string, any>, env: RenderEnv, width: 
       // The panel's own frame adds `pad` on each side; the origin takes it back so panels fill their cells.
       const ctx = new ChartCtx(sub(k, extra), env, cw + P * 2, ch - head + P * 2, hidden, local, place(i))
       def.compile(ctx)
+      ctx.fillRows(def.ref)
       return ctx
     })
     return { ctxs, local }

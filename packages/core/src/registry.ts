@@ -27,6 +27,11 @@ export interface ChartDef {
   example: Record<string, unknown>
   /** Cross-field checks after per-field validation. */
   check?(spec: Record<string, unknown>, ctx: ValidateCtx): void
+  /**
+   * What a reference (`resolveRef`) can name in this chart: which spec fields hold the columns `x` and `y` read,
+   * and which one holds the series. Leave it out and only `key` works. See {@link RefShape}.
+   */
+  ref?: RefShape
   /** Lay out and draw. Push marks onto `ctx.marks`; return the series for the legend. */
   compile(ctx: ChartCtx): { series: SeriesInfo[] }
   /**
@@ -34,6 +39,29 @@ export interface ChartDef {
    * in `env.timeZone` (default UTC) so the text matches the drawing.
    */
   describe(spec: Record<string, any>, env: Pick<RenderEnv, 'locale' | 'timeZone'>): string
+}
+
+/**
+ * The columns a reference reads, named by the spec fields that hold them (data, so the ports read it from
+ * `fields.v1.json`). Every rule is in `resolveRef`'s doc comment.
+ */
+export interface RefShape {
+  /** Fields whose columns `x` matches (a row matches when any of them does), e.g. `["x"]`, `["label"]`, `["from", "to"]`. */
+  x?: readonly string[]
+  /**
+   * Fields `y` reads, the first one the spec sets: the value column(s) of each point. A list of several columns is
+   * one series per column (wide form). With `yRow`, `y` matches the row on those columns instead (a heatmap's rows).
+   */
+  y?: readonly string[]
+  yRow?: boolean
+  /** More value fields, each column its own series (a bar chart's `line` and `yRight`). */
+  extra?: readonly string[]
+  /** The field naming the series column: `series` matches it. */
+  series?: string
+  /** The field whose column names the legend entry when there is no series field (a pie's slices). */
+  legend?: string
+  /** `x` matches a row whose `[start, end]` overlaps it (a timeline's bars). */
+  span?: readonly [string, string]
 }
 
 const defs = new Map<string, ChartDef>()

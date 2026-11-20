@@ -23,6 +23,8 @@ export interface TimelineItem {
   start: number
   end: number
   series: string
+  /** The row it came from. */
+  row: Row
   label: string | null
   /** Start and end were given the other way round and were swapped. */
   swapped: boolean
@@ -60,7 +62,7 @@ export function timelineItems(spec: Record<string, any>): TimelineData {
     }
     const swapped = b < a
     if (swapped) reversed++
-    items.push({ lane: xKey(r[spec.y]), start: Math.min(a, b), end: Math.max(a, b), series: spec.series ? xKey(r[spec.series]) : String(spec.y), label: spec.label ? clip(xKey(r[spec.label]), 60) : null, swapped })
+    items.push({ row: r, lane: xKey(r[spec.y]), start: Math.min(a, b), end: Math.max(a, b), series: spec.series ? xKey(r[spec.series]) : String(spec.y), label: spec.label ? clip(xKey(r[spec.label]), 60) : null, swapped })
   }
   const lanes = distinct(items.map(i => i.lane))
   const overlapping: string[] = []
@@ -154,7 +156,8 @@ function compile(c: ChartCtx): { series: SeriesInfo[] } {
       ...(xFixed ? { clip: 'plot' } : {}),
       tip: { title: clip(name, 60), rows },
       aria: c.t('timelineAria', { task: s.series ? `${name}, ${it.series}` : name, start: when(it.start), end: when(it.end), duration: long(it.start, it.end) }),
-      datum: { y: it.lane, start: iso(it.start), end: iso(it.end), series: it.series, ...(it.label !== null ? { label: it.label } : {}) }
+      datum: { y: it.lane, start: iso(it.start), end: iso(it.end), series: it.series, ...(it.label !== null ? { label: it.label } : {}) },
+      rows: c.rowsOf([it.row])
     })
     if (s.labels) {
       const text = it.label ?? long(it.start, it.end)
@@ -176,6 +179,7 @@ export const timeline: ChartDef = {
   summary: 'Floating horizontal bars from a start to an end, one lane per task or resource: a Gantt chart, a schedule, a history of states.',
   useWhen: 'Tasks, bookings, shifts, releases or incidents with a start and an end (dates or numbers), a few to a few hundred bars in up to ~40 lanes. Add `series` to colour by phase or owner, and an x annotation for "today". Use a bar chart for durations without positions in time, a calendar for daily values.',
   cartesian: true,
+  ref: { span: ['start', 'end'], y: ['y'], yRow: true, series: 'series' },
   fields: {
     y: { kind: 'column', role: 'any', required: true, desc: 'Column naming the lane (task, resource, room) each bar sits in; lanes keep the order of first appearance. Several rows may share a lane (phases one after another).' },
     start: { kind: 'column', role: 'x', required: true, desc: 'Column with where each bar starts: ISO dates or timestamps, or plain numbers (days, minutes, versions). The kind is detected from start and end together; override with `xType`.' },

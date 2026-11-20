@@ -153,6 +153,10 @@
           "type": "boolean",
           "description": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
         },
+        "key": {
+          "type": "string",
+          "description": "Column that identifies each row (an id, read after `transform`). A reference names rows by it (`key=<id>`, see `resolveRef`); every row should have one, and each only once (`key_missing`, `key_duplicate` warnings). (name of a column in data)"
+        },
         "xLabel": {
           "type": "string",
           "maxLength": 80,
@@ -165,8 +169,8 @@
         },
         "annotations": {
           "type": "array",
-          "maxItems": 50,
-          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date).",
+          "maxItems": 256,
+          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date). Either form takes `key` (a stable id, unique in the list, so a reference can point at it: `key=launch`), `note` (a longer explanation, at most 2,048 characters, shown as the mark's tooltip) and `by` (`author`, the default, or `assistant`: added by an assistant, drawn with a mark before the label and said so in the description).",
           "items": {
             "oneOf": [
               {
@@ -207,6 +211,24 @@
                       "warning",
                       "info"
                     ]
+                  },
+                  "key": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "description": "Stable id, unique among the annotations: a reference points at it (key=<id>)."
+                  },
+                  "note": {
+                    "type": "string",
+                    "maxLength": 2048,
+                    "description": "A longer explanation, shown as the tooltip of the mark."
+                  },
+                  "by": {
+                    "enum": [
+                      "author",
+                      "assistant"
+                    ],
+                    "description": "Who added it: author (default) or assistant (drawn with a mark, and said in the description)."
                   }
                 }
               },
@@ -244,6 +266,24 @@
                       "warning",
                       "info"
                     ]
+                  },
+                  "key": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "description": "Stable id, unique among the annotations: a reference points at it (key=<id>)."
+                  },
+                  "note": {
+                    "type": "string",
+                    "maxLength": 2048,
+                    "description": "A longer explanation, shown as the tooltip of the mark."
+                  },
+                  "by": {
+                    "enum": [
+                      "author",
+                      "assistant"
+                    ],
+                    "description": "Who added it: author (default) or assistant (drawn with a mark, and said in the description)."
                   }
                 }
               }
@@ -576,6 +616,10 @@
           "type": "boolean",
           "description": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
         },
+        "key": {
+          "type": "string",
+          "description": "Column that identifies each row (an id, read after `transform`). A reference names rows by it (`key=<id>`, see `resolveRef`); every row should have one, and each only once (`key_missing`, `key_duplicate` warnings). (name of a column in data)"
+        },
         "xLabel": {
           "type": "string",
           "maxLength": 80,
@@ -588,8 +632,8 @@
         },
         "annotations": {
           "type": "array",
-          "maxItems": 50,
-          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date).",
+          "maxItems": 256,
+          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date). Either form takes `key` (a stable id, unique in the list, so a reference can point at it: `key=launch`), `note` (a longer explanation, at most 2,048 characters, shown as the mark's tooltip) and `by` (`author`, the default, or `assistant`: added by an assistant, drawn with a mark before the label and said so in the description).",
           "items": {
             "oneOf": [
               {
@@ -630,6 +674,24 @@
                       "warning",
                       "info"
                     ]
+                  },
+                  "key": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "description": "Stable id, unique among the annotations: a reference points at it (key=<id>)."
+                  },
+                  "note": {
+                    "type": "string",
+                    "maxLength": 2048,
+                    "description": "A longer explanation, shown as the tooltip of the mark."
+                  },
+                  "by": {
+                    "enum": [
+                      "author",
+                      "assistant"
+                    ],
+                    "description": "Who added it: author (default) or assistant (drawn with a mark, and said in the description)."
                   }
                 }
               },
@@ -667,6 +729,24 @@
                       "warning",
                       "info"
                     ]
+                  },
+                  "key": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "description": "Stable id, unique among the annotations: a reference points at it (key=<id>)."
+                  },
+                  "note": {
+                    "type": "string",
+                    "maxLength": 2048,
+                    "description": "A longer explanation, shown as the tooltip of the mark."
+                  },
+                  "by": {
+                    "enum": [
+                      "author",
+                      "assistant"
+                    ],
+                    "description": "Who added it: author (default) or assistant (drawn with a mark, and said in the description)."
                   }
                 }
               }
@@ -997,6 +1077,10 @@
           "type": "boolean",
           "description": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
         },
+        "key": {
+          "type": "string",
+          "description": "Column that identifies each row (an id, read after `transform`). A reference names rows by it (`key=<id>`, see `resolveRef`); every row should have one, and each only once (`key_missing`, `key_duplicate` warnings). (name of a column in data)"
+        },
         "xLabel": {
           "type": "string",
           "maxLength": 80,
@@ -1009,8 +1093,8 @@
         },
         "annotations": {
           "type": "array",
-          "maxItems": 50,
-          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date).",
+          "maxItems": 256,
+          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date). Either form takes `key` (a stable id, unique in the list, so a reference can point at it: `key=launch`), `note` (a longer explanation, at most 2,048 characters, shown as the mark's tooltip) and `by` (`author`, the default, or `assistant`: added by an assistant, drawn with a mark before the label and said so in the description).",
           "items": {
             "oneOf": [
               {
@@ -1051,6 +1135,24 @@
                       "warning",
                       "info"
                     ]
+                  },
+                  "key": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "description": "Stable id, unique among the annotations: a reference points at it (key=<id>)."
+                  },
+                  "note": {
+                    "type": "string",
+                    "maxLength": 2048,
+                    "description": "A longer explanation, shown as the tooltip of the mark."
+                  },
+                  "by": {
+                    "enum": [
+                      "author",
+                      "assistant"
+                    ],
+                    "description": "Who added it: author (default) or assistant (drawn with a mark, and said in the description)."
                   }
                 }
               },
@@ -1088,6 +1190,24 @@
                       "warning",
                       "info"
                     ]
+                  },
+                  "key": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "description": "Stable id, unique among the annotations: a reference points at it (key=<id>)."
+                  },
+                  "note": {
+                    "type": "string",
+                    "maxLength": 2048,
+                    "description": "A longer explanation, shown as the tooltip of the mark."
+                  },
+                  "by": {
+                    "enum": [
+                      "author",
+                      "assistant"
+                    ],
+                    "description": "Who added it: author (default) or assistant (drawn with a mark, and said in the description)."
                   }
                 }
               }
@@ -1404,6 +1524,10 @@
           "type": "boolean",
           "description": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
         },
+        "key": {
+          "type": "string",
+          "description": "Column that identifies each row (an id, read after `transform`). A reference names rows by it (`key=<id>`, see `resolveRef`); every row should have one, and each only once (`key_missing`, `key_duplicate` warnings). (name of a column in data)"
+        },
         "xLabel": {
           "type": "string",
           "maxLength": 80,
@@ -1416,8 +1540,8 @@
         },
         "annotations": {
           "type": "array",
-          "maxItems": 50,
-          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date).",
+          "maxItems": 256,
+          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date). Either form takes `key` (a stable id, unique in the list, so a reference can point at it: `key=launch`), `note` (a longer explanation, at most 2,048 characters, shown as the mark's tooltip) and `by` (`author`, the default, or `assistant`: added by an assistant, drawn with a mark before the label and said so in the description).",
           "items": {
             "oneOf": [
               {
@@ -1458,6 +1582,24 @@
                       "warning",
                       "info"
                     ]
+                  },
+                  "key": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "description": "Stable id, unique among the annotations: a reference points at it (key=<id>)."
+                  },
+                  "note": {
+                    "type": "string",
+                    "maxLength": 2048,
+                    "description": "A longer explanation, shown as the tooltip of the mark."
+                  },
+                  "by": {
+                    "enum": [
+                      "author",
+                      "assistant"
+                    ],
+                    "description": "Who added it: author (default) or assistant (drawn with a mark, and said in the description)."
                   }
                 }
               },
@@ -1495,6 +1637,24 @@
                       "warning",
                       "info"
                     ]
+                  },
+                  "key": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "description": "Stable id, unique among the annotations: a reference points at it (key=<id>)."
+                  },
+                  "note": {
+                    "type": "string",
+                    "maxLength": 2048,
+                    "description": "A longer explanation, shown as the tooltip of the mark."
+                  },
+                  "by": {
+                    "enum": [
+                      "author",
+                      "assistant"
+                    ],
+                    "description": "Who added it: author (default) or assistant (drawn with a mark, and said in the description)."
                   }
                 }
               }
@@ -1780,6 +1940,10 @@
           "type": "boolean",
           "description": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
         },
+        "key": {
+          "type": "string",
+          "description": "Column that identifies each row (an id, read after `transform`). A reference names rows by it (`key=<id>`, see `resolveRef`); every row should have one, and each only once (`key_missing`, `key_duplicate` warnings). (name of a column in data)"
+        },
         "label": {
           "type": "string",
           "description": "Column naming each slice. (name of a column in data)"
@@ -1971,6 +2135,10 @@
           "type": "boolean",
           "description": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
         },
+        "key": {
+          "type": "string",
+          "description": "Column that identifies each row (an id, read after `transform`). A reference names rows by it (`key=<id>`, see `resolveRef`); every row should have one, and each only once (`key_missing`, `key_duplicate` warnings). (name of a column in data)"
+        },
         "label": {
           "type": "string",
           "description": "Column naming each slice. (name of a column in data)"
@@ -2161,6 +2329,10 @@
           "type": "boolean",
           "description": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
         },
+        "key": {
+          "type": "string",
+          "description": "Column that identifies each row (an id, read after `transform`). A reference names rows by it (`key=<id>`, see `resolveRef`); every row should have one, and each only once (`key_missing`, `key_duplicate` warnings). (name of a column in data)"
+        },
         "xLabel": {
           "type": "string",
           "maxLength": 80,
@@ -2173,8 +2345,8 @@
         },
         "annotations": {
           "type": "array",
-          "maxItems": 50,
-          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date).",
+          "maxItems": 256,
+          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date). Either form takes `key` (a stable id, unique in the list, so a reference can point at it: `key=launch`), `note` (a longer explanation, at most 2,048 characters, shown as the mark's tooltip) and `by` (`author`, the default, or `assistant`: added by an assistant, drawn with a mark before the label and said so in the description).",
           "items": {
             "oneOf": [
               {
@@ -2215,6 +2387,24 @@
                       "warning",
                       "info"
                     ]
+                  },
+                  "key": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "description": "Stable id, unique among the annotations: a reference points at it (key=<id>)."
+                  },
+                  "note": {
+                    "type": "string",
+                    "maxLength": 2048,
+                    "description": "A longer explanation, shown as the tooltip of the mark."
+                  },
+                  "by": {
+                    "enum": [
+                      "author",
+                      "assistant"
+                    ],
+                    "description": "Who added it: author (default) or assistant (drawn with a mark, and said in the description)."
                   }
                 }
               },
@@ -2252,6 +2442,24 @@
                       "warning",
                       "info"
                     ]
+                  },
+                  "key": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "description": "Stable id, unique among the annotations: a reference points at it (key=<id>)."
+                  },
+                  "note": {
+                    "type": "string",
+                    "maxLength": 2048,
+                    "description": "A longer explanation, shown as the tooltip of the mark."
+                  },
+                  "by": {
+                    "enum": [
+                      "author",
+                      "assistant"
+                    ],
+                    "description": "Who added it: author (default) or assistant (drawn with a mark, and said in the description)."
                   }
                 }
               }
@@ -2476,6 +2684,10 @@
           "type": "boolean",
           "description": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
         },
+        "key": {
+          "type": "string",
+          "description": "Column that identifies each row (an id, read after `transform`). A reference names rows by it (`key=<id>`, see `resolveRef`); every row should have one, and each only once (`key_missing`, `key_duplicate` warnings). (name of a column in data)"
+        },
         "xLabel": {
           "type": "string",
           "maxLength": 80,
@@ -2488,8 +2700,8 @@
         },
         "annotations": {
           "type": "array",
-          "maxItems": 50,
-          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date).",
+          "maxItems": 256,
+          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date). Either form takes `key` (a stable id, unique in the list, so a reference can point at it: `key=launch`), `note` (a longer explanation, at most 2,048 characters, shown as the mark's tooltip) and `by` (`author`, the default, or `assistant`: added by an assistant, drawn with a mark before the label and said so in the description).",
           "items": {
             "oneOf": [
               {
@@ -2530,6 +2742,24 @@
                       "warning",
                       "info"
                     ]
+                  },
+                  "key": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "description": "Stable id, unique among the annotations: a reference points at it (key=<id>)."
+                  },
+                  "note": {
+                    "type": "string",
+                    "maxLength": 2048,
+                    "description": "A longer explanation, shown as the tooltip of the mark."
+                  },
+                  "by": {
+                    "enum": [
+                      "author",
+                      "assistant"
+                    ],
+                    "description": "Who added it: author (default) or assistant (drawn with a mark, and said in the description)."
                   }
                 }
               },
@@ -2567,6 +2797,24 @@
                       "warning",
                       "info"
                     ]
+                  },
+                  "key": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "description": "Stable id, unique among the annotations: a reference points at it (key=<id>)."
+                  },
+                  "note": {
+                    "type": "string",
+                    "maxLength": 2048,
+                    "description": "A longer explanation, shown as the tooltip of the mark."
+                  },
+                  "by": {
+                    "enum": [
+                      "author",
+                      "assistant"
+                    ],
+                    "description": "Who added it: author (default) or assistant (drawn with a mark, and said in the description)."
                   }
                 }
               }
@@ -2785,6 +3033,10 @@
           "type": "boolean",
           "description": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
         },
+        "key": {
+          "type": "string",
+          "description": "Column that identifies each row (an id, read after `transform`). A reference names rows by it (`key=<id>`, see `resolveRef`); every row should have one, and each only once (`key_missing`, `key_duplicate` warnings). (name of a column in data)"
+        },
         "xLabel": {
           "type": "string",
           "maxLength": 80,
@@ -2797,8 +3049,8 @@
         },
         "annotations": {
           "type": "array",
-          "maxItems": 50,
-          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date).",
+          "maxItems": 256,
+          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date). Either form takes `key` (a stable id, unique in the list, so a reference can point at it: `key=launch`), `note` (a longer explanation, at most 2,048 characters, shown as the mark's tooltip) and `by` (`author`, the default, or `assistant`: added by an assistant, drawn with a mark before the label and said so in the description).",
           "items": {
             "oneOf": [
               {
@@ -2839,6 +3091,24 @@
                       "warning",
                       "info"
                     ]
+                  },
+                  "key": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "description": "Stable id, unique among the annotations: a reference points at it (key=<id>)."
+                  },
+                  "note": {
+                    "type": "string",
+                    "maxLength": 2048,
+                    "description": "A longer explanation, shown as the tooltip of the mark."
+                  },
+                  "by": {
+                    "enum": [
+                      "author",
+                      "assistant"
+                    ],
+                    "description": "Who added it: author (default) or assistant (drawn with a mark, and said in the description)."
                   }
                 }
               },
@@ -2876,6 +3146,24 @@
                       "warning",
                       "info"
                     ]
+                  },
+                  "key": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "description": "Stable id, unique among the annotations: a reference points at it (key=<id>)."
+                  },
+                  "note": {
+                    "type": "string",
+                    "maxLength": 2048,
+                    "description": "A longer explanation, shown as the tooltip of the mark."
+                  },
+                  "by": {
+                    "enum": [
+                      "author",
+                      "assistant"
+                    ],
+                    "description": "Who added it: author (default) or assistant (drawn with a mark, and said in the description)."
                   }
                 }
               }
@@ -3106,6 +3394,10 @@
           "type": "boolean",
           "description": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
         },
+        "key": {
+          "type": "string",
+          "description": "Column that identifies each row (an id, read after `transform`). A reference names rows by it (`key=<id>`, see `resolveRef`); every row should have one, and each only once (`key_missing`, `key_duplicate` warnings). (name of a column in data)"
+        },
         "x": {
           "type": "string",
           "description": "Column for the horizontal categories. (name of a column in data)"
@@ -3297,6 +3589,10 @@
           "type": "boolean",
           "description": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
         },
+        "key": {
+          "type": "string",
+          "description": "Column that identifies each row (an id, read after `transform`). A reference names rows by it (`key=<id>`, see `resolveRef`); every row should have one, and each only once (`key_missing`, `key_duplicate` warnings). (name of a column in data)"
+        },
         "x": {
           "type": "string",
           "description": "Date column: ISO dates (\"2026-03-14\") or epoch milliseconds. A time of day is dropped and rows on the same day are summed. Instants (timestamps, ISO strings with a time) count on their day in the render time zone (UTC by default); date-only strings keep their date. (name of a column in data)"
@@ -3477,6 +3773,10 @@
           "type": "boolean",
           "description": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
         },
+        "key": {
+          "type": "string",
+          "description": "Column that identifies each row (an id, read after `transform`). A reference names rows by it (`key=<id>`, see `resolveRef`); every row should have one, and each only once (`key_missing`, `key_duplicate` warnings). (name of a column in data)"
+        },
         "xLabel": {
           "type": "string",
           "maxLength": 80,
@@ -3489,8 +3789,8 @@
         },
         "annotations": {
           "type": "array",
-          "maxItems": 50,
-          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date).",
+          "maxItems": 256,
+          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date). Either form takes `key` (a stable id, unique in the list, so a reference can point at it: `key=launch`), `note` (a longer explanation, at most 2,048 characters, shown as the mark's tooltip) and `by` (`author`, the default, or `assistant`: added by an assistant, drawn with a mark before the label and said so in the description).",
           "items": {
             "oneOf": [
               {
@@ -3531,6 +3831,24 @@
                       "warning",
                       "info"
                     ]
+                  },
+                  "key": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "description": "Stable id, unique among the annotations: a reference points at it (key=<id>)."
+                  },
+                  "note": {
+                    "type": "string",
+                    "maxLength": 2048,
+                    "description": "A longer explanation, shown as the tooltip of the mark."
+                  },
+                  "by": {
+                    "enum": [
+                      "author",
+                      "assistant"
+                    ],
+                    "description": "Who added it: author (default) or assistant (drawn with a mark, and said in the description)."
                   }
                 }
               },
@@ -3568,6 +3886,24 @@
                       "warning",
                       "info"
                     ]
+                  },
+                  "key": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "description": "Stable id, unique among the annotations: a reference points at it (key=<id>)."
+                  },
+                  "note": {
+                    "type": "string",
+                    "maxLength": 2048,
+                    "description": "A longer explanation, shown as the tooltip of the mark."
+                  },
+                  "by": {
+                    "enum": [
+                      "author",
+                      "assistant"
+                    ],
+                    "description": "Who added it: author (default) or assistant (drawn with a mark, and said in the description)."
                   }
                 }
               }
@@ -3807,6 +4143,10 @@
           "type": "boolean",
           "description": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
         },
+        "key": {
+          "type": "string",
+          "description": "Column that identifies each row (an id, read after `transform`). A reference names rows by it (`key=<id>`, see `resolveRef`); every row should have one, and each only once (`key_missing`, `key_duplicate` warnings). (name of a column in data)"
+        },
         "xLabel": {
           "type": "string",
           "maxLength": 80,
@@ -3819,8 +4159,8 @@
         },
         "annotations": {
           "type": "array",
-          "maxItems": 50,
-          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date).",
+          "maxItems": 256,
+          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date). Either form takes `key` (a stable id, unique in the list, so a reference can point at it: `key=launch`), `note` (a longer explanation, at most 2,048 characters, shown as the mark's tooltip) and `by` (`author`, the default, or `assistant`: added by an assistant, drawn with a mark before the label and said so in the description).",
           "items": {
             "oneOf": [
               {
@@ -3861,6 +4201,24 @@
                       "warning",
                       "info"
                     ]
+                  },
+                  "key": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "description": "Stable id, unique among the annotations: a reference points at it (key=<id>)."
+                  },
+                  "note": {
+                    "type": "string",
+                    "maxLength": 2048,
+                    "description": "A longer explanation, shown as the tooltip of the mark."
+                  },
+                  "by": {
+                    "enum": [
+                      "author",
+                      "assistant"
+                    ],
+                    "description": "Who added it: author (default) or assistant (drawn with a mark, and said in the description)."
                   }
                 }
               },
@@ -3898,6 +4256,24 @@
                       "warning",
                       "info"
                     ]
+                  },
+                  "key": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "description": "Stable id, unique among the annotations: a reference points at it (key=<id>)."
+                  },
+                  "note": {
+                    "type": "string",
+                    "maxLength": 2048,
+                    "description": "A longer explanation, shown as the tooltip of the mark."
+                  },
+                  "by": {
+                    "enum": [
+                      "author",
+                      "assistant"
+                    ],
+                    "description": "Who added it: author (default) or assistant (drawn with a mark, and said in the description)."
                   }
                 }
               }
@@ -4130,6 +4506,10 @@
           "type": "boolean",
           "description": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
         },
+        "key": {
+          "type": "string",
+          "description": "Column that identifies each row (an id, read after `transform`). A reference names rows by it (`key=<id>`, see `resolveRef`); every row should have one, and each only once (`key_missing`, `key_duplicate` warnings). (name of a column in data)"
+        },
         "xLabel": {
           "type": "string",
           "maxLength": 80,
@@ -4142,8 +4522,8 @@
         },
         "annotations": {
           "type": "array",
-          "maxItems": 50,
-          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date).",
+          "maxItems": 256,
+          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date). Either form takes `key` (a stable id, unique in the list, so a reference can point at it: `key=launch`), `note` (a longer explanation, at most 2,048 characters, shown as the mark's tooltip) and `by` (`author`, the default, or `assistant`: added by an assistant, drawn with a mark before the label and said so in the description).",
           "items": {
             "oneOf": [
               {
@@ -4184,6 +4564,24 @@
                       "warning",
                       "info"
                     ]
+                  },
+                  "key": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "description": "Stable id, unique among the annotations: a reference points at it (key=<id>)."
+                  },
+                  "note": {
+                    "type": "string",
+                    "maxLength": 2048,
+                    "description": "A longer explanation, shown as the tooltip of the mark."
+                  },
+                  "by": {
+                    "enum": [
+                      "author",
+                      "assistant"
+                    ],
+                    "description": "Who added it: author (default) or assistant (drawn with a mark, and said in the description)."
                   }
                 }
               },
@@ -4221,6 +4619,24 @@
                       "warning",
                       "info"
                     ]
+                  },
+                  "key": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "description": "Stable id, unique among the annotations: a reference points at it (key=<id>)."
+                  },
+                  "note": {
+                    "type": "string",
+                    "maxLength": 2048,
+                    "description": "A longer explanation, shown as the tooltip of the mark."
+                  },
+                  "by": {
+                    "enum": [
+                      "author",
+                      "assistant"
+                    ],
+                    "description": "Who added it: author (default) or assistant (drawn with a mark, and said in the description)."
                   }
                 }
               }
@@ -4447,6 +4863,10 @@
           "type": "boolean",
           "description": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
         },
+        "key": {
+          "type": "string",
+          "description": "Column that identifies each row (an id, read after `transform`). A reference names rows by it (`key=<id>`, see `resolveRef`); every row should have one, and each only once (`key_missing`, `key_duplicate` warnings). (name of a column in data)"
+        },
         "xLabel": {
           "type": "string",
           "maxLength": 80,
@@ -4459,8 +4879,8 @@
         },
         "annotations": {
           "type": "array",
-          "maxItems": 50,
-          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date).",
+          "maxItems": 256,
+          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date). Either form takes `key` (a stable id, unique in the list, so a reference can point at it: `key=launch`), `note` (a longer explanation, at most 2,048 characters, shown as the mark's tooltip) and `by` (`author`, the default, or `assistant`: added by an assistant, drawn with a mark before the label and said so in the description).",
           "items": {
             "oneOf": [
               {
@@ -4501,6 +4921,24 @@
                       "warning",
                       "info"
                     ]
+                  },
+                  "key": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "description": "Stable id, unique among the annotations: a reference points at it (key=<id>)."
+                  },
+                  "note": {
+                    "type": "string",
+                    "maxLength": 2048,
+                    "description": "A longer explanation, shown as the tooltip of the mark."
+                  },
+                  "by": {
+                    "enum": [
+                      "author",
+                      "assistant"
+                    ],
+                    "description": "Who added it: author (default) or assistant (drawn with a mark, and said in the description)."
                   }
                 }
               },
@@ -4538,6 +4976,24 @@
                       "warning",
                       "info"
                     ]
+                  },
+                  "key": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "description": "Stable id, unique among the annotations: a reference points at it (key=<id>)."
+                  },
+                  "note": {
+                    "type": "string",
+                    "maxLength": 2048,
+                    "description": "A longer explanation, shown as the tooltip of the mark."
+                  },
+                  "by": {
+                    "enum": [
+                      "author",
+                      "assistant"
+                    ],
+                    "description": "Who added it: author (default) or assistant (drawn with a mark, and said in the description)."
                   }
                 }
               }
@@ -4762,6 +5218,10 @@
           "type": "boolean",
           "description": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
         },
+        "key": {
+          "type": "string",
+          "description": "Column that identifies each row (an id, read after `transform`). A reference names rows by it (`key=<id>`, see `resolveRef`); every row should have one, and each only once (`key_missing`, `key_duplicate` warnings). (name of a column in data)"
+        },
         "x": {
           "type": "string",
           "description": "Column naming each spoke (the measures). 3 to 16 distinct values. (name of a column in data)"
@@ -4953,6 +5413,10 @@
           "type": "boolean",
           "description": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
         },
+        "key": {
+          "type": "string",
+          "description": "Column that identifies each row (an id, read after `transform`). A reference names rows by it (`key=<id>`, see `resolveRef`); every row should have one, and each only once (`key_missing`, `key_duplicate` warnings). (name of a column in data)"
+        },
         "label": {
           "type": "string",
           "description": "Column naming each tile. (name of a column in data)"
@@ -5131,6 +5595,10 @@
         "patterns": {
           "type": "boolean",
           "description": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
+        },
+        "key": {
+          "type": "string",
+          "description": "Column that identifies each row (an id, read after `transform`). A reference names rows by it (`key=<id>`, see `resolveRef`); every row should have one, and each only once (`key_missing`, `key_duplicate` warnings). (name of a column in data)"
         },
         "path": {
           "oneOf": [
@@ -5320,6 +5788,10 @@
           "type": "boolean",
           "description": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
         },
+        "key": {
+          "type": "string",
+          "description": "Column that identifies each row (an id, read after `transform`). A reference names rows by it (`key=<id>`, see `resolveRef`); every row should have one, and each only once (`key_missing`, `key_duplicate` warnings). (name of a column in data)"
+        },
         "from": {
           "type": "string",
           "description": "Column naming where each flow starts. (name of a column in data)"
@@ -5481,6 +5953,10 @@
         "patterns": {
           "type": "boolean",
           "description": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
+        },
+        "key": {
+          "type": "string",
+          "description": "Column that identifies each row (an id, read after `transform`). A reference names rows by it (`key=<id>`, see `resolveRef`); every row should have one, and each only once (`key_missing`, `key_duplicate` warnings). (name of a column in data)"
         },
         "dimensions": {
           "type": "array",
@@ -5645,6 +6121,10 @@
         "patterns": {
           "type": "boolean",
           "description": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
+        },
+        "key": {
+          "type": "string",
+          "description": "Column that identifies each row (an id, read after `transform`). A reference names rows by it (`key=<id>`, see `resolveRef`); every row should have one, and each only once (`key_missing`, `key_duplicate` warnings). (name of a column in data)"
         },
         "stage": {
           "type": "string",
@@ -5818,6 +6298,10 @@
         "patterns": {
           "type": "boolean",
           "description": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
+        },
+        "key": {
+          "type": "string",
+          "description": "Column that identifies each row (an id, read after `transform`). A reference names rows by it (`key=<id>`, see `resolveRef`); every row should have one, and each only once (`key_missing`, `key_duplicate` warnings). (name of a column in data)"
         },
         "label": {
           "type": "string",
@@ -5997,6 +6481,10 @@
           "type": "boolean",
           "description": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
         },
+        "key": {
+          "type": "string",
+          "description": "Column that identifies each row (an id, read after `transform`). A reference names rows by it (`key=<id>`, see `resolveRef`); every row should have one, and each only once (`key_missing`, `key_duplicate` warnings). (name of a column in data)"
+        },
         "xLabel": {
           "type": "string",
           "maxLength": 80,
@@ -6009,8 +6497,8 @@
         },
         "annotations": {
           "type": "array",
-          "maxItems": 50,
-          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date).",
+          "maxItems": 256,
+          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date). Either form takes `key` (a stable id, unique in the list, so a reference can point at it: `key=launch`), `note` (a longer explanation, at most 2,048 characters, shown as the mark's tooltip) and `by` (`author`, the default, or `assistant`: added by an assistant, drawn with a mark before the label and said so in the description).",
           "items": {
             "oneOf": [
               {
@@ -6051,6 +6539,24 @@
                       "warning",
                       "info"
                     ]
+                  },
+                  "key": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "description": "Stable id, unique among the annotations: a reference points at it (key=<id>)."
+                  },
+                  "note": {
+                    "type": "string",
+                    "maxLength": 2048,
+                    "description": "A longer explanation, shown as the tooltip of the mark."
+                  },
+                  "by": {
+                    "enum": [
+                      "author",
+                      "assistant"
+                    ],
+                    "description": "Who added it: author (default) or assistant (drawn with a mark, and said in the description)."
                   }
                 }
               },
@@ -6088,6 +6594,24 @@
                       "warning",
                       "info"
                     ]
+                  },
+                  "key": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "description": "Stable id, unique among the annotations: a reference points at it (key=<id>)."
+                  },
+                  "note": {
+                    "type": "string",
+                    "maxLength": 2048,
+                    "description": "A longer explanation, shown as the tooltip of the mark."
+                  },
+                  "by": {
+                    "enum": [
+                      "author",
+                      "assistant"
+                    ],
+                    "description": "Who added it: author (default) or assistant (drawn with a mark, and said in the description)."
                   }
                 }
               }
@@ -6303,6 +6827,10 @@
           "type": "boolean",
           "description": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
         },
+        "key": {
+          "type": "string",
+          "description": "Column that identifies each row (an id, read after `transform`). A reference names rows by it (`key=<id>`, see `resolveRef`); every row should have one, and each only once (`key_missing`, `key_duplicate` warnings). (name of a column in data)"
+        },
         "value": {
           "type": "string",
           "description": "Numeric column with the value of each gauge. A value outside `min`..`max` is clamped on the arc but printed as it is. (name of a column in data)"
@@ -6499,6 +7027,10 @@
           "type": "boolean",
           "description": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
         },
+        "key": {
+          "type": "string",
+          "description": "Column that identifies each row (an id, read after `transform`). A reference names rows by it (`key=<id>`, see `resolveRef`); every row should have one, and each only once (`key_missing`, `key_duplicate` warnings). (name of a column in data)"
+        },
         "text": {
           "type": "string",
           "description": "Column holding each word or short phrase. Rows with the same text are summed. (name of a column in data)"
@@ -6670,6 +7202,10 @@
         "patterns": {
           "type": "boolean",
           "description": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
+        },
+        "key": {
+          "type": "string",
+          "description": "Column that identifies each row (an id, read after `transform`). A reference names rows by it (`key=<id>`, see `resolveRef`); every row should have one, and each only once (`key_missing`, `key_duplicate` warnings). (name of a column in data)"
         },
         "x": {
           "type": "string",
@@ -6895,6 +7431,10 @@
         "patterns": {
           "type": "boolean",
           "description": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
+        },
+        "key": {
+          "type": "string",
+          "description": "Column that identifies each row (an id, read after `transform`). A reference names rows by it (`key=<id>`, see `resolveRef`); every row should have one, and each only once (`key_missing`, `key_duplicate` warnings). (name of a column in data)"
         },
         "x": {
           "type": "string",
@@ -7122,6 +7662,10 @@
         "patterns": {
           "type": "boolean",
           "description": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
+        },
+        "key": {
+          "type": "string",
+          "description": "Column that identifies each row (an id, read after `transform`). A reference names rows by it (`key=<id>`, see `resolveRef`); every row should have one, and each only once (`key_missing`, `key_duplicate` warnings). (name of a column in data)"
         },
         "geo": {
           "oneOf": [
@@ -7391,6 +7935,10 @@
           "type": "boolean",
           "description": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
         },
+        "key": {
+          "type": "string",
+          "description": "Column that identifies each row (an id, read after `transform`). A reference names rows by it (`key=<id>`, see `resolveRef`); every row should have one, and each only once (`key_missing`, `key_duplicate` warnings). (name of a column in data)"
+        },
         "geo": {
           "oneOf": [
             {
@@ -7650,6 +8198,10 @@
           "type": "boolean",
           "description": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
         },
+        "key": {
+          "type": "string",
+          "description": "Column that identifies each row (an id, read after `transform`). A reference names rows by it (`key=<id>`, see `resolveRef`); every row should have one, and each only once (`key_missing`, `key_duplicate` warnings). (name of a column in data)"
+        },
         "geo": {
           "oneOf": [
             {
@@ -7907,6 +8459,10 @@
         "patterns": {
           "type": "boolean",
           "description": "Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print."
+        },
+        "key": {
+          "type": "string",
+          "description": "Column that identifies each row (an id, read after `transform`). A reference names rows by it (`key=<id>`, see `resolveRef`); every row should have one, and each only once (`key_missing`, `key_duplicate` warnings). (name of a column in data)"
         },
         "geo": {
           "oneOf": [

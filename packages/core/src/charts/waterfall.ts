@@ -161,7 +161,7 @@ function compile(c: ChartCtx): { series: SeriesInfo[] } {
     const rr: [number, number, number, number] = st.kind === 'total'
       ? (horizontal ? (up ? [0, r, r, 0] : [r, 0, 0, r]) : (up ? [r, r, 0, 0] : [0, 0, r, r]))
       : [r / 2, r / 2, r / 2, r / 2]
-    const common = { role: 'data' as const, series: st.kind, fill: color, tip: { title: clip(st.key, 60), rows: tipRows }, aria, datum, anim: (st.kind === 'total' ? (horizontal ? 'x' : 'y') : 'fade') as 'x' | 'y' | 'fade', r: rr }
+    const common = { role: 'data' as const, series: st.kind, fill: color, tip: { title: clip(st.key, 60), rows: tipRows }, aria, datum, rows: c.rowsBy([s.x], [st.key]), anim: (st.kind === 'total' ? (horizontal ? 'x' : 'y') : 'fade') as 'x' | 'y' | 'fade', r: rr }
     bars.push(horizontal
       ? { type: 'rect', x: Math.min(p0, p1), y: start, w: len, h: barW, ...common }
       : { type: 'rect', x: start, y: Math.min(p0, p1), w: barW, h: len, ...common })
@@ -188,6 +188,7 @@ export const waterfall: ChartDef = {
   summary: 'Shows how a starting value becomes a final one through signed steps: each change floats from the running total, totals stand on the axis.',
   useWhen: 'Explaining a change between two totals (budget to actual, opening to closing balance, price bridges) through a few to ~30 named contributions. Use a bar chart for sizes that do not add up; use a line for a running total over many dates.',
   cartesian: true,
+  ref: { x: ['x'], y: ['y'] },
   fields: {
     x: { kind: 'column', role: 'any', required: true, desc: 'Column holding the step label. Steps are drawn in data order; repeated labels are summed.' },
     y: { kind: 'column', role: 'number', required: true, desc: 'Numeric column with the signed change of each step. On a total row it may be empty (the bar shows the running total) or hold a reported balance.' },

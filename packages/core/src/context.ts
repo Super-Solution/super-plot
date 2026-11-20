@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2026 SUPER SOLUTION LABS INC
-import type { Issue } from './schema.js'
+import type { Issue, Row } from './schema.js'
 import type { AxisInfo, Mark, Rect, SceneGeo, SceneView3d, SeriesInfo, TextMark } from './scene.js'
 import type { RenderEnv } from './theme.js'
 import { cssVar, resolveVars, seriesVar } from './theme.js'
@@ -8,6 +8,18 @@ import { fit, clip } from './util/text.js'
 import { parseHex } from './util/color.js'
 import { valueFormatter } from './util/format.js'
 import { DEFAULT_STRINGS, fillString, type UiStringKey } from './strings.js'
+
+/** Row object to its index in the spec's data after `transform`; `compilePlot` sets it for the rows it draws. */
+const ROW_INDEX = new WeakMap<object, number>()
+
+/** Number the rows of a validated spec, so marks can say which rows they draw (`Mark.rows`). */
+export function indexRows(rows: readonly Row[]): void {
+  rows.forEach((r, i) => {
+    if (r && typeof r === 'object') ROW_INDEX.set(r, i)
+  })
+}
+
+const xKeyOf = (v: unknown): string => (v === null || v === undefined ? '' : String(v))
 
 export interface FrameOptions {
   series: SeriesInfo[]
@@ -56,6 +68,63 @@ export class ChartCtx<S extends Record<string, any> = Record<string, any>> {
     this.pad = this.compact ? 12 : 16
     this.size = this.compact ? env.theme.fontSize - 1 : env.theme.fontSize
     this.format = valueFormatter(spec.format, env.locale)
+  }
+
+  private groups = new Map<string, Map<string, number[]>>()
+
+  /** The indexes (in the spec's data after `transform`) of these rows, ascending: a mark's `rows`. */
+  rowsOf(rows: Iterable<Row>): number[] {
+    const out: number[] = []
+    for (const r of rows) {
+      const i = ROW_INDEX.get(r)
+      if (i !== undefined) out.push(i)
+    }
+    out.sort((a, b) => a - b)
+    return out.filter((v, i) => i === 0 || v !== out[i - 1])
+  }
+
+  /**
+   * The rows whose cells in `cols` read, as text (`xKey`), `values`: what a mark summed or grouped from them draws.
+   * An undefined column is left out of the match. Grouped once per set of columns.
+   */
+  rowsBy(cols: readonly (string | undefined)[], values: readonly string[]): number[] {
+    const use = cols.map((c, i) => [c, values[i]] as const).filter((p): p is readonly [string, string] => p[0] !== undefined)
+    const id = JSON.stringify(use.map(p => p[0]))
+    let g = this.groups.get(id)
+    if (!g) {
+      g = new Map()
+      for (const r of (this.spec.data ?? []) as Row[]) {
+        const i = ROW_INDEX.get(r)
+        if (i === undefined) continue
+        const k = JSON.stringify(use.map(p => xKeyOf(r[p[0]])))
+        const l = g.get(k)
+        if (l) l.push(i)
+        else g.set(k, [i])
+      }
+      this.groups.set(id, g)
+    }
+    return g.get(JSON.stringify(use.map(p => p[1]))) ?? []
+  }
+
+  /**
+   * After `compile`: a data or hit mark that did not list its rows gets those of its series (the rows whose series
+   * column, or legend column, reads its `series`; every row when the series is a value column of a wide spec). A
+   * chart lists finer rows itself where one series draws several marks (a bar per category, a cell per row).
+   */
+  fillRows(shape: { series?: string; legend?: string; y?: readonly string[]; extra?: readonly string[] } | undefined): void {
+    if (!shape) return
+    const sp = this.spec as Record<string, unknown>
+    const named = [shape.series, shape.legend].map(f => (f ? sp[f] : undefined)).find((v): v is string => typeof v === 'string')
+    const values = new Set<string>()
+    for (const f of [...(shape.y ?? []), ...(shape.extra ?? [])]) {
+      const v = sp[f]
+      for (const col of Array.isArray(v) ? v : [v]) if (typeof col === 'string') values.add(col)
+    }
+    for (const m of this.marks) {
+      if (m.rows || m.series === undefined || (m.role !== 'data' && m.role !== 'hit')) continue
+      if (named !== undefined && !(values.size > 1 && values.has(m.series))) m.rows = this.rowsBy([named], [m.series])
+      else if (values.has(m.series)) m.rows = this.rowsBy([], [])
+    }
   }
 
   get theme() { return this.env.theme }

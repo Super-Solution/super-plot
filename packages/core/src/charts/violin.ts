@@ -122,7 +122,8 @@ export function densityPeaks(d: Density): number[] {
 
 function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
   const s = c.spec
-  const g = groups(s)
+  const src = new Map<string, Record<string, unknown>[]>()
+  const g = groups(s, src)
   const keys = [...g.keys()]
   const stats = new Map(keys.map(k => [k, boxStats(g.get(k)!)!]))
   const dens = new Map(keys.map(k => [k, kde(g.get(k)!, s.bandwidth)!]))
@@ -186,7 +187,7 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
     } else if (s.inner === 'quartiles' && d.grid.length > 1) {
       out.push(across(st.q1, w(st.q1), 1, '3 3'), across(st.median, w(st.median), 2), across(st.q3, w(st.q3), 1, '3 3'))
     }
-    if (mode !== 'none') out.push(...pointMarks(c, { key: k, values: g.get(k)!, outliers: mode === 'all' ? null : st.outliers, mid, at: P, horizontal, color: col, spread: v => w(v) * 0.8, column: String(s.y) }))
+    if (mode !== 'none') out.push(...pointMarks(c, { key: k, values: g.get(k)!, outliers: mode === 'all' ? null : st.outliers, mid, at: P, horizontal, color: col, spread: v => w(v) * 0.8, column: String(s.y), rows: src.get(k) }))
   }
   c.marks.push(...out)
   return { series: [] }
@@ -198,6 +199,7 @@ export const violin: ChartDef = {
   summary: 'Shows the shape of a number\'s distribution for each group as a mirrored density curve, with a thin box plot inside.',
   useWhen: 'Comparing distributions across groups when the shape matters: two peaks, a long tail, a cluster that a box plot would hide. Needs ~20+ values per group; with fewer, the smoothing invents shape, so use a box plot or points: "all".',
   cartesian: true,
+  ref: { x: ['x'], y: ['y'], legend: 'x' },
   fields: {
     x: { kind: 'column', role: 'any', desc: 'Column that defines the groups (one violin each). Omit for a single violin.' },
     y: { kind: 'column', role: 'number', required: true, desc: 'Numeric column whose distribution is drawn.' },

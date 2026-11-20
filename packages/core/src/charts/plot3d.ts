@@ -178,7 +178,7 @@ function perspectiveNote(spec: Record<string, unknown>, ctx: ValidateCtx, altern
 
 // ---- scatter3d -------------------------------------------------------------------------------
 
-interface P3 { x: number; y: number; z: number; s: string; size: number | null; name: string | null; i: number }
+interface P3 { row: R; x: number; y: number; z: number; s: string; size: number | null; name: string | null; i: number }
 
 function points3d(spec: Spec): P3[] {
   const out: P3[] = []
@@ -187,7 +187,7 @@ function points3d(spec: Spec): P3[] {
     if (x === null || y === null || z === null) return
     const size = spec.size ? toNumber(r[spec.size]) : null
     if (spec.size && (size === null || size < 0)) return
-    out.push({ x, y, z, s: spec.series ? String(r[spec.series] ?? '') : String(spec.z), size, name: spec.label ? String(r[spec.label] ?? '') : null, i })
+    out.push({ row: r, x, y, z, s: spec.series ? String(r[spec.series] ?? '') : String(spec.z), size, name: spec.label ? String(r[spec.label] ?? '') : null, i })
   })
   return out
 }
@@ -252,7 +252,8 @@ function scatter3dCompile(c: ChartCtx): { series: SeriesInfo[] } {
     c.marks.push({
       type: 'circle', role: 'data', cx: q.x, cy: q.y, r: r0 * q.k, fill, opacity: p.size !== null ? 0.75 : 0.9,
       ...(dense ? {} : { stroke: c.c('background'), strokeWidth: 1 }), tip, aria, anim: 'fade', series: p.s, clip: clipId,
-      datum: { x: p.x, y: p.y, z: p.z, ...(p.size !== null ? { size: p.size } : {}), ...(s.series ? { series: p.s } : {}), ...(p.name !== null ? { label: p.name } : {}) }
+      datum: { x: p.x, y: p.y, z: p.z, ...(p.size !== null ? { size: p.size } : {}), ...(s.series ? { series: p.s } : {}), ...(p.name !== null ? { label: p.name } : {}) },
+      rows: c.rowsOf([p.row])
     })
   }
   const order = [...show].sort((a, b) => a.x - b.x || a.y - b.y || a.z - b.z || a.i - b.i).map(p => marks.get(p)!)
@@ -266,6 +267,7 @@ export const scatter3d: ChartDef = {
   summary: 'Places each row as a point in a box by three numbers (x, y and the vertical z), with drop lines to the floor; the viewer turns the box.',
   useWhen: 'Exploring how three measures relate when all three matter at once (clusters in three dimensions). Depth hides points and positions on screen mix all three values, so for comparison a 2D scatter of two measures (colour or size for the third) or small multiples read better. Exact values are in the tooltip and the data table.',
   cartesian: false,
+  ref: { x: ['x'], y: ['y'], series: 'series' },
   fields: {
     x: { kind: 'column', role: 'number', required: true, desc: 'Numeric column for x (left to right on the floor).' },
     y: { kind: 'column', role: 'number', required: true, desc: 'Numeric column for y (front to back on the floor).' },
@@ -387,6 +389,12 @@ function surfaceCompile(c: ChartCtx): { series: SeriesInfo[] } {
   const exact = exactFormatter(c.locale)
   const zf = s.format ? c.format : exact
   const mesh = s.mesh !== false
+  // The rows behind each grid point (\`Mark.rows\`).
+  const atPoint = new Map<string, R[]>()
+  for (const r of s.data as R[]) {
+    const k = `${toNumber(r[s.x])},${toNumber(r[s.y])}`
+    atPoint.set(k, [...(atPoint.get(k) ?? []), r])
+  }
   const tiles: { i: number; j: number; z: number; depth: number }[] = []
   for (let i = 0; i < nx; i++) for (let j = 0; j < ny; j++) {
     const z = zAt(i, j)
@@ -410,11 +418,13 @@ function surfaceCompile(c: ChartCtx): { series: SeriesInfo[] } {
     const pts = corners.map(([a, b]) => vertex(a, b))
     const fill = colorOf(t.z)
     const x = g.xs[t.i], y = g.ys[t.j]
+    const own = c.rowsOf(atPoint.get(`${x},${y}`) ?? [])
     index.set(`${t.i},${t.j}`, c.marks.length)
     c.marks.push({
       type: 'path', role: 'data', d: pathOf(pts), fill, stroke: mesh ? c.c('background') : fill, strokeWidth: mesh ? 0.6 : 0.5, anim: 'fade', clip: clipId,
       tip: { rows: [{ label: String(s.x), value: exact(x) }, { label: String(s.y), value: exact(y) }, { label: String(s.z), value: zf(t.z), color: fill }] },
-      aria: `${s.x} ${exact(x)}, ${s.y} ${exact(y)}: ${s.z} ${zf(t.z)}`, datum: { x, y, z: t.z }
+      aria: `${s.x} ${exact(x)}, ${s.y} ${exact(y)}: ${s.z} ${zf(t.z)}`, datum: { x, y, z: t.z },
+      rows: own
     })
   }
   // The colour key: the value scale of heatmaps, labelled with the z column. It sits at the bottom right, so the
@@ -436,6 +446,7 @@ export const surface: ChartDef = {
   summary: 'Draws z over a regular grid of x and y as a coloured surface in a box (colour is the z value, with a key); the viewer turns it.',
   useWhen: 'Showing the shape of a function of two numbers (a response surface, a terrain, a fitted model) where peaks, valleys and saddles matter more than exact values. Give one row per grid point. Depth hides parts of the surface: for exact reading a heatmap of the same grid is clearer. Exact values are in the tooltip and the data table.',
   cartesian: false,
+  ref: { x: ['x'], y: ['y'], yRow: true },
   fields: {
     x: { kind: 'column', role: 'number', required: true, desc: `Numeric column for x: the grid's columns (at most ${MAX_SURFACE_SIDE} distinct values).` },
     y: { kind: 'column', role: 'number', required: true, desc: `Numeric column for y: the grid's rows (at most ${MAX_SURFACE_SIDE} distinct values).` },

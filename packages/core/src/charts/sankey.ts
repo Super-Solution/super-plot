@@ -151,7 +151,8 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
     c.marks.push({
       type: 'path', role: 'data', series: l.source, d, fill: colorOf(l.source), opacity: 0.32, anim: 'fade',
       tip: { title: `${clip(l.source, 40)} → ${clip(l.target, 40)}`, rows: [{ label: String(s.value), value: fmt(l.value), color: colorOf(l.source) }, { label: c.t('shareOfSource', { name: clip(l.source, 24) }), value: formatPercent(l.value / (a.out || 1), c.locale) }] },
-      aria: c.t('linkAria', { source: l.source, target: l.target, value: fmt(l.value) }), datum: { source: l.source, target: l.target, value: l.value }
+      aria: c.t('linkAria', { source: l.source, target: l.target, value: fmt(l.value) }), datum: { source: l.source, target: l.target, value: l.value },
+      rows: c.rowsBy([s.from, s.to], [l.source, l.target])
     })
   }
   const lastLayer = Math.max(...[...nodes.values()].map(n => n.layer))
@@ -161,7 +162,8 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
     c.marks.push({
       type: 'rect', role: 'data', series: n.key, x: r2(x), y: r2(inner.y + n.y), w: nodeW, h: r2(n.h), r: 2, fill: col,
       tip: { title: clip(n.key, 60), rows: [...(n.in ? [{ label: c.t('flowIn'), value: fmt(n.in), color: col }] : []), ...(n.out ? [{ label: c.t('flowOut'), value: fmt(n.out), color: col }] : [])] },
-      aria: c.t('nodeAria', { name: n.key, in: fmt(n.in), out: fmt(n.out) }), datum: { node: n.key, in: n.in, out: n.out }
+      aria: c.t('nodeAria', { name: n.key, in: fmt(n.in), out: fmt(n.out) }), datum: { node: n.key, in: n.in, out: n.out },
+      rows: [...new Set([...c.rowsBy([s.from], [n.key]), ...c.rowsBy([s.to], [n.key])])].sort((x, y) => x - y)
     })
     const room = n.layer === lastLayer ? labelRoom - 6 : labelRoom + 40
     c.marks.push(c.text(x + nodeW + 6, inner.y + n.y + n.h / 2, fit(n.key, room, c.size, c.env.measure, 500), { role: 'label', anchor: 'start', baseline: 'middle', fill: c.c('text'), weight: 500 }))
@@ -176,6 +178,7 @@ export const sankey: ChartDef = {
   summary: 'Shows how a quantity flows between stages: bands between nodes, the band width is the amount.',
   useWhen: 'A quantity that splits and merges across stages (budget to departments, visitors to pages to outcomes, energy sources to uses). Flows must go one way (no loops). Not for a single split (use a pie or bar) or for more than about 30 nodes.',
   cartesian: false,
+  ref: { x: ['from', 'to'], y: ['value'] },
   fields: {
     from: { kind: 'column', role: 'any', required: true, desc: 'Column naming where each flow starts.' },
     to: { kind: 'column', role: 'any', required: true, desc: 'Column naming where each flow ends.' },

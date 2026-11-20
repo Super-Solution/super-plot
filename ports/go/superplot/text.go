@@ -48,6 +48,7 @@ type tables struct {
 	} `json:"currencies"`
 	Charts []struct {
 		Type   string     `json:"type"`
+		Ref    refShape   `json:"ref"`
 		Fields []fieldDef `json:"fields"`
 	} `json:"charts"`
 }

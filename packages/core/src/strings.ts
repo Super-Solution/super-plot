@@ -27,6 +27,10 @@ export const DEFAULT_STRINGS = {
   /** Accessible name of a legend entry. */
   legendToggle: '{label}: toggle series',
 
+  /** Put before the label of an annotation added by an assistant (`by: "assistant"`), and its accessible name. */
+  assistantMark: '✦',
+  assistantNote: 'Added by the assistant',
+
   /** Waterfall legend and tooltips. */
   increase: 'Increase',
   decrease: 'Decrease',
@@ -197,7 +201,9 @@ export const DEFAULT_STRINGS = {
   navWindow: 'Visible range of {field}',
   navStart: 'Start of the visible range of {field}',
   navEnd: 'End of the visible range of {field}',
-  navRange: '{from} to {to}'
+  navRange: '{from} to {to}',
+  /** References (`highlight`, `reveal`): read out in the live region when a reference is revealed. */
+  refShowing: 'Showing {label}.'
 } as const
 
 export type UiStringKey = keyof typeof DEFAULT_STRINGS

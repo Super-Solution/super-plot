@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2026 SUPER SOLUTION LABS INC
 import type { ChartCtx } from './context.js'
-import type { AxisInfo, Rect } from './scene.js'
+import type { AxisInfo, Rect, Tip } from './scene.js'
 import type { BandScale, LinearScale } from './scale.js'
 import { fit } from './util/text.js'
 import { toTime, zoneOffset } from './util/time.js'
@@ -145,7 +145,7 @@ const TONE: Record<string, string> = { neutral: 'text-muted', positive: 'positiv
 
 /** Reference lines and bands from `spec.annotations`. */
 export function drawAnnotations(c: ChartCtx, plot: Rect, x: Axis, y: Axis): void {
-  const list = (c.spec.annotations ?? []) as ({ axis: 'x' | 'y'; value: string | number; to?: string | number; label?: string; tone?: string } | PointAnnotation)[]
+  const list = (c.spec.annotations ?? []) as ({ axis: 'x' | 'y'; value: string | number; to?: string | number; label?: string; tone?: string } & AnnotationExtra | PointAnnotation)[]
   const points: [number, PointAnnotation][] = []
   for (const [i, a] of list.entries()) {
     if (!('axis' in a)) {
@@ -162,28 +162,51 @@ export function drawAnnotations(c: ChartCtx, plot: Rect, x: Axis, y: Axis): void
     }
     const color = c.c(TONE[a.tone ?? 'neutral'] ?? 'text-muted')
     const horizontal = a.axis === 'y'
+    const { label, tip, aria } = annotationText(c, a)
+    // One tab stop per annotation: the note's tooltip goes on the label, or on the line or band when there is none.
+    const keyed = a.key !== undefined ? { key: a.key } : {}
+    const own = { ...(tip ? { tip, aria } : {}), ...keyed }
+    const body = label ? keyed : own
     if (q !== null) {
       const lo = Math.min(p, q)
       const hi = Math.max(p, q)
       c.marks.push(horizontal
-        ? { type: 'rect', role: 'annotation', x: plot.x, y: lo, w: plot.w, h: hi - lo, fill: color, opacity: 0.12 }
-        : { type: 'rect', role: 'annotation', x: lo, y: plot.y, w: hi - lo, h: plot.h, fill: color, opacity: 0.12 })
-      if (a.label) c.marks.push(horizontal
-        ? c.text(plot.x + plot.w - 4, lo + 3, a.label, { role: 'annotation', anchor: 'end', baseline: 'hanging', fill: color, size: c.size - 1 })
-        : c.text(lo + 4, plot.y + 3, a.label, { role: 'annotation', baseline: 'hanging', fill: color, size: c.size - 1 }))
+        ? { type: 'rect', role: 'annotation', x: plot.x, y: lo, w: plot.w, h: hi - lo, fill: color, opacity: 0.12, ...body }
+        : { type: 'rect', role: 'annotation', x: lo, y: plot.y, w: hi - lo, h: plot.h, fill: color, opacity: 0.12, ...body })
+      if (label) c.marks.push(horizontal
+        ? c.text(plot.x + plot.w - 4, lo + 3, label, { role: 'annotation', anchor: 'end', baseline: 'hanging', fill: color, size: c.size - 1, ...own })
+        : c.text(lo + 4, plot.y + 3, label, { role: 'annotation', baseline: 'hanging', fill: color, size: c.size - 1, ...own }))
     } else {
       c.marks.push(horizontal
-        ? { type: 'line', role: 'annotation', x1: plot.x, x2: plot.x + plot.w, y1: p, y2: p, stroke: color, strokeWidth: 1.5, dash: '5 4' }
-        : { type: 'line', role: 'annotation', x1: p, x2: p, y1: plot.y, y2: plot.y + plot.h, stroke: color, strokeWidth: 1.5, dash: '5 4' })
-      if (a.label) c.marks.push(horizontal
-        ? c.text(plot.x + 4, p - 4, a.label, { role: 'annotation', fill: color, size: c.size - 1 })
-        : c.text(p + 4, plot.y + 3, a.label, { role: 'annotation', baseline: 'hanging', fill: color, size: c.size - 1 }))
+        ? { type: 'line', role: 'annotation', x1: plot.x, x2: plot.x + plot.w, y1: p, y2: p, stroke: color, strokeWidth: 1.5, dash: '5 4', ...body }
+        : { type: 'line', role: 'annotation', x1: p, x2: p, y1: plot.y, y2: plot.y + plot.h, stroke: color, strokeWidth: 1.5, dash: '5 4', ...body })
+      if (label) c.marks.push(horizontal
+        ? c.text(plot.x + 4, p - 4, label, { role: 'annotation', fill: color, size: c.size - 1, ...own })
+        : c.text(p + 4, plot.y + 3, label, { role: 'annotation', baseline: 'hanging', fill: color, size: c.size - 1, ...own }))
     }
   }
   for (const [i, a] of points) drawPointAnnotation(c, plot, x, y, i, a)
 }
 
-export interface PointAnnotation { x: string | number; y: string | number; label: string; tone?: string }
+/** The fields both annotation forms share: a reference key, a longer note, and who added it. */
+export interface AnnotationExtra { key?: string; note?: string; by?: 'author' | 'assistant' }
+
+export interface PointAnnotation extends AnnotationExtra { x: string | number; y: string | number; label: string; tone?: string }
+
+/**
+ * The label as drawn (with the assistant's mark before it when `by` is `assistant`), and the tooltip and accessible
+ * name that carry a `note`, or say who added the mark.
+ */
+function annotationText(c: ChartCtx, a: { label?: string } & AnnotationExtra): { label: string | undefined; tip?: Tip; aria?: string } {
+  const mine = a.by === 'assistant'
+  const label = a.label && mine ? `${c.t('assistantMark')} ${a.label}` : a.label
+  if (!mine && !a.note) return { label }
+  const rows: Tip['rows'] = []
+  if (a.note) rows.push({ label: a.note, value: '' })
+  if (mine) rows.push({ label: c.t('assistantNote'), value: '' })
+  const title = a.label ?? (a.key !== undefined ? a.key : undefined)
+  return { label, tip: { ...(title ? { title } : {}), rows }, aria: [a.label, a.note, mine ? c.t('assistantNote') : ''].filter(Boolean).join('. ') }
+}
 
 /** Pixel position of a value on an axis (a category, a number or an ISO date), or null when it is not shown. */
 export function axisPos(ax: Axis, v: string | number): number | null {
@@ -209,7 +232,9 @@ function drawPointAnnotation(c: ChartCtx, plot: Rect, x: Axis, y: Axis, i: numbe
   }
   const color = c.c(TONE[a.tone ?? 'neutral'] ?? 'text-muted')
   const size = c.size - 1
-  const label = fit(a.label, Math.max(40, plot.w - 16), size, c.env.measure)
+  const text = annotationText(c, a)
+  const own = { ...(text.tip ? { tip: text.tip, aria: text.aria } : {}), ...(a.key !== undefined ? { key: a.key } : {}) }
+  const label = fit(text.label!, Math.max(40, plot.w - 16), size, c.env.measure)
   const tw = c.measure(label, size)
   const lead = 16
   const right = px + lead + 4 + tw <= plot.x + plot.w || px - lead - 4 - tw < plot.x
@@ -218,9 +243,9 @@ function drawPointAnnotation(c: ChartCtx, plot: Rect, x: Axis, y: Axis, i: numbe
   const ey = py + (up ? -lead : lead)
   const want = ex + (right ? 4 : -4)
   const tx = right ? Math.max(plot.x + 2, Math.min(plot.x + plot.w - 2 - tw, want)) : Math.min(plot.x + plot.w - 2, Math.max(plot.x + 2 + tw, want))
-  c.marks.push({ type: 'line', role: 'annotation', x1: px, y1: py, x2: ex, y2: ey, stroke: color, strokeWidth: 1 })
-  c.marks.push({ type: 'circle', role: 'annotation', cx: px, cy: py, r: 3.5, fill: c.c('background'), stroke: color, strokeWidth: 1.5 })
-  c.marks.push(c.text(tx, ey, label, { role: 'annotation', anchor: right ? 'start' : 'end', baseline: 'middle', fill: color, size, weight: 500 }))
+  c.marks.push({ type: 'line', role: 'annotation', x1: px, y1: py, x2: ex, y2: ey, stroke: color, strokeWidth: 1, ...(a.key !== undefined ? { key: a.key } : {}) })
+  c.marks.push({ type: 'circle', role: 'annotation', cx: px, cy: py, r: 3.5, fill: c.c('background'), stroke: color, strokeWidth: 1.5, ...(a.key !== undefined ? { key: a.key } : {}) })
+  c.marks.push(c.text(tx, ey, label, { role: 'annotation', anchor: right ? 'start' : 'end', baseline: 'middle', fill: color, size, weight: 500, ...own }))
 }
 
 /**

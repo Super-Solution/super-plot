@@ -90,7 +90,8 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
     c.marks.push({
       type: 'path', role: 'data', series: key, d, fill: 'none', stroke, strokeWidth: 1.25, opacity, anim: 'fade',
       tip: { title, rows: dims.map((dim, i) => ({ label: clip(dim, 40), value: fmt(values[i]) })) },
-      aria: `${title}: ${dims.map((dim, i) => `${dim} ${fmt(values[i])}`).join(', ')}`, datum: row
+      aria: `${title}: ${dims.map((dim, i) => `${dim} ${fmt(values[i])}`).join(', ')}`, datum: row,
+      rows: c.rowsOf([row])
     })
   }
 
@@ -118,6 +119,7 @@ export const parallel: ChartDef = {
   summary: 'Draws each row as a line across several vertical axes, one per measure, to compare many measures at once.',
   useWhen: 'Rows described by 3 to 12 numeric measures (cars by price, power, weight and range; runs by their metrics), looking for clusters, trade-offs and outliers. Each axis has its own scale. Not for two measures (use a scatter plot) or for exact values.',
   cartesian: false,
+  ref: { series: 'series' },
   fields: {
     dimensions: { kind: 'columns', role: 'number', min: 2, max: MAX_DIMENSIONS, required: true, desc: `Numeric columns, one vertical axis each, left to right (2 to ${MAX_DIMENSIONS}). Each axis gets its own rounded scale.` },
     series: { kind: 'column', role: 'any', desc: 'Optional column that colours the lines by group, with a legend.' }

@@ -9,7 +9,7 @@ import { toNumber } from '../util/num.js'
 import { clip } from '../util/text.js'
 import { arc, formatter, lead, fmtList } from './shared.js'
 
-interface Slice { key: string; value: number; other?: boolean }
+interface Slice { key: string; value: number; other?: boolean; merged?: string[] }
 
 function slices(spec: Record<string, any>, hidden: Set<string> = new Set()): { all: Slice[]; shown: Slice[]; order: string[]; skipped: number } {
   const sums = new Map<string, number>()
@@ -32,7 +32,7 @@ function slices(spec: Record<string, any>, hidden: Set<string> = new Set()): { a
     // Keep the largest max-1 (by value), merge the rest; keep display order of survivors.
     const keep = new Set([...all].sort((a, b) => b.value - a.value).slice(0, max - 1).map(s => s.key))
     const rest = all.filter(s => !keep.has(s.key))
-    all = [...all.filter(s => keep.has(s.key)), { key: 'Other', value: rest.reduce((q, s) => q + s.value, 0), other: true }]
+    all = [...all.filter(s => keep.has(s.key)), { key: 'Other', value: rest.reduce((q, s) => q + s.value, 0), other: true, merged: rest.map(r => r.key) }]
   }
   return { all, shown: all.filter(s => !hidden.has(s.key) && s.value > 0), order, skipped }
 }
@@ -64,7 +64,8 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
     c.marks.push({
       type: 'path', role: 'data', series: sl.key, d: arc(cx, cy, r0, R, a, a + sweep), fill: info.color, stroke: c.c('background'), strokeWidth: c.theme.gap, anim: 'fade',
       tip: { title: info.label, rows: [{ label: s.value, value: c.format(sl.value), color: info.color }, { label: c.t('share'), value: pct(sl.value) }] },
-      aria: `${info.label}: ${c.format(sl.value)} (${pct(sl.value)})`, datum: { label: sl.key, value: sl.value }
+      aria: `${info.label}: ${c.format(sl.value)} (${pct(sl.value)})`, datum: { label: sl.key, value: sl.value },
+      rows: [...new Set((sl.merged ?? [sl.key]).flatMap(k => c.rowsBy([s.label], [k])))].sort((x, y) => x - y)
     })
     if (s.labels !== false) {
       const rm = r0 > 0 ? (R + r0) / 2 : R * 0.62
@@ -115,6 +116,7 @@ export const pie: ChartDef = {
   summary: 'Shows each category\'s share of a whole as angles of a circle.',
   useWhen: 'Few (2-6) parts of one whole where the point is "who has the biggest share". Prefer a bar chart to compare sizes precisely or to show more than ~7 parts. Not for time or for values that do not add up to a whole.',
   cartesian: false,
+  ref: { x: ['label'], y: ['value'], legend: 'label' },
   fields: {
     ...FIELDS,
     innerRadius: { kind: 'number', min: 0, max: 0.9, desc: 'Hole radius as a share of the outer radius. 0 for a pie. `donut` defaults to 0.62.' }

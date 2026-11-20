@@ -3,8 +3,8 @@
 // Differential fuzzing of the ports against the reference implementation.
 //   node ports/fuzz/generate.mjs <seed> <out.json>
 // Writes random numbers (formatting, ticks, bins, box statistics, timeUnit buckets, log ticks, kernel densities,
-// LOESS fits, bin steps, waffle cells, durations, exact numbers, word cloud layouts) and random specs of every chart type (every transform step and
-// every field included, sound and broken) together
+// LOESS fits, bin steps, waffle cells, durations, exact numbers, word cloud layouts), random specs of every chart type (every transform step and
+// every field included, sound and broken) and random card references on them (`resolveRef`), together
 // with what the TypeScript implementation says about them. `check.py` and `cmd/fuzzcheck` compare a port to it.
 import { pathToFileURL } from 'node:url'
 import { writeFileSync } from 'node:fs'
@@ -660,10 +660,49 @@ for (let i = 0; i < pool.length + limitSpecs.length; i++) {
 }
 const specs = specOut
 
-writeFileSync(target, JSON.stringify({ ...numeric, specs }))
+// References: random `ref:` links on the specs (a few per spec), built from the cells of their own data so that
+// many match, with ranges, ISO date prefixes, repeated params, unknown names, hidden series and broken links.
+const refs = []
+const pct = v => encodeURIComponent(v).replace(/[!'()*]/g, ch => `%${ch.charCodeAt(0).toString(16).toUpperCase()}`)
+const cellText = v => (v === null || v === undefined ? '' : typeof v === 'object' ? JSON.stringify(v) : String(v))
+for (let i = 0; i < specs.length; i++) {
+  // Every valid spec, and one in five of the others (they all answer ref_spec_invalid or ref_invalid).
+  if (!specs[i].ok && i % 5) continue
+  const spec = specs[i].spec
+  const rows = Array.isArray(spec.data) ? spec.data.filter(r => r && typeof r === 'object' && !Array.isArray(r)) : []
+  const cols = [...new Set(rows.flatMap(r => Object.keys(r)))]
+  // The columns the spec names (its x, label, series, ...): most values come from them, so that many refs match.
+  const named = Object.values(spec).flat().filter(v => typeof v === 'string' && cols.includes(v))
+  for (let n = 0; n < 3; n++) {
+    const cell = () => {
+      const r = rows.length ? pick(rows) : {}
+      return cellText(r[pick(named.length && chance(0.8) ? named : cols.length ? cols : ['x'])])
+    }
+    const value = () => pick([
+      cell, cell, cell,
+      () => `${cell()}..${cell()}`,
+      () => `..${cell()}`, () => `${cell()}..`,
+      () => cell().slice(0, pick([4, 7, 10, 16])),
+      () => `${cell().slice(0, 7)}..${cell().slice(0, 7)}`,
+      () => String(Math.round((rnd() - 0.3) * 1000) / 10),
+      () => `${Math.round(rnd() * 50)}..${Math.round(rnd() * 500)}`,
+      () => pick(['2026', '2026-03', '2026-02..2026-04', '2024-02-29', '2026-13', 'Q1..Q3', '..', '1e3', '-0', '0x10', ' 5', 'a..b..c', '\u00e9t\u00e9', '\u{1f600}'])
+    ])()
+    const names = pick([[], ['x'], ['x'], ['x'], ['y'], ['y'], ['series'], ['series'], ['key'], ['x', 'series'], ['x', 'y'], ['key', 'x'], ['y', 'series'], ['zz'], ['x', 'from']])
+    const parts = []
+    for (const name of names) for (let k = chance(0.2) ? 2 : 1; k > 0; k--) { const v = value(); if (v !== '') parts.push(`${name}=${pct(v)}`) }
+    let ref = `ref:${pick(['p', 'card-1', 'a.b:c'])}${parts.length ? `?${parts.join('&')}` : ''}`
+    if (chance(0.03)) ref = pick(['ref:', 'ref:p?', 'ref:p?x', 'ref:p#x', 'nope', 'ref:p?x=%FF', 'ref:p?X=1'])
+    const series = rows.length ? [...new Set(rows.map(r => cellText(r[pick(cols.length ? cols : ['x'])])))] : []
+    const hidden = chance(0.15) && series.length ? [pick(series)] : undefined
+    refs.push([i, ref, hidden ?? null, core.resolveRef(spec, ref, { hidden })])
+  }
+}
+
+writeFileSync(target, JSON.stringify({ ...numeric, specs, refs }))
 const stats = { valid: specs.filter(c => c.ok).length, transforms: specs.filter(c => c.spec.transform !== undefined).length, transformed: specs.filter(c => c.rows).length }
 const count = t => specs.filter(c => c.spec.type === t).length
 const withStep = k => specs.filter(c => Array.isArray(c.spec.transform) && c.spec.transform.some(st => st && typeof st === 'object' && k in st)).length
 const coded = code => specs.filter(c => c.issues.some(x => x[1] === code)).length
 if (process.env.FUZZ_STATS) console.log(JSON.stringify({ gauge: count('gauge'), wordcloud: count('wordcloud'), scatter3d: count('scatter3d'), surface: count('surface'), validNew: specs.filter(c => c.ok && ['gauge', 'wordcloud', 'scatter3d', 'surface'].includes(c.spec.type)).length, yRight: specs.filter(c => 'yRight' in c.spec).length, yBreak: specs.filter(c => 'yBreak' in c.spec).length, index: withStep('index'), codes: Object.fromEntries(['dual_axis', 'dual_axis_refused', 'dual_axis_ignored', 'dual_axis_overlap', 'right_axis_unused', 'axis_break', 'break_misleading', 'break_hides_values', 'break_refused', 'break_outside', 'perspective_3d', 'index_group_dropped', 'max_derived', 'value_outside_range', 'bands_not_increasing', 'missing_cells', 'duplicate_cells', 'grid_too_small', 'grid_too_large', 'too_many_words', 'nonpositive_values', 'incomplete_rows', 'negative_skipped', 'too_many_gauges'].map(c => [c, coded(c)])) }))
-console.log(`seed ${seed}: ${Object.values(numeric).reduce((n, l) => n + l.length, 0)} numeric cases, ${specs.length} specs (${stats.valid} valid; ${stats.transforms} with a transform, ${stats.transformed} of them valid)`)
+console.log(`seed ${seed}: ${Object.values(numeric).reduce((n, l) => n + l.length, 0)} numeric cases, ${specs.length} specs, ${refs.length} refs (${refs.filter(r => r[3].ok).length} matched) (${stats.valid} valid; ${stats.transforms} with a transform, ${stats.transformed} of them valid)`)

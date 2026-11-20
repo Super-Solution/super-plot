@@ -10,7 +10,7 @@ import { join, dirname } from 'node:path'
 
 const root = new URL('..', import.meta.url).pathname
 const core = await import(pathToFileURL(join(root, 'packages/core/dist/index.js')).href)
-const { linearTicks, niceDomain, quantile, boxStats, binEdges, binCounts, waffleCells, kde, silverman, densityPeaks, validatePlot, describePlot, chartCatalog, getChart, chartTypes, COMMON_FIELDS, CARTESIAN_FIELDS, LIMITS } = core
+const { linearTicks, niceDomain, quantile, boxStats, binEdges, binCounts, waffleCells, kde, silverman, densityPeaks, validatePlot, describePlot, chartCatalog, getChart, chartTypes, COMMON_FIELDS, CARTESIAN_FIELDS, LIMITS, resolveRef, datePeriod, formatCardRef } = core
 const { registerGeography, unregisterGeography, getGeography, matchRegion, GeographyError, GEO_LIMITS, CAMERA_LIMITS, CAMERA3D_LIMITS } = core
 
 const r = v => (typeof v === 'number' ? Math.round(v * 1e9) / 1e9 : v)
@@ -386,8 +386,20 @@ const FEATURE_VALIDATION = [
   ['yBreak: not on an area', { type: 'area', x: 'd', y: 'v', yBreak: [4, 5], data: W }]
 ]
 
+const KB = [{ id: 'r1', a: 'x', b: 1 }, { id: 'r1', a: 'y', b: 2 }, { id: '', a: 'z', b: 3 }, { a: 'w', b: 4 }]
 const VALIDATION = [
   ['json string, valid', JSON.stringify({ type: 'bar', x: 'a', y: 'b', data: B })],
+  ['key: repeated and missing row ids', { type: 'bar', x: 'a', y: 'b', key: 'id', data: KB }],
+  ['key: numeric ids compared as text', { type: 'bar', x: 'a', y: 'b', key: 'b', data: [{ a: 'x', b: 1 }, { a: 'y', b: '1' }] }],
+  ['key: no such column', { type: 'bar', x: 'a', y: 'b', key: 'nope', data: B }],
+  ['annotations: key, note and by', { type: 'line', x: 'b', y: 'b', data: B, annotations: [{ axis: 'y', value: 1, label: 'Low', key: 'low', by: 'assistant', note: 'The smallest value.' }, { x: 2, y: 2, label: 'Top', key: 'top', by: 'author' }] }],
+  ['annotations: repeated key', { type: 'line', x: 'b', y: 'b', data: B, annotations: [{ axis: 'y', value: 1, key: 'k' }, { axis: 'y', value: 2, key: 'k' }] }],
+  ['annotations: empty key', { type: 'line', x: 'b', y: 'b', data: B, annotations: [{ axis: 'y', value: 1, key: '  ' }] }],
+  ['annotations: key too long', { type: 'line', x: 'b', y: 'b', data: B, annotations: [{ axis: 'y', value: 1, key: 'k'.repeat(129) }] }],
+  ['annotations: key not a string', { type: 'line', x: 'b', y: 'b', data: B, annotations: [{ axis: 'y', value: 1, key: 7 }] }],
+  ['annotations: unknown by', { type: 'line', x: 'b', y: 'b', data: B, annotations: [{ axis: 'y', value: 1, by: 'bot' }] }],
+  ['annotations: note not a string', { type: 'line', x: 'b', y: 'b', data: B, annotations: [{ x: 1, y: 1, note: ['a'] }] }],
+  ['annotations: note too long', { type: 'line', x: 'b', y: 'b', data: B, annotations: [{ axis: 'x', value: 1, to: 2, note: 'n'.repeat(2100), by: 'assistant' }] }],
   ['json string, broken', '{"type": "bar",'],
   ['array instead of object', [1, 2]],
   ['missing type', { data: B }],
@@ -881,6 +893,83 @@ const TRANSFORM = [
   return { name, spec, ok: v.ok, issues: v.issues.map(i => ({ severity: i.severity, code: i.code, path: i.path })), normalized: v.spec ? withoutData(v.spec) : null, rows: v.spec ? v.spec.data : null, describe: d.ok ? d.text : null }
 })
 
+// References (`resolveRef`): the whole answer is the contract, label and reason text included.
+const RS = { type: 'bar', x: 'month', y: 'sales', series: 'region', key: 'id', annotations: [{ axis: 'y', value: 35, label: 'Target', key: 'target' }, { axis: 'x', value: 'Feb', to: 'Mar', key: 'spring', by: 'assistant' }],
+  data: [{ id: 'a', month: 'Jan', region: 'EU', sales: 10 }, { id: 'b', month: 'Feb', region: 'EU', sales: 30 }, { id: 'c', month: 'Mar', region: 'EU', sales: 25 }, { id: 'd', month: 'Jan', region: 'US', sales: 12 }, { id: 'e', month: 'Feb', region: 'US', sales: 18 }, { id: 'f', month: 'Mar', region: 'US', sales: 40.5 }] }
+const RD = { type: 'line', x: 'date', y: 'visits', data: [{ date: '2026-02-27', visits: 5 }, { date: '2026-03-01', visits: 8 }, { date: '2026-03-15', visits: 9 }, { date: '2026-03-31T23:59:00Z', visits: 4 }, { date: '2026-04-01', visits: 7 }, { date: '2024-02-29', visits: 1 }, { date: null, visits: 3 }] }
+const RW = { type: 'bar', x: 'q', y: ['north', 'south'], line: 'target', data: [{ q: 'Q1', north: 3, south: 9, target: 5 }, { q: 'Q2', north: 7, south: 2, target: 6 }, { q: 'Q3..Q4', north: 1, south: 1, target: 1 }] }
+const RN = { type: 'scatter', x: 'w', y: 'h', series: 'g', data: [{ w: 1, h: 2, g: 'a' }, { w: 5, h: '3', g: 'b' }, { w: 9.5, h: 1, g: 'a' }, { w: -2, h: 0, g: 1 }] }
+const RT = { type: 'timeline', y: 'task', start: 's', end: 'e', series: 'team', data: [{ task: 'Plan', s: '2026-01-05', e: '2026-02-10', team: 'core' }, { task: 'Build', s: '2026-02-01', e: '2026-04-20', team: 'web' }, { task: 'Ship', s: '2026-05-01', e: '2026-05-01', team: 'core' }] }
+const RH = { type: 'heatmap', x: 'day', y: 'hour', value: 'n', data: [{ day: 'Mon', hour: '9', n: 3 }, { day: 'Mon', hour: '10', n: 5 }, { day: 'Tue', hour: '9', n: 1 }] }
+const RP = { type: 'pie', label: 'k', value: 'v', data: [{ k: 'a', v: 5 }, { k: 'b', v: 3 }, { k: 'a', v: 1 }] }
+const RF = { ...RS, transform: [{ filter: { field: 'region', oneOf: ['US'] } }] }
+const REF = [
+  ['whole plot', RS, 'ref:sales'],
+  ['x category', RS, 'ref:sales?x=Mar'],
+  ['x category range in data order', RS, 'ref:sales?x=Feb..Mar&series=US'],
+  ['x reversed category range', RS, 'ref:sales?x=Mar..Jan&series=EU'],
+  ['x repeated', RS, 'ref:sales?x=Jan&x=Mar&series=EU'],
+  ['y range', RS, 'ref:sales?y=20..30'],
+  ['y one number', RS, 'ref:sales?y=40.5'],
+  ['y open ends', RS, 'ref:sales?y=..12'],
+  ['y open start end', RS, 'ref:sales?y=30..'],
+  ['y not a number', RS, 'ref:sales?y=lots'],
+  ['y reversed', RS, 'ref:sales?y=30..20'],
+  ['key row id and annotation', RS, 'ref:sales?key=b&key=target'],
+  ['key annotation only', RS, 'ref:sales?key=spring'],
+  ['key with x drops annotations', RS, 'ref:sales?key=target&x=Jan'],
+  ['key unknown', RS, 'ref:sales?key=zzz'],
+  ['series', RS, 'ref:sales?series=EU&y=..20'],
+  ['hidden series only', RS, 'ref:sales?x=Jan&series=US', ['US']],
+  ['hidden series left out', RS, 'ref:sales?x=Jan', ['US']],
+  ['unknown param', RS, 'ref:sales?colour=red'],
+  ['unknown and unsupported: alphabetical', RS, 'ref:sales?zz=1&key=a'],
+  ['no match', RS, 'ref:sales?x=Dec'],
+  ['invalid reference', RS, 'sales?x=Mar'],
+  ['invalid spec', { type: 'bar' }, 'ref:sales'],
+  ['after transform', RF, 'ref:sales?x=Mar'],
+  ['date month', RD, 'ref:d?x=2026-03'],
+  ['date range', RD, 'ref:d?x=2026-02..2026-03'],
+  ['date day', RD, 'ref:d?x=2026-03-15'],
+  ['date open end', RD, 'ref:d?x=2026-04..'],
+  ['date leap day', RD, 'ref:d?x=2024-02'],
+  ['date minute', RD, 'ref:d?x=2026-03-31T23%3A59'],
+  ['date year', RD, 'ref:d?x=2024'],
+  ['date not a date', RD, 'ref:d?x=March'],
+  ['date month 13', RD, 'ref:d?x=2026-13'],
+  ['line has no series param', RD, 'ref:d?series=visits'],
+  ['wide: series and y', RW, 'ref:w?series=south&y=5..'],
+  ['wide: x', RW, 'ref:w?x=Q2'],
+  ['wide: the extra line column', RW, 'ref:w?series=target'],
+  ['wide: a category written with two dots', RW, 'ref:w?x=Q3..Q4'],
+  ['numeric x range', RN, 'ref:p?x=2..9.5'],
+  ['numeric x negative', RN, 'ref:p?x=-2'],
+  ['numeric x bad', RN, 'ref:p?x=big'],
+  ['numeric series as text', RN, 'ref:p?series=1'],
+  ['numeric y on text cell', RN, 'ref:p?y=3'],
+  ['timeline span overlap', RT, 'ref:t?x=2026-02'],
+  ['timeline lane', RT, 'ref:t?y=Ship'],
+  ['timeline point in time', RT, 'ref:t?x=2026-05-01'],
+  ['heatmap row and column', RH, 'ref:h?x=Mon&y=9'],
+  ['heatmap y as text', RH, 'ref:h?y=10'],
+  ['pie slice', RP, 'ref:p?x=a'],
+  ['pie legend as series', RP, 'ref:p?series=b'],
+  ['pie value', RP, 'ref:p?y=..3'],
+  ...chartCatalog().map(c => [`example ${c.type}: whole plot`, c.example, 'ref:ex']),
+  ...chartCatalog().map(c => [`example ${c.type}: every param`, c.example, 'ref:ex?key=k&series=s&x=x&y=1']),
+  // The first row's x value (or the span start), on every example that has one.
+  ...chartCatalog().flatMap(c => {
+    const shape = getChart(c.type).ref ?? {}
+    const field = shape.span ? shape.span[0] : shape.x?.find(f => typeof c.example[f] === 'string' || Array.isArray(c.example[f]))
+    const col = field === undefined ? undefined : [c.example[field]].flat()[0]
+    const v = col === undefined ? undefined : validatePlot(c.example).spec?.data?.[0]?.[col]
+    const ref = v === undefined || v === null || v === '' ? null : formatCardRef({ target: 'ex', params: { x: [String(v)] } })
+    return ref ? [[`example ${c.type}: first x`, c.example, ref]] : []
+  })
+]
+const refCases = REF.map(([name, spec, ref, hidden]) => ({ name, spec, ref, ...(hidden ? { hidden } : {}), out: resolveRef(spec, ref, { hidden }) }))
+const datePeriods = ['2026', '2024', '2026-02', '2024-02', '2026-03-15', '2026-03-15T10:30', '2026-03-15T10:30:05Z', '2026-03-15T10:30:05', '2026-13', '2026-02-30', 'March', '2026-03-15T10:30:05.250Z', '1999-12-31T23:59:59Z'].map(v => ({ in: v, out: datePeriod(v) }))
+
 // English currency symbols and default fraction digits, straight from Intl, so a port never guesses them.
 const currencies = Object.fromEntries(Intl.supportedValuesOf('currency').map(code => {
   const nf = new Intl.NumberFormat('en', { style: 'currency', currency: code })
@@ -900,7 +989,7 @@ const fields = {
   charts: chartTypes().map(type => {
     const def = getChart(type)
     const all = { type: { kind: 'string', required: true, desc: `Chart type: ${def.type}.` }, ...COMMON_FIELDS, ...(def.cartesian ? CARTESIAN_FIELDS : {}), ...def.fields }
-    return { type, fields: Object.entries(all).map(([name, f]) => ({ name, ...f })) }
+    return { type, ...(def.ref ? { ref: def.ref } : {}), fields: Object.entries(all).map(([name, f]) => ({ name, ...f })) }
   })
 }
 
@@ -927,7 +1016,9 @@ const doc = rows({
   transformCases: TRANSFORM,
   formats,
   percents,
-  describeCases
+  describeCases,
+  refCases,
+  datePeriods
 })
 const outputs = [
   ['conformance/plot.v1.json', JSON.stringify(doc, null, 2) + '\n'],

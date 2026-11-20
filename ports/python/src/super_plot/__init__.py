@@ -11,6 +11,8 @@ from __future__ import annotations
 from .charts_more import cloud_layout
 from .geo import GEO_LIMITS, GEO_PRESETS, Geography, GeographyError, get_geography, list_geographies, match_region, normalize_region, register_geography, unregister_geography
 from .isotime import MAX_TIME, MIN_TIME, time_bucket
+from .ref import CARD_REF_LIMITS, CARD_REF_SCHEME, format_card_ref, parse_card_ref
+from .resolve import REF_PARAMS, date_period, resolve_ref
 from .numeric import (
     bin_counts, bin_edges, box_stats, density_peaks, kde, linear_ticks, loess, log_ticks, nice_domain, nice_log_domain, quantile,
     silverman, transform_bin_edges, waffle_cells,
@@ -20,7 +22,7 @@ from .transform import AGGREGATE_OPS, TIME_UNITS, TRANSFORM_LIMIT, TRANSFORM_OPS
 from .validate import LIMITS, PlotSpecError, Validation, chart_types, describe_plot, fields_of, is_safe_color, require_valid, validate_plot
 
 __all__ = [
-    "AGGREGATE_OPS", "GEO_LIMITS", "GEO_PRESETS", "Geography", "GeographyError", "LIMITS", "MAX_TIME", "MIN_TIME", "PlotSpecError", "TIME_UNITS",
+    "AGGREGATE_OPS", "CARD_REF_LIMITS", "CARD_REF_SCHEME", "REF_PARAMS", "date_period", "format_card_ref", "parse_card_ref", "resolve_ref", "GEO_LIMITS", "GEO_PRESETS", "Geography", "GeographyError", "LIMITS", "MAX_TIME", "MIN_TIME", "PlotSpecError", "TIME_UNITS",
     "TRANSFORM_LIMIT", "TRANSFORM_OPS", "Validation", "WINDOW_OPS", "apply_transform", "bin_counts", "bin_edges", "box_stats",
     "chart_types", "cloud_layout", "density_peaks", "describe_plot", "fields_of", "format_duration", "format_percent", "format_value", "get_geography", "is_safe_color",
     "kde", "linear_ticks", "list_geographies", "loess", "log_ticks", "match_region", "nice_domain", "nice_log_domain",

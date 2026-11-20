@@ -99,7 +99,8 @@ function compile(c: ChartCtx): { series: SeriesInfo[] } {
       type: 'rect', role: 'data', series: key, x: mid - bw / 2, y: top, w: bw, h, r: Math.min(c.theme.barRadius, h / 2, bw / 2), fill: color, anim: 'x',
       tip: { title: clip(st.key, 60), rows: rowsTip },
       aria: `${st.key}: ${fmt(st.value)}, ${c.t('ofFirstStageAria', { share: pct(st.ofFirst) })}${i ? `, ${c.t('ofStageBeforeAria', { share: pct(st.ofPrevious) })}` : ''}`,
-      datum: { stage: st.key, value: st.value, ofFirst: st.ofFirst, ofPrevious: st.ofPrevious }
+      datum: { stage: st.key, value: st.value, ofFirst: st.ofFirst, ofPrevious: st.ofPrevious },
+      rows: c.rowsBy([s.stage], [st.key])
     })
     if (s.labels !== false) {
       // The value and the share; the share alone when space is short (the tooltip keeps both).
@@ -126,6 +127,7 @@ export const funnel: ChartDef = {
   summary: 'Shows how many remain at each stage of a process, as centred bars whose width is the value, labelled with the share of the first stage.',
   useWhen: 'An ordered process where each stage is a subset of the one before (visit, sign-up, purchase), 3 to ~10 stages. Use a bar chart when the stages are not nested; a funnel whose values rise misleads (Super Plot warns). One number on its own is a stat tile, not a chart.',
   cartesian: false,
+  ref: { x: ['stage'], y: ['value'] },
   fields: {
     stage: { kind: 'column', role: 'any', required: true, desc: 'Column holding the stage name. Stages are drawn top to bottom in data order; repeated names are summed.' },
     value: { kind: 'column', role: 'number', required: true, desc: 'Numeric column with the count (or amount) at each stage. Negative values are skipped.' },

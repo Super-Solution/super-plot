@@ -172,7 +172,7 @@ function checkPlaces(spec: Spec, ctx: ValidateCtx, lat: string, lng: string, reg
 
 // ---- choropleth ----------------------------------------------------------------------------
 
-interface Val { key: string; label: string; value: number }
+interface Val { key: string; label: string; value: number; rows?: R[] }
 
 function regionValues(spec: Spec, geo: Geography | null): Val[] {
   const sums = new Map<string, Val>()
@@ -184,8 +184,10 @@ function regionValues(spec: Spec, geo: Geography | null): Val[] {
     const key = geo ? matchRegion(geo, raw) : String(raw).trim()
     if (!key) continue
     const cur = sums.get(key)
-    if (cur) cur.value += v
-    else sums.set(key, { key, label: geo?.byKey.get(key)?.name ?? String(raw).trim(), value: v })
+    if (cur) {
+      cur.value += v
+      cur.rows?.push(r)
+    } else sums.set(key, { key, label: geo?.byKey.get(key)?.name ?? String(raw).trim(), value: v, rows: [r] })
   }
   return [...sums.values()]
 }
@@ -246,7 +248,7 @@ function choroplethCompile(c: ChartCtx): { series: SeriesInfo[] } {
     const t = Math.max(0, Math.min(1, hi === lo ? 1 : (v.value - lo) / (hi - lo)))
     return {
       polygons: g.polygons, bbox: g.bbox, center: g.center, fill, stroke: border, strokeWidth: 0.6, height: extrude ? 0.02 + 0.3 * t : 0,
-      ...(disputed ? { dashed: true } : {}), tip, aria: `${g.name}: ${fmt(v.value)}`, datum: { region: g.key, name: g.name, value: v.value }
+      ...(disputed ? { dashed: true } : {}), tip, aria: `${g.name}: ${fmt(v.value)}`, datum: { region: g.key, name: g.name, value: v.value }, rows: c.rowsOf(v.rows ?? [])
     }
   })
   const payload = drawGeo(c, { view, input, sphere: s.view === 'globe' ? sphereOf(c) : null, graticule: graticuleOf(c), regions, points: [], columns: [], arcs: [] })
@@ -265,6 +267,7 @@ export const choropleth: ChartDef = {
   summary: 'Colours each region of a map by a number; raise regions by the value for a 3D view.',
   useWhen: 'Comparing a rate or share across countries, provinces or districts. Map rates (per person, percent), not raw totals, or big regions dominate. Needs region boundaries (geo). For exact ranking use a sorted bar chart.',
   cartesian: false,
+  ref: { x: ['region'], y: ['value'] },
   fields: {
     geo: geoField(true, 'Region boundaries to colour.'),
     region: { kind: 'column', role: 'any', required: true, desc: 'Column naming each row\'s region: its key, name or an alias (case ignored). Rows with the same region are summed.' },
@@ -356,7 +359,7 @@ function bubbleCompile(c: ChartCtx): { series: SeriesInfo[] } {
     return {
       lng: p.lng, lat: p.lat, r: radius(p), fill: color(p), stroke: dense ? '' : c.c('background'), opacity: p.size !== null ? 0.72 : dense ? 0.6 : 0.85,
       tip: { title: clip(p.name, 60) || undefined, rows }, ...(show.length <= 2000 ? { aria: `${p.name || `${p.lat.toFixed(2)}, ${p.lng.toFixed(2)}`}${p.size !== null ? `: ${fmt(p.size)}` : ''}` } : {}),
-      datum: { lng: p.lng, lat: p.lat, name: p.name, size: p.size, series: p.s }, ...(s.series ? { series: p.s } : {})
+      datum: { lng: p.lng, lat: p.lat, name: p.name, size: p.size, series: p.s }, rows: c.rowsOf([p.row]), ...(s.series ? { series: p.s } : {})
     }
   })
   c.geo = drawGeo(c, { view, input, sphere: s.view === 'globe' ? sphereOf(c) : null, graticule: graticuleOf(c), regions: basemap(c, geo), points, columns: [], arcs: [] })
@@ -375,6 +378,7 @@ export const bubbleMap: ChartDef = {
   summary: 'Places a circle per row on a map by longitude/latitude (or region), sized by a number and coloured by group.',
   useWhen: 'Showing where things are and how big they are: cities, sites, events, stores. Totals belong here rather than on a choropleth. Tens of thousands of points are fine (the web binding switches renderer). Use `geo` only to draw land under the points.',
   cartesian: false,
+  ref: { x: ['region', 'label'], y: ['size'], series: 'series' },
   fields: {
     geo: geoField(false, 'Optional boundaries drawn as land under the bubbles (needed when placing by region).'),
     ...placeFields('bubble'),
@@ -439,7 +443,7 @@ function columnCompile(c: ChartCtx): { series: SeriesInfo[] } {
     return {
       lng: p.lng, lat: p.lat, height: max > 0 ? 0.01 + 0.36 * (v / max) : 0.01, width, fill,
       tip: { title: clip(p.name, 60) || undefined, rows: [{ label: String(s.value), value: fmt(v), color: fill }, ...(s.series ? [{ label: String(s.series), value: clip(p.s, 40) }] : [])] },
-      aria: `${p.name || `${p.lat.toFixed(2)}, ${p.lng.toFixed(2)}`}: ${fmt(v)}`, datum: { lng: p.lng, lat: p.lat, name: p.name, value: v, series: p.s }, ...(s.series ? { series: p.s } : {})
+      aria: `${p.name || `${p.lat.toFixed(2)}, ${p.lng.toFixed(2)}`}: ${fmt(v)}`, datum: { lng: p.lng, lat: p.lat, name: p.name, value: v, series: p.s }, rows: c.rowsOf([p.row]), ...(s.series ? { series: p.s } : {})
     }
   })
   c.geo = drawGeo(c, { view, input, sphere: s.view === 'globe' ? sphereOf(c) : null, graticule: graticuleOf(c), regions: basemap(c, geo), points: [], columns, arcs: [] })
@@ -452,6 +456,7 @@ export const columnMap: ChartDef = {
   summary: 'Raises a column per row from its place on a globe or a tilted map, height by a number.',
   useWhen: 'Showing totals at places in 3D (population of cities, sales per store) where a bubble would overlap. Tall columns hide what is behind them: let the viewer turn the map, and give a ranked list too. For exact comparison use a bar chart.',
   cartesian: false,
+  ref: { x: ['region', 'label'], y: ['value'], series: 'series' },
   fields: {
     geo: geoField(false, 'Optional boundaries drawn as land under the columns (needed when placing by region).'),
     ...placeFields('column'),
@@ -500,7 +505,7 @@ export const columnMap: ChartDef = {
 
 // ---- flow map ------------------------------------------------------------------------------
 
-interface Flow { a: [number, number]; b: [number, number]; from: string; to: string; v: number | null; s: string }
+interface Flow { a: [number, number]; b: [number, number]; from: string; to: string; v: number | null; s: string; row: R }
 
 function flows(spec: Spec, geo: Geography | null): Flow[] {
   const out: Flow[] = []
@@ -510,7 +515,7 @@ function flows(spec: Spec, geo: Geography | null): Flow[] {
     if (!a || !b) continue
     const v = spec.value ? toNumber(r[spec.value]) : null
     if (spec.value && (v === null || v < 0)) continue
-    out.push({ a: [a.lng, a.lat], b: [b.lng, b.lat], from: spec.from ? String(r[spec.from] ?? '').trim() : a.name ?? '', to: spec.to ? String(r[spec.to] ?? '').trim() : b.name ?? '', v, s: spec.series ? String(r[spec.series] ?? '') : '' })
+    out.push({ a: [a.lng, a.lat], b: [b.lng, b.lat], from: spec.from ? String(r[spec.from] ?? '').trim() : a.name ?? '', to: spec.to ? String(r[spec.to] ?? '').trim() : b.name ?? '', v, s: spec.series ? String(r[spec.series] ?? '') : '', row: r })
   }
   return out
 }
@@ -554,7 +559,7 @@ function flowCompile(c: ChartCtx): { series: SeriesInfo[] } {
     return {
       from: f.a, to: f.b, height: arcHeight(f.a, f.b, view.kind === 'globe' ? 1 : 0.9), width: f.v === null || max === 0 ? 1.6 : 1 + 5 * Math.sqrt(f.v / max), stroke, opacity: 0.85,
       tip: { title: label(f), rows: [...(f.v !== null ? [{ label: String(s.value), value: fmt(f.v), color: stroke }] : []), ...(s.series ? [{ label: String(s.series), value: clip(f.s, 40) }] : [])] },
-      aria: `${label(f)}${f.v !== null ? `: ${fmt(f.v)}` : ''}`, datum: { from: f.from, to: f.to, value: f.v, series: f.s }, ...(s.series ? { series: f.s } : {})
+      aria: `${label(f)}${f.v !== null ? `: ${fmt(f.v)}` : ''}`, datum: { from: f.from, to: f.to, value: f.v, series: f.s }, rows: c.rowsOf([f.row]), ...(s.series ? { series: f.s } : {})
     }
   })
   // End points: one small dot per distinct place.
@@ -575,6 +580,7 @@ export const flowMap: ChartDef = {
   summary: 'Draws an arc from origin to destination per row, width by a number, on a globe or a flat map.',
   useWhen: 'Showing movement between places: trade, migration, flights, shipments. Keep it to the biggest flows (a few hundred at most) or the map turns to string. Origins and destinations are lat/lng columns, or regions with a geography.',
   cartesian: false,
+  ref: { x: ['from', 'to'], y: ['value'], series: 'series' },
   fields: {
     geo: geoField(false, 'Optional boundaries drawn as land (needed when from/to name regions).'),
     from: { kind: 'column', role: 'any', desc: 'Origin region column (needs geo), or the origin\'s name when fromLat/fromLng are given.' },
