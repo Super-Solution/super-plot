@@ -113,6 +113,15 @@ export function createPlotChatPlugin(options: PlotChatPluginOptions = {}): PlotC
     options.onChange?.(card.id, [...card.agent.values()])
   }
 
+  /**
+   * Where the host shows the card (super-protocol 0.4 `CardMountContext.placement`), read structurally so a host that
+   * predates placements, which shows every card inline, keeps working.
+   */
+  const placementOf = (context: CardMountContext): 'inline' | 'panel' | 'document' => {
+    const value = (context as { placement?: unknown }).placement
+    return value === 'panel' || value === 'document' ? value : 'inline'
+  }
+
   const mount = (container: HTMLElement, initial: unknown, initialContext: CardMountContext): PlotCardHandle => {
     let card: Card | null = null
     let shown = ''
@@ -146,7 +155,7 @@ export function createPlotChatPlugin(options: PlotChatPluginOptions = {}): PlotC
       if (font !== undefined && isThemeValue(font)) figure.style.setProperty('--sp-font', font)
       else figure.style.removeProperty('--sp-font')
     }
-    const frame = (figure: HTMLElement, spec: PlotCardSpec): HTMLElement => {
+    const frame = (figure: HTMLElement, spec: PlotCardSpec, placement: 'inline' | 'panel' | 'document'): HTMLElement => {
       figure.setAttribute('aria-label', spec.alt)
       let title = figure.querySelector<HTMLElement>(':scope > .spc-title')
       if (spec.title) {
@@ -159,13 +168,23 @@ export function createPlotChatPlugin(options: PlotChatPluginOptions = {}): PlotC
         title.textContent = spec.title
       } else title?.remove()
       const host = figure.querySelector<HTMLElement>(':scope > .spc-plot')!
-      host.style.height = spec.height === undefined ? '' : `${spec.height}px`
+      figure.dataset.placement = placement
+      if (placement === 'panel') {
+        // The side panel gives the plot the room it has: it fills it and ignores the card's own height.
+        figure.style.cssText = 'margin:0;display:flex;flex-direction:column;height:100%;min-height:320px'
+        host.style.cssText = 'flex:1 1 auto;min-height:0'
+      } else {
+        figure.style.cssText = 'margin:0'
+        host.style.cssText = ''
+        host.style.height = spec.height === undefined ? '' : `${spec.height}px`
+      }
       return host
     }
 
     const render = (raw: unknown, context: CardMountContext): void => {
       const theme = readHostTheme(context.hostTheme)
-      const signature = JSON.stringify([raw, context.theme, context.locale ?? null, theme, context.partial === true])
+      const placement = placementOf(context)
+      const signature = JSON.stringify([raw, context.theme, context.locale ?? null, theme, context.partial === true, placement])
       if (signature === shown) return
       shown = signature
       if (context.partial === true) return note('The plot is still being written.', 'status')
@@ -183,7 +202,7 @@ export function createPlotChatPlugin(options: PlotChatPluginOptions = {}): PlotC
         // The same card again (a new spec while it is on screen): keep the plot, its zoom and its highlight.
         if (source(spec) !== source(card.spec)) card.agent = new Map()
         card.spec = spec
-        frame(card.figure, spec)
+        frame(card.figure, spec, placement)
         look(card.figure, theme)
         card.plot.setOptions({ theme: plotTheme, locale: context.locale })
         redraw(card)
@@ -194,18 +213,19 @@ export function createPlotChatPlugin(options: PlotChatPluginOptions = {}): PlotC
       const id = spec.id ?? `plot-${++counter}`
       const figure = doc.createElement('figure')
       figure.className = 'spc'
-      figure.style.cssText = 'margin:0'
       const host = doc.createElement('div')
       host.className = 'spc-plot'
       figure.appendChild(host)
-      frame(figure, spec)
+      frame(figure, spec, placement)
       look(figure, theme)
       container.replaceChildren(figure)
       const agent = restored(spec)
       const user = options.plot ?? {}
       const self: { card: Card | null } = { card: null }
+      // A plot in a document is read (and printed): it appears drawn, without the entrance animation.
       const plot = new SuperPlot(host, drawn({ spec, agent }), {
         ...user,
+        ...(placement === 'document' ? { animate: false } : {}),
         theme: plotTheme,
         locale: context.locale,
         refTarget: id,
@@ -219,7 +239,7 @@ export function createPlotChatPlugin(options: PlotChatPluginOptions = {}): PlotC
           user.onHover?.(e)
         }
       })
-      card = self.card = { id, spec, plot, figure, agent, lit: null, revealing: false, still: user.animate === false }
+      card = self.card = { id, spec, plot, figure, agent, lit: null, revealing: false, still: user.animate === false || placement === 'document' }
       // A card that reuses an id takes it over; the newest card is the default for the tools.
       cards.delete(id)
       cards.set(id, card)
@@ -458,6 +478,8 @@ export function createPlotChatPlugin(options: PlotChatPluginOptions = {}): PlotC
       license: 'Apache-2.0',
       capabilities: [
         { id: 'plot.card', surface: 'card', cardKind: PLOT_CARD_KIND },
+        // A plot worth exploring (zoom, the data table) can open in a side panel with room of its own.
+        { id: 'plot.panel', surface: 'panel', cardKind: PLOT_CARD_KIND },
         ...tools.map(t => ({ id: `plot.${t.name.replace(/^plot_/, '').replace(/_/g, '-')}`, surface: 'tool' as const, toolName: t.name, inputSchema: t.inputSchema }))
       ]
     },

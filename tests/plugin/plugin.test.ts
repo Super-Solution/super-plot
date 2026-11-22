@@ -147,6 +147,22 @@ describe('the card', () => {
     expect(box.querySelector('.spc-title')!.textContent).toBe('New title')
     expect(outlined(box)).toBe(1)
   })
+
+  it('fits where the host shows it: fills a side panel, keeps its height inline and in a document, and moves without remounting', () => {
+    const h = show(cardOf('sales', { height: 300 }), { ...ctx, placement: 'panel' })
+    const fig = box.querySelector<HTMLElement>('figure')!
+    const root = box.querySelector('.sp-root')
+    expect(fig.dataset.placement).toBe('panel')
+    expect(fig.style.height).toBe('100%')
+    expect(fig.querySelector<HTMLElement>('.spc-plot')!.style.height).toBe('')
+    h.update(cardOf('sales', { height: 300 }), { ...ctx, placement: 'document' } as never)
+    expect(box.querySelector('.sp-root')).toBe(root)
+    expect(fig.dataset.placement).toBe('document')
+    expect(fig.querySelector<HTMLElement>('.spc-plot')!.style.height).toBe('300px')
+    h.update(cardOf('sales', { height: 300 }), ctx)
+    expect(fig.dataset.placement).toBe('inline')
+    expect(plugin.manifest.capabilities).toContainEqual({ id: 'plot.panel', surface: 'panel', cardKind: PLOT_CARD_KIND })
+  })
 })
 
 describe('finding the card', () => {
