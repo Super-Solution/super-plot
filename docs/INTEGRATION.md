@@ -538,6 +538,12 @@ card, its handle's `ref(ref, 'enter' | 'leave' | 'activate')` (highlight, clear,
 plot, check a reference before writing it, highlight part of a plot and add or remove its own annotations. See its
 README; `examples/chat` is a demo host.
 
+The card fits where the host shows it (super-protocol 0.4 `CardMountContext.placement`, read structurally so older
+hosts keep working): `inline` is the chat card with its `height`; `panel` fills a side panel (at least 320 px) and
+ignores `height`, and the manifest declares a `panel` capability for `super.plot`; `document` (inside a Super Editor
+report) keeps `height` and draws without the entrance animation. Moving a card between places keeps the plot, its zoom
+and its highlight.
+
 ## Super Chat
 
 Today Super Chat has a built-in `chart` card. `fromChatChartCard(card)` converts it to a spec so the same data can be drawn by Super Plot:

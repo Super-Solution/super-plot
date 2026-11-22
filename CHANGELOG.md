@@ -2,6 +2,12 @@
 
 All four npm packages (`@supersolutions/super-plot-core`, `-web`, `-react`, `-chat-plugin`) share one version.
 
+## Unreleased
+
+### Added
+
+- The chat plugin's card fits where the host shows it (super-protocol 0.4 placements): it fills a side panel (`panel`, at least 320 px, ignoring `height`), and in a document (`document`) it is drawn without the entrance animation. The manifest declares a `panel` capability for `super.plot`. Moving between places keeps the plot. Hosts without placements see no change.
+
 ## 0.6.0 (2026-11-22)
 
 ### Added
