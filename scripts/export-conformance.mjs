@@ -344,11 +344,22 @@ const FEATURE_VALIDATION = [
   ['annotation: a point without y', lines({ annotations: [{ x: '2026-02-09', label: 'Peak' }] })],
   ['annotation: a point with a bad x', lines({ annotations: [{ x: null, y: 8, label: 'Peak' }] })],
   ['annotation: a point with a line field', lines({ annotations: [{ x: 1, y: 8, label: 'Peak', to: 3 }] })],
+  ['annotation: a region', lines({ annotations: [{ xFrom: '2026-02-01', yFrom: 3, yTo: 9, label: 'Expansion', tone: 'positive' }] })],
+  ['annotation: a region with one side', lines({ annotations: [{ yFrom: 5 }] })],
+  ['annotation: a region by the assistant', lines({ annotations: [{ xFrom: 1, xTo: 2, label: 'Window', by: 'assistant', key: 'window', note: 'Why.' }] })],
+  ['annotation: a region with a bad bound', lines({ annotations: [{ xFrom: null, label: 'Bad' }] })],
+  ['annotation: a region with a boolean bound', lines({ annotations: [{ yTo: true }] })],
+  ['annotation: a region with an unknown field', lines({ annotations: [{ xFrom: 1, to: 3 }] })],
+  ['annotation: a region mixed with a point', lines({ annotations: [{ xFrom: 1, x: 2, y: 3, label: 'Mixed' }] })],
+  ['annotation: a region with an axis', lines({ annotations: [{ axis: 'y', value: 1, xFrom: 1 }] })],
   ['annotation: a line with a point field', lines({ annotations: [{ axis: 'y', value: 8, y: 3 }] })],
   ['gaps: connect', lines({ gaps: 'connect' })],
   ['gaps: zero on an area', { type: 'area', x: 'd', y: 'v', gaps: 'zero', data: W }],
   ['gaps: bad value', lines({ gaps: 'skip' })],
   ['gaps: not on a bar', bars({ gaps: 'connect' })],
+  ['scatter: connected by order', { type: 'scatter', x: 'v', y: 't', order: 'd', data: W }],
+  ['scatter: order with hexagons', { type: 'scatter', x: 'v', y: 't', order: 'd', density: 'hex', data: W }],
+  ['scatter: order with no such column', { type: 'scatter', x: 'v', y: 't', order: 'when', data: W }],
   ['trend: loess', { type: 'scatter', x: 'v', y: 't', trend: 'loess', trendBandwidth: 0.5, data: W }],
   ['trend: bandwidth without loess', { type: 'scatter', x: 'v', y: 't', trendBandwidth: 0.5, data: W }],
   ['trend: bandwidth out of range', { type: 'scatter', x: 'v', y: 't', trend: 'loess', trendBandwidth: 2, data: W }],
@@ -428,6 +439,9 @@ const VALIDATION = [
   ['format with modifiers in the wrong order', { type: 'bar', x: 'a', y: 'b', data: B, format: 'currency:USD:narrow:compact' }],
   ['format with an empty suffix', { type: 'bar', x: 'a', y: 'b', data: B, format: 'integer~' }],
   ['format with a long suffix', { type: 'bar', x: 'a', y: 'b', data: B, format: 'integer~12345678901234567' }],
+  ['format with a prefix', { type: 'bar', x: 'a', y: 'b', data: B, format: 'NT$^integer~ B' }],
+  ['format with an empty prefix', { type: 'bar', x: 'a', y: 'b', data: B, format: '^integer' }],
+  ['format with a long prefix', { type: 'bar', x: 'a', y: 'b', data: B, format: '123456789^integer' }],
   ['format percent:N', { type: 'bar', x: 'a', y: 'b', data: B, format: 'percent:1' }],
   ['good formats', { type: 'bar', x: 'a', y: 'b', data: B, format: 'currency:eur' }],
   ['domain ok with null', { type: 'bar', x: 'a', y: 'b', data: B, yDomain: [null, 10] }],
@@ -599,7 +613,7 @@ const VALIDATION = [
 
 // Number formats, English. Values include ties, tiny numbers, negatives and magnitude roll-over.
 const FORMAT_VALUES = [0, 1, -1, 0.5, 1.005, 2.675, 0.125, 0.285, 12.5, 99.995, 999, 999.5, 999.95, 1000, 1234, 1234.5, 9999.99, 12345.678, 99999, 999499, 999500, 999999, 1000000, 1234567, 15000000, 999999999, 2.5e9, 7.1e12, 3.3e14, 1.2e15, 123456789012345680000, 0.00001, -0.00001, 0.0004, 0.00049, 0.07, 0.0999, 0.1, 0.1234, 0.9999, 5e-7, -12.34, -1234.5, -999999, 48200, 21800, 5400000, 1324, 463]
-const FORMATS = ['auto', 'compact', 'integer', 'percent', 'fixed:0', 'fixed:2', 'fixed:3', 'currency:USD', 'currency:EUR', 'currency:JPY', 'currency:TWD', 'currency:CHF', 'currency:KWD', 'currency:xyz', 'percent:0', 'percent:1', 'percent:3', 'currency:USD:compact', 'currency:USD:narrow', 'currency:USD:compact:narrow', 'currency:CAD:narrow', 'currency:CAD:compact:narrow', 'currency:CHF:compact', 'currency:JPY:compact:narrow', 'integer~ days', 'fixed:1~%', 'currency:USD:compact~/yr']
+const FORMATS = ['auto', 'compact', 'integer', 'percent', 'fixed:0', 'fixed:2', 'fixed:3', 'currency:USD', 'currency:EUR', 'currency:JPY', 'currency:TWD', 'currency:CHF', 'currency:KWD', 'currency:xyz', 'percent:0', 'percent:1', 'percent:3', 'currency:USD:compact', 'currency:USD:narrow', 'currency:USD:compact:narrow', 'currency:CAD:narrow', 'currency:CAD:compact:narrow', 'currency:CHF:compact', 'currency:JPY:compact:narrow', 'integer~ days', 'fixed:1~%', 'currency:USD:compact~/yr', 'NT$^integer', '£^fixed:2', 'HK$^compact~ B', '$^percent:1']
 const formats = []
 for (const format of FORMATS) {
   for (const value of FORMAT_VALUES) formats.push({ in: { format, value }, out: core.valueFormatter(format, 'en')(value) })

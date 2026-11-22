@@ -2,6 +2,14 @@
 
 All four npm packages (`@supersolutions/super-plot-core`, `-web`, `-react`, `-chat-plugin`) share one version.
 
+## Unreleased
+
+### Added
+
+- Scatter `order`: a column that joins each series' points by a line, from the lowest value to the highest (a connected scatter, such as a cycle over time). A row without a value stays a dot off the line; `density: "hex"` ignores it with a warning.
+- Region annotations: `{xFrom, xTo, yFrom, yTo, label, tone}` shades a rectangle between two values on each axis, and a side left out runs to the edge of the plot, so one corner makes a quadrant. Numeric and time axes; skipped with a warning on a category axis or when wholly outside the plot. Described as "Shaded: ...".
+- Number formats: a `prefix^` before any format (`NT$^integer`, `£^fixed:2`), printed before the digits and after a minus sign, at most 8 characters. Pairs with the existing `~suffix`. Validation, JSON Schema, the Python and Go ports and conformance cases are in step.
+
 ## 0.5.0 (2026-11-21)
 
 ### Added

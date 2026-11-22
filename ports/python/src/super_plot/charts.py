@@ -76,7 +76,8 @@ def _stable_desc(items: list[Any], key: Callable[[Any], float]) -> list[Any]:
 def point_notes(spec: Spec) -> str:
     """The labelled points ("Marked: ...") and the lines and bands an assistant added, for the description. Mirrors `pointNotes`."""
     every = spec.get("annotations") or []
-    pts = [a for a in every if "axis" not in a and isinstance(a.get("label"), str)]
+    pts = [a for a in every if "axis" not in a and ("x" in a or "y" in a) and isinstance(a.get("label"), str)]
+    regions = [a for a in every if "axis" not in a and "x" not in a and "y" not in a and any(k in a for k in ("xFrom", "xTo", "yFrom", "yTo")) and isinstance(a.get("label"), str)]
 
     def more(n: int) -> str:
         return f" and {n - 5} more" if n > 5 else ""
@@ -85,6 +86,16 @@ def point_notes(spec: Spec) -> str:
     if pts:
         items = [f'"{clip(a["label"], 40)}" at {clip(js_string(a.get("x")), 30)}, {clip(js_string(a.get("y")), 30)}{" (added by the assistant)" if a.get("by") == "assistant" else ""}' for a in pts[:5]]
         out += f" Marked: {'; '.join(items)}{more(len(pts))}."
+    if regions:
+
+        def span(a: dict, k: str) -> str:
+            lo, hi = a.get(f"{k}From"), a.get(f"{k}To")
+            if lo is None and hi is None:
+                return ""
+            return f"{k} {'lowest' if lo is None else clip(js_string(lo), 30)} to {'highest' if hi is None else clip(js_string(hi), 30)}"
+
+        items = [f'"{clip(a["label"], 40)}" ({", ".join(t for t in (span(a, "x"), span(a, "y")) if t)}){" (added by the assistant)" if a.get("by") == "assistant" else ""}' for a in regions[:5]]
+        out += f" Shaded: {'; '.join(items)}{more(len(regions))}."
     lines = [a for a in every if "axis" in a and a.get("by") == "assistant"]
     if lines:
         items = []
@@ -559,6 +570,8 @@ def _check_scatter(spec: Spec, rows: list[dict], issues: Issues) -> None:
         _log_domain(spec, issues, f"{a}Scale", f"{a}Domain")
     _interval_check(spec, rows, issues, "y")
     _interval_check(spec, rows, issues, "x")
+    if spec.get("order") and spec.get("density") == "hex":
+        _issue(issues, "warning", "order_ignored_density", "order", "Hexagons count points, so no line joins them; `order` is ignored while hexagons are drawn.", 'Use `density: "points"` (or leave it out) for a connected scatter.')
     if "trendBandwidth" in spec and spec.get("trend") != "loess":
         _issue(issues, "warning", "trend_bandwidth_ignored", "trendBandwidth", 'trendBandwidth only applies to `trend: "loess"`; it is ignored.')
     if _has_error(issues):
@@ -586,6 +599,8 @@ def _describe_scatter(spec: Spec) -> str:
     bars = (["vertical"] if spec.get("yLower") and spec.get("yUpper") else []) + (["horizontal"] if spec.get("xLower") and spec.get("xUpper") else [])
     if bars:
         t += f" Points carry {' and '.join(bars)} error bars."
+    if spec.get("order") and spec.get("density") != "hex":
+        t += f" Points are joined by a line in the order of {spec['order']}."
     if spec.get("trend") == "loess":
         t += " A LOESS curve shows the local trend."
     return t

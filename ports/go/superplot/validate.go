@@ -60,6 +60,8 @@ func (e *SpecError) Error() string {
 var (
 	annotationKeys = []string{"axis", "value", "to", "label", "tone", "key", "note", "by"}
 	pointKeys      = []string{"x", "y", "label", "tone", "key", "note", "by"}
+	regionBounds   = []string{"xFrom", "xTo", "yFrom", "yTo"}
+	regionKeys     = []string{"xFrom", "xTo", "yFrom", "yTo", "label", "tone", "key", "note", "by"}
 	annotationBy   = []string{"author", "assistant"}
 	cameraKeys     = []string{"lng", "lat", "zoom", "pitch", "bearing"}
 	tones          = []string{"neutral", "positive", "negative", "warning", "info"}
@@ -572,9 +574,19 @@ func validateAnnotations(name string, value any, issues *[]Issue) any {
 		_, hasX := a["x"]
 		_, hasY := a["y"]
 		point := !hasAxis && (hasX || hasY)
+		region := false
+		if !point && !hasAxis {
+			for _, k := range regionBounds {
+				if _, given := a[k]; given {
+					region = true
+				}
+			}
+		}
 		keys, what := annotationKeys, "annotation"
 		if point {
 			keys, what = pointKeys, "point annotation"
+		} else if region {
+			keys, what = regionKeys, "region annotation"
 		}
 		for _, k := range sortedKeys(a) {
 			if !contains(keys, k) {
@@ -670,12 +682,31 @@ func validateAnnotations(name string, value any, issues *[]Issue) any {
 			keep()
 			continue
 		}
+		if region {
+			bad := ""
+			for _, k := range regionBounds {
+				if v, given := a[k]; given {
+					if f, isNum := v.(float64); !isString(v) && !(isNum && isFinite(f)) {
+						bad = k
+						break
+					}
+				}
+			}
+			if bad != "" {
+				add(issues, "error", "bad_type", p+"."+bad, fmt.Sprintf("%s.%s must be a number or an ISO date, got %s.", p, bad, show(a[bad])))
+				continue
+			}
+			if toneAndLabel() {
+				keep()
+			}
+			continue
+		}
 		isStrOrNum := func(v any) bool { _, s := v.(string); return s || isNumber(v) }
 		axis, _ := a["axis"].(string)
 		_, hasTo := a["to"]
 		switch {
 		case axis != "x" && axis != "y":
-			add(issues, "error", "bad_enum", p+".axis", p+`.axis must be "x" or "y".`, "For a labelled point, leave out axis and give x, y and label.")
+			add(issues, "error", "bad_enum", p+".axis", p+`.axis must be "x" or "y".`, "For a labelled point, leave out axis and give x, y and label; for a shaded region give xFrom, xTo, yFrom or yTo.")
 		case !isStrOrNum(a["value"]):
 			add(issues, "error", "bad_type", p+".value", p+".value must be a number or a string.")
 		case hasTo && !isStrOrNum(a["to"]):
