@@ -2,9 +2,13 @@
 // Copyright 2026 SUPER SOLUTION LABS INC
 import { build } from 'esbuild'
 import { execFileSync } from 'node:child_process'
+import { createRequire } from 'node:module'
 import { readdirSync, rmSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 import { packages } from './packages.mjs'
+
+// Run the repo's own TypeScript through node: `npx` is `npx.cmd` on Windows and cannot be spawned without a shell.
+const tsc = createRequire(import.meta.url).resolve('typescript/bin/tsc')
 
 /** Every source module of a package (`.d.ts` files excluded). */
 function sources(dir) {
@@ -38,6 +42,6 @@ for (const p of packages) {
   if (p.global) {
     await build({ entryPoints: [join(p.dir, p.global)], outfile: join(p.dir, 'dist/super-plot.global.js'), bundle: true, format: 'iife', target: 'es2020', platform: 'browser', minify: true, logLevel: 'warning' })
   }
-  if (!noDts) execFileSync('npx', ['tsc', '-p', join(p.dir, 'tsconfig.build.json')], { stdio: 'inherit' })
+  if (!noDts) execFileSync(process.execPath, [tsc, '-p', join(p.dir, 'tsconfig.build.json')], { stdio: 'inherit' })
   console.log(`built ${p.name}`)
 }

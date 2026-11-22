@@ -54,7 +54,8 @@ for (const p of packages) {
       }
     }
   }
-  const pack = JSON.parse(execFileSync('npm', ['pack', '--dry-run', '--json', '--ignore-scripts'], { cwd: p.dir, encoding: 'utf8' }))[0]
+  // `npm` is npm.cmd on Windows, which cannot be spawned without a shell
+  const pack = JSON.parse(execFileSync('npm', ['pack', '--dry-run', '--json', '--ignore-scripts'], { cwd: p.dir, encoding: 'utf8', shell: process.platform === 'win32' }))[0]
   const files = pack.files.map(f => f.path)
   if (files.some(f => f.startsWith('src/') || f.startsWith('tests/') || f.endsWith('.tsbuildinfo'))) fail(`${p.name}: package ships sources or tests`)
   if (!files.includes('README.md')) fail(`${p.name}: README.md missing from package`)
