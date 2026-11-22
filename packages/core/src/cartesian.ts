@@ -4,6 +4,7 @@ import type { ChartCtx } from './context.js'
 import type { AxisInfo, Rect, Tip } from './scene.js'
 import type { BandScale, LinearScale } from './scale.js'
 import { fit } from './util/text.js'
+import { REGION_BOUNDS } from './schema.js'
 import { toTime, zoneOffset } from './util/time.js'
 
 const DAY = 864e5
@@ -161,7 +162,8 @@ export function drawAnnotations(c: ChartCtx, plot: Rect, x: Axis, y: Axis): void
   const points: [number, PointAnnotation][] = []
   for (const [i, a] of list.entries()) {
     if (!('axis' in a)) {
-      points.push([i, a])
+      if (REGION_BOUNDS.some(k => k in a)) drawRegion(c, plot, x, y, i, a as unknown as RegionAnnotation)
+      else points.push([i, a as PointAnnotation])
       continue
     }
     const ax = a.axis === 'x' ? x : y
@@ -198,6 +200,48 @@ export function drawAnnotations(c: ChartCtx, plot: Rect, x: Axis, y: Axis): void
     }
   }
   for (const [i, a] of points) drawPointAnnotation(c, plot, x, y, i, a)
+}
+
+export interface RegionAnnotation extends AnnotationExtra { xFrom?: string | number; xTo?: string | number; yFrom?: string | number; yTo?: string | number; label?: string; tone?: string }
+
+/**
+ * A shaded rectangle between two values on each axis. A side left out runs to the plot's edge, so a single corner
+ * value draws a quadrant; a side past the plot is cut at its edge. Only numeric and time axes have positions between
+ * values: on a category axis the region is skipped, said in a warning. A region wholly outside the plot is skipped too.
+ */
+function drawRegion(c: ChartCtx, plot: Rect, x: Axis, y: Axis, i: number, a: RegionAnnotation): void {
+  const p = `annotations[${i}]`
+  if (x.scale.kind === 'band' || y.scale.kind === 'band') {
+    c.warn('annotation_out_of_range', p, `Annotation ${i} is a shaded region, which needs numeric or date axes; this chart has a category axis, so it was skipped.`, 'Use a band ({axis, value, to}) on a category axis.')
+    return
+  }
+  const side = (ax: Axis, from: string | number | undefined, to: string | number | undefined, lo: number, hi: number, vertical: boolean): [number, number] | null => {
+    const at = (v: string | number | undefined, edge: number): number | null => {
+      if (v === undefined) return edge
+      const n = ax.scale.kind === 'time' ? toTime(v) : toNumber(v)
+      return n === null ? null : Math.max(lo, Math.min(hi, (ax.scale as LinearScale).at(n)))
+    }
+    // A side left out runs to the edge where its values end: the lowest value is at the bottom of a vertical axis.
+    const a0 = at(from, vertical ? hi : lo)
+    const a1 = at(to, vertical ? lo : hi)
+    if (a0 === null || a1 === null) return null
+    return [Math.min(a0, a1), Math.max(a0, a1)]
+  }
+  const xs = side(x, a.xFrom, a.xTo, plot.x, plot.x + plot.w, false)
+  const ys = side(y, a.yFrom, a.yTo, plot.y, plot.y + plot.h, true)
+  if (!xs || !ys || xs[1] - xs[0] < 0.5 || ys[1] - ys[0] < 0.5) {
+    c.warn('annotation_out_of_range', p, `Annotation ${i} (a shaded region) is outside the plotted range or has a value that is not a number or date, and was skipped.`)
+    return
+  }
+  const color = annotationColor(c, a)
+  const { label, tip, aria } = annotationText(c, a)
+  const keyed = a.key !== undefined ? { key: a.key } : {}
+  const own = { ...(tip ? { tip, aria } : {}), ...keyed }
+  c.marks.push({ type: 'rect', role: 'annotation', x: xs[0], y: ys[0], w: xs[1] - xs[0], h: ys[1] - ys[0], fill: color, opacity: 0.12, ...(label ? keyed : own) })
+  if (label) {
+    const size = c.size - 1
+    c.marks.push(c.text(xs[0] + 6, ys[0] + 5, fit(label, Math.max(24, xs[1] - xs[0] - 12), size, c.env.measure), { role: 'annotation', baseline: 'hanging', fill: color, size, ...own }))
+  }
 }
 
 /** The fields both annotation forms share: a reference key, a longer note, and who added it. */

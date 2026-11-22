@@ -62,7 +62,7 @@ var data = func() tables {
 	return t
 }()
 
-var formatRe = regexp.MustCompile(`^(auto|compact|integer|percent(:\d)?|fixed:\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\x00-\x1f]{1,16})?$`)
+var formatRe = regexp.MustCompile(`^([^~^\x00-\x1f]{1,8}\^)?(auto|compact|integer|percent(:\d)?|fixed:\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\x00-\x1f]{1,16})?$`)
 
 // IsValueFormat reports whether s is a format string: auto | compact | integer | percent | percent:N | fixed:N |
 // currency:CODE[:compact][:narrow], then an optional ~suffix.
@@ -238,12 +238,25 @@ func currency(v float64, code string, maxFrac int, compactBody, narrow bool) str
 // ValueFormatter returns a formatter for single values. format: auto | compact | integer | percent | percent:N |
 // fixed:N | currency:CODE[:compact][:narrow], then an optional ~suffix printed after the value; empty means auto.
 func ValueFormatter(format string) func(float64) string {
-	base, suffix, hasSuffix := strings.Cut(format, "~")
-	one := baseFormatter(base)
-	if hasSuffix && suffix != "" {
-		return func(v float64) string { return one(v) + suffix }
+	left, suffix, _ := strings.Cut(format, "~")
+	prefix, base, hasPrefix := strings.Cut(left, "^")
+	if !hasPrefix {
+		prefix, base = "", left
 	}
-	return one
+	one := baseFormatter(base)
+	if prefix == "" && suffix == "" {
+		return one
+	}
+	return func(v float64) string {
+		s := one(v)
+		sign := ""
+		if strings.HasPrefix(s, "-") {
+			sign, s = "-", s[1:]
+		} else if strings.HasPrefix(s, "\u2212") {
+			sign, s = "\u2212", s[len("\u2212"):]
+		}
+		return sign + prefix + s + suffix
+	}
 }
 
 func baseFormatter(f string) func(float64) string {

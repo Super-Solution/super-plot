@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2026 SUPER SOLUTION LABS INC
-import type { Row } from '../schema.js'
+import { REGION_BOUNDS, type Row } from '../schema.js'
 import { r2, toNumber } from '../util/num.js'
 import type { ChartCtx } from '../context.js'
 import { mix } from '../util/color.js'
@@ -88,12 +88,18 @@ const BY_ASSISTANT = ' (added by the assistant)'
  */
 export function pointNotes(spec: Record<string, any>): string {
   const all = (spec.annotations ?? []) as Record<string, unknown>[]
-  const pts = all.filter(a => !('axis' in a) && typeof a.label === 'string')
+  const pts = all.filter(a => !('axis' in a) && ('x' in a || 'y' in a) && typeof a.label === 'string')
+  const regions = all.filter(a => !('axis' in a) && !('x' in a || 'y' in a) && REGION_BOUNDS.some(k => k in a) && typeof a.label === 'string')
   const more = (n: number): string => (n > 5 ? ` and ${n - 5} more` : '')
   let out = ''
   if (pts.length) {
     const list = pts.slice(0, 5).map(a => `"${clip(String(a.label), 40)}" at ${clip(String(a.x), 30)}, ${clip(String(a.y), 30)}${a.by === 'assistant' ? BY_ASSISTANT : ''}`)
     out += ` Marked: ${list.join('; ')}${more(pts.length)}.`
+  }
+  if (regions.length) {
+    const span = (a: Record<string, unknown>, k: 'x' | 'y'): string => (a[`${k}From`] !== undefined || a[`${k}To`] !== undefined ? `${k} ${a[`${k}From`] !== undefined ? clip(String(a[`${k}From`]), 30) : 'lowest'} to ${a[`${k}To`] !== undefined ? clip(String(a[`${k}To`]), 30) : 'highest'}` : '')
+    const list = regions.slice(0, 5).map(a => `"${clip(String(a.label), 40)}" (${[span(a, 'x'), span(a, 'y')].filter(Boolean).join(', ')})${a.by === 'assistant' ? BY_ASSISTANT : ''}`)
+    out += ` Shaded: ${list.join('; ')}${more(regions.length)}.`
   }
   const lines = all.filter(a => 'axis' in a && a.by === 'assistant')
   if (lines.length) {

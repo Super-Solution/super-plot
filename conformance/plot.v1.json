@@ -23284,6 +23284,96 @@
       "normalized": null
     },
     {
+      "name": "format with a prefix",
+      "spec": {
+        "type": "bar",
+        "x": "a",
+        "y": "b",
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "b": 2
+          }
+        ],
+        "format": "NT$^integer~ B"
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "bar",
+        "x": "a",
+        "y": "b",
+        "format": "NT$^integer~ B",
+        "legend": "auto",
+        "tooltip": true,
+        "bare": false,
+        "stack": "none",
+        "orientation": "vertical",
+        "sort": "none",
+        "labels": false
+      }
+    },
+    {
+      "name": "format with an empty prefix",
+      "spec": {
+        "type": "bar",
+        "x": "a",
+        "y": "b",
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "b": 2
+          }
+        ],
+        "format": "^integer"
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "bad_format",
+          "path": "format"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "format with a long prefix",
+      "spec": {
+        "type": "bar",
+        "x": "a",
+        "y": "b",
+        "data": [
+          {
+            "a": "x",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "b": 2
+          }
+        ],
+        "format": "123456789^integer"
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "bad_format",
+          "path": "format"
+        }
+      ],
+      "normalized": null
+    },
+    {
       "name": "format percent:N",
       "spec": {
         "type": "bar",
@@ -46761,6 +46851,439 @@
       "normalized": null
     },
     {
+      "name": "annotation: a region",
+      "spec": {
+        "type": "line",
+        "x": "d",
+        "y": "v",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ],
+        "annotations": [
+          {
+            "xFrom": "2026-02-01",
+            "yFrom": 3,
+            "yTo": 9,
+            "label": "Expansion",
+            "tone": "positive"
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "line",
+        "x": "d",
+        "y": "v",
+        "annotations": [
+          {
+            "xFrom": "2026-02-01",
+            "yFrom": 3,
+            "yTo": 9,
+            "label": "Expansion",
+            "tone": "positive"
+          }
+        ],
+        "legend": "auto",
+        "tooltip": true,
+        "bare": false,
+        "xType": "auto",
+        "curve": "linear"
+      }
+    },
+    {
+      "name": "annotation: a region with one side",
+      "spec": {
+        "type": "line",
+        "x": "d",
+        "y": "v",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ],
+        "annotations": [
+          {
+            "yFrom": 5
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "line",
+        "x": "d",
+        "y": "v",
+        "annotations": [
+          {
+            "yFrom": 5
+          }
+        ],
+        "legend": "auto",
+        "tooltip": true,
+        "bare": false,
+        "xType": "auto",
+        "curve": "linear"
+      }
+    },
+    {
+      "name": "annotation: a region by the assistant",
+      "spec": {
+        "type": "line",
+        "x": "d",
+        "y": "v",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ],
+        "annotations": [
+          {
+            "xFrom": 1,
+            "xTo": 2,
+            "label": "Window",
+            "by": "assistant",
+            "key": "window",
+            "note": "Why."
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "line",
+        "x": "d",
+        "y": "v",
+        "annotations": [
+          {
+            "xFrom": 1,
+            "xTo": 2,
+            "label": "Window",
+            "by": "assistant",
+            "key": "window",
+            "note": "Why."
+          }
+        ],
+        "legend": "auto",
+        "tooltip": true,
+        "bare": false,
+        "xType": "auto",
+        "curve": "linear"
+      }
+    },
+    {
+      "name": "annotation: a region with a bad bound",
+      "spec": {
+        "type": "line",
+        "x": "d",
+        "y": "v",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ],
+        "annotations": [
+          {
+            "xFrom": null,
+            "label": "Bad"
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "bad_type",
+          "path": "annotations[0].xFrom"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "annotation: a region with a boolean bound",
+      "spec": {
+        "type": "line",
+        "x": "d",
+        "y": "v",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ],
+        "annotations": [
+          {
+            "yTo": true
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "bad_type",
+          "path": "annotations[0].yTo"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "annotation: a region with an unknown field",
+      "spec": {
+        "type": "line",
+        "x": "d",
+        "y": "v",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ],
+        "annotations": [
+          {
+            "xFrom": 1,
+            "to": 3
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "unknown_field",
+          "path": "annotations[0].to"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "annotation: a region mixed with a point",
+      "spec": {
+        "type": "line",
+        "x": "d",
+        "y": "v",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ],
+        "annotations": [
+          {
+            "xFrom": 1,
+            "x": 2,
+            "y": 3,
+            "label": "Mixed"
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "unknown_field",
+          "path": "annotations[0].xFrom"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "annotation: a region with an axis",
+      "spec": {
+        "type": "line",
+        "x": "d",
+        "y": "v",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ],
+        "annotations": [
+          {
+            "axis": "y",
+            "value": 1,
+            "xFrom": 1
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "unknown_field",
+          "path": "annotations[0].xFrom"
+        }
+      ],
+      "normalized": null
+    },
+    {
       "name": "annotation: a line with a point field",
       "spec": {
         "type": "line",
@@ -46991,6 +47514,154 @@
           "severity": "error",
           "code": "unknown_field",
           "path": "gaps"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "scatter: connected by order",
+      "spec": {
+        "type": "scatter",
+        "x": "v",
+        "y": "t",
+        "order": "d",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "scatter",
+        "x": "v",
+        "y": "t",
+        "order": "d",
+        "legend": "auto",
+        "tooltip": true,
+        "bare": false,
+        "trend": "none",
+        "xType": "auto"
+      }
+    },
+    {
+      "name": "scatter: order with hexagons",
+      "spec": {
+        "type": "scatter",
+        "x": "v",
+        "y": "t",
+        "order": "d",
+        "density": "hex",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "order_ignored_density",
+          "path": "order"
+        }
+      ],
+      "normalized": {
+        "type": "scatter",
+        "x": "v",
+        "y": "t",
+        "order": "d",
+        "density": "hex",
+        "legend": "auto",
+        "tooltip": true,
+        "bare": false,
+        "trend": "none",
+        "xType": "auto"
+      }
+    },
+    {
+      "name": "scatter: order with no such column",
+      "spec": {
+        "type": "scatter",
+        "x": "v",
+        "y": "t",
+        "order": "when",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "no_such_column",
+          "path": "order"
         }
       ],
       "normalized": null
@@ -81196,6 +81867,1378 @@
         "value": 463
       },
       "out": "$463/yr"
+    },
+    {
+      "in": {
+        "format": "NT$^integer",
+        "value": 0
+      },
+      "out": "NT$0"
+    },
+    {
+      "in": {
+        "format": "NT$^integer",
+        "value": 1
+      },
+      "out": "NT$1"
+    },
+    {
+      "in": {
+        "format": "NT$^integer",
+        "value": -1
+      },
+      "out": "-NT$1"
+    },
+    {
+      "in": {
+        "format": "NT$^integer",
+        "value": 0.5
+      },
+      "out": "NT$1"
+    },
+    {
+      "in": {
+        "format": "NT$^integer",
+        "value": 1.005
+      },
+      "out": "NT$1"
+    },
+    {
+      "in": {
+        "format": "NT$^integer",
+        "value": 2.675
+      },
+      "out": "NT$3"
+    },
+    {
+      "in": {
+        "format": "NT$^integer",
+        "value": 0.125
+      },
+      "out": "NT$0"
+    },
+    {
+      "in": {
+        "format": "NT$^integer",
+        "value": 0.285
+      },
+      "out": "NT$0"
+    },
+    {
+      "in": {
+        "format": "NT$^integer",
+        "value": 12.5
+      },
+      "out": "NT$13"
+    },
+    {
+      "in": {
+        "format": "NT$^integer",
+        "value": 99.995
+      },
+      "out": "NT$100"
+    },
+    {
+      "in": {
+        "format": "NT$^integer",
+        "value": 999
+      },
+      "out": "NT$999"
+    },
+    {
+      "in": {
+        "format": "NT$^integer",
+        "value": 999.5
+      },
+      "out": "NT$1,000"
+    },
+    {
+      "in": {
+        "format": "NT$^integer",
+        "value": 999.95
+      },
+      "out": "NT$1,000"
+    },
+    {
+      "in": {
+        "format": "NT$^integer",
+        "value": 1000
+      },
+      "out": "NT$1,000"
+    },
+    {
+      "in": {
+        "format": "NT$^integer",
+        "value": 1234
+      },
+      "out": "NT$1,234"
+    },
+    {
+      "in": {
+        "format": "NT$^integer",
+        "value": 1234.5
+      },
+      "out": "NT$1,235"
+    },
+    {
+      "in": {
+        "format": "NT$^integer",
+        "value": 9999.99
+      },
+      "out": "NT$10,000"
+    },
+    {
+      "in": {
+        "format": "NT$^integer",
+        "value": 12345.678
+      },
+      "out": "NT$12,346"
+    },
+    {
+      "in": {
+        "format": "NT$^integer",
+        "value": 99999
+      },
+      "out": "NT$99,999"
+    },
+    {
+      "in": {
+        "format": "NT$^integer",
+        "value": 999499
+      },
+      "out": "NT$999,499"
+    },
+    {
+      "in": {
+        "format": "NT$^integer",
+        "value": 999500
+      },
+      "out": "NT$999,500"
+    },
+    {
+      "in": {
+        "format": "NT$^integer",
+        "value": 999999
+      },
+      "out": "NT$999,999"
+    },
+    {
+      "in": {
+        "format": "NT$^integer",
+        "value": 1000000
+      },
+      "out": "NT$1,000,000"
+    },
+    {
+      "in": {
+        "format": "NT$^integer",
+        "value": 1234567
+      },
+      "out": "NT$1,234,567"
+    },
+    {
+      "in": {
+        "format": "NT$^integer",
+        "value": 15000000
+      },
+      "out": "NT$15,000,000"
+    },
+    {
+      "in": {
+        "format": "NT$^integer",
+        "value": 999999999
+      },
+      "out": "NT$999,999,999"
+    },
+    {
+      "in": {
+        "format": "NT$^integer",
+        "value": 2500000000
+      },
+      "out": "NT$2,500,000,000"
+    },
+    {
+      "in": {
+        "format": "NT$^integer",
+        "value": 7100000000000
+      },
+      "out": "NT$7,100,000,000,000"
+    },
+    {
+      "in": {
+        "format": "NT$^integer",
+        "value": 330000000000000
+      },
+      "out": "NT$330,000,000,000,000"
+    },
+    {
+      "in": {
+        "format": "NT$^integer",
+        "value": 1200000000000000
+      },
+      "out": "NT$1,200,000,000,000,000"
+    },
+    {
+      "in": {
+        "format": "NT$^integer",
+        "value": 123456789012345680000
+      },
+      "out": "NT$123,456,789,012,345,680,000"
+    },
+    {
+      "in": {
+        "format": "NT$^integer",
+        "value": 0.00001
+      },
+      "out": "NT$0"
+    },
+    {
+      "in": {
+        "format": "NT$^integer",
+        "value": -0.00001
+      },
+      "out": "-NT$0"
+    },
+    {
+      "in": {
+        "format": "NT$^integer",
+        "value": 0.0004
+      },
+      "out": "NT$0"
+    },
+    {
+      "in": {
+        "format": "NT$^integer",
+        "value": 0.00049
+      },
+      "out": "NT$0"
+    },
+    {
+      "in": {
+        "format": "NT$^integer",
+        "value": 0.07
+      },
+      "out": "NT$0"
+    },
+    {
+      "in": {
+        "format": "NT$^integer",
+        "value": 0.0999
+      },
+      "out": "NT$0"
+    },
+    {
+      "in": {
+        "format": "NT$^integer",
+        "value": 0.1
+      },
+      "out": "NT$0"
+    },
+    {
+      "in": {
+        "format": "NT$^integer",
+        "value": 0.1234
+      },
+      "out": "NT$0"
+    },
+    {
+      "in": {
+        "format": "NT$^integer",
+        "value": 0.9999
+      },
+      "out": "NT$1"
+    },
+    {
+      "in": {
+        "format": "NT$^integer",
+        "value": 5e-7
+      },
+      "out": "NT$0"
+    },
+    {
+      "in": {
+        "format": "NT$^integer",
+        "value": -12.34
+      },
+      "out": "-NT$12"
+    },
+    {
+      "in": {
+        "format": "NT$^integer",
+        "value": -1234.5
+      },
+      "out": "-NT$1,235"
+    },
+    {
+      "in": {
+        "format": "NT$^integer",
+        "value": -999999
+      },
+      "out": "-NT$999,999"
+    },
+    {
+      "in": {
+        "format": "NT$^integer",
+        "value": 48200
+      },
+      "out": "NT$48,200"
+    },
+    {
+      "in": {
+        "format": "NT$^integer",
+        "value": 21800
+      },
+      "out": "NT$21,800"
+    },
+    {
+      "in": {
+        "format": "NT$^integer",
+        "value": 5400000
+      },
+      "out": "NT$5,400,000"
+    },
+    {
+      "in": {
+        "format": "NT$^integer",
+        "value": 1324
+      },
+      "out": "NT$1,324"
+    },
+    {
+      "in": {
+        "format": "NT$^integer",
+        "value": 463
+      },
+      "out": "NT$463"
+    },
+    {
+      "in": {
+        "format": "£^fixed:2",
+        "value": 0
+      },
+      "out": "£0.00"
+    },
+    {
+      "in": {
+        "format": "£^fixed:2",
+        "value": 1
+      },
+      "out": "£1.00"
+    },
+    {
+      "in": {
+        "format": "£^fixed:2",
+        "value": -1
+      },
+      "out": "-£1.00"
+    },
+    {
+      "in": {
+        "format": "£^fixed:2",
+        "value": 0.5
+      },
+      "out": "£0.50"
+    },
+    {
+      "in": {
+        "format": "£^fixed:2",
+        "value": 1.005
+      },
+      "out": "£1.01"
+    },
+    {
+      "in": {
+        "format": "£^fixed:2",
+        "value": 2.675
+      },
+      "out": "£2.68"
+    },
+    {
+      "in": {
+        "format": "£^fixed:2",
+        "value": 0.125
+      },
+      "out": "£0.13"
+    },
+    {
+      "in": {
+        "format": "£^fixed:2",
+        "value": 0.285
+      },
+      "out": "£0.29"
+    },
+    {
+      "in": {
+        "format": "£^fixed:2",
+        "value": 12.5
+      },
+      "out": "£12.50"
+    },
+    {
+      "in": {
+        "format": "£^fixed:2",
+        "value": 99.995
+      },
+      "out": "£100.00"
+    },
+    {
+      "in": {
+        "format": "£^fixed:2",
+        "value": 999
+      },
+      "out": "£999.00"
+    },
+    {
+      "in": {
+        "format": "£^fixed:2",
+        "value": 999.5
+      },
+      "out": "£999.50"
+    },
+    {
+      "in": {
+        "format": "£^fixed:2",
+        "value": 999.95
+      },
+      "out": "£999.95"
+    },
+    {
+      "in": {
+        "format": "£^fixed:2",
+        "value": 1000
+      },
+      "out": "£1,000.00"
+    },
+    {
+      "in": {
+        "format": "£^fixed:2",
+        "value": 1234
+      },
+      "out": "£1,234.00"
+    },
+    {
+      "in": {
+        "format": "£^fixed:2",
+        "value": 1234.5
+      },
+      "out": "£1,234.50"
+    },
+    {
+      "in": {
+        "format": "£^fixed:2",
+        "value": 9999.99
+      },
+      "out": "£9,999.99"
+    },
+    {
+      "in": {
+        "format": "£^fixed:2",
+        "value": 12345.678
+      },
+      "out": "£12,345.68"
+    },
+    {
+      "in": {
+        "format": "£^fixed:2",
+        "value": 99999
+      },
+      "out": "£99,999.00"
+    },
+    {
+      "in": {
+        "format": "£^fixed:2",
+        "value": 999499
+      },
+      "out": "£999,499.00"
+    },
+    {
+      "in": {
+        "format": "£^fixed:2",
+        "value": 999500
+      },
+      "out": "£999,500.00"
+    },
+    {
+      "in": {
+        "format": "£^fixed:2",
+        "value": 999999
+      },
+      "out": "£999,999.00"
+    },
+    {
+      "in": {
+        "format": "£^fixed:2",
+        "value": 1000000
+      },
+      "out": "£1,000,000.00"
+    },
+    {
+      "in": {
+        "format": "£^fixed:2",
+        "value": 1234567
+      },
+      "out": "£1,234,567.00"
+    },
+    {
+      "in": {
+        "format": "£^fixed:2",
+        "value": 15000000
+      },
+      "out": "£15,000,000.00"
+    },
+    {
+      "in": {
+        "format": "£^fixed:2",
+        "value": 999999999
+      },
+      "out": "£999,999,999.00"
+    },
+    {
+      "in": {
+        "format": "£^fixed:2",
+        "value": 2500000000
+      },
+      "out": "£2,500,000,000.00"
+    },
+    {
+      "in": {
+        "format": "£^fixed:2",
+        "value": 7100000000000
+      },
+      "out": "£7,100,000,000,000.00"
+    },
+    {
+      "in": {
+        "format": "£^fixed:2",
+        "value": 330000000000000
+      },
+      "out": "£330,000,000,000,000.00"
+    },
+    {
+      "in": {
+        "format": "£^fixed:2",
+        "value": 1200000000000000
+      },
+      "out": "£1,200,000,000,000,000.00"
+    },
+    {
+      "in": {
+        "format": "£^fixed:2",
+        "value": 123456789012345680000
+      },
+      "out": "£123,456,789,012,345,680,000.00"
+    },
+    {
+      "in": {
+        "format": "£^fixed:2",
+        "value": 0.00001
+      },
+      "out": "£0.00"
+    },
+    {
+      "in": {
+        "format": "£^fixed:2",
+        "value": -0.00001
+      },
+      "out": "-£0.00"
+    },
+    {
+      "in": {
+        "format": "£^fixed:2",
+        "value": 0.0004
+      },
+      "out": "£0.00"
+    },
+    {
+      "in": {
+        "format": "£^fixed:2",
+        "value": 0.00049
+      },
+      "out": "£0.00"
+    },
+    {
+      "in": {
+        "format": "£^fixed:2",
+        "value": 0.07
+      },
+      "out": "£0.07"
+    },
+    {
+      "in": {
+        "format": "£^fixed:2",
+        "value": 0.0999
+      },
+      "out": "£0.10"
+    },
+    {
+      "in": {
+        "format": "£^fixed:2",
+        "value": 0.1
+      },
+      "out": "£0.10"
+    },
+    {
+      "in": {
+        "format": "£^fixed:2",
+        "value": 0.1234
+      },
+      "out": "£0.12"
+    },
+    {
+      "in": {
+        "format": "£^fixed:2",
+        "value": 0.9999
+      },
+      "out": "£1.00"
+    },
+    {
+      "in": {
+        "format": "£^fixed:2",
+        "value": 5e-7
+      },
+      "out": "£0.00"
+    },
+    {
+      "in": {
+        "format": "£^fixed:2",
+        "value": -12.34
+      },
+      "out": "-£12.34"
+    },
+    {
+      "in": {
+        "format": "£^fixed:2",
+        "value": -1234.5
+      },
+      "out": "-£1,234.50"
+    },
+    {
+      "in": {
+        "format": "£^fixed:2",
+        "value": -999999
+      },
+      "out": "-£999,999.00"
+    },
+    {
+      "in": {
+        "format": "£^fixed:2",
+        "value": 48200
+      },
+      "out": "£48,200.00"
+    },
+    {
+      "in": {
+        "format": "£^fixed:2",
+        "value": 21800
+      },
+      "out": "£21,800.00"
+    },
+    {
+      "in": {
+        "format": "£^fixed:2",
+        "value": 5400000
+      },
+      "out": "£5,400,000.00"
+    },
+    {
+      "in": {
+        "format": "£^fixed:2",
+        "value": 1324
+      },
+      "out": "£1,324.00"
+    },
+    {
+      "in": {
+        "format": "£^fixed:2",
+        "value": 463
+      },
+      "out": "£463.00"
+    },
+    {
+      "in": {
+        "format": "HK$^compact~ B",
+        "value": 0
+      },
+      "out": "HK$0 B"
+    },
+    {
+      "in": {
+        "format": "HK$^compact~ B",
+        "value": 1
+      },
+      "out": "HK$1 B"
+    },
+    {
+      "in": {
+        "format": "HK$^compact~ B",
+        "value": -1
+      },
+      "out": "-HK$1 B"
+    },
+    {
+      "in": {
+        "format": "HK$^compact~ B",
+        "value": 0.5
+      },
+      "out": "HK$0.5 B"
+    },
+    {
+      "in": {
+        "format": "HK$^compact~ B",
+        "value": 1.005
+      },
+      "out": "HK$1 B"
+    },
+    {
+      "in": {
+        "format": "HK$^compact~ B",
+        "value": 2.675
+      },
+      "out": "HK$2.7 B"
+    },
+    {
+      "in": {
+        "format": "HK$^compact~ B",
+        "value": 0.125
+      },
+      "out": "HK$0.1 B"
+    },
+    {
+      "in": {
+        "format": "HK$^compact~ B",
+        "value": 0.285
+      },
+      "out": "HK$0.3 B"
+    },
+    {
+      "in": {
+        "format": "HK$^compact~ B",
+        "value": 12.5
+      },
+      "out": "HK$12.5 B"
+    },
+    {
+      "in": {
+        "format": "HK$^compact~ B",
+        "value": 99.995
+      },
+      "out": "HK$100 B"
+    },
+    {
+      "in": {
+        "format": "HK$^compact~ B",
+        "value": 999
+      },
+      "out": "HK$999 B"
+    },
+    {
+      "in": {
+        "format": "HK$^compact~ B",
+        "value": 999.5
+      },
+      "out": "HK$999.5 B"
+    },
+    {
+      "in": {
+        "format": "HK$^compact~ B",
+        "value": 999.95
+      },
+      "out": "HK$1K B"
+    },
+    {
+      "in": {
+        "format": "HK$^compact~ B",
+        "value": 1000
+      },
+      "out": "HK$1K B"
+    },
+    {
+      "in": {
+        "format": "HK$^compact~ B",
+        "value": 1234
+      },
+      "out": "HK$1.2K B"
+    },
+    {
+      "in": {
+        "format": "HK$^compact~ B",
+        "value": 1234.5
+      },
+      "out": "HK$1.2K B"
+    },
+    {
+      "in": {
+        "format": "HK$^compact~ B",
+        "value": 9999.99
+      },
+      "out": "HK$10K B"
+    },
+    {
+      "in": {
+        "format": "HK$^compact~ B",
+        "value": 12345.678
+      },
+      "out": "HK$12.3K B"
+    },
+    {
+      "in": {
+        "format": "HK$^compact~ B",
+        "value": 99999
+      },
+      "out": "HK$100K B"
+    },
+    {
+      "in": {
+        "format": "HK$^compact~ B",
+        "value": 999499
+      },
+      "out": "HK$999.5K B"
+    },
+    {
+      "in": {
+        "format": "HK$^compact~ B",
+        "value": 999500
+      },
+      "out": "HK$999.5K B"
+    },
+    {
+      "in": {
+        "format": "HK$^compact~ B",
+        "value": 999999
+      },
+      "out": "HK$1M B"
+    },
+    {
+      "in": {
+        "format": "HK$^compact~ B",
+        "value": 1000000
+      },
+      "out": "HK$1M B"
+    },
+    {
+      "in": {
+        "format": "HK$^compact~ B",
+        "value": 1234567
+      },
+      "out": "HK$1.2M B"
+    },
+    {
+      "in": {
+        "format": "HK$^compact~ B",
+        "value": 15000000
+      },
+      "out": "HK$15M B"
+    },
+    {
+      "in": {
+        "format": "HK$^compact~ B",
+        "value": 999999999
+      },
+      "out": "HK$1B B"
+    },
+    {
+      "in": {
+        "format": "HK$^compact~ B",
+        "value": 2500000000
+      },
+      "out": "HK$2.5B B"
+    },
+    {
+      "in": {
+        "format": "HK$^compact~ B",
+        "value": 7100000000000
+      },
+      "out": "HK$7.1T B"
+    },
+    {
+      "in": {
+        "format": "HK$^compact~ B",
+        "value": 330000000000000
+      },
+      "out": "HK$330T B"
+    },
+    {
+      "in": {
+        "format": "HK$^compact~ B",
+        "value": 1200000000000000
+      },
+      "out": "HK$1200T B"
+    },
+    {
+      "in": {
+        "format": "HK$^compact~ B",
+        "value": 123456789012345680000
+      },
+      "out": "HK$123,456,789T B"
+    },
+    {
+      "in": {
+        "format": "HK$^compact~ B",
+        "value": 0.00001
+      },
+      "out": "HK$0 B"
+    },
+    {
+      "in": {
+        "format": "HK$^compact~ B",
+        "value": -0.00001
+      },
+      "out": "-HK$0 B"
+    },
+    {
+      "in": {
+        "format": "HK$^compact~ B",
+        "value": 0.0004
+      },
+      "out": "HK$0 B"
+    },
+    {
+      "in": {
+        "format": "HK$^compact~ B",
+        "value": 0.00049
+      },
+      "out": "HK$0 B"
+    },
+    {
+      "in": {
+        "format": "HK$^compact~ B",
+        "value": 0.07
+      },
+      "out": "HK$0.1 B"
+    },
+    {
+      "in": {
+        "format": "HK$^compact~ B",
+        "value": 0.0999
+      },
+      "out": "HK$0.1 B"
+    },
+    {
+      "in": {
+        "format": "HK$^compact~ B",
+        "value": 0.1
+      },
+      "out": "HK$0.1 B"
+    },
+    {
+      "in": {
+        "format": "HK$^compact~ B",
+        "value": 0.1234
+      },
+      "out": "HK$0.1 B"
+    },
+    {
+      "in": {
+        "format": "HK$^compact~ B",
+        "value": 0.9999
+      },
+      "out": "HK$1 B"
+    },
+    {
+      "in": {
+        "format": "HK$^compact~ B",
+        "value": 5e-7
+      },
+      "out": "HK$0 B"
+    },
+    {
+      "in": {
+        "format": "HK$^compact~ B",
+        "value": -12.34
+      },
+      "out": "-HK$12.3 B"
+    },
+    {
+      "in": {
+        "format": "HK$^compact~ B",
+        "value": -1234.5
+      },
+      "out": "-HK$1.2K B"
+    },
+    {
+      "in": {
+        "format": "HK$^compact~ B",
+        "value": -999999
+      },
+      "out": "-HK$1M B"
+    },
+    {
+      "in": {
+        "format": "HK$^compact~ B",
+        "value": 48200
+      },
+      "out": "HK$48.2K B"
+    },
+    {
+      "in": {
+        "format": "HK$^compact~ B",
+        "value": 21800
+      },
+      "out": "HK$21.8K B"
+    },
+    {
+      "in": {
+        "format": "HK$^compact~ B",
+        "value": 5400000
+      },
+      "out": "HK$5.4M B"
+    },
+    {
+      "in": {
+        "format": "HK$^compact~ B",
+        "value": 1324
+      },
+      "out": "HK$1.3K B"
+    },
+    {
+      "in": {
+        "format": "HK$^compact~ B",
+        "value": 463
+      },
+      "out": "HK$463 B"
+    },
+    {
+      "in": {
+        "format": "$^percent:1",
+        "value": 0
+      },
+      "out": "$0.0%"
+    },
+    {
+      "in": {
+        "format": "$^percent:1",
+        "value": 1
+      },
+      "out": "$100.0%"
+    },
+    {
+      "in": {
+        "format": "$^percent:1",
+        "value": -1
+      },
+      "out": "-$100.0%"
+    },
+    {
+      "in": {
+        "format": "$^percent:1",
+        "value": 0.5
+      },
+      "out": "$50.0%"
+    },
+    {
+      "in": {
+        "format": "$^percent:1",
+        "value": 1.005
+      },
+      "out": "$100.5%"
+    },
+    {
+      "in": {
+        "format": "$^percent:1",
+        "value": 2.675
+      },
+      "out": "$267.5%"
+    },
+    {
+      "in": {
+        "format": "$^percent:1",
+        "value": 0.125
+      },
+      "out": "$12.5%"
+    },
+    {
+      "in": {
+        "format": "$^percent:1",
+        "value": 0.285
+      },
+      "out": "$28.5%"
+    },
+    {
+      "in": {
+        "format": "$^percent:1",
+        "value": 12.5
+      },
+      "out": "$1,250.0%"
+    },
+    {
+      "in": {
+        "format": "$^percent:1",
+        "value": 99.995
+      },
+      "out": "$9,999.5%"
+    },
+    {
+      "in": {
+        "format": "$^percent:1",
+        "value": 999
+      },
+      "out": "$99,900.0%"
+    },
+    {
+      "in": {
+        "format": "$^percent:1",
+        "value": 999.5
+      },
+      "out": "$99,950.0%"
+    },
+    {
+      "in": {
+        "format": "$^percent:1",
+        "value": 999.95
+      },
+      "out": "$99,995.0%"
+    },
+    {
+      "in": {
+        "format": "$^percent:1",
+        "value": 1000
+      },
+      "out": "$100,000.0%"
+    },
+    {
+      "in": {
+        "format": "$^percent:1",
+        "value": 1234
+      },
+      "out": "$123,400.0%"
+    },
+    {
+      "in": {
+        "format": "$^percent:1",
+        "value": 1234.5
+      },
+      "out": "$123,450.0%"
+    },
+    {
+      "in": {
+        "format": "$^percent:1",
+        "value": 9999.99
+      },
+      "out": "$999,999.0%"
+    },
+    {
+      "in": {
+        "format": "$^percent:1",
+        "value": 12345.678
+      },
+      "out": "$1,234,567.8%"
+    },
+    {
+      "in": {
+        "format": "$^percent:1",
+        "value": 99999
+      },
+      "out": "$9,999,900.0%"
+    },
+    {
+      "in": {
+        "format": "$^percent:1",
+        "value": 999499
+      },
+      "out": "$99,949,900.0%"
+    },
+    {
+      "in": {
+        "format": "$^percent:1",
+        "value": 999500
+      },
+      "out": "$99,950,000.0%"
+    },
+    {
+      "in": {
+        "format": "$^percent:1",
+        "value": 999999
+      },
+      "out": "$99,999,900.0%"
+    },
+    {
+      "in": {
+        "format": "$^percent:1",
+        "value": 1000000
+      },
+      "out": "$100,000,000.0%"
+    },
+    {
+      "in": {
+        "format": "$^percent:1",
+        "value": 1234567
+      },
+      "out": "$123,456,700.0%"
+    },
+    {
+      "in": {
+        "format": "$^percent:1",
+        "value": 15000000
+      },
+      "out": "$1,500,000,000.0%"
+    },
+    {
+      "in": {
+        "format": "$^percent:1",
+        "value": 999999999
+      },
+      "out": "$99,999,999,900.0%"
+    },
+    {
+      "in": {
+        "format": "$^percent:1",
+        "value": 2500000000
+      },
+      "out": "$250,000,000,000.0%"
+    },
+    {
+      "in": {
+        "format": "$^percent:1",
+        "value": 7100000000000
+      },
+      "out": "$710,000,000,000,000.0%"
+    },
+    {
+      "in": {
+        "format": "$^percent:1",
+        "value": 330000000000000
+      },
+      "out": "$33,000,000,000,000,000.0%"
+    },
+    {
+      "in": {
+        "format": "$^percent:1",
+        "value": 1200000000000000
+      },
+      "out": "$120,000,000,000,000,000.0%"
+    },
+    {
+      "in": {
+        "format": "$^percent:1",
+        "value": 123456789012345680000
+      },
+      "out": "$12,345,678,901,234,568,000,000.0%"
+    },
+    {
+      "in": {
+        "format": "$^percent:1",
+        "value": 0.00001
+      },
+      "out": "$0.0%"
+    },
+    {
+      "in": {
+        "format": "$^percent:1",
+        "value": -0.00001
+      },
+      "out": "-$0.0%"
+    },
+    {
+      "in": {
+        "format": "$^percent:1",
+        "value": 0.0004
+      },
+      "out": "$0.0%"
+    },
+    {
+      "in": {
+        "format": "$^percent:1",
+        "value": 0.00049
+      },
+      "out": "$0.0%"
+    },
+    {
+      "in": {
+        "format": "$^percent:1",
+        "value": 0.07
+      },
+      "out": "$7.0%"
+    },
+    {
+      "in": {
+        "format": "$^percent:1",
+        "value": 0.0999
+      },
+      "out": "$10.0%"
+    },
+    {
+      "in": {
+        "format": "$^percent:1",
+        "value": 0.1
+      },
+      "out": "$10.0%"
+    },
+    {
+      "in": {
+        "format": "$^percent:1",
+        "value": 0.1234
+      },
+      "out": "$12.3%"
+    },
+    {
+      "in": {
+        "format": "$^percent:1",
+        "value": 0.9999
+      },
+      "out": "$100.0%"
+    },
+    {
+      "in": {
+        "format": "$^percent:1",
+        "value": 5e-7
+      },
+      "out": "$0.0%"
+    },
+    {
+      "in": {
+        "format": "$^percent:1",
+        "value": -12.34
+      },
+      "out": "-$1,234.0%"
+    },
+    {
+      "in": {
+        "format": "$^percent:1",
+        "value": -1234.5
+      },
+      "out": "-$123,450.0%"
+    },
+    {
+      "in": {
+        "format": "$^percent:1",
+        "value": -999999
+      },
+      "out": "-$99,999,900.0%"
+    },
+    {
+      "in": {
+        "format": "$^percent:1",
+        "value": 48200
+      },
+      "out": "$4,820,000.0%"
+    },
+    {
+      "in": {
+        "format": "$^percent:1",
+        "value": 21800
+      },
+      "out": "$2,180,000.0%"
+    },
+    {
+      "in": {
+        "format": "$^percent:1",
+        "value": 5400000
+      },
+      "out": "$540,000,000.0%"
+    },
+    {
+      "in": {
+        "format": "$^percent:1",
+        "value": 1324
+      },
+      "out": "$132,400.0%"
+    },
+    {
+      "in": {
+        "format": "$^percent:1",
+        "value": 463
+      },
+      "out": "$46,300.0%"
     },
     {
       "in": {

@@ -38,6 +38,8 @@ DESCRIBE = {**_DESCRIBE, **DESCRIBE_MORE}
 _CHARTS: dict[str, dict[str, dict[str, Any]]] = {c["type"]: {f["name"]: f for f in c["fields"]} for c in _DEFS["charts"]}
 _ANNOTATION_KEYS = ["axis", "value", "to", "label", "tone", "key", "note", "by"]
 _POINT_ANNOTATION_KEYS = ["x", "y", "label", "tone", "key", "note", "by"]
+_REGION_BOUNDS = ["xFrom", "xTo", "yFrom", "yTo"]
+_REGION_ANNOTATION_KEYS = [*_REGION_BOUNDS, "label", "tone", "key", "note", "by"]
 _ANNOTATION_BY = ["author", "assistant"]
 _TONES = ["neutral", "positive", "negative", "warning", "info"]
 _HEX = re.compile(r"#(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})", re.I)
@@ -336,10 +338,11 @@ def _annotations(name: str, value: Any, issues: list) -> Any:
             continue
         # Two forms: a reference line or band ({axis, value, to?}) and a labelled point ({x, y, label}).
         point = "axis" not in a and ("x" in a or "y" in a)
-        keys = _POINT_ANNOTATION_KEYS if point else _ANNOTATION_KEYS
+        region = not point and "axis" not in a and any(k in a for k in _REGION_BOUNDS)
+        keys = _POINT_ANNOTATION_KEYS if point else _REGION_ANNOTATION_KEYS if region else _ANNOTATION_KEYS
         for k in a:
             if k not in keys:
-                _add(issues, "error", "unknown_field", f"{p}.{k}", f'Unknown {"point annotation" if point else "annotation"} field "{k}".', f"Allowed: {', '.join(keys)}.")
+                _add(issues, "error", "unknown_field", f"{p}.{k}", f'Unknown {"point annotation" if point else "region annotation" if region else "annotation"} field "{k}".', f"Allowed: {', '.join(keys)}.")
 
         def tone_and_label() -> bool:
             if "tone" in a and not (isinstance(a["tone"], str) and a["tone"] in _TONES):
@@ -395,8 +398,20 @@ def _annotations(name: str, value: Any, issues: list) -> Any:
                 continue
             out.append({**a, "label": uslice(a["label"], 80), **more})
             continue
+        if region:
+            bad_bound = next((k for k in _REGION_BOUNDS if k in a and not (isinstance(a[k], str) or is_finite_number(a[k]))), None)
+            if bad_bound is not None:
+                _add(issues, "error", "bad_type", f"{p}.{bad_bound}", f"{p}.{bad_bound} must be a number or an ISO date, got {_show(a[bad_bound])}.")
+                continue
+            if not tone_and_label():
+                continue
+            more = extra()
+            if more is None:
+                continue
+            out.append({**a, **({"label": uslice(a["label"], 80)} if isinstance(a.get("label"), str) else {}), **more})
+            continue
         if a.get("axis") not in ("x", "y") or not isinstance(a.get("axis"), str):
-            _add(issues, "error", "bad_enum", f"{p}.axis", f'{p}.axis must be "x" or "y".', "For a labelled point, leave out axis and give x, y and label.")
+            _add(issues, "error", "bad_enum", f"{p}.axis", f'{p}.axis must be "x" or "y".', "For a labelled point, leave out axis and give x, y and label; for a shaded region give xFrom, xTo, yFrom or yTo.")
         elif not (isinstance(a.get("value"), str) or is_number(a.get("value"))):
             _add(issues, "error", "bad_type", f"{p}.value", f"{p}.value must be a number or a string.")
         elif "to" in a and not (isinstance(a["to"], str) or is_number(a["to"])):

@@ -88,7 +88,7 @@ export const COMMON_FIELDS: FieldMap = {
   source: { kind: 'string', max: 160, desc: 'Source line shown small under the chart.' },
   legend: { kind: 'enum', values: ['auto', 'top', 'bottom', 'right', 'none'], default: 'auto', desc: 'Legend placement. `auto` hides it for a single series and picks a side from the available width.' },
   tooltip: { kind: 'boolean', default: true, desc: 'Show a hover tooltip (web binding only).' },
-  format: { kind: 'format', desc: 'Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol ("$", not "US$"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days.' },
+  format: { kind: 'format', desc: 'Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol ("$", not "US$"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days; a `prefix^` (1 to 8 characters) goes before it, after the minus sign, e.g. `NT$^integer` shows NT$1,234.' },
   colors: { kind: 'colors', desc: 'Series (or slice/category) name to CSS colour, e.g. {"Revenue":"#2962FF"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours.' },
   transform: { kind: 'transform', desc: 'Data steps run before the chart reads its columns, in order (at most 10): filter, timeUnit, aggregate, sort, top, bin (round bins: start and end columns), window (running sum, mean, count, rank, pctChange, lag, lead, movingMean, per group, in a sort order), fold (wide columns to key/value rows) and index (rescale each group so its value at a base point is 100). No expressions. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output.' },
   patterns: { kind: 'boolean', desc: 'Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print.' },
@@ -99,7 +99,7 @@ export const COMMON_FIELDS: FieldMap = {
 export const CARTESIAN_FIELDS: FieldMap = {
   xLabel: { kind: 'string', max: 80, desc: 'Title of the horizontal axis.' },
   yLabel: { kind: 'string', max: 80, desc: 'Title of the vertical axis (include the unit).' },
-  annotations: { kind: 'annotations', desc: 'Reference marks: {axis:"y", value:100, label:"Target"} draws a line; add `to` for a band. {x:"2026-03-01", y:120, label:"Launch"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date). Either form takes `key` (a stable id, unique in the list, so a reference can point at it: `key=launch`), `note` (a longer explanation, at most 2,048 characters, shown as the mark\'s tooltip) and `by` (`author`, the default, or `assistant`: added by an assistant, drawn with a mark before the label and said so in the description).' },
+  annotations: { kind: 'annotations', desc: 'Reference marks: {axis:"y", value:100, label:"Target"} draws a line; add `to` for a band. {xFrom:0, yFrom:0, label:"Expansion"} shades a region (xFrom, xTo, yFrom, yTo: numbers or dates on numeric or time axes; a side left out runs to the edge of the plot, so one corner makes a quadrant). {x:"2026-03-01", y:120, label:"Launch"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date). Either form takes `key` (a stable id, unique in the list, so a reference can point at it: `key=launch`), `note` (a longer explanation, at most 2,048 characters, shown as the mark\'s tooltip) and `by` (`author`, the default, or `assistant`: added by an assistant, drawn with a mark before the label and said so in the description).' },
   facet: { kind: 'column', role: 'any', desc: 'Split into small multiples: one panel per value of this column (at most 12), sharing axes, colours and one legend.' },
   bare: { kind: 'boolean', default: false, desc: 'Default false. Draw only the marks: no axes, tick labels, grid, axis titles, title, subtitle, legend or source line, and almost no padding, so the plot fills its box. For a small trend inside a table cell or card (a sparkline). The title and description still name the chart for screen readers, and the tooltip still works. Fix the range with `yDomain` when the line should fill the height.' },
   zoom: { kind: 'enum', values: ['none', 'x', 'xy'], desc: 'Default none. Let the viewer zoom and pan a continuous axis (web binding): Ctrl/⌘-scroll or pinch to zoom, drag to pan, double-click or 0 to reset. Scatter, line and area.' },
@@ -108,6 +108,9 @@ export const CARTESIAN_FIELDS: FieldMap = {
 
 const ANNOTATION_KEYS = ['axis', 'value', 'to', 'label', 'tone', 'key', 'note', 'by']
 const POINT_ANNOTATION_KEYS = ['x', 'y', 'label', 'tone', 'key', 'note', 'by']
+/** A shaded region of the plot: a number or a date at each side; a side left out runs to the plot's edge. */
+export const REGION_BOUNDS = ['xFrom', 'xTo', 'yFrom', 'yTo'] as const
+const REGION_ANNOTATION_KEYS = [...REGION_BOUNDS, 'label', 'tone', 'key', 'note', 'by']
 /** Who added an annotation (`by`): the spec's author, or an assistant (drawn with a mark, and said in the description). */
 export const ANNOTATION_BY = ['author', 'assistant'] as const
 export const CAMERA_KEYS = ['lng', 'lat', 'zoom', 'pitch', 'bearing'] as const
@@ -168,7 +171,7 @@ export function validateField(name: string, def: FieldDef, value: unknown, ctx: 
       return bad('bad_enum', `${name} must be one of ${def.values.join(', ')}; got ${fmt(value)}.`, near ? `Did you mean "${near}"?` : undefined)
     }
     case 'format':
-      return isValueFormat(value) ? value : bad('bad_format', `format ${fmt(value)} is not recognised.`, 'Use auto, compact, integer, percent, percent:N, fixed:N (N is 0-20) or currency:USD (add :compact or :narrow); a ~suffix may follow, e.g. integer~ days.')
+      return isValueFormat(value) ? value : bad('bad_format', `format ${fmt(value)} is not recognised.`, 'Use auto, compact, integer, percent, percent:N, fixed:N (N is 0-20) or currency:USD (add :compact or :narrow); a ~suffix may follow, e.g. integer~ days, and a prefix^ may lead, e.g. NT$^integer.')
     case 'bins': {
       if (value === 'auto') return value
       if (typeof value === 'number' && Number.isInteger(value) && value >= 1 && value <= 200) return value
@@ -255,9 +258,10 @@ export function validateField(name: string, def: FieldDef, value: unknown, ctx: 
         const o = a as Record<string, unknown>
         // Two forms: a reference line or band ({axis, value, to?}) and a labelled point ({x, y, label}).
         const point = !('axis' in o) && ('x' in o || 'y' in o)
-        const keys = point ? POINT_ANNOTATION_KEYS : ANNOTATION_KEYS
+        const region = !point && !('axis' in o) && REGION_BOUNDS.some(k => k in o)
+        const keys = point ? POINT_ANNOTATION_KEYS : region ? REGION_ANNOTATION_KEYS : ANNOTATION_KEYS
         for (const k of Object.keys(o)) {
-          if (!keys.includes(k)) add(ctx, 'error', 'unknown_field', `${p}.${k}`, `Unknown ${point ? 'point annotation' : 'annotation'} field "${k}".`, `Allowed: ${keys.join(', ')}.${!point && (k === 'x' || k === 'y') ? ' A point annotation has x, y and label, and no axis.' : ''}`)
+          if (!keys.includes(k)) add(ctx, 'error', 'unknown_field', `${p}.${k}`, `Unknown ${point ? 'point annotation' : region ? 'region annotation' : 'annotation'} field "${k}".`, `Allowed: ${keys.join(', ')}.${!point && (k === 'x' || k === 'y') ? ' A point annotation has x, y and label, and no axis.' : ''}`)
         }
         const tone = (): boolean => {
           if (o.tone !== undefined && !TONES.includes(o.tone as string)) { add(ctx, 'error', 'bad_enum', `${p}.tone`, `${p}.tone must be one of ${TONES.join(', ')}.`); return false }
@@ -297,7 +301,17 @@ export function validateField(name: string, def: FieldDef, value: unknown, ctx: 
           out.push({ ...o, label: o.label.slice(0, 80), ...more })
           return
         }
-        if (o.axis !== 'x' && o.axis !== 'y') return add(ctx, 'error', 'bad_enum', `${p}.axis`, `${p}.axis must be "x" or "y".`, 'For a labelled point, leave out axis and give x, y and label.')
+        if (region) {
+          for (const k of REGION_BOUNDS) {
+            if (o[k] !== undefined && !(typeof o[k] === 'string' || (typeof o[k] === 'number' && Number.isFinite(o[k])))) return add(ctx, 'error', 'bad_type', `${p}.${k}`, `${p}.${k} must be a number or an ISO date, got ${fmt(o[k])}.`)
+          }
+          if (!tone() || !label()) return
+          const more = extra()
+          if (!more) return
+          out.push({ ...o, ...(typeof o.label === 'string' ? { label: o.label.slice(0, 80) } : {}), ...more })
+          return
+        }
+        if (o.axis !== 'x' && o.axis !== 'y') return add(ctx, 'error', 'bad_enum', `${p}.axis`, `${p}.axis must be "x" or "y".`, 'For a labelled point, leave out axis and give x, y and label; for a shaded region give xFrom, xTo, yFrom or yTo.')
         if (!(typeof o.value === 'string' || typeof o.value === 'number')) return add(ctx, 'error', 'bad_type', `${p}.value`, `${p}.value must be a number or a string.`)
         if (o.to !== undefined && !(typeof o.to === 'string' || typeof o.to === 'number')) return add(ctx, 'error', 'bad_type', `${p}.to`, `${p}.to must be a number or a string.`)
         if (!tone() || !label()) return
@@ -444,6 +458,11 @@ export function fieldSchema(def: FieldDef): Record<string, unknown> {
             {
               type: 'object', additionalProperties: false, required: ['axis', 'value'],
               properties: { axis: { enum: ['x', 'y'] }, value: { type: ['number', 'string'] }, to: { type: ['number', 'string'] }, label: { type: 'string', maxLength: 80 }, tone: { enum: TONES }, ...ANNOTATION_EXTRA }
+            },
+            {
+              type: 'object', additionalProperties: false, minProperties: 1,
+              anyOf: REGION_BOUNDS.map(k => ({ required: [k] })),
+              properties: { xFrom: { type: ['number', 'string'] }, xTo: { type: ['number', 'string'] }, yFrom: { type: ['number', 'string'] }, yTo: { type: ['number', 'string'] }, label: { type: 'string', maxLength: 80 }, tone: { enum: TONES }, ...ANNOTATION_EXTRA }
             },
             {
               type: 'object', additionalProperties: false, required: ['x', 'y', 'label'],

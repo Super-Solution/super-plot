@@ -5,19 +5,31 @@ import { tickStep } from './num.js'
 
 /**
  * Value format grammar (one string, easy for an agent to write):
- *   auto | compact | integer | percent | percent:N | fixed:N | currency:CODE[:compact][:narrow]  [~suffix]
+ *   [prefix^] auto | compact | integer | percent | percent:N | fixed:N | currency:CODE[:compact][:narrow]  [~suffix]
  * `percent` expects ratios (0.25 shows as 25%); `percent:N` shows exactly N decimals. `currency:CODE:compact` abbreviates
  * large amounts ($1.2B) and `:narrow` uses the narrow symbol ("$", not "US$"). A `~suffix` (1 to 16 characters, no
- * control characters) is printed after every value and tick: `integer~ days` shows 92 days.
+ * control characters) is printed after every value and tick: `integer~ days` shows 92 days. A `prefix^` (1 to 8
+ * characters, no `^` or `~`) is printed before it, after the minus sign: `NT$^integer` shows NT$1,234 and -NT$1,234.
  */
 export type ValueFormat = string
 
-export const FORMAT_PATTERN = '^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$'
+export const FORMAT_PATTERN = '^([^~^\\u0000-\\u001f]{1,8}\\^)?(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$'
 const FORMAT_RE = new RegExp(FORMAT_PATTERN)
-/** A format split into the part that formats a number and the suffix printed after it. */
-function splitFormat(f: string): [string, string] {
+/** A format split into the text printed before a value, the part that formats the number, and the suffix after it. */
+function splitFormat(f: string): [string, string, string] {
   const i = f.indexOf('~')
-  return i < 0 ? [f, ''] : [f.slice(0, i), f.slice(i + 1)]
+  const left = i < 0 ? f : f.slice(0, i)
+  const j = left.indexOf('^')
+  return [j < 0 ? '' : left.slice(0, j), j < 0 ? left : left.slice(j + 1), i < 0 ? '' : f.slice(i + 1)]
+}
+/** Puts `prefix` before the digits: after a minus sign, so a negative reads -NT$5, not NT$-5. */
+function decorate(one: (v: number) => string, prefix: string, suffix: string): (v: number) => string {
+  if (!prefix && !suffix) return one
+  return v => {
+    const s = one(v)
+    const neg = s.startsWith('-') || s.startsWith('\u2212')
+    return (neg ? s[0] : '') + prefix + (neg ? s.slice(1) : s) + suffix
+  }
 }
 /** `currency:USD:compact:narrow` -> its code and flags. */
 function currencyOf(f: string): { code: string; compact: boolean; narrow: boolean } {
@@ -44,9 +56,8 @@ function nf(locale: string, opts: Intl.NumberFormatOptions): Intl.NumberFormat {
 
 /** Formatter for a single value (tooltips, labels). Number formats are built once per formatter, not per value. */
 export function valueFormatter(format: ValueFormat | undefined, locale: string): (v: number) => string {
-  const [base, suffix] = splitFormat(format ?? 'auto')
-  const one = baseFormatter(base, locale)
-  return suffix ? v => one(v) + suffix : one
+  const [prefix, base, suffix] = splitFormat(format ?? 'auto')
+  return decorate(baseFormatter(base, locale), prefix, suffix)
 }
 
 function baseFormatter(f: string, locale: string): (v: number) => string {
@@ -84,9 +95,8 @@ function baseFormatter(f: string, locale: string): (v: number) => string {
 
 /** Formatter for axis ticks: shares one precision across all ticks and goes compact when large. */
 export function tickFormatter(format: ValueFormat | undefined, locale: string, domain: [number, number], count: number): (v: number) => string {
-  const [base, suffix] = splitFormat(format ?? 'auto')
-  const one = baseTickFormatter(base, locale, domain, count)
-  return suffix ? v => one(v) + suffix : one
+  const [prefix, base, suffix] = splitFormat(format ?? 'auto')
+  return decorate(baseTickFormatter(base, locale, domain, count), prefix, suffix)
 }
 
 function baseTickFormatter(f: string, locale: string, domain: [number, number], count: number): (v: number) => string {

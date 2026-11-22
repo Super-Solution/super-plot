@@ -203,8 +203,23 @@ func pointNotes(s spec) string {
 		}
 		return ""
 	}
-	var items, marks []string
-	n, m := 0, 0
+	var items, marks, shaded []string
+	n, m, r := 0, 0, 0
+	span := func(a map[string]any, k string) string {
+		lo, hasLo := a[k+"From"]
+		hi, hasHi := a[k+"To"]
+		if !hasLo && !hasHi {
+			return ""
+		}
+		from, to := "lowest", "highest"
+		if hasLo {
+			from = clip(jsString(lo), 30)
+		}
+		if hasHi {
+			to = clip(jsString(hi), 30)
+		}
+		return k + " " + from + " to " + to
+	}
 	for _, item := range list {
 		a, _ := item.(map[string]any)
 		label, isStr := a["label"].(string)
@@ -229,6 +244,33 @@ func pointNotes(s spec) string {
 		if !isStr {
 			continue
 		}
+		_, hasX := a["x"]
+		_, hasY := a["y"]
+		if !hasX && !hasY {
+			isRegion := false
+			for _, k := range []string{"xFrom", "xTo", "yFrom", "yTo"} {
+				if _, given := a[k]; given {
+					isRegion = true
+				}
+			}
+			if isRegion {
+				r++
+				if r <= 5 {
+					by := ""
+					if a["by"] == "assistant" {
+						by = " (added by the assistant)"
+					}
+					var sides []string
+					for _, k := range []string{"x", "y"} {
+						if t := span(a, k); t != "" {
+							sides = append(sides, t)
+						}
+					}
+					shaded = append(shaded, fmt.Sprintf("\"%s\" (%s)%s", clip(label, 40), strings.Join(sides, ", "), by))
+				}
+			}
+			continue
+		}
 		n++
 		if n <= 5 {
 			by := ""
@@ -241,6 +283,9 @@ func pointNotes(s spec) string {
 	out := ""
 	if n > 0 {
 		out += fmt.Sprintf(" Marked: %s%s.", strings.Join(items, "; "), more(n))
+	}
+	if r > 0 {
+		out += fmt.Sprintf(" Shaded: %s%s.", strings.Join(shaded, "; "), more(r))
 	}
 	if m > 0 {
 		out += fmt.Sprintf(" The assistant marked %s%s.", strings.Join(marks, "; "), more(m))
@@ -801,6 +846,9 @@ func checkScatter(s spec, rows []row, issues *[]Issue) {
 	}
 	intervalCheck(s, rows, issues, "y")
 	intervalCheck(s, rows, issues, "x")
+	if str(s, "order") != "" && str(s, "density") == "hex" {
+		issue(issues, "warning", "order_ignored_density", "order", "Hexagons count points, so no line joins them; `order` is ignored while hexagons are drawn.", "Use `density: \"points\"` (or leave it out) for a connected scatter.")
+	}
 	if has(s, "trendBandwidth") && str(s, "trend") != "loess" {
 		issue(issues, "warning", "trend_bandwidth_ignored", "trendBandwidth", "trendBandwidth only applies to `trend: \"loess\"`; it is ignored.")
 	}
@@ -861,6 +909,9 @@ func describeScatter(s spec) string {
 	}
 	if len(bars) > 0 {
 		t += fmt.Sprintf(" Points carry %s error bars.", strings.Join(bars, " and "))
+	}
+	if str(s, "order") != "" && str(s, "density") != "hex" {
+		t += fmt.Sprintf(" Points are joined by a line in the order of %s.", str(s, "order"))
 	}
 	if str(s, "trend") == "loess" {
 		t += " A LOESS curve shows the local trend."

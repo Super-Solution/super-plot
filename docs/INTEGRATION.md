@@ -100,6 +100,10 @@ All of these are spec fields (see [SPEC.md](SPEC.md)); validation explains every
 { type: 'bar', x: 'team', y: 'score', yLower: 'lo', yUpper: 'hi', mark: 'lollipop', orientation: 'horizontal', sort: 'desc', data }
 // A labelled point next to the existing line and band annotations.
 annotations: [{ x: '2026-03-01', y: 120, label: 'Launch' }, { axis: 'y', value: 100, label: 'Target' }]
+// A connected scatter: the points of each series joined in the order of a column, with the quadrants shaded.
+{ type: 'scatter', x: 'growth', y: 'inflation', order: 'year', xDomain: [-2, 6], yDomain: [0, 6], annotations: [{ xFrom: 2, yFrom: 3, label: 'Overheating' }, { xTo: 2, yTo: 3, label: 'Slowdown' }], data }
+// A prefix before every figure and a unit after it.
+{ type: 'bar', x: 'quarter', y: 'revenue', format: 'NT$^compact~ B', data }
 ```
 
 - `yScale: 'log'` works on line and scatter, `xScale: 'log'` on scatter and on a line with a numeric x. Values at or below zero are left out with a `log_nonpositive` warning that gives the count (an error when nothing is left). Bars, areas and histograms refuse `log` (`log_scale_refused`): their marks start at zero, which a log axis cannot show. Zoom, pan and brush work in log space; `scene.axes.x.scale === 'log'` tells a custom renderer or binding to do the same, and the brush's `filters` still report data values.
@@ -107,6 +111,8 @@ annotations: [{ x: '2026-03-01', y: 120, label: 'Launch' }, { axis: 'y', value: 
 - Intervals are columns, not computed: compute a confidence interval upstream or in your query. The tooltip, the spoken label and `onSelect`'s `datum` carry both ends.
 - `trend: 'loess'` is a deterministic local regression (`loess(xs, ys, bandwidth, grid)` is exported from core with the exact algorithm in its doc comment); on log axes the fit is made in log space.
 - Point annotations take `x` and `y` in the units of the horizontal and vertical axis (on a horizontal bar chart `x` is the value). They are listed in the description ("Marked: ...").
+- Region annotations take `xFrom`, `xTo`, `yFrom`, `yTo` (numbers or dates) and shade the rectangle between them; a side left out runs to the edge of the plot, so `{ xFrom: 2, yFrom: 3 }` is the top-right quadrant. Numeric and time axes only (a category axis skips the region with `annotation_out_of_range`). They are listed in the description ("Shaded: ...").
+- `order` (scatter) joins each series by a line in the order of a column; `format: 'prefix^…'` prints text before the figure, after a minus sign.
 
 ## Transform steps: bin, window, fold
 

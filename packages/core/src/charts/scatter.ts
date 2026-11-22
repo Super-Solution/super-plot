@@ -15,7 +15,7 @@ import { formatter, lead } from './shared.js'
 import { loess } from '../util/loess.js'
 import { intervalCheck, intervalFields, intervalText, logDomain, logNonPositive, refuseLog, scaleField } from './extras.js'
 
-interface P { row: Record<string, unknown>; x: number; y: number; s: string; size: number | null; name: string | null; ylo?: number; yhi?: number; xlo?: number; xhi?: number }
+interface P { row: Record<string, unknown>; x: number; y: number; s: string; size: number | null; name: string | null; ord?: number; ylo?: number; yhi?: number; xlo?: number; xhi?: number }
 
 /** `density: "auto"` switches to hexagons above this many visible points. */
 export const DENSITY_AUTO = 10_000
@@ -82,6 +82,12 @@ function hexbin(c: ChartCtx, pts: P[], xs: LinearScale, ys: LinearScale, plot: R
   if (groups > 1) c.warn('density_merges_series', 'density', `Hexagons count all ${groups} groups together; colour shows density, not group.`, 'Facet by the group column to compare densities per group.')
 }
 
+/** The position of a row on a connected path: a number, or a date read as time; null leaves the row off the path. */
+function orderKey(v: unknown): number | null {
+  if (v instanceof Date) return Number.isNaN(v.getTime()) ? null : v.getTime()
+  return toNumber(v) ?? (typeof v === 'string' ? toTime(v) : null)
+}
+
 function points(spec: Record<string, any>): { pts: P[]; kind: 'linear' | 'time' } {
   const kind: 'linear' | 'time' = spec.xType === 'time' ? 'time' : spec.xType === 'linear' ? 'linear' : (spec.data as Record<string, unknown>[]).some(r => typeof r[spec.x] === 'string' && toNumber(r[spec.x]) === null) ? 'time' : 'linear'
   const pts: P[] = []
@@ -94,6 +100,10 @@ function points(spec: Record<string, any>): { pts: P[]; kind: 'linear' | 'time' 
     const y = toNumber(r[spec.y])
     if (x === null || y === null || (logX && !(x > 0)) || (logY && !(y > 0))) continue
     const p: P = { row: r, x, y, s: spec.series ? String(r[spec.series] ?? '') : String(spec.y), size: spec.size ? toNumber(r[spec.size]) : null, name: spec.label ? String(r[spec.label] ?? '') : null }
+    if (spec.order) {
+      const o = orderKey(r[spec.order])
+      if (o !== null) p.ord = o
+    }
     if (yi) {
       const a = toNumber(r[spec.yLower])
       const b = toNumber(r[spec.yUpper])
@@ -225,7 +235,18 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
       trend.push({ type: 'line', role: 'annotation', x1: xScale.at(e[0]), y1: Math.max(plot.y, Math.min(plot.y + plot.h, yScale.at(y0))), x2: xScale.at(e[1]), y2: Math.max(plot.y, Math.min(plot.y + plot.h, yScale.at(y1))), stroke: color, strokeWidth: 1.5, dash: '6 4', series: k })
     }
   }
-  c.marks.push(...trend, ...bars, ...dots, ...hits)
+  // `order`: join each series' points, in the order of that column, with a line under the dots.
+  const paths: Mark[] = []
+  if (s.order) {
+    for (const k of keys) {
+      if (c.hidden.has(k)) continue
+      const own = show.filter(p => p.s === k && p.ord !== undefined).map((p, i) => ({ p, i })).sort((a, b) => a.p.ord! - b.p.ord! || a.i - b.i).map(e => e.p)
+      if (own.length < 2) continue
+      const d = own.map((p, i) => `${i ? 'L' : 'M'}${Math.round(xScale.at(p.x) * 100) / 100} ${Math.round(yScale.at(p.y) * 100) / 100}`).join('')
+      paths.push({ type: 'path', role: 'data', series: k, d, stroke: series[keys.indexOf(k)].color, strokeWidth: c.theme.lineWidth, opacity: 0.7, anim: 'draw', rows: c.rowsOf(own.map(p => p.row)), ...(clipTrend ? { clip: 'plot' } : {}) })
+    }
+  }
+  c.marks.push(...trend, ...paths, ...bars, ...dots, ...hits)
   if (pts.length > 5000) c.warn('many_marks', 'data', `${pts.length} points are fine in the browser (the web binding switches to canvas) but make a heavy SVG file.`, 'Set `density: "auto"` to draw hexagons by count past 10,000 points, or aggregate with `transform`.')
   return { series }
 }
@@ -243,6 +264,7 @@ export const scatter: ChartDef = {
     series: { kind: 'column', role: 'any', desc: 'Column that colours points by group.' },
     size: { kind: 'column', role: 'number', desc: 'Numeric column mapped to bubble area.' },
     label: { kind: 'column', role: 'any', desc: 'Column used as each point\'s name in the tooltip.' },
+    order: { kind: 'column', role: 'any', desc: 'Column that gives the order of the points: each series is joined by a line through its points from the lowest value to the highest (a connected scatter, e.g. a cycle over time). A date or a number; a row without a value stays a dot off the line. Ties keep the order of the data.' },
     trend: { kind: 'enum', values: ['none', 'linear', 'loess'], default: 'none', desc: 'Draw a fit per series: `linear` is a least-squares line, `loess` a local regression curve (tricube weights, local linear fits, evaluated on 50 points; see `trendBandwidth`). On a log axis the fit is made in log space.' },
     trendBandwidth: { kind: 'number', min: 0.05, max: 1, desc: 'Default 0.3. For `trend: "loess"`: the share of the points each local fit uses. Smaller follows the data more closely, larger is smoother.' },
     yScale: scaleField('y', 'incomes, populations, response times'),
@@ -279,6 +301,7 @@ export const scatter: ChartDef = {
     }
     intervalCheck(spec, ctx, 'y')
     intervalCheck(spec, ctx, 'x')
+    if (spec.order && spec.density === 'hex') ctx.issues.push({ severity: 'warning', code: 'order_ignored_density', path: 'order', message: 'Hexagons count points, so no line joins them; `order` is ignored while hexagons are drawn.', hint: 'Use `density: "points"` (or leave it out) for a connected scatter.' })
     if (spec.trendBandwidth !== undefined && spec.trend !== 'loess') ctx.issues.push({ severity: 'warning', code: 'trend_bandwidth_ignored', path: 'trendBandwidth', message: 'trendBandwidth only applies to `trend: "loess"`; it is ignored.' })
     if (ctx.issues.some(i => i.severity === 'error')) return
     if (!points({ ...spec, data: ctx.rows }).pts.length) ctx.issues.push({ severity: 'error', code: 'no_points', path: 'data', message: spec.xScale === 'log' || spec.yScale === 'log' ? 'No row has a numeric x and y that a log axis can place (above zero).' : 'No row has both a numeric x and y.' })
@@ -297,6 +320,7 @@ export const scatter: ChartDef = {
     if (logs.length) t += ` The ${logs.join(' and ')} axis ${logs.length > 1 ? 'are' : 'is'} logarithmic.`
     const bars = [spec.yLower && spec.yUpper ? 'vertical' : '', spec.xLower && spec.xUpper ? 'horizontal' : ''].filter(Boolean)
     if (bars.length) t += ` Points carry ${bars.join(' and ')} error bars.`
+    if (spec.order && spec.density !== 'hex') t += ` Points are joined by a line in the order of ${spec.order}.`
     if (spec.trend === 'loess') t += ' A LOESS curve shows the local trend.'
     return t
   }

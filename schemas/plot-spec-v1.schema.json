@@ -70,8 +70,8 @@
         },
         "format": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
-          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
+          "pattern": "^([^~^\\u0000-\\u001f]{1,8}\\^)?(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days; a `prefix^` (1 to 8 characters) goes before it, after the minus sign, e.g. `NT$^integer` shows NT$1,234."
         },
         "colors": {
           "type": "object",
@@ -170,7 +170,7 @@
         "annotations": {
           "type": "array",
           "maxItems": 256,
-          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date). Either form takes `key` (a stable id, unique in the list, so a reference can point at it: `key=launch`), `note` (a longer explanation, at most 2,048 characters, shown as the mark's tooltip) and `by` (`author`, the default, or `assistant`: added by an assistant, drawn with a mark before the label and said so in the description).",
+          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {xFrom:0, yFrom:0, label:\"Expansion\"} shades a region (xFrom, xTo, yFrom, yTo: numbers or dates on numeric or time axes; a side left out runs to the edge of the plot, so one corner makes a quadrant). {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date). Either form takes `key` (a stable id, unique in the list, so a reference can point at it: `key=launch`), `note` (a longer explanation, at most 2,048 characters, shown as the mark's tooltip) and `by` (`author`, the default, or `assistant`: added by an assistant, drawn with a mark before the label and said so in the description).",
           "items": {
             "oneOf": [
               {
@@ -194,6 +194,90 @@
                     ]
                   },
                   "to": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "label": {
+                    "type": "string",
+                    "maxLength": 80
+                  },
+                  "tone": {
+                    "enum": [
+                      "neutral",
+                      "positive",
+                      "negative",
+                      "warning",
+                      "info"
+                    ]
+                  },
+                  "key": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "description": "Stable id, unique among the annotations: a reference points at it (key=<id>)."
+                  },
+                  "note": {
+                    "type": "string",
+                    "maxLength": 2048,
+                    "description": "A longer explanation, shown as the tooltip of the mark."
+                  },
+                  "by": {
+                    "enum": [
+                      "author",
+                      "assistant"
+                    ],
+                    "description": "Who added it: author (default) or assistant (drawn with a mark, and said in the description)."
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "minProperties": 1,
+                "anyOf": [
+                  {
+                    "required": [
+                      "xFrom"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "xTo"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "yFrom"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "yTo"
+                    ]
+                  }
+                ],
+                "properties": {
+                  "xFrom": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "xTo": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "yFrom": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "yTo": {
                     "type": [
                       "number",
                       "string"
@@ -419,7 +503,7 @@
         },
         "formatRight": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
+          "pattern": "^([^~^\\u0000-\\u001f]{1,8}\\^)?(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
           "description": "Value format of the right axis, its tick labels and its series in tooltips (default: `format`). Needs `yRight`."
         },
         "yBreak": {
@@ -538,8 +622,8 @@
         },
         "format": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
-          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
+          "pattern": "^([^~^\\u0000-\\u001f]{1,8}\\^)?(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days; a `prefix^` (1 to 8 characters) goes before it, after the minus sign, e.g. `NT$^integer` shows NT$1,234."
         },
         "colors": {
           "type": "object",
@@ -638,7 +722,7 @@
         "annotations": {
           "type": "array",
           "maxItems": 256,
-          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date). Either form takes `key` (a stable id, unique in the list, so a reference can point at it: `key=launch`), `note` (a longer explanation, at most 2,048 characters, shown as the mark's tooltip) and `by` (`author`, the default, or `assistant`: added by an assistant, drawn with a mark before the label and said so in the description).",
+          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {xFrom:0, yFrom:0, label:\"Expansion\"} shades a region (xFrom, xTo, yFrom, yTo: numbers or dates on numeric or time axes; a side left out runs to the edge of the plot, so one corner makes a quadrant). {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date). Either form takes `key` (a stable id, unique in the list, so a reference can point at it: `key=launch`), `note` (a longer explanation, at most 2,048 characters, shown as the mark's tooltip) and `by` (`author`, the default, or `assistant`: added by an assistant, drawn with a mark before the label and said so in the description).",
           "items": {
             "oneOf": [
               {
@@ -662,6 +746,90 @@
                     ]
                   },
                   "to": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "label": {
+                    "type": "string",
+                    "maxLength": 80
+                  },
+                  "tone": {
+                    "enum": [
+                      "neutral",
+                      "positive",
+                      "negative",
+                      "warning",
+                      "info"
+                    ]
+                  },
+                  "key": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "description": "Stable id, unique among the annotations: a reference points at it (key=<id>)."
+                  },
+                  "note": {
+                    "type": "string",
+                    "maxLength": 2048,
+                    "description": "A longer explanation, shown as the tooltip of the mark."
+                  },
+                  "by": {
+                    "enum": [
+                      "author",
+                      "assistant"
+                    ],
+                    "description": "Who added it: author (default) or assistant (drawn with a mark, and said in the description)."
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "minProperties": 1,
+                "anyOf": [
+                  {
+                    "required": [
+                      "xFrom"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "xTo"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "yFrom"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "yTo"
+                    ]
+                  }
+                ],
+                "properties": {
+                  "xFrom": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "xTo": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "yFrom": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "yTo": {
                     "type": [
                       "number",
                       "string"
@@ -886,7 +1054,7 @@
         },
         "formatRight": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
+          "pattern": "^([^~^\\u0000-\\u001f]{1,8}\\^)?(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
           "description": "Value format of the right axis, its tick labels and its series in tooltips (default: `format`). Needs `yRight`."
         },
         "splitAt": {
@@ -1077,8 +1245,8 @@
         },
         "format": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
-          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
+          "pattern": "^([^~^\\u0000-\\u001f]{1,8}\\^)?(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days; a `prefix^` (1 to 8 characters) goes before it, after the minus sign, e.g. `NT$^integer` shows NT$1,234."
         },
         "colors": {
           "type": "object",
@@ -1177,7 +1345,7 @@
         "annotations": {
           "type": "array",
           "maxItems": 256,
-          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date). Either form takes `key` (a stable id, unique in the list, so a reference can point at it: `key=launch`), `note` (a longer explanation, at most 2,048 characters, shown as the mark's tooltip) and `by` (`author`, the default, or `assistant`: added by an assistant, drawn with a mark before the label and said so in the description).",
+          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {xFrom:0, yFrom:0, label:\"Expansion\"} shades a region (xFrom, xTo, yFrom, yTo: numbers or dates on numeric or time axes; a side left out runs to the edge of the plot, so one corner makes a quadrant). {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date). Either form takes `key` (a stable id, unique in the list, so a reference can point at it: `key=launch`), `note` (a longer explanation, at most 2,048 characters, shown as the mark's tooltip) and `by` (`author`, the default, or `assistant`: added by an assistant, drawn with a mark before the label and said so in the description).",
           "items": {
             "oneOf": [
               {
@@ -1201,6 +1369,90 @@
                     ]
                   },
                   "to": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "label": {
+                    "type": "string",
+                    "maxLength": 80
+                  },
+                  "tone": {
+                    "enum": [
+                      "neutral",
+                      "positive",
+                      "negative",
+                      "warning",
+                      "info"
+                    ]
+                  },
+                  "key": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "description": "Stable id, unique among the annotations: a reference points at it (key=<id>)."
+                  },
+                  "note": {
+                    "type": "string",
+                    "maxLength": 2048,
+                    "description": "A longer explanation, shown as the tooltip of the mark."
+                  },
+                  "by": {
+                    "enum": [
+                      "author",
+                      "assistant"
+                    ],
+                    "description": "Who added it: author (default) or assistant (drawn with a mark, and said in the description)."
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "minProperties": 1,
+                "anyOf": [
+                  {
+                    "required": [
+                      "xFrom"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "xTo"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "yFrom"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "yTo"
+                    ]
+                  }
+                ],
+                "properties": {
+                  "xFrom": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "xTo": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "yFrom": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "yTo": {
                     "type": [
                       "number",
                       "string"
@@ -1425,7 +1677,7 @@
         },
         "formatRight": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
+          "pattern": "^([^~^\\u0000-\\u001f]{1,8}\\^)?(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
           "description": "Value format of the right axis, its tick labels and its series in tooltips (default: `format`). Needs `yRight`."
         },
         "splitAt": {
@@ -1562,8 +1814,8 @@
         },
         "format": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
-          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
+          "pattern": "^([^~^\\u0000-\\u001f]{1,8}\\^)?(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days; a `prefix^` (1 to 8 characters) goes before it, after the minus sign, e.g. `NT$^integer` shows NT$1,234."
         },
         "colors": {
           "type": "object",
@@ -1662,7 +1914,7 @@
         "annotations": {
           "type": "array",
           "maxItems": 256,
-          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date). Either form takes `key` (a stable id, unique in the list, so a reference can point at it: `key=launch`), `note` (a longer explanation, at most 2,048 characters, shown as the mark's tooltip) and `by` (`author`, the default, or `assistant`: added by an assistant, drawn with a mark before the label and said so in the description).",
+          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {xFrom:0, yFrom:0, label:\"Expansion\"} shades a region (xFrom, xTo, yFrom, yTo: numbers or dates on numeric or time axes; a side left out runs to the edge of the plot, so one corner makes a quadrant). {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date). Either form takes `key` (a stable id, unique in the list, so a reference can point at it: `key=launch`), `note` (a longer explanation, at most 2,048 characters, shown as the mark's tooltip) and `by` (`author`, the default, or `assistant`: added by an assistant, drawn with a mark before the label and said so in the description).",
           "items": {
             "oneOf": [
               {
@@ -1686,6 +1938,90 @@
                     ]
                   },
                   "to": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "label": {
+                    "type": "string",
+                    "maxLength": 80
+                  },
+                  "tone": {
+                    "enum": [
+                      "neutral",
+                      "positive",
+                      "negative",
+                      "warning",
+                      "info"
+                    ]
+                  },
+                  "key": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "description": "Stable id, unique among the annotations: a reference points at it (key=<id>)."
+                  },
+                  "note": {
+                    "type": "string",
+                    "maxLength": 2048,
+                    "description": "A longer explanation, shown as the tooltip of the mark."
+                  },
+                  "by": {
+                    "enum": [
+                      "author",
+                      "assistant"
+                    ],
+                    "description": "Who added it: author (default) or assistant (drawn with a mark, and said in the description)."
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "minProperties": 1,
+                "anyOf": [
+                  {
+                    "required": [
+                      "xFrom"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "xTo"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "yFrom"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "yTo"
+                    ]
+                  }
+                ],
+                "properties": {
+                  "xFrom": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "xTo": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "yFrom": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "yTo": {
                     "type": [
                       "number",
                       "string"
@@ -1826,6 +2162,10 @@
         "label": {
           "type": "string",
           "description": "Column used as each point's name in the tooltip. (name of a column in data)"
+        },
+        "order": {
+          "type": "string",
+          "description": "Column that gives the order of the points: each series is joined by a line through its points from the lowest value to the highest (a connected scatter, e.g. a cycle over time). A date or a number; a row without a value stays a dot off the line. Ties keep the order of the data. (name of a column in data)"
         },
         "trend": {
           "enum": [
@@ -1983,8 +2323,8 @@
         },
         "format": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
-          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
+          "pattern": "^([^~^\\u0000-\\u001f]{1,8}\\^)?(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days; a `prefix^` (1 to 8 characters) goes before it, after the minus sign, e.g. `NT$^integer` shows NT$1,234."
         },
         "colors": {
           "type": "object",
@@ -2178,8 +2518,8 @@
         },
         "format": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
-          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
+          "pattern": "^([^~^\\u0000-\\u001f]{1,8}\\^)?(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days; a `prefix^` (1 to 8 characters) goes before it, after the minus sign, e.g. `NT$^integer` shows NT$1,234."
         },
         "colors": {
           "type": "object",
@@ -2372,8 +2712,8 @@
         },
         "format": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
-          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
+          "pattern": "^([^~^\\u0000-\\u001f]{1,8}\\^)?(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days; a `prefix^` (1 to 8 characters) goes before it, after the minus sign, e.g. `NT$^integer` shows NT$1,234."
         },
         "colors": {
           "type": "object",
@@ -2472,7 +2812,7 @@
         "annotations": {
           "type": "array",
           "maxItems": 256,
-          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date). Either form takes `key` (a stable id, unique in the list, so a reference can point at it: `key=launch`), `note` (a longer explanation, at most 2,048 characters, shown as the mark's tooltip) and `by` (`author`, the default, or `assistant`: added by an assistant, drawn with a mark before the label and said so in the description).",
+          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {xFrom:0, yFrom:0, label:\"Expansion\"} shades a region (xFrom, xTo, yFrom, yTo: numbers or dates on numeric or time axes; a side left out runs to the edge of the plot, so one corner makes a quadrant). {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date). Either form takes `key` (a stable id, unique in the list, so a reference can point at it: `key=launch`), `note` (a longer explanation, at most 2,048 characters, shown as the mark's tooltip) and `by` (`author`, the default, or `assistant`: added by an assistant, drawn with a mark before the label and said so in the description).",
           "items": {
             "oneOf": [
               {
@@ -2496,6 +2836,90 @@
                     ]
                   },
                   "to": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "label": {
+                    "type": "string",
+                    "maxLength": 80
+                  },
+                  "tone": {
+                    "enum": [
+                      "neutral",
+                      "positive",
+                      "negative",
+                      "warning",
+                      "info"
+                    ]
+                  },
+                  "key": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "description": "Stable id, unique among the annotations: a reference points at it (key=<id>)."
+                  },
+                  "note": {
+                    "type": "string",
+                    "maxLength": 2048,
+                    "description": "A longer explanation, shown as the tooltip of the mark."
+                  },
+                  "by": {
+                    "enum": [
+                      "author",
+                      "assistant"
+                    ],
+                    "description": "Who added it: author (default) or assistant (drawn with a mark, and said in the description)."
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "minProperties": 1,
+                "anyOf": [
+                  {
+                    "required": [
+                      "xFrom"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "xTo"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "yFrom"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "yTo"
+                    ]
+                  }
+                ],
+                "properties": {
+                  "xFrom": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "xTo": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "yFrom": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "yTo": {
                     "type": [
                       "number",
                       "string"
@@ -2732,8 +3156,8 @@
         },
         "format": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
-          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
+          "pattern": "^([^~^\\u0000-\\u001f]{1,8}\\^)?(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days; a `prefix^` (1 to 8 characters) goes before it, after the minus sign, e.g. `NT$^integer` shows NT$1,234."
         },
         "colors": {
           "type": "object",
@@ -2832,7 +3256,7 @@
         "annotations": {
           "type": "array",
           "maxItems": 256,
-          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date). Either form takes `key` (a stable id, unique in the list, so a reference can point at it: `key=launch`), `note` (a longer explanation, at most 2,048 characters, shown as the mark's tooltip) and `by` (`author`, the default, or `assistant`: added by an assistant, drawn with a mark before the label and said so in the description).",
+          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {xFrom:0, yFrom:0, label:\"Expansion\"} shades a region (xFrom, xTo, yFrom, yTo: numbers or dates on numeric or time axes; a side left out runs to the edge of the plot, so one corner makes a quadrant). {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date). Either form takes `key` (a stable id, unique in the list, so a reference can point at it: `key=launch`), `note` (a longer explanation, at most 2,048 characters, shown as the mark's tooltip) and `by` (`author`, the default, or `assistant`: added by an assistant, drawn with a mark before the label and said so in the description).",
           "items": {
             "oneOf": [
               {
@@ -2856,6 +3280,90 @@
                     ]
                   },
                   "to": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "label": {
+                    "type": "string",
+                    "maxLength": 80
+                  },
+                  "tone": {
+                    "enum": [
+                      "neutral",
+                      "positive",
+                      "negative",
+                      "warning",
+                      "info"
+                    ]
+                  },
+                  "key": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "description": "Stable id, unique among the annotations: a reference points at it (key=<id>)."
+                  },
+                  "note": {
+                    "type": "string",
+                    "maxLength": 2048,
+                    "description": "A longer explanation, shown as the tooltip of the mark."
+                  },
+                  "by": {
+                    "enum": [
+                      "author",
+                      "assistant"
+                    ],
+                    "description": "Who added it: author (default) or assistant (drawn with a mark, and said in the description)."
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "minProperties": 1,
+                "anyOf": [
+                  {
+                    "required": [
+                      "xFrom"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "xTo"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "yFrom"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "yTo"
+                    ]
+                  }
+                ],
+                "properties": {
+                  "xFrom": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "xTo": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "yFrom": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "yTo": {
                     "type": [
                       "number",
                       "string"
@@ -3086,8 +3594,8 @@
         },
         "format": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
-          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
+          "pattern": "^([^~^\\u0000-\\u001f]{1,8}\\^)?(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days; a `prefix^` (1 to 8 characters) goes before it, after the minus sign, e.g. `NT$^integer` shows NT$1,234."
         },
         "colors": {
           "type": "object",
@@ -3186,7 +3694,7 @@
         "annotations": {
           "type": "array",
           "maxItems": 256,
-          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date). Either form takes `key` (a stable id, unique in the list, so a reference can point at it: `key=launch`), `note` (a longer explanation, at most 2,048 characters, shown as the mark's tooltip) and `by` (`author`, the default, or `assistant`: added by an assistant, drawn with a mark before the label and said so in the description).",
+          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {xFrom:0, yFrom:0, label:\"Expansion\"} shades a region (xFrom, xTo, yFrom, yTo: numbers or dates on numeric or time axes; a side left out runs to the edge of the plot, so one corner makes a quadrant). {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date). Either form takes `key` (a stable id, unique in the list, so a reference can point at it: `key=launch`), `note` (a longer explanation, at most 2,048 characters, shown as the mark's tooltip) and `by` (`author`, the default, or `assistant`: added by an assistant, drawn with a mark before the label and said so in the description).",
           "items": {
             "oneOf": [
               {
@@ -3210,6 +3718,90 @@
                     ]
                   },
                   "to": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "label": {
+                    "type": "string",
+                    "maxLength": 80
+                  },
+                  "tone": {
+                    "enum": [
+                      "neutral",
+                      "positive",
+                      "negative",
+                      "warning",
+                      "info"
+                    ]
+                  },
+                  "key": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "description": "Stable id, unique among the annotations: a reference points at it (key=<id>)."
+                  },
+                  "note": {
+                    "type": "string",
+                    "maxLength": 2048,
+                    "description": "A longer explanation, shown as the tooltip of the mark."
+                  },
+                  "by": {
+                    "enum": [
+                      "author",
+                      "assistant"
+                    ],
+                    "description": "Who added it: author (default) or assistant (drawn with a mark, and said in the description)."
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "minProperties": 1,
+                "anyOf": [
+                  {
+                    "required": [
+                      "xFrom"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "xTo"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "yFrom"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "yTo"
+                    ]
+                  }
+                ],
+                "properties": {
+                  "xFrom": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "xTo": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "yFrom": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "yTo": {
                     "type": [
                       "number",
                       "string"
@@ -3452,8 +4044,8 @@
         },
         "format": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
-          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
+          "pattern": "^([^~^\\u0000-\\u001f]{1,8}\\^)?(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days; a `prefix^` (1 to 8 characters) goes before it, after the minus sign, e.g. `NT$^integer` shows NT$1,234."
         },
         "colors": {
           "type": "object",
@@ -3647,8 +4239,8 @@
         },
         "format": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
-          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
+          "pattern": "^([^~^\\u0000-\\u001f]{1,8}\\^)?(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days; a `prefix^` (1 to 8 characters) goes before it, after the minus sign, e.g. `NT$^integer` shows NT$1,234."
         },
         "colors": {
           "type": "object",
@@ -3831,8 +4423,8 @@
         },
         "format": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
-          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
+          "pattern": "^([^~^\\u0000-\\u001f]{1,8}\\^)?(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days; a `prefix^` (1 to 8 characters) goes before it, after the minus sign, e.g. `NT$^integer` shows NT$1,234."
         },
         "colors": {
           "type": "object",
@@ -3931,7 +4523,7 @@
         "annotations": {
           "type": "array",
           "maxItems": 256,
-          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date). Either form takes `key` (a stable id, unique in the list, so a reference can point at it: `key=launch`), `note` (a longer explanation, at most 2,048 characters, shown as the mark's tooltip) and `by` (`author`, the default, or `assistant`: added by an assistant, drawn with a mark before the label and said so in the description).",
+          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {xFrom:0, yFrom:0, label:\"Expansion\"} shades a region (xFrom, xTo, yFrom, yTo: numbers or dates on numeric or time axes; a side left out runs to the edge of the plot, so one corner makes a quadrant). {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date). Either form takes `key` (a stable id, unique in the list, so a reference can point at it: `key=launch`), `note` (a longer explanation, at most 2,048 characters, shown as the mark's tooltip) and `by` (`author`, the default, or `assistant`: added by an assistant, drawn with a mark before the label and said so in the description).",
           "items": {
             "oneOf": [
               {
@@ -3955,6 +4547,90 @@
                     ]
                   },
                   "to": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "label": {
+                    "type": "string",
+                    "maxLength": 80
+                  },
+                  "tone": {
+                    "enum": [
+                      "neutral",
+                      "positive",
+                      "negative",
+                      "warning",
+                      "info"
+                    ]
+                  },
+                  "key": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "description": "Stable id, unique among the annotations: a reference points at it (key=<id>)."
+                  },
+                  "note": {
+                    "type": "string",
+                    "maxLength": 2048,
+                    "description": "A longer explanation, shown as the tooltip of the mark."
+                  },
+                  "by": {
+                    "enum": [
+                      "author",
+                      "assistant"
+                    ],
+                    "description": "Who added it: author (default) or assistant (drawn with a mark, and said in the description)."
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "minProperties": 1,
+                "anyOf": [
+                  {
+                    "required": [
+                      "xFrom"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "xTo"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "yFrom"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "yTo"
+                    ]
+                  }
+                ],
+                "properties": {
+                  "xFrom": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "xTo": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "yFrom": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "yTo": {
                     "type": [
                       "number",
                       "string"
@@ -4206,8 +4882,8 @@
         },
         "format": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
-          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
+          "pattern": "^([^~^\\u0000-\\u001f]{1,8}\\^)?(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days; a `prefix^` (1 to 8 characters) goes before it, after the minus sign, e.g. `NT$^integer` shows NT$1,234."
         },
         "colors": {
           "type": "object",
@@ -4306,7 +4982,7 @@
         "annotations": {
           "type": "array",
           "maxItems": 256,
-          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date). Either form takes `key` (a stable id, unique in the list, so a reference can point at it: `key=launch`), `note` (a longer explanation, at most 2,048 characters, shown as the mark's tooltip) and `by` (`author`, the default, or `assistant`: added by an assistant, drawn with a mark before the label and said so in the description).",
+          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {xFrom:0, yFrom:0, label:\"Expansion\"} shades a region (xFrom, xTo, yFrom, yTo: numbers or dates on numeric or time axes; a side left out runs to the edge of the plot, so one corner makes a quadrant). {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date). Either form takes `key` (a stable id, unique in the list, so a reference can point at it: `key=launch`), `note` (a longer explanation, at most 2,048 characters, shown as the mark's tooltip) and `by` (`author`, the default, or `assistant`: added by an assistant, drawn with a mark before the label and said so in the description).",
           "items": {
             "oneOf": [
               {
@@ -4330,6 +5006,90 @@
                     ]
                   },
                   "to": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "label": {
+                    "type": "string",
+                    "maxLength": 80
+                  },
+                  "tone": {
+                    "enum": [
+                      "neutral",
+                      "positive",
+                      "negative",
+                      "warning",
+                      "info"
+                    ]
+                  },
+                  "key": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "description": "Stable id, unique among the annotations: a reference points at it (key=<id>)."
+                  },
+                  "note": {
+                    "type": "string",
+                    "maxLength": 2048,
+                    "description": "A longer explanation, shown as the tooltip of the mark."
+                  },
+                  "by": {
+                    "enum": [
+                      "author",
+                      "assistant"
+                    ],
+                    "description": "Who added it: author (default) or assistant (drawn with a mark, and said in the description)."
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "minProperties": 1,
+                "anyOf": [
+                  {
+                    "required": [
+                      "xFrom"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "xTo"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "yFrom"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "yTo"
+                    ]
+                  }
+                ],
+                "properties": {
+                  "xFrom": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "xTo": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "yFrom": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "yTo": {
                     "type": [
                       "number",
                       "string"
@@ -4574,8 +5334,8 @@
         },
         "format": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
-          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
+          "pattern": "^([^~^\\u0000-\\u001f]{1,8}\\^)?(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days; a `prefix^` (1 to 8 characters) goes before it, after the minus sign, e.g. `NT$^integer` shows NT$1,234."
         },
         "colors": {
           "type": "object",
@@ -4674,7 +5434,7 @@
         "annotations": {
           "type": "array",
           "maxItems": 256,
-          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date). Either form takes `key` (a stable id, unique in the list, so a reference can point at it: `key=launch`), `note` (a longer explanation, at most 2,048 characters, shown as the mark's tooltip) and `by` (`author`, the default, or `assistant`: added by an assistant, drawn with a mark before the label and said so in the description).",
+          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {xFrom:0, yFrom:0, label:\"Expansion\"} shades a region (xFrom, xTo, yFrom, yTo: numbers or dates on numeric or time axes; a side left out runs to the edge of the plot, so one corner makes a quadrant). {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date). Either form takes `key` (a stable id, unique in the list, so a reference can point at it: `key=launch`), `note` (a longer explanation, at most 2,048 characters, shown as the mark's tooltip) and `by` (`author`, the default, or `assistant`: added by an assistant, drawn with a mark before the label and said so in the description).",
           "items": {
             "oneOf": [
               {
@@ -4698,6 +5458,90 @@
                     ]
                   },
                   "to": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "label": {
+                    "type": "string",
+                    "maxLength": 80
+                  },
+                  "tone": {
+                    "enum": [
+                      "neutral",
+                      "positive",
+                      "negative",
+                      "warning",
+                      "info"
+                    ]
+                  },
+                  "key": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "description": "Stable id, unique among the annotations: a reference points at it (key=<id>)."
+                  },
+                  "note": {
+                    "type": "string",
+                    "maxLength": 2048,
+                    "description": "A longer explanation, shown as the tooltip of the mark."
+                  },
+                  "by": {
+                    "enum": [
+                      "author",
+                      "assistant"
+                    ],
+                    "description": "Who added it: author (default) or assistant (drawn with a mark, and said in the description)."
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "minProperties": 1,
+                "anyOf": [
+                  {
+                    "required": [
+                      "xFrom"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "xTo"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "yFrom"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "yTo"
+                    ]
+                  }
+                ],
+                "properties": {
+                  "xFrom": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "xTo": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "yFrom": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "yTo": {
                     "type": [
                       "number",
                       "string"
@@ -4936,8 +5780,8 @@
         },
         "format": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
-          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
+          "pattern": "^([^~^\\u0000-\\u001f]{1,8}\\^)?(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days; a `prefix^` (1 to 8 characters) goes before it, after the minus sign, e.g. `NT$^integer` shows NT$1,234."
         },
         "colors": {
           "type": "object",
@@ -5036,7 +5880,7 @@
         "annotations": {
           "type": "array",
           "maxItems": 256,
-          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date). Either form takes `key` (a stable id, unique in the list, so a reference can point at it: `key=launch`), `note` (a longer explanation, at most 2,048 characters, shown as the mark's tooltip) and `by` (`author`, the default, or `assistant`: added by an assistant, drawn with a mark before the label and said so in the description).",
+          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {xFrom:0, yFrom:0, label:\"Expansion\"} shades a region (xFrom, xTo, yFrom, yTo: numbers or dates on numeric or time axes; a side left out runs to the edge of the plot, so one corner makes a quadrant). {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date). Either form takes `key` (a stable id, unique in the list, so a reference can point at it: `key=launch`), `note` (a longer explanation, at most 2,048 characters, shown as the mark's tooltip) and `by` (`author`, the default, or `assistant`: added by an assistant, drawn with a mark before the label and said so in the description).",
           "items": {
             "oneOf": [
               {
@@ -5060,6 +5904,90 @@
                     ]
                   },
                   "to": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "label": {
+                    "type": "string",
+                    "maxLength": 80
+                  },
+                  "tone": {
+                    "enum": [
+                      "neutral",
+                      "positive",
+                      "negative",
+                      "warning",
+                      "info"
+                    ]
+                  },
+                  "key": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "description": "Stable id, unique among the annotations: a reference points at it (key=<id>)."
+                  },
+                  "note": {
+                    "type": "string",
+                    "maxLength": 2048,
+                    "description": "A longer explanation, shown as the tooltip of the mark."
+                  },
+                  "by": {
+                    "enum": [
+                      "author",
+                      "assistant"
+                    ],
+                    "description": "Who added it: author (default) or assistant (drawn with a mark, and said in the description)."
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "minProperties": 1,
+                "anyOf": [
+                  {
+                    "required": [
+                      "xFrom"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "xTo"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "yFrom"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "yTo"
+                    ]
+                  }
+                ],
+                "properties": {
+                  "xFrom": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "xTo": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "yFrom": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "yTo": {
                     "type": [
                       "number",
                       "string"
@@ -5296,8 +6224,8 @@
         },
         "format": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
-          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
+          "pattern": "^([^~^\\u0000-\\u001f]{1,8}\\^)?(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days; a `prefix^` (1 to 8 characters) goes before it, after the minus sign, e.g. `NT$^integer` shows NT$1,234."
         },
         "colors": {
           "type": "object",
@@ -5491,8 +6419,8 @@
         },
         "format": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
-          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
+          "pattern": "^([^~^\\u0000-\\u001f]{1,8}\\^)?(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days; a `prefix^` (1 to 8 characters) goes before it, after the minus sign, e.g. `NT$^integer` shows NT$1,234."
         },
         "colors": {
           "type": "object",
@@ -5674,8 +6602,8 @@
         },
         "format": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
-          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
+          "pattern": "^([^~^\\u0000-\\u001f]{1,8}\\^)?(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days; a `prefix^` (1 to 8 characters) goes before it, after the minus sign, e.g. `NT$^integer` shows NT$1,234."
         },
         "colors": {
           "type": "object",
@@ -5866,8 +6794,8 @@
         },
         "format": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
-          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
+          "pattern": "^([^~^\\u0000-\\u001f]{1,8}\\^)?(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days; a `prefix^` (1 to 8 characters) goes before it, after the minus sign, e.g. `NT$^integer` shows NT$1,234."
         },
         "colors": {
           "type": "object",
@@ -6032,8 +6960,8 @@
         },
         "format": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
-          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
+          "pattern": "^([^~^\\u0000-\\u001f]{1,8}\\^)?(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days; a `prefix^` (1 to 8 characters) goes before it, after the minus sign, e.g. `NT$^integer` shows NT$1,234."
         },
         "colors": {
           "type": "object",
@@ -6200,8 +7128,8 @@
         },
         "format": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
-          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
+          "pattern": "^([^~^\\u0000-\\u001f]{1,8}\\^)?(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days; a `prefix^` (1 to 8 characters) goes before it, after the minus sign, e.g. `NT$^integer` shows NT$1,234."
         },
         "colors": {
           "type": "object",
@@ -6377,8 +7305,8 @@
         },
         "format": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
-          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
+          "pattern": "^([^~^\\u0000-\\u001f]{1,8}\\^)?(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days; a `prefix^` (1 to 8 characters) goes before it, after the minus sign, e.g. `NT$^integer` shows NT$1,234."
         },
         "colors": {
           "type": "object",
@@ -6559,8 +7487,8 @@
         },
         "format": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
-          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
+          "pattern": "^([^~^\\u0000-\\u001f]{1,8}\\^)?(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days; a `prefix^` (1 to 8 characters) goes before it, after the minus sign, e.g. `NT$^integer` shows NT$1,234."
         },
         "colors": {
           "type": "object",
@@ -6659,7 +7587,7 @@
         "annotations": {
           "type": "array",
           "maxItems": 256,
-          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date). Either form takes `key` (a stable id, unique in the list, so a reference can point at it: `key=launch`), `note` (a longer explanation, at most 2,048 characters, shown as the mark's tooltip) and `by` (`author`, the default, or `assistant`: added by an assistant, drawn with a mark before the label and said so in the description).",
+          "description": "Reference marks: {axis:\"y\", value:100, label:\"Target\"} draws a line; add `to` for a band. {xFrom:0, yFrom:0, label:\"Expansion\"} shades a region (xFrom, xTo, yFrom, yTo: numbers or dates on numeric or time axes; a side left out runs to the edge of the plot, so one corner makes a quadrant). {x:\"2026-03-01\", y:120, label:\"Launch\"} marks one point with a short leader and its label (x and y in the units of the horizontal and vertical axis: a category, a number or an ISO date). Either form takes `key` (a stable id, unique in the list, so a reference can point at it: `key=launch`), `note` (a longer explanation, at most 2,048 characters, shown as the mark's tooltip) and `by` (`author`, the default, or `assistant`: added by an assistant, drawn with a mark before the label and said so in the description).",
           "items": {
             "oneOf": [
               {
@@ -6683,6 +7611,90 @@
                     ]
                   },
                   "to": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "label": {
+                    "type": "string",
+                    "maxLength": 80
+                  },
+                  "tone": {
+                    "enum": [
+                      "neutral",
+                      "positive",
+                      "negative",
+                      "warning",
+                      "info"
+                    ]
+                  },
+                  "key": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "description": "Stable id, unique among the annotations: a reference points at it (key=<id>)."
+                  },
+                  "note": {
+                    "type": "string",
+                    "maxLength": 2048,
+                    "description": "A longer explanation, shown as the tooltip of the mark."
+                  },
+                  "by": {
+                    "enum": [
+                      "author",
+                      "assistant"
+                    ],
+                    "description": "Who added it: author (default) or assistant (drawn with a mark, and said in the description)."
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "minProperties": 1,
+                "anyOf": [
+                  {
+                    "required": [
+                      "xFrom"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "xTo"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "yFrom"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "yTo"
+                    ]
+                  }
+                ],
+                "properties": {
+                  "xFrom": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "xTo": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "yFrom": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  },
+                  "yTo": {
                     "type": [
                       "number",
                       "string"
@@ -6910,8 +7922,8 @@
         },
         "format": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
-          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
+          "pattern": "^([^~^\\u0000-\\u001f]{1,8}\\^)?(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days; a `prefix^` (1 to 8 characters) goes before it, after the minus sign, e.g. `NT$^integer` shows NT$1,234."
         },
         "colors": {
           "type": "object",
@@ -7110,8 +8122,8 @@
         },
         "format": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
-          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
+          "pattern": "^([^~^\\u0000-\\u001f]{1,8}\\^)?(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days; a `prefix^` (1 to 8 characters) goes before it, after the minus sign, e.g. `NT$^integer` shows NT$1,234."
         },
         "colors": {
           "type": "object",
@@ -7286,8 +8298,8 @@
         },
         "format": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
-          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
+          "pattern": "^([^~^\\u0000-\\u001f]{1,8}\\^)?(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days; a `prefix^` (1 to 8 characters) goes before it, after the minus sign, e.g. `NT$^integer` shows NT$1,234."
         },
         "colors": {
           "type": "object",
@@ -7515,8 +8527,8 @@
         },
         "format": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
-          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
+          "pattern": "^([^~^\\u0000-\\u001f]{1,8}\\^)?(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days; a `prefix^` (1 to 8 characters) goes before it, after the minus sign, e.g. `NT$^integer` shows NT$1,234."
         },
         "colors": {
           "type": "object",
@@ -7746,8 +8758,8 @@
         },
         "format": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
-          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
+          "pattern": "^([^~^\\u0000-\\u001f]{1,8}\\^)?(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days; a `prefix^` (1 to 8 characters) goes before it, after the minus sign, e.g. `NT$^integer` shows NT$1,234."
         },
         "colors": {
           "type": "object",
@@ -8018,8 +9030,8 @@
         },
         "format": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
-          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
+          "pattern": "^([^~^\\u0000-\\u001f]{1,8}\\^)?(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days; a `prefix^` (1 to 8 characters) goes before it, after the minus sign, e.g. `NT$^integer` shows NT$1,234."
         },
         "colors": {
           "type": "object",
@@ -8281,8 +9293,8 @@
         },
         "format": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
-          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
+          "pattern": "^([^~^\\u0000-\\u001f]{1,8}\\^)?(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days; a `prefix^` (1 to 8 characters) goes before it, after the minus sign, e.g. `NT$^integer` shows NT$1,234."
         },
         "colors": {
           "type": "object",
@@ -8543,8 +9555,8 @@
         },
         "format": {
           "type": "string",
-          "pattern": "^(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
-          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days."
+          "pattern": "^([^~^\\u0000-\\u001f]{1,8}\\^)?(auto|compact|integer|percent(:\\d)?|fixed:\\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\\u0000-\\u001f]{1,16})?$",
+          "description": "Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol (\"$\", not \"US$\"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days; a `prefix^` (1 to 8 characters) goes before it, after the minus sign, e.g. `NT$^integer` shows NT$1,234."
         },
         "colors": {
           "type": "object",

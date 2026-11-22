@@ -148,6 +148,20 @@ export const gallery: { id: string; note: string; spec: Record<string, unknown> 
     }
   },
   {
+    id: 'scatter-cycle', note: 'order joins the points in time order; four shaded regions make the quadrants; a prefix before the figure',
+    spec: {
+      type: 'scatter', title: 'Growth and inflation', subtitle: 'One point per year, joined in order. Invented figures', x: 'growth', y: 'inflation', order: 'year', label: 'year',
+      xLabel: 'Growth (%)', yLabel: 'Inflation', format: '£^fixed:1', xDomain: [-2, 6], yDomain: [0, 6],
+      annotations: [
+        { xFrom: 2, yFrom: 3, label: 'Overheating', tone: 'warning' },
+        { xTo: 2, yFrom: 3, label: 'Stagflation', tone: 'negative' },
+        { xTo: 2, yTo: 3, label: 'Slowdown', tone: 'info' },
+        { xFrom: 2, yTo: 3, label: 'Expansion', tone: 'positive' }
+      ],
+      data: [[2019, 2.1, 1.8], [2020, -1.6, 0.9], [2021, 5.2, 2.6], [2022, 3.8, 5.4], [2023, 1.2, 4.1], [2024, 1.9, 2.7], [2025, 2.6, 2.2]].map(([year, growth, inflation]) => ({ year: String(year), growth, inflation }))
+    }
+  },
+  {
     id: 'line-bare', note: 'bare: marks only, the shape of a sparkline (set yDomain to fill the height)',
     spec: {
       type: 'line', title: 'Equity, last 12 weeks', x: 'week', y: 'equity', bare: true, yDomain: [96, 112], points: false,

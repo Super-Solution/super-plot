@@ -21,7 +21,7 @@ from ._js import is_finite_number
 
 _CTX = Context(prec=500)
 _NBSP = " "
-_FORMAT_RE = re.compile(r"(auto|compact|integer|percent(:\d)?|fixed:\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\u0000-\u001f]{1,16})?")
+_FORMAT_RE = re.compile(r"([^~^\u0000-\u001f]{1,8}\^)?(auto|compact|integer|percent(:\d)?|fixed:\d{1,2}|currency:[A-Za-z]{3}(:compact)?(:narrow)?)(~[^~\u0000-\u001f]{1,16})?")
 _MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 _SUFFIX = ["", "K", "M", "B", "T"]
 
@@ -102,10 +102,21 @@ def _currency(v: float, code: str, max_frac: int, compact: bool = False, narrow:
 
 def value_formatter(fmt: str | None = None) -> Callable[[float], str]:
     """Formatter for a single value. Grammar: auto | compact | integer | percent | percent:N | fixed:N |
-    currency:CODE[:compact][:narrow], then an optional ~suffix printed after the value."""
-    base, tilde, suffix = (fmt or "auto").partition("~")
+    currency:CODE[:compact][:narrow], with an optional prefix^ before it and ~suffix after it."""
+    left, _, suffix = (fmt or "auto").partition("~")
+    prefix, caret, base = left.partition("^")
+    if not caret:
+        prefix, base = "", left
     one = _base_formatter(base)
-    return (lambda v: one(v) + suffix) if tilde and suffix else one
+    if not prefix and not suffix:
+        return one
+
+    def decorated(v: float) -> str:
+        s = one(v)
+        neg = s[:1] in ("-", "\u2212")
+        return (s[0] if neg else "") + prefix + (s[1:] if neg else s) + suffix
+
+    return decorated
 
 
 def _base_formatter(f: str) -> Callable[[float], str]:
