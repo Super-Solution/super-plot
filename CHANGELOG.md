@@ -2,7 +2,7 @@
 
 All four npm packages (`@supersolutions/super-plot-core`, `-web`, `-react`, `-chat-plugin`) share one version.
 
-## Unreleased
+## 0.7.0 (2026-11-22)
 
 ### Added
 
