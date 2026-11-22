@@ -13,7 +13,8 @@ let server: Server
 export async function setup(): Promise<void> {
   execFileSync(process.execPath, [join(root, 'scripts/examples.mjs'), '--build'], { cwd: root, stdio: 'pipe' })
   server = createServer((req, res) => {
-    let p = normalize(decodeURIComponent(new URL(req.url ?? '/', 'http://x').pathname)).replace(/^(\.\.[/\\])+/, '')
+    // Windows' normalize() gives backslashes, so the trailing-slash test below needs them as slashes first.
+    let p = normalize(decodeURIComponent(new URL(req.url ?? '/', 'http://x').pathname)).replace(/\\/g, '/').replace(/^(\.\.\/)+/, '')
     if (p.endsWith('/')) p += 'index.html'
     const f = join(dist, p)
     if (!f.startsWith(dist) || !existsSync(f) || !statSync(f).isFile()) return void res.writeHead(404).end('not found')

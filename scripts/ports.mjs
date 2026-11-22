@@ -8,8 +8,9 @@ import { execFileSync, spawnSync } from 'node:child_process'
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
-const root = new URL('..', import.meta.url).pathname
+const root = fileURLToPath(new URL('..', import.meta.url))
 if (process.env.SKIP_PORTS) { console.log('ports: skipped (SKIP_PORTS)'); process.exit(0) }
 const fuzz = process.argv.includes('--fuzz')
 let failed = false
