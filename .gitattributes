@@ -1,0 +1,7 @@
+# Generated files (conformance/*.json, docs/SPEC.md, schemas, port field lists) are checked
+# byte-for-byte by `--check`, so every text file is checked out with LF on every OS.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.gif binary
+*.woff2 binary
