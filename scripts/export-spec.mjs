@@ -4,10 +4,10 @@
 //   node scripts/export-spec.mjs           write
 //   node scripts/export-spec.mjs --check   fail when a file is out of date
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs'
-import { pathToFileURL } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import { join } from 'node:path'
 
-const root = new URL('..', import.meta.url).pathname
+const root = fileURLToPath(new URL('..', import.meta.url))
 const { chartCatalog, plotJsonSchema, LIMITS, TRANSFORM_DOCS, TRANSFORM_KEYS, TRANSFORM_LIMIT } = await import(pathToFileURL(join(root, 'packages/core/dist/index.js')).href)
 
 const schema = { $id: 'https://superplot.dev/schema/plot-spec-v1.json', ...plotJsonSchema() }

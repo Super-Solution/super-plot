@@ -5,10 +5,10 @@
 //   node scripts/export-conformance.mjs --check   fail when the file is out of date
 // Reads the built core (run `npm run build` first).
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs'
-import { pathToFileURL } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import { join, dirname } from 'node:path'
 
-const root = new URL('..', import.meta.url).pathname
+const root = fileURLToPath(new URL('..', import.meta.url))
 const core = await import(pathToFileURL(join(root, 'packages/core/dist/index.js')).href)
 const { linearTicks, niceDomain, quantile, boxStats, binEdges, binCounts, waffleCells, kde, silverman, densityPeaks, validatePlot, describePlot, chartCatalog, getChart, chartTypes, COMMON_FIELDS, CARTESIAN_FIELDS, LIMITS, resolveRef, datePeriod, formatCardRef } = core
 const { registerGeography, unregisterGeography, getGeography, matchRegion, GeographyError, GEO_LIMITS, CAMERA_LIMITS, CAMERA3D_LIMITS } = core
