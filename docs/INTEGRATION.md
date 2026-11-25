@@ -210,6 +210,17 @@ sound.stop(); await sound.done
 
 The first visible series is played left to right as short sine notes (Web Audio), higher values higher (220 to 880 Hz by default, `minFrequency` / `maxFrequency`), with start and end announced in a live region. A second call stops the first and starts again; `dispose()` stops it. Without Web Audio it returns a controller that did nothing and reports `sonify_unavailable` through `onIssues`; nothing to play is `sonify_empty`. The mapping is the pure `sonifyNotes(scene, options)` (exported), which returns the notes with their time, length, frequency, value and label, so it can be tested or played by your own synthesiser.
 
+## Narrow charts
+
+Rules that follow the chart's width, not an option: nothing to switch on, no spec field. Each keeps what a wide chart draws and only changes what would otherwise be cut off. Under **420 px** a chart is `compact` (smaller type, 12 px padding); the rules below that name another size say so.
+
+- **Titles take two lines.** A title that does not fit on one line breaks at spaces (between any two characters of Chinese, Japanese and Korean) and is shortened with an ellipsis only on the second line. The plot starts lower by the line it needed. `scene.title`, `<title>` and the accessible name always carry the whole title.
+- **Category labels wrap.** A label on the x axis that is wider than its slot (and the slots are at least 48 px) breaks over two lines before it is shortened; below 48 px the labels still turn 45 degrees as before. Labels of a horizontal bar chart wrap too, when a row is at least 2.4 text heights tall (otherwise two lines would touch the next row). A word longer than the room is still shortened, so the ellipsis is the last resort, not the first.
+- **Annotations become a numbered key.** Under 420 px, a chart with one to four labelled annotations draws "1", "2" beside the line, band, region or point and lists "1  Target" under the plot, in the same order. The room for the key comes off the plot, and only when a plot of at least 140 px is left: a short chart, a wider one or one with more than four labels keeps the labels beside the marks. The annotation's note and tooltip stay on the number; the key is plain text.
+- **A calendar is cut into rows.** Each day keeps at least 8 px: a year that would get less is split into the fewest equal rows of weeks (two rows of about 27 weeks on a phone), the year's name once above the first. The colour scale goes in a row under the weeks (lowest value, five steps, highest, "No data") where there is no room beside them. A few months that fit stay in one row. `defaultHeight(type, width, spec)` gives such a calendar the taller box it needs; the browser binding uses it when the host sets no height, so does `renderToSvg` without `height`. A chart you size yourself keeps your size, and cells get smaller (with the `calendar_cramped` warning under 6 px).
+
+Not done: the legend below the chart on a phone still wraps by rows without a limit, titles keep two lines at most, and a vertical category axis with long labels and short rows still shortens them. A narrow chart does not hide the data table or the tooltip: they work as on a wide one.
+
 ## Server rendering and hydration
 
 ```ts

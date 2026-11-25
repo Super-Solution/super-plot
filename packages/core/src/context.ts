@@ -4,7 +4,7 @@ import { DASH_PATTERNS, type Issue, type Row } from './schema.js'
 import type { AxisInfo, Mark, Rect, SceneGeo, SceneView3d, SeriesInfo, TextMark } from './scene.js'
 import type { RenderEnv } from './theme.js'
 import { cssVar, resolveVars, seriesVar } from './theme.js'
-import { fit, clip } from './util/text.js'
+import { fit, clip, wrap } from './util/text.js'
 import { parseHex } from './util/color.js'
 import { valueFormatter } from './util/format.js'
 import { DEFAULT_STRINGS, fillString, type UiStringKey } from './strings.js'
@@ -44,6 +44,11 @@ export class ChartCtx<S extends Record<string, any> = Record<string, any>> {
   axes: { plot: Rect; x: AxisInfo; y: AxisInfo; y2?: AxisInfo } | undefined
   /** Data columns behind the x and y axes, when a chart's axes are not simply `spec.x` / `spec.y`. */
   axisFields: { x?: string; y?: string; y2?: string } | undefined
+  /**
+   * Narrow charts number their annotations ("1", "2") and list what each says in a key under the plot, instead of
+   * printing the label beside the line. Set by `layoutCartesian` when it reserved the room; read by `drawAnnotations`.
+   */
+  annotationKey: { x: number; y: number; w: number; lineH: number; used: string[] } | undefined
   readonly issues: Issue[]
   /** Series keys hidden by the viewer (legend toggles). */
   readonly hidden: Set<string>
@@ -196,8 +201,10 @@ export class ChartCtx<S extends Record<string, any> = Record<string, any>> {
 
     if (spec.title) {
       const size = this.compact ? this.theme.titleSize - 2 : this.theme.titleSize
-      this.marks.push(this.text(left, top, fit(String(spec.title), w - pad * 2, size, this.env.measure, 600), { role: 'title', size, weight: 600, fill: this.c('text'), baseline: 'hanging' }))
-      top += size * 1.3
+      // A title that does not fit on one line takes a second before it is shortened (at most two lines).
+      const lines = wrap(String(spec.title), w - pad * 2, size, this.env.measure, 600, 2)
+      lines.forEach((line, i) => this.marks.push(this.text(left, top + i * size * 1.2, line, { role: 'title', size, weight: 600, fill: this.c('text'), baseline: 'hanging' })))
+      top += size * 1.3 + (lines.length - 1) * size * 1.2
     }
     if (spec.subtitle) {
       this.marks.push(this.text(left, top + 2, fit(String(spec.subtitle), w - pad * 2, this.size, this.env.measure), { role: 'title', baseline: 'hanging' }))

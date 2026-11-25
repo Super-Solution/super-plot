@@ -6,13 +6,13 @@ All four npm packages (`@supersolutions/super-plot-core`, `-web`, `-react`, `-ch
 
 ### Added
 
+- Narrow-width rules, applied by the layout from the chart's width (no option): a title that does not fit takes a second line (Chinese and Japanese break between characters); wide category labels wrap over two lines before they are shortened (a horizontal bar chart's too, when its rows are tall enough); under 420 px one to four labelled annotations become numbers with a key under the plot; and a calendar whose days would get under 8 px is cut into rows of weeks (two on a phone) with its colour scale in a row beneath. `defaultHeight(type, width, spec)` takes the spec, and `ChartDef.height` lets a chart ask for a taller default box.
 - `renderToSvg(spec, { onInvalid: 'placeholder' })`: an invalid spec (no data, an unknown column) comes back as an SVG that names the first error, its path and code, with every error in `<desc>`, instead of a `PlotSpecError`. The default is still to throw. New UI string `chartUnavailable`.
 - Pie and donut validation warnings with stable codes: `pie_no_positive` (nothing positive to draw; the chart now says "No positive values to show", string `noPositive`, and its description says nothing is drawn), `zero_slices` (a slice with a total of 0 has no angle and sits in the legend only) and `negative_slices`, which now comes from `validatePlot` (so `plot_validate` and the Go and Python ports report it) instead of only from drawing. Go, Python and conformance cases in step.
 
 ### Changed
 
 - A bar category with no number (null, `NaN`, text) is described as missing (`Missing: b (no value, so not counted above)`) and left out of the highest, lowest and total; it was counted as 0 ("Lowest: b (0)"). Ports and conformance in step.
-
 - `renderToSvg` (and `renderSvg`) no longer write the same element ids for every chart. The default id prefix is `sp` plus a hash of the drawing, so two charts on one page do not share `sp-t` / `sp-d` (an `aria-labelledby` that points at another chart's title reads the wrong chart). The same spec still writes the same bytes; `idPrefix` still names the ids yourself, and `hydrate: true` output is unchanged.
 
 ## 0.7.0 (2026-11-22)

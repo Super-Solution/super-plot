@@ -67,7 +67,16 @@ export type CompileResult =
 
 export const MAX_FACETS = 12
 
-export function defaultHeight(type: string, width: number): number {
+/**
+ * The height a chart gets when nothing sets one: a share of the width by chart type, clamped. With the `spec`, a chart
+ * that needs more room at this width (see `ChartDef.height`) may ask for it.
+ */
+export function defaultHeight(type: string, width: number, spec?: unknown): number {
+  if (spec && typeof spec === 'object') {
+    let own: number | undefined
+    try { own = getChart(type)?.height?.(spec as Record<string, any>, width) } catch { own = undefined }
+    if (own !== undefined && Number.isFinite(own)) return Math.round(clamp(own, 100, 4000))
+  }
   const ratio = type === 'pie' || type === 'donut' ? 0.62 : type === 'radar' ? 0.85 : type === 'sunburst' || type === 'column-map' || type === 'flow-map' || type === 'scatter3d' || type === 'surface' ? 0.75 : type === 'calendar' ? 0.34 : 0.6
   return Math.round(clamp(width * ratio, 220, 520))
 }
@@ -85,7 +94,7 @@ export function compilePlot(input: unknown, options: RenderOptions = {}): Compil
   // A bare chart (a sparkline) may be small: it has no labels to fit.
   const bare = spec.bare === true
   const width = Math.round(clamp(options.width ?? 640, bare ? 24 : 120, 4000))
-  const height = Math.round(clamp(options.height ?? defaultHeight(spec.type, width), bare ? 16 : 100, 4000))
+  const height = Math.round(clamp(options.height ?? defaultHeight(spec.type, width, spec), bare ? 16 : 100, 4000))
   const issues = [...v.issues]
   const timeZone = renderTimeZone(options.timeZone, issues)
   const strings = resolveStrings(options.strings, issues)

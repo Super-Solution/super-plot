@@ -877,7 +877,7 @@ export class SuperPlot {
     // Decide again on every render whether the host has a height of its own (it may have been detached,
     // hidden or unstyled when the plot was created). Without one, the plot picks a height from the width.
     if (o.height === undefined) this.autoHeight = this.hostHeight() === 0
-    let height = o.height ?? (this.autoHeight ? defaultHeight(this.specType(), width) : Math.floor(this.host.clientHeight) || defaultHeight(this.specType(), width))
+    let height = o.height ?? (this.autoHeight ? defaultHeight(this.specType(), width, this.spec) : Math.floor(this.host.clientHeight) || defaultHeight(this.specType(), width, this.spec))
     // The navigator takes its strip from a fixed height; with an automatic height it adds it below the chart.
     const navH = this.navWanted() ? NAV_HEIGHT : 0
     if (navH && (o.height !== undefined || !this.autoHeight)) height = Math.max(100, height - navH)

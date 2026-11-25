@@ -4,7 +4,8 @@ import type { ChartDef } from '../registry.js'
 import type { ChartCtx } from '../context.js'
 import { toNumber } from '../util/num.js'
 import { formatTime, formatWeekday, toTime, toWall } from '../util/time.js'
-import { fit } from '../util/text.js'
+import { estimateWidth, fit } from '../util/text.js'
+import { resolveTheme } from '../theme.js'
 import { formatter, lead, seqLegend, seqScale } from './shared.js'
 
 const DAY = 864e5
@@ -42,6 +43,45 @@ function years(days: Map<number, number>): { all: number[]; shown: number[] } {
   return { all, shown: all.slice(-MAX_CALENDAR_YEARS) }
 }
 
+/** A row of weeks: the whole year, a few months, or (on a narrow chart) a part of a year. */
+interface Seg { year: number; start: number; end: number; colStart: number; cols: number; first: boolean }
+
+/** A cell this small or smaller is too small to read or touch: a year is cut into rows rather than drawn smaller. */
+export const MIN_CALENDAR_CELL = 8
+
+/**
+ * One row per year (a single year shows only the months that have data, several show whole years so the same week
+ * lines up from one row to the next), then each row wider than `maxCols` weeks cut into the fewest equal rows that fit.
+ * `weekday(day)` is the row of a day in its week (0 = the first weekday). Pure: the layout and the default height read it.
+ */
+function segments(days: Map<number, number>, weekday: (d: number) => number, maxCols: number): Seg[] {
+  const shown = years(days).shown
+  const kept = [...days.keys()].filter(d => shown.includes(yearOf(d)))
+  if (!kept.length) return []
+  const first = Math.min(...kept)
+  const last = Math.max(...kept)
+  const out: Seg[] = []
+  for (const y of shown) {
+    let start = Date.UTC(y, 0, 1) / DAY
+    let end = Date.UTC(y, 11, 31) / DAY
+    if (shown.length === 1) {
+      const a = new Date(first * DAY)
+      const b = new Date(last * DAY)
+      start = Date.UTC(y, a.getUTCMonth(), 1) / DAY
+      end = Date.UTC(y, b.getUTCMonth() + 1, 0) / DAY
+    }
+    const colStart = start - weekday(start)
+    const cols = Math.floor((end - colStart) / 7) + 1
+    const rows = Math.ceil(cols / Math.max(1, maxCols))
+    const per = Math.ceil(cols / rows)
+    for (let k = 0; k < rows; k++) {
+      const c0 = colStart + k * per * 7
+      out.push({ year: y, start: Math.max(start, c0), end: Math.min(end, c0 + per * 7 - 1), colStart: c0, cols: Math.min(per, cols - k * per), first: k === 0 })
+    }
+  }
+  return out
+}
+
 function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
   const s = c.spec
   const src = new Map<number, Record<string, unknown>[]>()
@@ -58,24 +98,6 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
   const ws = s.weekStart === 'sunday' ? 0 : 1
   const weekday = (day: number): number => (new Date(day * DAY).getUTCDay() - ws + 7) % 7
 
-  // One panel per year. A single year shows the months that have data; several years show whole years, so the
-  // same week lines up from one row to the next.
-  const first = Math.min(...kept.map(([d]) => d))
-  const last = Math.max(...kept.map(([d]) => d))
-  const panels = shown.map(y => {
-    let start = Date.UTC(y, 0, 1) / DAY
-    let end = Date.UTC(y, 11, 31) / DAY
-    if (shown.length === 1) {
-      const a = new Date(first * DAY)
-      const b = new Date(last * DAY)
-      start = Date.UTC(y, a.getUTCMonth(), 1) / DAY
-      end = Date.UTC(y, b.getUTCMonth() + 1, 0) / DAY
-    }
-    const colStart = start - weekday(start)
-    return { year: y, start, end, colStart, cols: Math.floor((end - colStart) / 7) + 1 }
-  })
-  const cols = Math.max(...panels.map(p => p.cols))
-
   const size = c.size - 1
   const rowNames = [0, 1, 2, 3, 4, 5, 6].map(r => formatWeekday(((ws + r + 3) % 7) * DAY, 'short', c.locale))
   // Monday, Wednesday and Friday are labelled, as on a contribution graph.
@@ -84,10 +106,17 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
   const legendW = c.compact ? 0 : 72
   const headH = size + 8
   const gapY = 12
+  // A narrow chart keeps its cells at least MIN_CALENDAR_CELL px: a year that would not fit is cut into rows of weeks.
+  const maxCols = Math.max(8, Math.floor((frame.w - gutter - legendW) / MIN_CALENDAR_CELL))
+  const segs = segments(days, weekday, maxCols)
+  const cols = Math.max(...segs.map(p => p.cols))
+  // Without room beside the weeks the colour scale goes in a row under them.
+  const legendRow = legendW ? 0 : size + 14
+  const heads = segs.reduce((q, p) => q + headH * (p.first ? 2 : 1) + gapY, 0) - gapY + legendRow
   const cellW = (frame.w - gutter - legendW) / cols
-  const cellH = (frame.h - panels.length * (headH * 2 + gapY) + gapY) / (7 * panels.length)
+  const cellH = (frame.h - heads) / (7 * segs.length)
   const cell = Math.max(2, Math.min(24, cellW, cellH))
-  if (cell < 6) c.warn('calendar_cramped', 'x', `Each day gets only ${Math.round(cell * 10) / 10} px.`, panels.length > 1 ? 'Make the chart larger or show fewer years with a `transform` filter.' : 'Make the chart larger.')
+  if (cell < 6) c.warn('calendar_cramped', 'x', `Each day gets only ${Math.round(cell * 10) / 10} px.`, segs.length > 1 ? 'Make the chart larger or show fewer years with a `transform` filter.' : 'Make the chart larger.')
   const pad = cell >= 8 ? 2 : 1
   const r = Math.min(2, cell / 4)
   const empty = c.c('background')
@@ -95,19 +124,22 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
   const muted = c.c('text-muted')
 
   let y0 = frame.y
-  for (const p of panels) {
+  for (const p of segs) {
     const x0 = frame.x + gutter
-    c.marks.push(c.text(frame.x, y0, String(p.year), { role: 'title', baseline: 'hanging', weight: 600, fill: c.c('text'), size }))
-    const top = y0 + headH * 2
+    // The year is named on its first row; a row that continues it (the second half) gets no caption of its own.
+    if (p.first) c.marks.push(c.text(frame.x, y0, String(p.year), { role: 'title', baseline: 'hanging', weight: 600, fill: c.c('text'), size }))
+    const monthsY = y0 + (p.first ? headH : 0)
+    const top = monthsY + headH
     // Month labels at the week of the 1st, skipped when they would touch the one before.
     let lastEnd = -Infinity
     for (let m = 0; m < 12; m++) {
       const d = Date.UTC(p.year, m, 1) / DAY
       if (d < p.start || d > p.end) continue
-      const x = x0 + Math.floor((d - p.colStart) / 7) * cell
       const label = formatTime(d * DAY, 'month', c.locale)
+      // The last column's month is pulled in so its name stays inside the chart.
+      const x = Math.min(x0 + Math.floor((d - p.colStart) / 7) * cell, frame.x + frame.w - c.measure(label, size))
       if (x < lastEnd + 4) continue
-      c.marks.push(c.text(x, y0 + headH, label, { baseline: 'hanging', fill: muted, size }))
+      c.marks.push(c.text(x, monthsY, label, { baseline: 'hanging', fill: muted, size }))
       lastEnd = x + c.measure(label, size)
     }
     for (const row of labelRows) {
@@ -141,6 +173,23 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
     seqLegend(c, x, ly, h, lo, hi)
     c.marks.push({ type: 'rect', role: 'legend', x: x + 0.5, y: ly + h + 10.5, w: 11, h: 11, r: 2, fill: empty, stroke: grid, strokeWidth: 1 })
     c.marks.push(c.text(x + 18, ly + h + 16, c.t('noData'), { role: 'legend', baseline: 'middle', size }))
+  } else {
+    // Narrow: the lowest value, five steps of the scale, the highest, and the "no data" cell, in one row under the weeks.
+    const ly = y0 - gapY + 10 + size / 2
+    const x1 = frame.x + gutter
+    const lowT = fmt(lo)
+    const highT = fmt(hi)
+    let x = x1
+    c.marks.push(c.text(x, ly, lowT, { role: 'legend', baseline: 'middle', size }))
+    x += c.measure(lowT, size) + 6
+    for (let i = 0; i < 5; i++) {
+      c.marks.push({ type: 'rect', role: 'legend', x: x + i * 12, y: ly - 5, w: 11, h: 10, r: 2, fill: color(lo + ((hi - lo) * i) / 4) })
+    }
+    x += 5 * 12 + 4
+    c.marks.push(c.text(x, ly, highT, { role: 'legend', baseline: 'middle', size }))
+    x += c.measure(highT, size) + 16
+    c.marks.push({ type: 'rect', role: 'legend', x: x + 0.5, y: ly - 4.5, w: 10, h: 10, r: 2, fill: empty, stroke: grid, strokeWidth: 1 })
+    c.marks.push(c.text(x + 16, ly, fit(c.t('noData'), Math.max(20, frame.x + frame.w - x - 16), size, c.env.measure), { role: 'legend', baseline: 'middle', size }))
   }
   return { series: [] }
 }
@@ -184,6 +233,28 @@ export const calendar: ChartDef = {
     const ys = years(days)
     if (ys.all.length > MAX_CALENDAR_YEARS) ctx.issues.push({ severity: 'warning', code: 'too_many_years', path: 'x', message: `The data spans ${ys.all.length} years; only the last ${MAX_CALENDAR_YEARS} (${ys.shown[0]} to ${ys.shown[ys.shown.length - 1]}) are drawn.`, hint: 'Filter with `transform`, or aggregate to weeks or months and use a line or bar chart.' })
     if (spec.patterns === true) ctx.issues.push({ severity: 'warning', code: 'patterns_unsupported', path: 'patterns', message: 'A calendar has one colour scale and no series, so patterns is ignored.' })
+  },
+  height(spec, width) {
+    // Only when a year had to be cut into rows (a narrow chart): the rows need a taller box than the width-based default.
+    if (!Array.isArray(spec.data) || typeof spec.x !== 'string' || typeof spec.value !== 'string') return undefined
+    const days = calendarDays(spec.data, spec.x, spec.value)
+    const theme = resolveTheme('light')
+    const compact = width < 420
+    const ws = spec.weekStart === 'sunday' ? 0 : 1
+    const weekday = (day: number): number => (new Date(day * DAY).getUTCDay() - ws + 7) % 7
+    const body = (compact ? theme.fontSize - 1 : theme.fontSize)
+    const size = body - 1
+    const pad = compact ? 12 : 16
+    const gutter = estimateWidth('Wed', size) + 8
+    const legendW = compact ? 0 : 72
+    const inner = width - pad * 2
+    const segs = segments(days, weekday, Math.max(8, Math.floor((inner - gutter - legendW) / MIN_CALENDAR_CELL)))
+    if (segs.length <= years(days).shown.length) return undefined
+    const headH = size + 8
+    const heads = segs.reduce((q, p) => q + headH * (p.first ? 2 : 1) + 12, 0) - 12 + (legendW ? 0 : size + 14)
+    const cell = Math.min(24, (inner - gutter - legendW) / Math.max(...segs.map(p => p.cols)))
+    const chrome = pad * 2 + (spec.title ? (compact ? theme.titleSize - 2 : theme.titleSize) * 1.3 : 0) + (spec.subtitle ? body * 1.5 + 2 : 0) + (spec.title || spec.subtitle ? 8 : 0) + (spec.source ? body + 6 : 0)
+    return Math.ceil(chrome + heads + 7 * cell * segs.length)
   },
   compile,
   describe(spec, env) {
