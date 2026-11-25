@@ -75,6 +75,7 @@ describe('live-data announcements', () => {
     p.dispose()
     HTMLCanvasElement.prototype.getContext = (() => stub2d()) as unknown as typeof HTMLCanvasElement.prototype.getContext
     const c = new SuperPlot(host, spec, { width: 600, height: 400, animate: false, announce: true, renderer: 'canvas' })
+    await c.ready()
     c.appendRows([{ t: at(14, 5), revenue: 1100 }])
     await raf()
     expect(host.querySelectorAll('.sp-live')).toHaveLength(1)
