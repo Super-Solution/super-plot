@@ -397,6 +397,15 @@ const FEATURE_VALIDATION = [
   ['yBreak: not on an area', { type: 'area', x: 'd', y: 'v', yBreak: [4, 5], data: W }]
 ]
 
+// 0.8.0: pie and donut with nothing (or little) to draw.
+const PIE0 = [{ k: 'a', v: 0 }, { k: 'b', v: -4 }]
+const V08_VALIDATION = [
+  ['pie: nothing positive (zero and negative)', { type: 'pie', label: 'k', value: 'v', data: PIE0 }],
+  ['donut: only zeros', { type: 'donut', label: 'k', value: 'v', data: [{ k: 'a', v: 0 }, { k: 'b', v: '0' }] }],
+  ['pie: a zero slice and a negative row beside a positive one', { type: 'pie', label: 'k', value: 'v', data: [{ k: 'a', v: 3 }, { k: 'b', v: 0 }, { k: 'c', v: -1 }, { k: 'd', v: 'n/a' }] }],
+  ['pie: rows of one label are summed before the zero test', { type: 'pie', label: 'k', value: 'v', data: [{ k: 'a', v: 5 }, { k: 'a', v: -5 }, { k: 'b', v: 0 }, { k: 'b', v: 0 }] }],
+  ['pie: all well', { type: 'pie', label: 'k', value: 'v', data: [{ k: 'a', v: 3 }, { k: 'b', v: 1 }] }]
+]
 const KB = [{ id: 'r1', a: 'x', b: 1 }, { id: 'r1', a: 'y', b: 2 }, { id: '', a: 'z', b: 3 }, { a: 'w', b: 4 }]
 const VALIDATION = [
   ['json string, valid', JSON.stringify({ type: 'bar', x: 'a', y: 'b', data: B })],
@@ -605,6 +614,7 @@ const VALIDATION = [
   ['surface: grid too large', { type: 'surface', x: 'x', y: 'y', z: 'z', data: GRID(201, 2) }],
   ['surface: no points', { type: 'surface', x: 'x', y: 'y', z: 'z', data: [{ x: 'a', y: 1, z: 2 }] }],
   ...FEATURE_VALIDATION,
+  ...V08_VALIDATION,
   ...MAP_VALIDATION
 ].map(([name, spec]) => {
   const v = validatePlot(spec)
@@ -630,6 +640,11 @@ const describeCases = [
   D('bar: one category', { type: 'bar', x: 'k', y: 'v', format: 'percent', data: [{ k: 'only', v: 0.256 }] }),
   D('bar: numeric category labels and nulls', { type: 'bar', x: 'k', y: 'v', data: [{ k: 2024, v: 1.5 }, { k: 2025, v: null }, { k: 2026, v: '3' }] }),
   D('bar: many series (list is cut)', { type: 'bar', x: 'k', y: ['a', 'b', 'c', 'd', 'e', 'f', 'g'], data: [{ k: 'x', a: 1, b: 2, c: 3, d: 4, e: 5, f: 6, g: 7 }] }),
+  D('bar: categories with no number are missing, not 0', { type: 'bar', x: 'k', y: 'v', data: [{ k: 'a', v: 5 }, { k: 'b', v: 'n/a' }, { k: 'c', v: null }, { k: 'd', v: 3 }] }),
+  D('bar: a real zero is not missing', { type: 'bar', x: 'k', y: 'v', data: [{ k: 'a', v: 5 }, { k: 'b', v: 0 }] }),
+  D('bar: missing in one of two series only', { type: 'bar', x: 'k', y: ['p', 'q'], data: [{ k: 'a', p: 2, q: null }, { k: 'b', p: null, q: null }, { k: 'c', p: 4, q: 1 }] }),
+  D('pie: nothing positive', { type: 'pie', label: 'k', value: 'v', title: 'Empty', data: PIE0 }),
+  D('donut: zero beside positive', { type: 'donut', label: 'k', value: 'v', data: [{ k: 'a', v: 3 }, { k: 'b', v: 0 }] }),
   D('line: weekly dates, two series', { type: 'line', x: 'd', y: ['a', 'b'], title: 'Users', format: 'compact', data: dates(10, i => ({ a: 1000 * (i + 1), b: 40000 - i * 1500 })) }),
   D('line: month strings and a flat series', { type: 'line', x: 'd', y: 'v', data: [{ d: '2026-01', v: 0 }, { d: '2026-02', v: 5 }, { d: '2026-03', v: 0 }] }),
   D('line: timestamps with a time of day', { type: 'line', x: 'd', y: 'v', xType: 'time', data: [{ d: '2026-03-01T09:30:00Z', v: 3 }, { d: '2026-03-01T18:45:00+02:00', v: 4 }, { d: '2026-03-02 08:00', v: 2 }] }),

@@ -446,7 +446,9 @@ export const bar: ChartDef = {
   describe(spec, env) {
     const { cats, keys, m } = model(spec)
     const f = formatter(spec, env.locale)
-    const totals = cats.map(c => ({ c, v: [...(m.get(c)?.values() ?? [])].reduce((a, b) => a + b, 0) }))
+    // A category with no number at all (null, NaN, text) is missing, not 0: it is named, and left out of the extremes and the total.
+    const totals = cats.filter(c => m.has(c)).map(c => ({ c, v: [...m.get(c)!.values()].reduce((a, b) => a + b, 0) }))
+    const missing = cats.filter(c => !m.has(c))
     let t = `${lead(spec, spec.mark === 'lollipop' && (spec.stack ?? 'none') === 'none' ? 'Lollipop chart' : 'Bar chart')} ${cats.length} ${cats.length === 1 ? 'category' : 'categories'}`
     t += keys.length > 1 ? `, ${keys.length} series (${fmtList(keys)}${spec.stack === 'stack' ? ', stacked' : spec.stack === 'normalize' ? ', stacked to 100%' : ''}).` : '.'
     if (totals.length) {
@@ -456,6 +458,7 @@ export const bar: ChartDef = {
       if (totals.length > 1) t += ` Lowest: ${clip(lo.c, 40)} (${f(lo.v)}).`
       t += ` Total: ${f(totals.reduce((a, b) => a + b.v, 0))}.`
     }
+    if (missing.length) t += ` Missing: ${fmtList(missing.map(k => clip(k, 30)))} (no value, so not counted above).`
     const ls = lineCols(spec).filter(k => !keys.includes(k))
     if (ls.length) t += ` With ${ls.length === 1 ? 'a line' : 'lines'} for ${fmtList(ls)} on the same axis.`
     const rs = rightLineCols(spec).filter(k => !keys.includes(k) && !ls.includes(k))

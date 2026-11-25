@@ -385,7 +385,9 @@ def _check_bar(spec: Spec, rows: list[dict], issues: Issues) -> None:
 def _describe_bar(spec: Spec) -> str:
     cats, keys, m = _bar_model(spec)
     f = _formatter(spec)
-    totals = [{"c": c, "v": total(list(m.get(c, {}).values()))} for c in cats]
+    # A category with no number at all is missing, not 0: named at the end, and left out of the extremes and the total.
+    totals = [{"c": c, "v": total(list(m[c].values()))} for c in cats if c in m]
+    missing = [clip(c, 30) for c in cats if c not in m]
     unstacked = spec.get("stack", "none") == "none"
     t = f"{_lead(spec, 'Lollipop chart' if spec.get('mark') == 'lollipop' and unstacked else 'Bar chart')} {len(cats)} {_plural(len(cats), 'category', 'categories')}"
     if len(keys) > 1:
@@ -400,6 +402,8 @@ def _describe_bar(spec: Spec) -> str:
         if len(totals) > 1:
             t += f" Lowest: {clip(lo['c'], 40)} ({f(lo['v'])})."
         t += f" Total: {f(total([x['v'] for x in totals]))}."
+    if missing:
+        t += f" Missing: {_fmt_list(missing)} (no value, so not counted above)."
     ls = [k for k in _line_cols(spec) if k not in keys]
     if ls:
         t += f" With {'a line' if len(ls) == 1 else 'lines'} for {_fmt_list(ls)} on the same axis."
@@ -630,6 +634,30 @@ def _pie_slices(spec: Spec) -> list[dict]:
     return allv
 
 
+def _check_pie(spec: Spec, rows: list[dict], issues: Issues) -> None:
+    """negative_slices, pie_no_positive and zero_slices, on what the chart draws. Mirrors `checkPie`."""
+    sums: dict[str, float] = {}
+    negative = 0
+    for r in rows:
+        v = to_number(r.get(spec["value"]))
+        if v is None:
+            continue
+        if v < 0:
+            negative += 1
+            continue
+        k = or_empty(r.get(spec["label"]))
+        sums[k] = sums.get(k, 0.0) + v
+    if negative:
+        _issue(issues, "warning", "negative_slices", "data", f"{negative} negative value(s) were skipped; a pie cannot show negatives.", "Use a bar chart for values that can be negative, or remove those rows with `transform`.")
+    if not any(v > 0 for v in sums.values()):
+        _issue(issues, "warning", "pie_no_positive", "value", f"No slice has a positive value, so the {spec['type']} has nothing to draw.",
+               f'A {spec["type"]} shows shares of a positive total: check the "{spec["value"]}" column, or use a bar chart for values that are zero or negative.')
+        return
+    zero = sum(1 for v in sums.values() if v == 0)
+    if zero:
+        _issue(issues, "warning", "zero_slices", "value", f"{zero} slice(s) add up to 0: they get no angle and appear in the legend only.", "Remove those rows with `transform` to drop them from the legend too.")
+
+
 def _describe_pie(spec: Spec, name: str) -> str:
     allv = _pie_slices(spec)
     tot = total([a["value"] for a in allv])
@@ -641,6 +669,8 @@ def _describe_pie(spec: Spec, name: str) -> str:
         if len(srt) > 2:
             top = srt[:3]
             t += f" The top {min(3, len(srt))} ({_fmt_list([clip(x['key'], 30) for x in top], 3)}) make up {format_percent(total([x['value'] for x in top]) / tot)}."
+    else:
+        t += " No slice has a positive value, so nothing is drawn."
     return t
 
 
@@ -2000,6 +2030,8 @@ def _describe_area(spec: Spec) -> str:
 
 CHECKS: dict[str, Callable[[Spec, list[dict], Issues], None]] = {
     "bar": _check_bar,
+    "pie": _check_pie,
+    "donut": _check_pie,
     "line": lambda s, r, i: _check_series(s, r, i, False),
     "area": lambda s, r, i: _check_series(s, r, i, True),
     "scatter": _check_scatter,

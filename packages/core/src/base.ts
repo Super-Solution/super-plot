@@ -8,7 +8,7 @@
  * and re-exports everything.
  */
 export { compilePlot, compileOrThrow, renderToSvg, defaultHeight } from './compile.js'
-export type { RenderOptions, CompileResult, PlotPlugin, HydrateOptions } from './compile.js'
+export type { RenderOptions, CompileResult, PlotPlugin, HydrateOptions, InvalidOptions } from './compile.js'
 export { MAX_FACETS } from './compile.js'
 export { applyTransform, registerTransforms, registerTransform, transformTypes, MIN_TIME, MAX_TIME, TRANSFORM_OPS, TIME_UNITS, AGGREGATE_OPS, WINDOW_OPS, TRANSFORM_LIMIT, TRANSFORM_KEYS, BIN_LIMIT, FOLD_LIMIT } from './transform.js'
 export type { TransformStep, FilterStep, TransformDef, TransformCtx, TransformOp } from './transform.js'

@@ -49395,6 +49395,216 @@
       "normalized": null
     },
     {
+      "name": "pie: nothing positive (zero and negative)",
+      "spec": {
+        "type": "pie",
+        "label": "k",
+        "value": "v",
+        "data": [
+          {
+            "k": "a",
+            "v": 0
+          },
+          {
+            "k": "b",
+            "v": -4
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "negative_slices",
+          "path": "data"
+        },
+        {
+          "severity": "warning",
+          "code": "pie_no_positive",
+          "path": "value"
+        }
+      ],
+      "normalized": {
+        "type": "pie",
+        "label": "k",
+        "value": "v",
+        "legend": "auto",
+        "tooltip": true,
+        "sort": "desc",
+        "maxSlices": 8,
+        "labels": true
+      }
+    },
+    {
+      "name": "donut: only zeros",
+      "spec": {
+        "type": "donut",
+        "label": "k",
+        "value": "v",
+        "data": [
+          {
+            "k": "a",
+            "v": 0
+          },
+          {
+            "k": "b",
+            "v": "0"
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "pie_no_positive",
+          "path": "value"
+        }
+      ],
+      "normalized": {
+        "type": "donut",
+        "label": "k",
+        "value": "v",
+        "legend": "auto",
+        "tooltip": true,
+        "sort": "desc",
+        "maxSlices": 8,
+        "labels": true
+      }
+    },
+    {
+      "name": "pie: a zero slice and a negative row beside a positive one",
+      "spec": {
+        "type": "pie",
+        "label": "k",
+        "value": "v",
+        "data": [
+          {
+            "k": "a",
+            "v": 3
+          },
+          {
+            "k": "b",
+            "v": 0
+          },
+          {
+            "k": "c",
+            "v": -1
+          },
+          {
+            "k": "d",
+            "v": "n/a"
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "some_not_numeric",
+          "path": "value"
+        },
+        {
+          "severity": "warning",
+          "code": "negative_slices",
+          "path": "data"
+        },
+        {
+          "severity": "warning",
+          "code": "zero_slices",
+          "path": "value"
+        }
+      ],
+      "normalized": {
+        "type": "pie",
+        "label": "k",
+        "value": "v",
+        "legend": "auto",
+        "tooltip": true,
+        "sort": "desc",
+        "maxSlices": 8,
+        "labels": true
+      }
+    },
+    {
+      "name": "pie: rows of one label are summed before the zero test",
+      "spec": {
+        "type": "pie",
+        "label": "k",
+        "value": "v",
+        "data": [
+          {
+            "k": "a",
+            "v": 5
+          },
+          {
+            "k": "a",
+            "v": -5
+          },
+          {
+            "k": "b",
+            "v": 0
+          },
+          {
+            "k": "b",
+            "v": 0
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "negative_slices",
+          "path": "data"
+        },
+        {
+          "severity": "warning",
+          "code": "zero_slices",
+          "path": "value"
+        }
+      ],
+      "normalized": {
+        "type": "pie",
+        "label": "k",
+        "value": "v",
+        "legend": "auto",
+        "tooltip": true,
+        "sort": "desc",
+        "maxSlices": 8,
+        "labels": true
+      }
+    },
+    {
+      "name": "pie: all well",
+      "spec": {
+        "type": "pie",
+        "label": "k",
+        "value": "v",
+        "data": [
+          {
+            "k": "a",
+            "v": 3
+          },
+          {
+            "k": "b",
+            "v": 1
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "pie",
+        "label": "k",
+        "value": "v",
+        "legend": "auto",
+        "tooltip": true,
+        "sort": "desc",
+        "maxSlices": 8,
+        "labels": true
+      }
+    },
+    {
       "name": "map: unknown geography name",
       "spec": {
         "type": "choropleth",
@@ -55672,7 +55882,7 @@
           "v": true
         }
       ],
-      "describe": "Bar chart. 4 categories. Highest: a (19). Lowest:  (0). Total: 29."
+      "describe": "Bar chart. 4 categories. Highest: a (19). Lowest: b (10). Total: 29. Missing: , 7 (no value, so not counted above)."
     },
     {
       "name": "filter: equal",
@@ -55849,7 +56059,7 @@
           "v": null
         }
       ],
-      "describe": "Bar chart. 1 category. Highest:  (0). Total: 0."
+      "describe": "Bar chart. 1 category. Missing:  (no value, so not counted above)."
     },
     {
       "name": "filter: valid true",
@@ -55965,7 +56175,7 @@
           "v": true
         }
       ],
-      "describe": "Bar chart. 6 categories. Highest: a (19). Lowest: ～ (-1). Total: 28."
+      "describe": "Bar chart. 6 categories. Highest: a (19). Lowest: ～ (-1). Total: 28. Missing: B, 😀, 7 (no value, so not counted above)."
     },
     {
       "name": "filter: valid false",
@@ -56390,7 +56600,7 @@
           "v": 10
         }
       ],
-      "describe": "Bar chart. 5 categories. Highest: a (19). Lowest: ～ (-1). Total: 30.5."
+      "describe": "Bar chart. 5 categories. Highest: a (19). Lowest: ～ (-1). Total: 30.5. Missing: 😀 (no value, so not counted above)."
     },
     {
       "name": "filter: gt and lte",
@@ -56588,7 +56798,7 @@
           "units": 2
         }
       ],
-      "describe": "Bar chart. 3 categories. Highest: LATAM (40). Lowest: EMEA (0). Total: 50."
+      "describe": "Bar chart. 3 categories. Highest: LATAM (40). Lowest: APAC (10). Total: 50. Missing: EMEA (no value, so not counted above)."
     },
     {
       "name": "filter: several tests must all hold",
@@ -60317,7 +60527,7 @@
           "units": 3
         }
       ],
-      "describe": "Bar chart. 6 categories. Highest: 2026-01-05 (120). Lowest: 2026-02-14 (0). Total: 310.5."
+      "describe": "Bar chart. 6 categories. Highest: 2026-01-05 (120). Lowest: 1775001600000 (10). Total: 310.5. Missing: 2026-02-14 (no value, so not counted above)."
     },
     {
       "name": "sort: numbers, then text by UTF-16 unit, missing last",
@@ -60444,7 +60654,7 @@
           "v": null
         }
       ],
-      "describe": "Bar chart. 7 categories. Highest: a (19). Lowest: ～ (-1). Total: 30.5."
+      "describe": "Bar chart. 7 categories. Highest: a (19). Lowest: ～ (-1). Total: 30.5. Missing: 😀, 7, B (no value, so not counted above)."
     },
     {
       "name": "sort: text column, descending, ties keep their order",
@@ -60571,7 +60781,7 @@
           "v": 2.5
         }
       ],
-      "describe": "Bar chart. 7 categories. Highest: a (19). Lowest: ～ (-1). Total: 30.5."
+      "describe": "Bar chart. 7 categories. Highest: a (19). Lowest: ～ (-1). Total: 30.5. Missing: 😀, B, 7 (no value, so not counted above)."
     },
     {
       "name": "top: the three largest",
@@ -60795,7 +61005,7 @@
           "v": null
         }
       ],
-      "describe": "Bar chart. 7 categories. Highest: a (19). Lowest: ～ (-1). Total: 30.5."
+      "describe": "Bar chart. 7 categories. Highest: a (19). Lowest: ～ (-1). Total: 30.5. Missing: B, 7, 😀 (no value, so not counted above)."
     },
     {
       "name": "pipeline: monthly revenue with an order count as a line",
@@ -61773,7 +61983,7 @@
           "date": null
         }
       ],
-      "describe": "Bar chart. 1 category. Highest: LATAM (0). Total: 0."
+      "describe": "Bar chart. 1 category. Missing: LATAM (no value, so not counted above)."
     },
     {
       "name": "empty after a filter",
@@ -66233,7 +66443,7 @@
           "to": 25
         }
       ],
-      "describe": "Bar chart. 6 categories. Highest: 100 (120). Lowest:  (0). Total: 310.5."
+      "describe": "Bar chart. 6 categories. Highest: 100 (120). Lowest: 0 (10). Total: 310.5. Missing:  (no value, so not counted above)."
     },
     {
       "name": "bin: one value",
@@ -67058,7 +67268,7 @@
           "w": 190.5
         }
       ],
-      "describe": "Bar chart. 6 categories, 3 series (APAC, EMEA, LATAM). Highest: 2026-02-14 (5). Lowest: 2026-02-02T10:30:00Z (0). Total: 13."
+      "describe": "Bar chart. 6 categories, 3 series (APAC, EMEA, LATAM). Highest: 2026-02-14 (5). Lowest: 2026-03-01 (1). Total: 13. Missing: 2026-02-02T10:30:00Z (no value, so not counted above)."
     },
     {
       "name": "window: mean per region by date",
@@ -67191,7 +67401,7 @@
           "w": 63.5
         }
       ],
-      "describe": "Bar chart. 6 categories, 3 series (APAC, EMEA, LATAM). Highest: 2026-02-14 (5). Lowest: 2026-02-02T10:30:00Z (0). Total: 13."
+      "describe": "Bar chart. 6 categories, 3 series (APAC, EMEA, LATAM). Highest: 2026-02-14 (5). Lowest: 2026-03-01 (1). Total: 13. Missing: 2026-02-02T10:30:00Z (no value, so not counted above)."
     },
     {
       "name": "window: count per region by date",
@@ -67324,7 +67534,7 @@
           "w": 3
         }
       ],
-      "describe": "Bar chart. 6 categories, 3 series (APAC, EMEA, LATAM). Highest: 2026-02-14 (5). Lowest: 2026-02-02T10:30:00Z (0). Total: 13."
+      "describe": "Bar chart. 6 categories, 3 series (APAC, EMEA, LATAM). Highest: 2026-02-14 (5). Lowest: 2026-03-01 (1). Total: 13. Missing: 2026-02-02T10:30:00Z (no value, so not counted above)."
     },
     {
       "name": "window: rank per region by date",
@@ -67457,7 +67667,7 @@
           "w": 3
         }
       ],
-      "describe": "Bar chart. 6 categories, 3 series (APAC, EMEA, LATAM). Highest: 2026-02-14 (5). Lowest: 2026-02-02T10:30:00Z (0). Total: 13."
+      "describe": "Bar chart. 6 categories, 3 series (APAC, EMEA, LATAM). Highest: 2026-02-14 (5). Lowest: 2026-03-01 (1). Total: 13. Missing: 2026-02-02T10:30:00Z (no value, so not counted above)."
     },
     {
       "name": "window: pctChange per region by date",
@@ -67590,7 +67800,7 @@
           "w": -0.834710744
         }
       ],
-      "describe": "Bar chart. 6 categories, 3 series (APAC, EMEA, LATAM). Highest: 2026-02-14 (5). Lowest: 2026-02-02T10:30:00Z (0). Total: 13."
+      "describe": "Bar chart. 6 categories, 3 series (APAC, EMEA, LATAM). Highest: 2026-02-14 (5). Lowest: 2026-03-01 (1). Total: 13. Missing: 2026-02-02T10:30:00Z (no value, so not counted above)."
     },
     {
       "name": "window: lag per region by date",
@@ -67723,7 +67933,7 @@
           "w": 60.5
         }
       ],
-      "describe": "Bar chart. 6 categories, 3 series (APAC, EMEA, LATAM). Highest: 2026-02-14 (5). Lowest: 2026-02-02T10:30:00Z (0). Total: 13."
+      "describe": "Bar chart. 6 categories, 3 series (APAC, EMEA, LATAM). Highest: 2026-02-14 (5). Lowest: 2026-03-01 (1). Total: 13. Missing: 2026-02-02T10:30:00Z (no value, so not counted above)."
     },
     {
       "name": "window: lead per region by date",
@@ -67856,7 +68066,7 @@
           "w": null
         }
       ],
-      "describe": "Bar chart. 6 categories, 3 series (APAC, EMEA, LATAM). Highest: 2026-02-14 (5). Lowest: 2026-02-02T10:30:00Z (0). Total: 13."
+      "describe": "Bar chart. 6 categories, 3 series (APAC, EMEA, LATAM). Highest: 2026-02-14 (5). Lowest: 2026-03-01 (1). Total: 13. Missing: 2026-02-02T10:30:00Z (no value, so not counted above)."
     },
     {
       "name": "window: movingMean per region by date",
@@ -67989,7 +68199,7 @@
           "w": 63.5
         }
       ],
-      "describe": "Bar chart. 6 categories, 3 series (APAC, EMEA, LATAM). Highest: 2026-02-14 (5). Lowest: 2026-02-02T10:30:00Z (0). Total: 13."
+      "describe": "Bar chart. 6 categories, 3 series (APAC, EMEA, LATAM). Highest: 2026-02-14 (5). Lowest: 2026-03-01 (1). Total: 13. Missing: 2026-02-02T10:30:00Z (no value, so not counted above)."
     },
     {
       "name": "window: sum descending, no groups",
@@ -68257,7 +68467,7 @@
           "r": 2
         }
       ],
-      "describe": "Bar chart. 7 categories. Highest: a (19). Lowest: ～ (-1). Total: 30.5."
+      "describe": "Bar chart. 7 categories. Highest: a (19). Lowest: ～ (-1). Total: 30.5. Missing: B, 😀, 7 (no value, so not counted above)."
     },
     {
       "name": "window: rank of text",
@@ -68656,7 +68866,7 @@
           "prev": ""
         }
       ],
-      "describe": "Bar chart. 7 categories. Highest: a (19). Lowest: ～ (-1). Total: 30.5."
+      "describe": "Bar chart. 7 categories. Highest: a (19). Lowest: ～ (-1). Total: 30.5. Missing: B, 😀, 7 (no value, so not counted above)."
     },
     {
       "name": "window: frame ignored",
@@ -70685,7 +70895,7 @@
           "units": 2
         }
       ],
-      "describe": "Bar chart. 6 categories, 3 series (APAC, EMEA, LATAM). Highest: 2026-01-05 (100). Lowest: 2026-02-14 (0). Total: 358.7."
+      "describe": "Bar chart. 6 categories, 3 series (APAC, EMEA, LATAM). Highest: 2026-01-05 (100). Lowest: 1775001600000 (8.33). Total: 358.7. Missing: 2026-02-14 (no value, so not counted above)."
     },
     {
       "name": "index: no groups, data order, a ratio into a new column",
@@ -88131,7 +88341,7 @@
           }
         ]
       },
-      "describe": "Bar chart. 3 categories. Highest: 2026 (3). Lowest: 2025 (0). Total: 4.5.",
+      "describe": "Bar chart. 3 categories. Highest: 2026 (3). Lowest: 2024 (1.5). Total: 4.5. Missing: 2025 (no value, so not counted above).",
       "issueCodes": []
     },
     {
@@ -88163,6 +88373,132 @@
       },
       "describe": "Bar chart. 1 category, 7 series (a, b, c, d, e and 2 more). Highest: x (28). Total: 28.",
       "issueCodes": []
+    },
+    {
+      "name": "bar: categories with no number are missing, not 0",
+      "spec": {
+        "type": "bar",
+        "x": "k",
+        "y": "v",
+        "data": [
+          {
+            "k": "a",
+            "v": 5
+          },
+          {
+            "k": "b",
+            "v": "n/a"
+          },
+          {
+            "k": "c",
+            "v": null
+          },
+          {
+            "k": "d",
+            "v": 3
+          }
+        ]
+      },
+      "describe": "Bar chart. 4 categories. Highest: a (5). Lowest: d (3). Total: 8. Missing: b, c (no value, so not counted above).",
+      "issueCodes": [
+        "some_not_numeric"
+      ]
+    },
+    {
+      "name": "bar: a real zero is not missing",
+      "spec": {
+        "type": "bar",
+        "x": "k",
+        "y": "v",
+        "data": [
+          {
+            "k": "a",
+            "v": 5
+          },
+          {
+            "k": "b",
+            "v": 0
+          }
+        ]
+      },
+      "describe": "Bar chart. 2 categories. Highest: a (5). Lowest: b (0). Total: 5.",
+      "issueCodes": []
+    },
+    {
+      "name": "bar: missing in one of two series only",
+      "spec": {
+        "type": "bar",
+        "x": "k",
+        "y": [
+          "p",
+          "q"
+        ],
+        "data": [
+          {
+            "k": "a",
+            "p": 2,
+            "q": null
+          },
+          {
+            "k": "b",
+            "p": null,
+            "q": null
+          },
+          {
+            "k": "c",
+            "p": 4,
+            "q": 1
+          }
+        ]
+      },
+      "describe": "Bar chart. 3 categories, 2 series (p, q). Highest: c (5). Lowest: a (2). Total: 7. Missing: b (no value, so not counted above).",
+      "issueCodes": []
+    },
+    {
+      "name": "pie: nothing positive",
+      "spec": {
+        "type": "pie",
+        "label": "k",
+        "value": "v",
+        "title": "Empty",
+        "data": [
+          {
+            "k": "a",
+            "v": 0
+          },
+          {
+            "k": "b",
+            "v": -4
+          }
+        ]
+      },
+      "describe": "Pie chart \"Empty\". 1 slice totalling 0. No slice has a positive value, so nothing is drawn.",
+      "issueCodes": [
+        "negative_slices",
+        "pie_no_positive"
+      ]
+    },
+    {
+      "name": "donut: zero beside positive",
+      "spec": {
+        "type": "donut",
+        "label": "k",
+        "value": "v",
+        "data": [
+          {
+            "k": "a",
+            "v": 3
+          },
+          {
+            "k": "b",
+            "v": 0
+          }
+        ]
+      },
+      "describe": "Donut chart. 2 slices totalling 3. Largest: a (100%).",
+      "issueCodes": [
+        "zero_slices"
+      ]
     },
     {
       "name": "line: weekly dates, two series",
@@ -88518,7 +88854,9 @@
         ]
       },
       "describe": "Pie chart. 2 slices totalling 6. Largest: a (50%).",
-      "issueCodes": []
+      "issueCodes": [
+        "negative_slices"
+      ]
     },
     {
       "name": "pie: one slice",

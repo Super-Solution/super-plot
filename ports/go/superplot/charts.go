@@ -30,6 +30,8 @@ type spec = map[string]any
 
 var checks = map[string]func(spec, []row, *[]Issue){
 	"bar":       checkBar,
+	"pie":       checkPie,
+	"donut":     checkPie,
 	"line":      func(s spec, r []row, i *[]Issue) { checkSeries(s, r, i, false) },
 	"area":      func(s spec, r []row, i *[]Issue) { checkSeries(s, r, i, true) },
 	"scatter":   checkScatter,
@@ -477,13 +479,15 @@ func describeBar(s spec) string {
 		c string
 		v float64
 	}
-	totals := make([]tot, len(mod.cats))
-	for i, c := range mod.cats {
-		v := 0.0
+	// A category with no number at all is missing, not 0: named at the end, and left out of the extremes and the total.
+	var totals []tot
+	var missing []string
+	for _, c := range mod.cats {
 		if row, ok := mod.m.get(c); ok {
-			v = total(row.values())
+			totals = append(totals, tot{c, total(row.values())})
+		} else {
+			missing = append(missing, clip(c, 30))
 		}
-		totals[i] = tot{c, v}
 	}
 	kind := "Bar chart"
 	if str(s, "mark") == "lollipop" && !stacked(s) {
@@ -514,6 +518,9 @@ func describeBar(s spec) string {
 			sum[i] = x.v
 		}
 		t += fmt.Sprintf(" Total: %s.", f(total(sum)))
+	}
+	if len(missing) > 0 {
+		t += fmt.Sprintf(" Missing: %s (no value, so not counted above).", fmtList(missing, 5))
 	}
 	var ls []string
 	for _, k := range lineCols(s) {
@@ -979,6 +986,44 @@ func pieSlices(s spec) []slice {
 	return all
 }
 
+// checkPie mirrors checkPie: negative_slices, pie_no_positive and zero_slices, computed on what the chart draws
+// (rows with one label are summed, text that is not a number is skipped).
+func checkPie(s spec, rows []row, issues *[]Issue) {
+	sums := newOmap[float64]()
+	negative := 0
+	for _, r := range rows {
+		v, ok := toNumber(r[str(s, "value")])
+		if !ok {
+			continue
+		}
+		if v < 0 {
+			negative++
+			continue
+		}
+		k := orEmpty(r[str(s, "label")])
+		cur, _ := sums.get(k)
+		sums.set(k, cur+v)
+	}
+	if negative > 0 {
+		issue(issues, "warning", "negative_slices", "data", fmt.Sprintf("%d negative value(s) were skipped; a pie cannot show negatives.", negative), "Use a bar chart for values that can be negative, or remove those rows with `transform`.")
+	}
+	positive, zero := false, 0
+	for _, v := range sums.values() {
+		if v > 0 {
+			positive = true
+		} else if v == 0 {
+			zero++
+		}
+	}
+	if !positive {
+		issue(issues, "warning", "pie_no_positive", "value", fmt.Sprintf("No slice has a positive value, so the %s has nothing to draw.", str(s, "type")), fmt.Sprintf(`A %s shows shares of a positive total: check the "%s" column, or use a bar chart for values that are zero or negative.`, str(s, "type"), str(s, "value")))
+		return
+	}
+	if zero > 0 {
+		issue(issues, "warning", "zero_slices", "value", fmt.Sprintf("%d slice(s) add up to 0: they get no angle and appear in the legend only.", zero), "Remove those rows with `transform` to drop them from the legend too.")
+	}
+}
+
 func describePie(s spec, name string) string {
 	all := pieSlices(s)
 	vals := make([]float64, len(all))
@@ -1001,6 +1046,8 @@ func describePie(s spec, name string) string {
 			}
 			t += fmt.Sprintf(" The top %d (%s) make up %s.", min(3, len(sorted)), fmtList(names, 3), FormatPercent(total(tv)/tot, 1))
 		}
+	} else {
+		t += " No slice has a positive value, so nothing is drawn."
 	}
 	return t
 }

@@ -371,12 +371,56 @@ export interface HydrateOptions {
   hydrate?: boolean
 }
 
+export interface InvalidOptions {
+  /**
+   * What to do with a spec that cannot be drawn (`empty_data`, an unknown column, ...). `'throw'` (default): a
+   * `PlotSpecError` whose `issues` say how to fix it. `'placeholder'`: an SVG of the requested size with the first
+   * error, its path and code written as text, and every error in `<desc>`, so a report or an HTML reply shows
+   * *why* there is no chart instead of nothing; the call never throws for an invalid spec. Warnings do not make a
+   * spec invalid, so a spec that draws is drawn either way.
+   */
+  onInvalid?: 'throw' | 'placeholder'
+}
+
+/** The scene `onInvalid: 'placeholder'` draws: a quiet card that names the first problem and says there are more. */
+export function placeholderScene(issues: readonly Issue[], input: unknown, options: RenderOptions = {}): Scene {
+  const theme = resolveTheme(options.theme, options.prefersDark)
+  const strings = resolveStrings(options.strings, [])
+  const type = input && typeof input === 'object' && typeof (input as { type?: unknown }).type === 'string' ? (input as { type: string }).type : ''
+  const width = Math.round(clamp(options.width ?? 640, 120, 4000))
+  const height = Math.round(clamp(options.height ?? defaultHeight(type, width), 100, 4000))
+  const errors = issues.filter(i => i.severity === 'error')
+  const first = errors[0] ?? issues[0]
+  const pad = width < 420 ? 12 : 16
+  const size = width < 420 ? theme.fontSize - 1 : theme.fontSize
+  const measure = options.measure ?? estimateWidth
+  const room = width - pad * 2
+  const marks: Mark[] = [{ type: 'rect', role: 'label', x: 0.5, y: 0.5, w: width - 1, h: height - 1, r: 6, fill: 'none', stroke: cssVar(theme, 'grid'), strokeWidth: 1 }]
+  const text = (y: number, s: string, o: { size?: number; weight?: number; fill?: string } = {}): void => {
+    marks.push({ type: 'text', role: 'label', x: width / 2, y, text: fit(s, room, o.size ?? size, measure, o.weight ?? 400), size: o.size ?? size, fill: o.fill ?? cssVar(theme, 'text-muted'), anchor: 'middle', baseline: 'middle', ...(o.weight ? { weight: o.weight } : {}) })
+  }
+  const mid = height / 2
+  text(mid - size * 1.6, strings.chartUnavailable, { size: size + 2, weight: 600, fill: cssVar(theme, 'text') })
+  if (first) {
+    text(mid, `${first.path ? `${first.path}: ` : ''}${first.message}`)
+    text(mid + size * 1.6, `${first.code}${errors.length > 1 ? ` (+${errors.length - 1})` : ''}`, { size: size - 1 })
+  }
+  const list = (errors.length ? errors : issues).slice(0, 8).map(i => `${i.code}${i.path ? ` at ${i.path}` : ''}: ${i.message}${i.hint ? ` ${i.hint}` : ''}`)
+  return { width, height, background: cssVar(theme, 'background'), title: strings.chartUnavailable, description: `${strings.chartUnavailable}. ${list.join(' ')}`.trim(), marks, series: [], type: 'placeholder' }
+}
+
 /**
  * Spec to standalone SVG string: no DOM, runs in Node, a worker or an agent tool.
  * Colours are resolved to plain values unless `resolveVars: false` (or `hydrate: true`).
  */
-export function renderToSvg(input: unknown, options: RenderOptions & SvgOptions & HydrateOptions = {}): string {
-  const scene = compileOrThrow(input, options)
+export function renderToSvg(input: unknown, options: RenderOptions & SvgOptions & HydrateOptions & InvalidOptions = {}): string {
+  const compiled = compilePlot(input, options)
+  if (!compiled.ok) {
+    if (options.onInvalid !== 'placeholder') throw new PlotSpecError(compiled.issues)
+    const font = options.font ?? (options.resolveVars === false ? `var(--sp-font, ${resolveTheme(options.theme, options.prefersDark).font})` : resolveTheme(options.theme, options.prefersDark).font)
+    return renderSvg(placeholderScene(compiled.issues, input, options), { resolveVars: true, ...options, font })
+  }
+  const scene = compiled.scene
   const theme: Theme = resolveTheme(options.theme, options.prefersDark)
   if (options.hydrate) {
     const font = options.font ?? `var(--sp-font, ${theme.font})`
