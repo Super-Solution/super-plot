@@ -40,7 +40,7 @@ var (
 	// TransformOps are the step kinds, TimeUnits the buckets of timeUnit, AggregateOps the operations of aggregate.
 	// WindowOps are the operations of window.
 	TransformOps = []string{"filter", "timeUnit", "aggregate", "sort", "top", "bin", "window", "fold", "index"}
-	WindowOps    = []string{"sum", "mean", "count", "rank", "pctChange", "lag", "lead", "movingMean"}
+	WindowOps    = []string{"sum", "mean", "count", "rank", "pctChange", "lag", "lead", "movingMean", "ema"}
 	TimeUnits    = []string{"year", "quarter", "month", "week", "day", "hour"}
 	AggregateOps = []string{"sum", "mean", "median", "min", "max", "count", "distinct"}
 
@@ -514,8 +514,8 @@ func applyTransform(value any, raw json.RawMessage, rows []row, issues *[]Issue,
 					return fail(bp+".frame", "bad_value", fmt.Sprintf("%s.frame must be an integer from 1 to 1000 (rows in the moving window), got %s.", bp, show(v)))
 				}
 				frame = int(n)
-				if wop != "movingMean" {
-					add(issues, "warning", "frame_ignored", bp+".frame", fmt.Sprintf("%s.frame only applies to movingMean; it is ignored for %s.", bp, wop))
+				if wop != "movingMean" && wop != "ema" {
+					add(issues, "warning", "frame_ignored", bp+".frame", fmt.Sprintf("%s.frame only applies to movingMean and ema; it is ignored for %s.", bp, wop))
 				}
 			}
 			if hasOrder && !sorted && wop != "rank" {
@@ -1042,6 +1042,8 @@ func windowRows(rows []row, op, field, target string, groupBy []string, sortBy s
 		}
 		total := 0.0
 		seen, present := 0, 0
+		alpha := 2 / float64(frame+1)
+		ema, emaSeen := 0.0, false
 		for k, ri := range order {
 			switch op {
 			case "sum":
@@ -1083,6 +1085,18 @@ func windowRows(rows []row, op, field, target string, groupBy []string, sortBy s
 				if k < len(order)-1 {
 					result[ri] = rows[order[k+1]][field]
 				}
+			case "ema":
+				// alpha*x + (1-alpha)*average: each product is rounded before the sum, so a platform that fuses
+				// multiply-add (arm64) still gives the digits of the other languages.
+				if !isNum[k] {
+					break
+				}
+				if !emaSeen {
+					ema, emaSeen = nums[k], true
+				} else {
+					ema = float64(alpha*nums[k]) + float64((1-alpha)*ema)
+				}
+				result[ri] = ema
 			default: // movingMean
 				s, c := 0.0, 0
 				for j := max(0, k-frame+1); j <= k; j++ {

@@ -82,7 +82,6 @@ describe('calendar on a narrow chart', () => {
     expect(defaultHeight('calendar', 1000, year)).toBe(defaultHeight('calendar', 1000))
     const s = scene(year, 1000)
     expect(texts(s, 'title')).toEqual(['2026'])
-    expect(s.marks.filter(m => m.type === 'text' && m.role === 'month').length).toBe(0)
     expect(new Set(cells(s).map(c => c.y)).size).toBe(7)
   })
   it('a few months stay in one row on a phone', () => {

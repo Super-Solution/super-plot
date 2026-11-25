@@ -34,7 +34,7 @@ Issues = list[dict[str, Any]]
 
 TRANSFORM_LIMIT = 10
 TRANSFORM_OPS = ["filter", "timeUnit", "aggregate", "sort", "top", "bin", "window", "fold", "index"]
-WINDOW_OPS = ["sum", "mean", "count", "rank", "pctChange", "lag", "lead", "movingMean"]
+WINDOW_OPS = ["sum", "mean", "count", "rank", "pctChange", "lag", "lead", "movingMean", "ema"]
 BIN_LIMIT = 200
 FOLD_LIMIT = 50
 MAX_ROWS = 50000  # LIMITS.maxRows
@@ -281,8 +281,8 @@ def apply_transform(value: Any, rows: list[Row], issues: Issues, path: str = "tr
             if "frame" in b:
                 if not (_is_int(b["frame"]) and 1 <= b["frame"] <= 1000):
                     return err(f"{bp}.frame", "bad_value", f"{bp}.frame must be an integer from 1 to 1000 (rows in the moving window), got {_fmt(b['frame'])}.")
-                if wop != "movingMean":
-                    issues.append({"severity": "warning", "code": "frame_ignored", "path": f"{bp}.frame", "message": f"{bp}.frame only applies to movingMean; it is ignored for {wop}."})
+                if wop not in ("movingMean", "ema"):
+                    issues.append({"severity": "warning", "code": "frame_ignored", "path": f"{bp}.frame", "message": f"{bp}.frame only applies to movingMean and ema; it is ignored for {wop}."})
             if "order" in b and sort_by is None and wop != "rank":
                 issues.append({"severity": "warning", "code": "order_ignored", "path": f"{bp}.order", "message": f"{bp}.order needs sortBy; without it the rows keep their order."})
             if sort_by is None and wop == "rank":
@@ -496,6 +496,9 @@ def _window_rows(rows: list[Row], op: str, field: str, target: str, group_by: li
         nums = [to_number(rows[i].get(field)) for i in order]
         total = 0.0
         seen = present = 0
+        alpha = 2 / (frame + 1)
+        ema = 0.0
+        ema_seen = False
         for k, ri in enumerate(order):
             n = nums[k]
             if op == "sum":
@@ -525,6 +528,14 @@ def _window_rows(rows: list[Row], op: str, field: str, target: str, group_by: li
                 result[ri] = rows[order[k - 1]].get(field) if k > 0 else None
             elif op == "lead":
                 result[ri] = rows[order[k + 1]].get(field) if k < len(order) - 1 else None
+            elif op == "ema":
+                # alpha*x + (1-alpha)*average, in that order; null before the first number and at a gap (the average carries on).
+                if n is not None:
+                    if not ema_seen:
+                        ema, ema_seen = n, True
+                    else:
+                        ema = alpha * n + (1 - alpha) * ema
+                    result[ri] = ema
             else:  # movingMean
                 s = 0.0
                 c = 0

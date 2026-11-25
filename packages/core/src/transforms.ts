@@ -25,7 +25,7 @@ export const TRANSFORM_DOCS: Record<TransformOp, { desc: string; example: Record
   sort: { desc: 'Stable sort by `field`: numbers and dates by value, then text, missing last; `order` ascending (default) or descending.', example: { sort: { field: 'revenue', order: 'descending' } } },
   top: { desc: 'The `n` rows (1 to 1000) with the largest `by`.', example: { top: { n: 10, by: 'revenue' } } },
   bin: { desc: 'Round bins of a numeric `field`, as the histogram makes them: adds start and end columns (`as`, default [field_start, field_end]; a non-number gets null). `step` sets the width; otherwise the histogram step for `maxbins` (default 10), made coarser until there are at most `maxbins` bins.', example: { bin: { field: 'price', maxbins: 10, as: ['from', 'to'] } } },
-  window: { desc: 'Adds `as`: an op over each `groupBy` group walked in `sortBy` order (`order` asc or desc; no sortBy keeps the data order). sum, mean, count run cumulatively; rank is the standard competition rank of the sort key (1, 2, 2, 4; by `field` without sortBy); pctChange is (v - previous) / |previous|; lag and lead read the previous and next row; movingMean averages the last `frame` rows (default 3). Rows keep their order.', example: { window: { op: 'sum', field: 'revenue', as: 'running', groupBy: ['region'], sortBy: 'date' } } },
+  window: { desc: 'Adds `as`: an op over each `groupBy` group walked in `sortBy` order (`order` asc or desc; no sortBy keeps the data order). sum, mean, count run cumulatively; rank is the standard competition rank of the sort key (1, 2, 2, 4; by `field` without sortBy); pctChange is (v - previous) / |previous|; lag and lead read the previous and next row; movingMean averages the last `frame` rows (default 3); ema is the exponential moving average with smoothing 2 / (`frame` + 1) (`frame` is its span, default 3: each row weighs 1 - 2 / (frame + 1) of the average before it). Rows keep their order.', example: { window: { op: 'sum', field: 'revenue', as: 'running', groupBy: ['region'], sortBy: 'date' } } },
   fold: { desc: 'Wide to long: each row becomes one row per column in `fields`, with the column name in `as[0]` and its value in `as[1]` (default key, value); the folded columns are dropped.', example: { fold: { fields: ['Q1', 'Q2', 'Q3'], as: ['quarter', 'revenue'] } } },
   index: { desc: 'Rescale `field` (into `as`, default in place) so each `groupBy` group equals `base` (default 100) at its base row: v * base / baseValue. The base row is the first in `sortBy` order (`at: "first"`, the default; no sortBy keeps the data order) or the row whose `sortBy` value is `at`. A group whose base value is 0, negative, missing or not found is dropped with an `index_group_dropped` warning that lists it. Compares growth of series of different size on one axis, instead of two axes.', example: { index: { field: 'revenue', groupBy: ['region'], sortBy: 'month', base: 100 } } }
 }
@@ -243,7 +243,7 @@ export const windowStep: TransformDef = {
     if (b.order !== undefined && b.order !== 'asc' && b.order !== 'desc') return err(`${bp}.order`, 'bad_enum', `${bp}.order must be "asc" or "desc".`)
     if (b.frame !== undefined) {
       if (typeof b.frame !== 'number' || !Number.isInteger(b.frame) || b.frame < 1 || b.frame > 1000) return err(`${bp}.frame`, 'bad_value', `${bp}.frame must be an integer from 1 to 1000 (rows in the moving window), got ${fmt(b.frame)}.`)
-      if (op !== 'movingMean') issues.push({ severity: 'warning', code: 'frame_ignored', path: `${bp}.frame`, message: `${bp}.frame only applies to movingMean; it is ignored for ${op}.` })
+      if (op !== 'movingMean' && op !== 'ema') issues.push({ severity: 'warning', code: 'frame_ignored', path: `${bp}.frame`, message: `${bp}.frame only applies to movingMean and ema; it is ignored for ${op}.` })
     }
     if (b.order !== undefined && sortBy === undefined && op !== 'rank') issues.push({ severity: 'warning', code: 'order_ignored', path: `${bp}.order`, message: `${bp}.order needs sortBy; without it the rows keep their order.` })
     cur = windowRows(cur, { op, field, as: b.as as string, groupBy: groupBy as string[], sortBy: sortBy ?? (op === 'rank' ? field : undefined), desc: b.order === 'desc', frame: (b.frame as number | undefined) ?? 3 })
@@ -458,6 +458,10 @@ interface WindowSpec { op: (typeof WINDOW_OPS)[number]; field: string; as: strin
  *                      is not a number, or when the previous value is 0
  *   lag, lead          the field of the previous / next row (null at the ends)
  *   movingMean         mean of the numbers among this row and the `frame - 1` rows before it
+ *   ema                exponential moving average with alpha = 2 / (frame + 1): the first number seen is the average
+ *                      so far, and each later number x makes it alpha * x + (1 - alpha) * average (that order, no fused
+ *                      multiply-add); null before the first number, and at a row whose cell is not a number, where the
+ *                      average carries on unchanged to the next row (a gap is not a reset and not a zero)
  * The rows come out in their input order, with the new column added.
  */
 function windowRows(rows: Row[], w: WindowSpec): Row[] {
@@ -475,6 +479,9 @@ function windowRows(rows: Row[], w: WindowSpec): Row[] {
     let total = 0
     let seen = 0
     let present = 0
+    const alpha = 2 / (w.frame + 1)
+    let ema = 0
+    let emaSeen = false
     order.forEach((ri, k) => {
       const n = nums[k]
       switch (w.op) {
@@ -507,6 +514,12 @@ function windowRows(rows: Row[], w: WindowSpec): Row[] {
         case 'lead':
           result[ri] = k < order.length - 1 ? rows[order[k + 1]][w.field] ?? null : null
           break
+        case 'ema': {
+          if (n === null) break
+          if (!emaSeen) { ema = n; emaSeen = true } else ema = alpha * n + (1 - alpha) * ema
+          result[ri] = ema
+          break
+        }
         case 'movingMean': {
           let s = 0
           let c = 0

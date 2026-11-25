@@ -68202,6 +68202,139 @@
       "describe": "Bar chart. 6 categories, 3 series (APAC, EMEA, LATAM). Highest: 2026-02-14 (5). Lowest: 2026-03-01 (1). Total: 13. Missing: 2026-02-02T10:30:00Z (no value, so not counted above)."
     },
     {
+      "name": "window: ema per region by date",
+      "spec": {
+        "type": "bar",
+        "x": "date",
+        "y": "units",
+        "data": [
+          {
+            "date": "2026-01-05",
+            "region": "APAC",
+            "revenue": 120,
+            "units": 3
+          },
+          {
+            "date": "2026-01-19",
+            "region": "EMEA",
+            "revenue": 80,
+            "units": "2"
+          },
+          {
+            "date": "2026-02-02T10:30:00Z",
+            "region": "APAC",
+            "revenue": 60.5,
+            "units": null
+          },
+          {
+            "date": "2026-02-14",
+            "region": "EMEA",
+            "revenue": null,
+            "units": 5
+          },
+          {
+            "date": "2026-03-01",
+            "region": "LATAM",
+            "revenue": 40,
+            "units": 1
+          },
+          {
+            "date": 1775001600000,
+            "region": "APAC",
+            "revenue": "10",
+            "units": 2
+          }
+        ],
+        "transform": [
+          {
+            "window": {
+              "op": "ema",
+              "field": "revenue",
+              "as": "w",
+              "groupBy": [
+                "region"
+              ],
+              "sortBy": "date"
+            }
+          }
+        ],
+        "series": "region"
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "bar",
+        "x": "date",
+        "y": "units",
+        "transform": [
+          {
+            "window": {
+              "op": "ema",
+              "field": "revenue",
+              "as": "w",
+              "groupBy": [
+                "region"
+              ],
+              "sortBy": "date"
+            }
+          }
+        ],
+        "series": "region",
+        "legend": "auto",
+        "tooltip": true,
+        "bare": false,
+        "stack": "none",
+        "orientation": "vertical",
+        "sort": "none",
+        "labels": false
+      },
+      "rows": [
+        {
+          "date": "2026-01-05",
+          "region": "APAC",
+          "revenue": 120,
+          "units": 3,
+          "w": 120
+        },
+        {
+          "date": "2026-01-19",
+          "region": "EMEA",
+          "revenue": 80,
+          "units": "2",
+          "w": 80
+        },
+        {
+          "date": "2026-02-02T10:30:00Z",
+          "region": "APAC",
+          "revenue": 60.5,
+          "units": null,
+          "w": 90.25
+        },
+        {
+          "date": "2026-02-14",
+          "region": "EMEA",
+          "revenue": null,
+          "units": 5,
+          "w": null
+        },
+        {
+          "date": "2026-03-01",
+          "region": "LATAM",
+          "revenue": 40,
+          "units": 1,
+          "w": 40
+        },
+        {
+          "date": 1775001600000,
+          "region": "APAC",
+          "revenue": "10",
+          "units": 2,
+          "w": 50.125
+        }
+      ],
+      "describe": "Bar chart. 6 categories, 3 series (APAC, EMEA, LATAM). Highest: 2026-02-14 (5). Lowest: 2026-03-01 (1). Total: 13. Missing: 2026-02-02T10:30:00Z (no value, so not counted above)."
+    },
+    {
       "name": "window: sum descending, no groups",
       "spec": {
         "type": "bar",
@@ -68728,6 +68861,669 @@
         }
       ],
       "describe": "Bar chart. 3 categories. Highest: APAC (215.3). Lowest: LATAM (40). Total: 415.8."
+    },
+    {
+      "name": "window: ema over 4 rows (alpha 0.4)",
+      "spec": {
+        "type": "bar",
+        "x": "region",
+        "y": "m",
+        "data": [
+          {
+            "date": "2026-01-05",
+            "region": "APAC",
+            "revenue": 120,
+            "units": 3
+          },
+          {
+            "date": "2026-01-19",
+            "region": "EMEA",
+            "revenue": 80,
+            "units": "2"
+          },
+          {
+            "date": "2026-02-02T10:30:00Z",
+            "region": "APAC",
+            "revenue": 60.5,
+            "units": null
+          },
+          {
+            "date": "2026-02-14",
+            "region": "EMEA",
+            "revenue": null,
+            "units": 5
+          },
+          {
+            "date": "2026-03-01",
+            "region": "LATAM",
+            "revenue": 40,
+            "units": 1
+          },
+          {
+            "date": 1775001600000,
+            "region": "APAC",
+            "revenue": "10",
+            "units": 2
+          }
+        ],
+        "transform": [
+          {
+            "window": {
+              "op": "ema",
+              "field": "revenue",
+              "as": "m",
+              "sortBy": "date",
+              "frame": 4
+            }
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "bar",
+        "x": "region",
+        "y": "m",
+        "transform": [
+          {
+            "window": {
+              "op": "ema",
+              "field": "revenue",
+              "as": "m",
+              "sortBy": "date",
+              "frame": 4
+            }
+          }
+        ],
+        "legend": "auto",
+        "tooltip": true,
+        "bare": false,
+        "stack": "none",
+        "orientation": "vertical",
+        "sort": "none",
+        "labels": false
+      },
+      "rows": [
+        {
+          "date": "2026-01-05",
+          "region": "APAC",
+          "revenue": 120,
+          "units": 3,
+          "m": 120
+        },
+        {
+          "date": "2026-01-19",
+          "region": "EMEA",
+          "revenue": 80,
+          "units": "2",
+          "m": 104
+        },
+        {
+          "date": "2026-02-02T10:30:00Z",
+          "region": "APAC",
+          "revenue": 60.5,
+          "units": null,
+          "m": 86.6
+        },
+        {
+          "date": "2026-02-14",
+          "region": "EMEA",
+          "revenue": null,
+          "units": 5,
+          "m": null
+        },
+        {
+          "date": "2026-03-01",
+          "region": "LATAM",
+          "revenue": 40,
+          "units": 1,
+          "m": 67.96
+        },
+        {
+          "date": 1775001600000,
+          "region": "APAC",
+          "revenue": "10",
+          "units": 2,
+          "m": 44.776
+        }
+      ],
+      "describe": "Bar chart. 3 categories. Highest: APAC (251.4). Lowest: LATAM (67.96). Total: 423.3."
+    },
+    {
+      "name": "window: ema skips text and missing cells without a reset",
+      "spec": {
+        "type": "bar",
+        "x": "k",
+        "y": "e",
+        "data": [
+          {
+            "k": "b",
+            "v": 10
+          },
+          {
+            "k": "a",
+            "v": "9"
+          },
+          {
+            "k": null,
+            "v": null
+          },
+          {
+            "k": "B",
+            "v": "x"
+          },
+          {
+            "k": "😀",
+            "v": "2026-01-01"
+          },
+          {
+            "k": "～",
+            "v": -1
+          },
+          {
+            "v": 2.5
+          },
+          {
+            "k": "a",
+            "v": 10
+          },
+          {
+            "k": "",
+            "v": ""
+          },
+          {
+            "k": 7,
+            "v": true
+          }
+        ],
+        "transform": [
+          {
+            "window": {
+              "op": "ema",
+              "field": "v",
+              "as": "e",
+              "frame": 5
+            }
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "bar",
+        "x": "k",
+        "y": "e",
+        "transform": [
+          {
+            "window": {
+              "op": "ema",
+              "field": "v",
+              "as": "e",
+              "frame": 5
+            }
+          }
+        ],
+        "legend": "auto",
+        "tooltip": true,
+        "bare": false,
+        "stack": "none",
+        "orientation": "vertical",
+        "sort": "none",
+        "labels": false
+      },
+      "rows": [
+        {
+          "k": "b",
+          "v": 10,
+          "e": 10
+        },
+        {
+          "k": "a",
+          "v": "9",
+          "e": 9.666666667
+        },
+        {
+          "k": null,
+          "v": null,
+          "e": null
+        },
+        {
+          "k": "B",
+          "v": "x",
+          "e": null
+        },
+        {
+          "k": "😀",
+          "v": "2026-01-01",
+          "e": null
+        },
+        {
+          "k": "～",
+          "v": -1,
+          "e": 6.111111111
+        },
+        {
+          "v": 2.5,
+          "e": 4.907407407
+        },
+        {
+          "k": "a",
+          "v": 10,
+          "e": 6.604938272
+        },
+        {
+          "k": "",
+          "v": "",
+          "e": null
+        },
+        {
+          "k": 7,
+          "v": true,
+          "e": null
+        }
+      ],
+      "describe": "Bar chart. 7 categories. Highest: a (16.27). Lowest:  (4.91). Total: 37.29. Missing: B, 😀, 7 (no value, so not counted above)."
+    },
+    {
+      "name": "window: ema with a span of 1 is the series",
+      "spec": {
+        "type": "bar",
+        "x": "k",
+        "y": "e",
+        "data": [
+          {
+            "k": "b",
+            "v": 10
+          },
+          {
+            "k": "a",
+            "v": "9"
+          },
+          {
+            "k": null,
+            "v": null
+          },
+          {
+            "k": "B",
+            "v": "x"
+          },
+          {
+            "k": "😀",
+            "v": "2026-01-01"
+          },
+          {
+            "k": "～",
+            "v": -1
+          },
+          {
+            "v": 2.5
+          },
+          {
+            "k": "a",
+            "v": 10
+          },
+          {
+            "k": "",
+            "v": ""
+          },
+          {
+            "k": 7,
+            "v": true
+          }
+        ],
+        "transform": [
+          {
+            "window": {
+              "op": "ema",
+              "field": "v",
+              "as": "e",
+              "frame": 1
+            }
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "bar",
+        "x": "k",
+        "y": "e",
+        "transform": [
+          {
+            "window": {
+              "op": "ema",
+              "field": "v",
+              "as": "e",
+              "frame": 1
+            }
+          }
+        ],
+        "legend": "auto",
+        "tooltip": true,
+        "bare": false,
+        "stack": "none",
+        "orientation": "vertical",
+        "sort": "none",
+        "labels": false
+      },
+      "rows": [
+        {
+          "k": "b",
+          "v": 10,
+          "e": 10
+        },
+        {
+          "k": "a",
+          "v": "9",
+          "e": 9
+        },
+        {
+          "k": null,
+          "v": null,
+          "e": null
+        },
+        {
+          "k": "B",
+          "v": "x",
+          "e": null
+        },
+        {
+          "k": "😀",
+          "v": "2026-01-01",
+          "e": null
+        },
+        {
+          "k": "～",
+          "v": -1,
+          "e": -1
+        },
+        {
+          "v": 2.5,
+          "e": 2.5
+        },
+        {
+          "k": "a",
+          "v": 10,
+          "e": 10
+        },
+        {
+          "k": "",
+          "v": "",
+          "e": null
+        },
+        {
+          "k": 7,
+          "v": true,
+          "e": null
+        }
+      ],
+      "describe": "Bar chart. 7 categories. Highest: a (19). Lowest: ～ (-1). Total: 30.5. Missing: B, 😀, 7 (no value, so not counted above)."
+    },
+    {
+      "name": "window: ema, a long span, descending",
+      "spec": {
+        "type": "bar",
+        "x": "region",
+        "y": "e",
+        "data": [
+          {
+            "date": "2026-01-05",
+            "region": "APAC",
+            "revenue": 120,
+            "units": 3
+          },
+          {
+            "date": "2026-01-19",
+            "region": "EMEA",
+            "revenue": 80,
+            "units": "2"
+          },
+          {
+            "date": "2026-02-02T10:30:00Z",
+            "region": "APAC",
+            "revenue": 60.5,
+            "units": null
+          },
+          {
+            "date": "2026-02-14",
+            "region": "EMEA",
+            "revenue": null,
+            "units": 5
+          },
+          {
+            "date": "2026-03-01",
+            "region": "LATAM",
+            "revenue": 40,
+            "units": 1
+          },
+          {
+            "date": 1775001600000,
+            "region": "APAC",
+            "revenue": "10",
+            "units": 2
+          }
+        ],
+        "transform": [
+          {
+            "window": {
+              "op": "ema",
+              "field": "revenue",
+              "as": "e",
+              "groupBy": [
+                "region"
+              ],
+              "sortBy": "date",
+              "order": "desc",
+              "frame": 250
+            }
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "bar",
+        "x": "region",
+        "y": "e",
+        "transform": [
+          {
+            "window": {
+              "op": "ema",
+              "field": "revenue",
+              "as": "e",
+              "groupBy": [
+                "region"
+              ],
+              "sortBy": "date",
+              "order": "desc",
+              "frame": 250
+            }
+          }
+        ],
+        "legend": "auto",
+        "tooltip": true,
+        "bare": false,
+        "stack": "none",
+        "orientation": "vertical",
+        "sort": "none",
+        "labels": false
+      },
+      "rows": [
+        {
+          "date": "2026-01-05",
+          "region": "APAC",
+          "revenue": 120,
+          "units": 3,
+          "e": 11.275678164
+        },
+        {
+          "date": "2026-01-19",
+          "region": "EMEA",
+          "revenue": 80,
+          "units": "2",
+          "e": 80
+        },
+        {
+          "date": "2026-02-02T10:30:00Z",
+          "region": "APAC",
+          "revenue": 60.5,
+          "units": null,
+          "e": 10.402390438
+        },
+        {
+          "date": "2026-02-14",
+          "region": "EMEA",
+          "revenue": null,
+          "units": 5,
+          "e": null
+        },
+        {
+          "date": "2026-03-01",
+          "region": "LATAM",
+          "revenue": 40,
+          "units": 1,
+          "e": 40
+        },
+        {
+          "date": 1775001600000,
+          "region": "APAC",
+          "revenue": "10",
+          "units": 2,
+          "e": 10
+        }
+      ],
+      "describe": "Bar chart. 3 categories. Highest: EMEA (80). Lowest: APAC (31.68). Total: 151.7."
+    },
+    {
+      "name": "window: frame ignored for rank",
+      "spec": {
+        "type": "bar",
+        "x": "region",
+        "y": "revenue",
+        "data": [
+          {
+            "date": "2026-01-05",
+            "region": "APAC",
+            "revenue": 120,
+            "units": 3
+          },
+          {
+            "date": "2026-01-19",
+            "region": "EMEA",
+            "revenue": 80,
+            "units": "2"
+          },
+          {
+            "date": "2026-02-02T10:30:00Z",
+            "region": "APAC",
+            "revenue": 60.5,
+            "units": null
+          },
+          {
+            "date": "2026-02-14",
+            "region": "EMEA",
+            "revenue": null,
+            "units": 5
+          },
+          {
+            "date": "2026-03-01",
+            "region": "LATAM",
+            "revenue": 40,
+            "units": 1
+          },
+          {
+            "date": 1775001600000,
+            "region": "APAC",
+            "revenue": "10",
+            "units": 2
+          }
+        ],
+        "transform": [
+          {
+            "window": {
+              "op": "rank",
+              "field": "revenue",
+              "as": "w",
+              "frame": 4
+            }
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "frame_ignored",
+          "path": "transform[0].window.frame"
+        }
+      ],
+      "normalized": {
+        "type": "bar",
+        "x": "region",
+        "y": "revenue",
+        "transform": [
+          {
+            "window": {
+              "op": "rank",
+              "field": "revenue",
+              "as": "w",
+              "frame": 4
+            }
+          }
+        ],
+        "legend": "auto",
+        "tooltip": true,
+        "bare": false,
+        "stack": "none",
+        "orientation": "vertical",
+        "sort": "none",
+        "labels": false
+      },
+      "rows": [
+        {
+          "date": "2026-01-05",
+          "region": "APAC",
+          "revenue": 120,
+          "units": 3,
+          "w": 5
+        },
+        {
+          "date": "2026-01-19",
+          "region": "EMEA",
+          "revenue": 80,
+          "units": "2",
+          "w": 4
+        },
+        {
+          "date": "2026-02-02T10:30:00Z",
+          "region": "APAC",
+          "revenue": 60.5,
+          "units": null,
+          "w": 3
+        },
+        {
+          "date": "2026-02-14",
+          "region": "EMEA",
+          "revenue": null,
+          "units": 5,
+          "w": null
+        },
+        {
+          "date": "2026-03-01",
+          "region": "LATAM",
+          "revenue": 40,
+          "units": 1,
+          "w": 2
+        },
+        {
+          "date": 1775001600000,
+          "region": "APAC",
+          "revenue": "10",
+          "units": 2,
+          "w": 1
+        }
+      ],
+      "describe": "Bar chart. 3 categories. Highest: APAC (190.5). Lowest: LATAM (40). Total: 310.5."
     },
     {
       "name": "window: data order without sortBy",
