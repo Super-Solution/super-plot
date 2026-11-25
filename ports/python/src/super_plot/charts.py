@@ -13,7 +13,7 @@ from ._js import clip, is_finite_number, is_number, js_string, key_string, numbe
 from .data import detect_x_kind, distinct, matrix, observations
 from .geo import Geography, js_trim, normalize_region
 from .isotime import _civil_from_days, to_time
-from .numeric import bin_counts, bin_edges, box_stats, closest, correlation, density_peaks, extent, js_round, kde, mean, quantile, r2, total, waffle_cells, waffle_grid
+from .numeric import chord_layout, bin_counts, bin_edges, box_stats, closest, correlation, density_peaks, extent, js_round, kde, mean, quantile, r2, total, waffle_cells, waffle_grid
 from .text import format_date, format_datetime, format_duration, format_percent, value_formatter
 
 Spec = dict[str, Any]
@@ -1001,6 +1001,46 @@ def _describe_sankey(spec: Spec) -> str:
     t = f"{_lead(spec, 'Sankey diagram')} {len(nodes)} nodes, {len(ls)} flows; {f(tot)} enters from {_fmt_list(sources, 4)} and ends in {_fmt_list(sinks, 4)}."
     t += f" Largest flow: {clip(big['source'], 30)} to {clip(big['target'], 30)} ({f(big['value'])})."
     return t
+
+
+# ---------------------------------------------------------------------------------------- chord
+# Mirrors `packages/core/src/charts/chord.ts`; the flows are the sankey's (`_links`).
+
+CHORD_MAX_NODES = 24
+
+
+def _check_chord(spec: Spec, rows: list[dict], issues: Issues) -> None:
+    kept = []
+    for r in rows:
+        v = to_number(r.get(spec["value"]))
+        s, t = or_empty(r.get(spec["from"])), or_empty(r.get(spec["to"]))
+        if v is not None and v > 0 and s != t:
+            kept.append((s, t))
+    nodes = {n for pair in kept for n in pair}
+    if len(kept) != len(rows):
+        _issue(issues, "warning", "flows_skipped", "value", "Flows with zero, negative or no number, or that start and end at the same group, are skipped.")
+    if not kept:
+        _issue(issues, "error", "no_flows", "value", "No row has a positive number between two different groups, so there is nothing to draw.", "Check the from, to and value columns.")
+    if len(nodes) > CHORD_MAX_NODES:
+        _issue(issues, "error", "too_many_nodes", "from", f"A chord diagram can show at most {CHORD_MAX_NODES} groups; this has {len(nodes)}.", 'Merge small groups into "Other".')
+    if len({f"{s}\u0000{t}" for s, t in kept}) > MAX_LINKS:
+        _issue(issues, "error", "too_many_links", "data", f"A chord diagram can show at most {MAX_LINKS} flows.")
+
+
+def _describe_chord(spec: Spec) -> str:
+    ls = _links(spec)
+    f = _formatter(spec)
+    if not ls:
+        return f"{_lead(spec, 'Chord diagram')} No positive flows."
+    nodes = chord_layout(ls)["nodes"]
+    busy = nodes[0]
+    for n in nodes[1:]:
+        if n["total"] > busy["total"]:
+            busy = n
+    big = _first_max(ls, lambda l: l["value"])
+    return (f"{_lead(spec, 'Chord diagram')} {len(nodes)} groups, {len(ls)} flows, {f(total([l['value'] for l in ls]))} in all. "
+            f"Busiest group: {clip(busy['name'], 30)} ({f(busy['total'])} in and out). "
+            f"Largest flow: {clip(big['source'], 30)} to {clip(big['target'], 30)} ({f(big['value'])}). Arcs follow the order the groups first appear in the data.")
 
 
 # ------------------------------------------------------------------------------------------- maps
@@ -2068,6 +2108,7 @@ CHECKS: dict[str, Callable[[Spec, list[dict], Issues], None]] = {
     "radar": _check_radar,
     "treemap": _check_treemap,
     "sankey": _check_sankey,
+    "chord": _check_chord,
 }
 
 # Map charts: the check also gets the geography that `geo` resolved to (None when the spec has no `geo`).
@@ -2102,6 +2143,7 @@ DESCRIBE: dict[str, Callable[[Spec], str]] = {
     "radar": _describe_radar,
     "treemap": _describe_treemap,
     "sankey": _describe_sankey,
+    "chord": _describe_chord,
     "choropleth": _describe_choropleth,
     "bubble-map": _describe_bubble_map,
     "column-map": _describe_column_map,

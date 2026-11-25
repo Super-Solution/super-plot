@@ -3362,6 +3362,457 @@
       "out": -0.150119302
     }
   ],
+  "chordLayout": [
+    {
+      "in": {
+        "flows": [
+          {
+            "source": "a",
+            "target": "b",
+            "value": 3
+          },
+          {
+            "source": "b",
+            "target": "a",
+            "value": 1
+          }
+        ]
+      },
+      "out": {
+        "nodes": [
+          {
+            "name": "a",
+            "start": 0,
+            "end": 3.111592654,
+            "total": 4
+          },
+          {
+            "name": "b",
+            "start": 3.141592654,
+            "end": 6.253185307,
+            "total": 4
+          }
+        ],
+        "ribbons": [
+          {
+            "sourceStart": 0,
+            "sourceEnd": 2.33369449,
+            "targetStart": 3.919490817,
+            "targetEnd": 6.253185307
+          },
+          {
+            "sourceStart": 3.141592654,
+            "sourceEnd": 3.919490817,
+            "targetStart": 2.33369449,
+            "targetEnd": 3.111592654
+          }
+        ]
+      }
+    },
+    {
+      "in": {
+        "flows": [
+          {
+            "source": "x",
+            "target": "y",
+            "value": 5
+          },
+          {
+            "source": "y",
+            "target": "z",
+            "value": 2
+          },
+          {
+            "source": "z",
+            "target": "x",
+            "value": 4
+          },
+          {
+            "source": "x",
+            "target": "z",
+            "value": 1
+          }
+        ]
+      },
+      "out": {
+        "nodes": [
+          {
+            "name": "x",
+            "start": 0,
+            "end": 2.580493878,
+            "total": 10
+          },
+          {
+            "name": "y",
+            "start": 2.610493878,
+            "end": 4.416839593,
+            "total": 7
+          },
+          {
+            "name": "z",
+            "start": 4.446839593,
+            "end": 6.253185307,
+            "total": 7
+          }
+        ],
+        "ribbons": [
+          {
+            "sourceStart": 0,
+            "sourceEnd": 1.290246939,
+            "targetStart": 2.610493878,
+            "targetEnd": 3.900740817
+          },
+          {
+            "sourceStart": 3.900740817,
+            "sourceEnd": 4.416839593,
+            "targetStart": 5.737086532,
+            "targetEnd": 6.253185307
+          },
+          {
+            "sourceStart": 4.446839593,
+            "sourceEnd": 5.479037144,
+            "targetStart": 1.548296327,
+            "targetEnd": 2.580493878
+          },
+          {
+            "sourceStart": 1.290246939,
+            "sourceEnd": 1.548296327,
+            "targetStart": 5.479037144,
+            "targetEnd": 5.737086532
+          }
+        ]
+      }
+    },
+    {
+      "in": {
+        "flows": [
+          {
+            "source": "Asia",
+            "target": "Europe",
+            "value": 120
+          },
+          {
+            "source": "Europe",
+            "target": "Asia",
+            "value": 95
+          },
+          {
+            "source": "Asia",
+            "target": "Americas",
+            "value": 150
+          },
+          {
+            "source": "Americas",
+            "target": "Asia",
+            "value": 70
+          },
+          {
+            "source": "Europe",
+            "target": "Americas",
+            "value": 85
+          },
+          {
+            "source": "Americas",
+            "target": "Europe",
+            "value": 110
+          },
+          {
+            "source": "Africa",
+            "target": "Europe",
+            "value": 45
+          },
+          {
+            "source": "Europe",
+            "target": "Africa",
+            "value": 30
+          },
+          {
+            "source": "Asia",
+            "target": "Africa",
+            "value": 40
+          }
+        ]
+      },
+      "out": {
+        "nodes": [
+          {
+            "name": "Asia",
+            "start": 0,
+            "end": 1.96477384,
+            "total": 475
+          },
+          {
+            "name": "Europe",
+            "start": 1.99477384,
+            "end": 4.000911339,
+            "total": 485
+          },
+          {
+            "name": "Americas",
+            "start": 4.030911339,
+            "end": 5.74750322,
+            "total": 415
+          },
+          {
+            "name": "Africa",
+            "start": 5.77750322,
+            "end": 6.253185307,
+            "total": 115
+          }
+        ],
+        "ribbons": [
+          {
+            "sourceStart": 0,
+            "sourceEnd": 0.496363917,
+            "targetStart": 2.387728607,
+            "targetEnd": 2.884092525
+          },
+          {
+            "sourceStart": 1.99477384,
+            "sourceEnd": 2.387728607,
+            "targetStart": 0.496363917,
+            "targetEnd": 0.889318685
+          },
+          {
+            "sourceStart": 0.889318685,
+            "sourceEnd": 1.509773582,
+            "targetStart": 4.320456957,
+            "targetEnd": 4.940911854
+          },
+          {
+            "sourceStart": 4.030911339,
+            "sourceEnd": 4.320456957,
+            "targetStart": 1.509773582,
+            "targetEnd": 1.7993192
+          },
+          {
+            "sourceStart": 2.884092525,
+            "sourceEnd": 3.235683633,
+            "targetStart": 5.395912112,
+            "targetEnd": 5.74750322
+          },
+          {
+            "sourceStart": 4.940911854,
+            "sourceEnd": 5.395912112,
+            "targetStart": 3.235683633,
+            "targetEnd": 3.690683891
+          },
+          {
+            "sourceStart": 5.942957859,
+            "sourceEnd": 6.129094328,
+            "targetStart": 3.81477487,
+            "targetEnd": 4.000911339
+          },
+          {
+            "sourceStart": 3.690683891,
+            "sourceEnd": 3.81477487,
+            "targetStart": 6.129094328,
+            "targetEnd": 6.253185307
+          },
+          {
+            "sourceStart": 1.7993192,
+            "sourceEnd": 1.96477384,
+            "targetStart": 5.77750322,
+            "targetEnd": 5.942957859
+          }
+        ]
+      }
+    },
+    {
+      "in": {
+        "flows": [
+          {
+            "source": "p",
+            "target": "q",
+            "value": 0.1
+          },
+          {
+            "source": "q",
+            "target": "r",
+            "value": 0.2
+          },
+          {
+            "source": "r",
+            "target": "p",
+            "value": 0.3
+          },
+          {
+            "source": "p",
+            "target": "r",
+            "value": 0.7
+          },
+          {
+            "source": "q",
+            "target": "p",
+            "value": 0.001
+          }
+        ]
+      },
+      "out": {
+        "nodes": [
+          {
+            "name": "p",
+            "start": 0,
+            "end": 2.620559963,
+            "total": 1.101
+          },
+          {
+            "name": "q",
+            "start": 2.650559963,
+            "end": 3.366989162,
+            "total": 0.301
+          },
+          {
+            "name": "r",
+            "start": 3.396989162,
+            "end": 6.253185307,
+            "total": 1.2
+          }
+        ],
+        "ribbons": [
+          {
+            "sourceStart": 0,
+            "sourceEnd": 0.238016345,
+            "targetStart": 2.652940126,
+            "targetEnd": 2.890956472
+          },
+          {
+            "sourceStart": 2.890956472,
+            "sourceEnd": 3.366989162,
+            "targetStart": 5.777152616,
+            "targetEnd": 6.253185307
+          },
+          {
+            "sourceStart": 3.396989162,
+            "sourceEnd": 4.111038199,
+            "targetStart": 1.906510927,
+            "targetEnd": 2.620559963
+          },
+          {
+            "sourceStart": 0.240396509,
+            "sourceEnd": 1.906510927,
+            "targetStart": 4.111038199,
+            "targetEnd": 5.777152616
+          },
+          {
+            "sourceStart": 2.650559963,
+            "sourceEnd": 2.652940126,
+            "targetStart": 0.238016345,
+            "targetEnd": 0.240396509
+          }
+        ]
+      }
+    },
+    {
+      "in": {
+        "flows": [
+          {
+            "source": "solo",
+            "target": "pair",
+            "value": 7
+          }
+        ]
+      },
+      "out": {
+        "nodes": [
+          {
+            "name": "solo",
+            "start": 0,
+            "end": 3.111592654,
+            "total": 7
+          },
+          {
+            "name": "pair",
+            "start": 3.141592654,
+            "end": 6.253185307,
+            "total": 7
+          }
+        ],
+        "ribbons": [
+          {
+            "sourceStart": 0,
+            "sourceEnd": 3.111592654,
+            "targetStart": 3.141592654,
+            "targetEnd": 6.253185307
+          }
+        ]
+      }
+    },
+    {
+      "in": {
+        "flows": [
+          {
+            "source": "m",
+            "target": "n",
+            "value": 1000000000
+          },
+          {
+            "source": "n",
+            "target": "m",
+            "value": 1
+          },
+          {
+            "source": "o",
+            "target": "m",
+            "value": 33.3333
+          },
+          {
+            "source": "n",
+            "target": "o",
+            "value": 2.5
+          }
+        ]
+      },
+      "out": {
+        "nodes": [
+          {
+            "name": "m",
+            "start": 0,
+            "end": 3.096592646,
+            "total": 1000000034.3333
+          },
+          {
+            "name": "n",
+            "start": 3.126592646,
+            "end": 6.223185196,
+            "total": 1000000003.5
+          },
+          {
+            "name": "o",
+            "start": 6.253185196,
+            "end": 6.253185307,
+            "total": 35.8333
+          }
+        ],
+        "ribbons": [
+          {
+            "sourceStart": 0,
+            "sourceEnd": 3.09659254,
+            "targetStart": 3.126592649,
+            "targetEnd": 6.223185188
+          },
+          {
+            "sourceStart": 3.126592646,
+            "sourceEnd": 3.126592649,
+            "targetStart": 3.09659254,
+            "targetEnd": 3.096592543
+          },
+          {
+            "sourceStart": 6.253185196,
+            "sourceEnd": 6.253185299,
+            "targetStart": 3.096592543,
+            "targetEnd": 3.096592646
+          },
+          {
+            "sourceStart": 6.223185188,
+            "sourceEnd": 6.223185196,
+            "targetStart": 6.253185299,
+            "targetEnd": 6.253185307
+          }
+        ]
+      }
+    }
+  ],
   "cloudLayout": [
     {
       "in": {
@@ -8473,6 +8924,79 @@
         "tooltip": true
       },
       "describe": "Sankey diagram \"Where the visitors go\". 8 nodes, 11 flows; 12.1K enters from Search, Social, Direct and ends in Left, Signed up. Largest flow: Search to Home (5.2K)."
+    },
+    {
+      "type": "chord",
+      "spec": {
+        "type": "chord",
+        "title": "Trade between regions",
+        "subtitle": "Exports, USD billions. Invented figures",
+        "from": "from",
+        "to": "to",
+        "value": "billions",
+        "format": "integer",
+        "data": [
+          {
+            "from": "Asia",
+            "to": "Europe",
+            "billions": 120
+          },
+          {
+            "from": "Europe",
+            "to": "Asia",
+            "billions": 95
+          },
+          {
+            "from": "Asia",
+            "to": "Americas",
+            "billions": 150
+          },
+          {
+            "from": "Americas",
+            "to": "Asia",
+            "billions": 70
+          },
+          {
+            "from": "Europe",
+            "to": "Americas",
+            "billions": 85
+          },
+          {
+            "from": "Americas",
+            "to": "Europe",
+            "billions": 110
+          },
+          {
+            "from": "Africa",
+            "to": "Europe",
+            "billions": 45
+          },
+          {
+            "from": "Europe",
+            "to": "Africa",
+            "billions": 30
+          },
+          {
+            "from": "Asia",
+            "to": "Africa",
+            "billions": 40
+          }
+        ]
+      },
+      "valid": true,
+      "issueCodes": [],
+      "normalized": {
+        "type": "chord",
+        "title": "Trade between regions",
+        "subtitle": "Exports, USD billions. Invented figures",
+        "from": "from",
+        "to": "to",
+        "value": "billions",
+        "format": "integer",
+        "legend": "auto",
+        "tooltip": true
+      },
+      "describe": "Chord diagram \"Trade between regions\". 4 groups, 9 flows, 745 in all. Busiest group: Europe (485 in and out). Largest flow: Asia to Americas (150). Arcs follow the order the groups first appear in the data."
     },
     {
       "type": "parallel",
@@ -49989,6 +50513,1835 @@
       }
     },
     {
+      "name": "chord: ok",
+      "spec": {
+        "type": "chord",
+        "from": "a",
+        "to": "c",
+        "value": "b",
+        "data": [
+          {
+            "a": "x",
+            "c": "y",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "c": "x",
+            "b": 2
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "chord",
+        "from": "a",
+        "to": "c",
+        "value": "b",
+        "legend": "auto",
+        "tooltip": true
+      }
+    },
+    {
+      "name": "chord: a loop is fine",
+      "spec": {
+        "type": "chord",
+        "from": "a",
+        "to": "c",
+        "value": "b",
+        "data": [
+          {
+            "a": "x",
+            "c": "y",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "c": "z",
+            "b": 1
+          },
+          {
+            "a": "z",
+            "c": "x",
+            "b": 1
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "chord",
+        "from": "a",
+        "to": "c",
+        "value": "b",
+        "legend": "auto",
+        "tooltip": true
+      }
+    },
+    {
+      "name": "chord: skipped flows",
+      "spec": {
+        "type": "chord",
+        "from": "a",
+        "to": "c",
+        "value": "b",
+        "data": [
+          {
+            "a": "x",
+            "c": "y",
+            "b": 1
+          },
+          {
+            "a": "x",
+            "c": "x",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "c": "z",
+            "b": 0
+          },
+          {
+            "a": "z",
+            "c": "x",
+            "b": "n/a"
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "some_not_numeric",
+          "path": "value"
+        },
+        {
+          "severity": "warning",
+          "code": "flows_skipped",
+          "path": "value"
+        }
+      ],
+      "normalized": {
+        "type": "chord",
+        "from": "a",
+        "to": "c",
+        "value": "b",
+        "legend": "auto",
+        "tooltip": true
+      }
+    },
+    {
+      "name": "chord: nothing to draw",
+      "spec": {
+        "type": "chord",
+        "from": "a",
+        "to": "c",
+        "value": "b",
+        "data": [
+          {
+            "a": "x",
+            "c": "x",
+            "b": 1
+          },
+          {
+            "a": "y",
+            "c": "z",
+            "b": -2
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "flows_skipped",
+          "path": "value"
+        },
+        {
+          "severity": "error",
+          "code": "no_flows",
+          "path": "value"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "chord: too many groups",
+      "spec": {
+        "type": "chord",
+        "from": "a",
+        "to": "c",
+        "value": "b",
+        "data": [
+          {
+            "a": "n0",
+            "c": "n1",
+            "b": 1
+          },
+          {
+            "a": "n1",
+            "c": "n2",
+            "b": 1
+          },
+          {
+            "a": "n2",
+            "c": "n3",
+            "b": 1
+          },
+          {
+            "a": "n3",
+            "c": "n4",
+            "b": 1
+          },
+          {
+            "a": "n4",
+            "c": "n5",
+            "b": 1
+          },
+          {
+            "a": "n5",
+            "c": "n6",
+            "b": 1
+          },
+          {
+            "a": "n6",
+            "c": "n7",
+            "b": 1
+          },
+          {
+            "a": "n7",
+            "c": "n8",
+            "b": 1
+          },
+          {
+            "a": "n8",
+            "c": "n9",
+            "b": 1
+          },
+          {
+            "a": "n9",
+            "c": "n10",
+            "b": 1
+          },
+          {
+            "a": "n10",
+            "c": "n11",
+            "b": 1
+          },
+          {
+            "a": "n11",
+            "c": "n12",
+            "b": 1
+          },
+          {
+            "a": "n12",
+            "c": "n13",
+            "b": 1
+          },
+          {
+            "a": "n13",
+            "c": "n14",
+            "b": 1
+          },
+          {
+            "a": "n14",
+            "c": "n15",
+            "b": 1
+          },
+          {
+            "a": "n15",
+            "c": "n16",
+            "b": 1
+          },
+          {
+            "a": "n16",
+            "c": "n17",
+            "b": 1
+          },
+          {
+            "a": "n17",
+            "c": "n18",
+            "b": 1
+          },
+          {
+            "a": "n18",
+            "c": "n19",
+            "b": 1
+          },
+          {
+            "a": "n19",
+            "c": "n20",
+            "b": 1
+          },
+          {
+            "a": "n20",
+            "c": "n21",
+            "b": 1
+          },
+          {
+            "a": "n21",
+            "c": "n22",
+            "b": 1
+          },
+          {
+            "a": "n22",
+            "c": "n23",
+            "b": 1
+          },
+          {
+            "a": "n23",
+            "c": "n24",
+            "b": 1
+          },
+          {
+            "a": "n24",
+            "c": "n25",
+            "b": 1
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "too_many_nodes",
+          "path": "from"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "chord: too many flows",
+      "spec": {
+        "type": "chord",
+        "from": "a",
+        "to": "c",
+        "value": "b",
+        "data": [
+          {
+            "a": "s0",
+            "c": "t0",
+            "b": 1
+          },
+          {
+            "a": "s1",
+            "c": "t0",
+            "b": 1
+          },
+          {
+            "a": "s2",
+            "c": "t0",
+            "b": 1
+          },
+          {
+            "a": "s3",
+            "c": "t0",
+            "b": 1
+          },
+          {
+            "a": "s4",
+            "c": "t0",
+            "b": 1
+          },
+          {
+            "a": "s5",
+            "c": "t0",
+            "b": 1
+          },
+          {
+            "a": "s6",
+            "c": "t0",
+            "b": 1
+          },
+          {
+            "a": "s7",
+            "c": "t0",
+            "b": 1
+          },
+          {
+            "a": "s8",
+            "c": "t0",
+            "b": 1
+          },
+          {
+            "a": "s9",
+            "c": "t0",
+            "b": 1
+          },
+          {
+            "a": "s10",
+            "c": "t0",
+            "b": 1
+          },
+          {
+            "a": "s11",
+            "c": "t0",
+            "b": 1
+          },
+          {
+            "a": "s12",
+            "c": "t0",
+            "b": 1
+          },
+          {
+            "a": "s13",
+            "c": "t0",
+            "b": 1
+          },
+          {
+            "a": "s14",
+            "c": "t0",
+            "b": 1
+          },
+          {
+            "a": "s15",
+            "c": "t0",
+            "b": 1
+          },
+          {
+            "a": "s16",
+            "c": "t0",
+            "b": 1
+          },
+          {
+            "a": "s17",
+            "c": "t0",
+            "b": 1
+          },
+          {
+            "a": "s18",
+            "c": "t0",
+            "b": 1
+          },
+          {
+            "a": "s19",
+            "c": "t0",
+            "b": 1
+          },
+          {
+            "a": "s0",
+            "c": "t1",
+            "b": 1
+          },
+          {
+            "a": "s1",
+            "c": "t1",
+            "b": 1
+          },
+          {
+            "a": "s2",
+            "c": "t1",
+            "b": 1
+          },
+          {
+            "a": "s3",
+            "c": "t1",
+            "b": 1
+          },
+          {
+            "a": "s4",
+            "c": "t1",
+            "b": 1
+          },
+          {
+            "a": "s5",
+            "c": "t1",
+            "b": 1
+          },
+          {
+            "a": "s6",
+            "c": "t1",
+            "b": 1
+          },
+          {
+            "a": "s7",
+            "c": "t1",
+            "b": 1
+          },
+          {
+            "a": "s8",
+            "c": "t1",
+            "b": 1
+          },
+          {
+            "a": "s9",
+            "c": "t1",
+            "b": 1
+          },
+          {
+            "a": "s10",
+            "c": "t1",
+            "b": 1
+          },
+          {
+            "a": "s11",
+            "c": "t1",
+            "b": 1
+          },
+          {
+            "a": "s12",
+            "c": "t1",
+            "b": 1
+          },
+          {
+            "a": "s13",
+            "c": "t1",
+            "b": 1
+          },
+          {
+            "a": "s14",
+            "c": "t1",
+            "b": 1
+          },
+          {
+            "a": "s15",
+            "c": "t1",
+            "b": 1
+          },
+          {
+            "a": "s16",
+            "c": "t1",
+            "b": 1
+          },
+          {
+            "a": "s17",
+            "c": "t1",
+            "b": 1
+          },
+          {
+            "a": "s18",
+            "c": "t1",
+            "b": 1
+          },
+          {
+            "a": "s19",
+            "c": "t1",
+            "b": 1
+          },
+          {
+            "a": "s0",
+            "c": "t2",
+            "b": 1
+          },
+          {
+            "a": "s1",
+            "c": "t2",
+            "b": 1
+          },
+          {
+            "a": "s2",
+            "c": "t2",
+            "b": 1
+          },
+          {
+            "a": "s3",
+            "c": "t2",
+            "b": 1
+          },
+          {
+            "a": "s4",
+            "c": "t2",
+            "b": 1
+          },
+          {
+            "a": "s5",
+            "c": "t2",
+            "b": 1
+          },
+          {
+            "a": "s6",
+            "c": "t2",
+            "b": 1
+          },
+          {
+            "a": "s7",
+            "c": "t2",
+            "b": 1
+          },
+          {
+            "a": "s8",
+            "c": "t2",
+            "b": 1
+          },
+          {
+            "a": "s9",
+            "c": "t2",
+            "b": 1
+          },
+          {
+            "a": "s10",
+            "c": "t2",
+            "b": 1
+          },
+          {
+            "a": "s11",
+            "c": "t2",
+            "b": 1
+          },
+          {
+            "a": "s12",
+            "c": "t2",
+            "b": 1
+          },
+          {
+            "a": "s13",
+            "c": "t2",
+            "b": 1
+          },
+          {
+            "a": "s14",
+            "c": "t2",
+            "b": 1
+          },
+          {
+            "a": "s15",
+            "c": "t2",
+            "b": 1
+          },
+          {
+            "a": "s16",
+            "c": "t2",
+            "b": 1
+          },
+          {
+            "a": "s17",
+            "c": "t2",
+            "b": 1
+          },
+          {
+            "a": "s18",
+            "c": "t2",
+            "b": 1
+          },
+          {
+            "a": "s19",
+            "c": "t2",
+            "b": 1
+          },
+          {
+            "a": "s0",
+            "c": "t3",
+            "b": 1
+          },
+          {
+            "a": "s1",
+            "c": "t3",
+            "b": 1
+          },
+          {
+            "a": "s2",
+            "c": "t3",
+            "b": 1
+          },
+          {
+            "a": "s3",
+            "c": "t3",
+            "b": 1
+          },
+          {
+            "a": "s4",
+            "c": "t3",
+            "b": 1
+          },
+          {
+            "a": "s5",
+            "c": "t3",
+            "b": 1
+          },
+          {
+            "a": "s6",
+            "c": "t3",
+            "b": 1
+          },
+          {
+            "a": "s7",
+            "c": "t3",
+            "b": 1
+          },
+          {
+            "a": "s8",
+            "c": "t3",
+            "b": 1
+          },
+          {
+            "a": "s9",
+            "c": "t3",
+            "b": 1
+          },
+          {
+            "a": "s10",
+            "c": "t3",
+            "b": 1
+          },
+          {
+            "a": "s11",
+            "c": "t3",
+            "b": 1
+          },
+          {
+            "a": "s12",
+            "c": "t3",
+            "b": 1
+          },
+          {
+            "a": "s13",
+            "c": "t3",
+            "b": 1
+          },
+          {
+            "a": "s14",
+            "c": "t3",
+            "b": 1
+          },
+          {
+            "a": "s15",
+            "c": "t3",
+            "b": 1
+          },
+          {
+            "a": "s16",
+            "c": "t3",
+            "b": 1
+          },
+          {
+            "a": "s17",
+            "c": "t3",
+            "b": 1
+          },
+          {
+            "a": "s18",
+            "c": "t3",
+            "b": 1
+          },
+          {
+            "a": "s19",
+            "c": "t3",
+            "b": 1
+          },
+          {
+            "a": "s0",
+            "c": "t4",
+            "b": 1
+          },
+          {
+            "a": "s1",
+            "c": "t4",
+            "b": 1
+          },
+          {
+            "a": "s2",
+            "c": "t4",
+            "b": 1
+          },
+          {
+            "a": "s3",
+            "c": "t4",
+            "b": 1
+          },
+          {
+            "a": "s4",
+            "c": "t4",
+            "b": 1
+          },
+          {
+            "a": "s5",
+            "c": "t4",
+            "b": 1
+          },
+          {
+            "a": "s6",
+            "c": "t4",
+            "b": 1
+          },
+          {
+            "a": "s7",
+            "c": "t4",
+            "b": 1
+          },
+          {
+            "a": "s8",
+            "c": "t4",
+            "b": 1
+          },
+          {
+            "a": "s9",
+            "c": "t4",
+            "b": 1
+          },
+          {
+            "a": "s10",
+            "c": "t4",
+            "b": 1
+          },
+          {
+            "a": "s11",
+            "c": "t4",
+            "b": 1
+          },
+          {
+            "a": "s12",
+            "c": "t4",
+            "b": 1
+          },
+          {
+            "a": "s13",
+            "c": "t4",
+            "b": 1
+          },
+          {
+            "a": "s14",
+            "c": "t4",
+            "b": 1
+          },
+          {
+            "a": "s15",
+            "c": "t4",
+            "b": 1
+          },
+          {
+            "a": "s16",
+            "c": "t4",
+            "b": 1
+          },
+          {
+            "a": "s17",
+            "c": "t4",
+            "b": 1
+          },
+          {
+            "a": "s18",
+            "c": "t4",
+            "b": 1
+          },
+          {
+            "a": "s19",
+            "c": "t4",
+            "b": 1
+          },
+          {
+            "a": "s0",
+            "c": "t5",
+            "b": 1
+          },
+          {
+            "a": "s1",
+            "c": "t5",
+            "b": 1
+          },
+          {
+            "a": "s2",
+            "c": "t5",
+            "b": 1
+          },
+          {
+            "a": "s3",
+            "c": "t5",
+            "b": 1
+          },
+          {
+            "a": "s4",
+            "c": "t5",
+            "b": 1
+          },
+          {
+            "a": "s5",
+            "c": "t5",
+            "b": 1
+          },
+          {
+            "a": "s6",
+            "c": "t5",
+            "b": 1
+          },
+          {
+            "a": "s7",
+            "c": "t5",
+            "b": 1
+          },
+          {
+            "a": "s8",
+            "c": "t5",
+            "b": 1
+          },
+          {
+            "a": "s9",
+            "c": "t5",
+            "b": 1
+          },
+          {
+            "a": "s10",
+            "c": "t5",
+            "b": 1
+          },
+          {
+            "a": "s11",
+            "c": "t5",
+            "b": 1
+          },
+          {
+            "a": "s12",
+            "c": "t5",
+            "b": 1
+          },
+          {
+            "a": "s13",
+            "c": "t5",
+            "b": 1
+          },
+          {
+            "a": "s14",
+            "c": "t5",
+            "b": 1
+          },
+          {
+            "a": "s15",
+            "c": "t5",
+            "b": 1
+          },
+          {
+            "a": "s16",
+            "c": "t5",
+            "b": 1
+          },
+          {
+            "a": "s17",
+            "c": "t5",
+            "b": 1
+          },
+          {
+            "a": "s18",
+            "c": "t5",
+            "b": 1
+          },
+          {
+            "a": "s19",
+            "c": "t5",
+            "b": 1
+          },
+          {
+            "a": "s0",
+            "c": "t6",
+            "b": 1
+          },
+          {
+            "a": "s1",
+            "c": "t6",
+            "b": 1
+          },
+          {
+            "a": "s2",
+            "c": "t6",
+            "b": 1
+          },
+          {
+            "a": "s3",
+            "c": "t6",
+            "b": 1
+          },
+          {
+            "a": "s4",
+            "c": "t6",
+            "b": 1
+          },
+          {
+            "a": "s5",
+            "c": "t6",
+            "b": 1
+          },
+          {
+            "a": "s6",
+            "c": "t6",
+            "b": 1
+          },
+          {
+            "a": "s7",
+            "c": "t6",
+            "b": 1
+          },
+          {
+            "a": "s8",
+            "c": "t6",
+            "b": 1
+          },
+          {
+            "a": "s9",
+            "c": "t6",
+            "b": 1
+          },
+          {
+            "a": "s10",
+            "c": "t6",
+            "b": 1
+          },
+          {
+            "a": "s11",
+            "c": "t6",
+            "b": 1
+          },
+          {
+            "a": "s12",
+            "c": "t6",
+            "b": 1
+          },
+          {
+            "a": "s13",
+            "c": "t6",
+            "b": 1
+          },
+          {
+            "a": "s14",
+            "c": "t6",
+            "b": 1
+          },
+          {
+            "a": "s15",
+            "c": "t6",
+            "b": 1
+          },
+          {
+            "a": "s16",
+            "c": "t6",
+            "b": 1
+          },
+          {
+            "a": "s17",
+            "c": "t6",
+            "b": 1
+          },
+          {
+            "a": "s18",
+            "c": "t6",
+            "b": 1
+          },
+          {
+            "a": "s19",
+            "c": "t6",
+            "b": 1
+          },
+          {
+            "a": "s0",
+            "c": "t7",
+            "b": 1
+          },
+          {
+            "a": "s1",
+            "c": "t7",
+            "b": 1
+          },
+          {
+            "a": "s2",
+            "c": "t7",
+            "b": 1
+          },
+          {
+            "a": "s3",
+            "c": "t7",
+            "b": 1
+          },
+          {
+            "a": "s4",
+            "c": "t7",
+            "b": 1
+          },
+          {
+            "a": "s5",
+            "c": "t7",
+            "b": 1
+          },
+          {
+            "a": "s6",
+            "c": "t7",
+            "b": 1
+          },
+          {
+            "a": "s7",
+            "c": "t7",
+            "b": 1
+          },
+          {
+            "a": "s8",
+            "c": "t7",
+            "b": 1
+          },
+          {
+            "a": "s9",
+            "c": "t7",
+            "b": 1
+          },
+          {
+            "a": "s10",
+            "c": "t7",
+            "b": 1
+          },
+          {
+            "a": "s11",
+            "c": "t7",
+            "b": 1
+          },
+          {
+            "a": "s12",
+            "c": "t7",
+            "b": 1
+          },
+          {
+            "a": "s13",
+            "c": "t7",
+            "b": 1
+          },
+          {
+            "a": "s14",
+            "c": "t7",
+            "b": 1
+          },
+          {
+            "a": "s15",
+            "c": "t7",
+            "b": 1
+          },
+          {
+            "a": "s16",
+            "c": "t7",
+            "b": 1
+          },
+          {
+            "a": "s17",
+            "c": "t7",
+            "b": 1
+          },
+          {
+            "a": "s18",
+            "c": "t7",
+            "b": 1
+          },
+          {
+            "a": "s19",
+            "c": "t7",
+            "b": 1
+          },
+          {
+            "a": "s0",
+            "c": "t8",
+            "b": 1
+          },
+          {
+            "a": "s1",
+            "c": "t8",
+            "b": 1
+          },
+          {
+            "a": "s2",
+            "c": "t8",
+            "b": 1
+          },
+          {
+            "a": "s3",
+            "c": "t8",
+            "b": 1
+          },
+          {
+            "a": "s4",
+            "c": "t8",
+            "b": 1
+          },
+          {
+            "a": "s5",
+            "c": "t8",
+            "b": 1
+          },
+          {
+            "a": "s6",
+            "c": "t8",
+            "b": 1
+          },
+          {
+            "a": "s7",
+            "c": "t8",
+            "b": 1
+          },
+          {
+            "a": "s8",
+            "c": "t8",
+            "b": 1
+          },
+          {
+            "a": "s9",
+            "c": "t8",
+            "b": 1
+          },
+          {
+            "a": "s10",
+            "c": "t8",
+            "b": 1
+          },
+          {
+            "a": "s11",
+            "c": "t8",
+            "b": 1
+          },
+          {
+            "a": "s12",
+            "c": "t8",
+            "b": 1
+          },
+          {
+            "a": "s13",
+            "c": "t8",
+            "b": 1
+          },
+          {
+            "a": "s14",
+            "c": "t8",
+            "b": 1
+          },
+          {
+            "a": "s15",
+            "c": "t8",
+            "b": 1
+          },
+          {
+            "a": "s16",
+            "c": "t8",
+            "b": 1
+          },
+          {
+            "a": "s17",
+            "c": "t8",
+            "b": 1
+          },
+          {
+            "a": "s18",
+            "c": "t8",
+            "b": 1
+          },
+          {
+            "a": "s19",
+            "c": "t8",
+            "b": 1
+          },
+          {
+            "a": "s0",
+            "c": "t9",
+            "b": 1
+          },
+          {
+            "a": "s1",
+            "c": "t9",
+            "b": 1
+          },
+          {
+            "a": "s2",
+            "c": "t9",
+            "b": 1
+          },
+          {
+            "a": "s3",
+            "c": "t9",
+            "b": 1
+          },
+          {
+            "a": "s4",
+            "c": "t9",
+            "b": 1
+          },
+          {
+            "a": "s5",
+            "c": "t9",
+            "b": 1
+          },
+          {
+            "a": "s6",
+            "c": "t9",
+            "b": 1
+          },
+          {
+            "a": "s7",
+            "c": "t9",
+            "b": 1
+          },
+          {
+            "a": "s8",
+            "c": "t9",
+            "b": 1
+          },
+          {
+            "a": "s9",
+            "c": "t9",
+            "b": 1
+          },
+          {
+            "a": "s10",
+            "c": "t9",
+            "b": 1
+          },
+          {
+            "a": "s11",
+            "c": "t9",
+            "b": 1
+          },
+          {
+            "a": "s12",
+            "c": "t9",
+            "b": 1
+          },
+          {
+            "a": "s13",
+            "c": "t9",
+            "b": 1
+          },
+          {
+            "a": "s14",
+            "c": "t9",
+            "b": 1
+          },
+          {
+            "a": "s15",
+            "c": "t9",
+            "b": 1
+          },
+          {
+            "a": "s16",
+            "c": "t9",
+            "b": 1
+          },
+          {
+            "a": "s17",
+            "c": "t9",
+            "b": 1
+          },
+          {
+            "a": "s18",
+            "c": "t9",
+            "b": 1
+          },
+          {
+            "a": "s19",
+            "c": "t9",
+            "b": 1
+          },
+          {
+            "a": "s0",
+            "c": "t10",
+            "b": 1
+          },
+          {
+            "a": "s1",
+            "c": "t10",
+            "b": 1
+          },
+          {
+            "a": "s2",
+            "c": "t10",
+            "b": 1
+          },
+          {
+            "a": "s3",
+            "c": "t10",
+            "b": 1
+          },
+          {
+            "a": "s4",
+            "c": "t10",
+            "b": 1
+          },
+          {
+            "a": "s5",
+            "c": "t10",
+            "b": 1
+          },
+          {
+            "a": "s6",
+            "c": "t10",
+            "b": 1
+          },
+          {
+            "a": "s7",
+            "c": "t10",
+            "b": 1
+          },
+          {
+            "a": "s8",
+            "c": "t10",
+            "b": 1
+          },
+          {
+            "a": "s9",
+            "c": "t10",
+            "b": 1
+          },
+          {
+            "a": "s10",
+            "c": "t10",
+            "b": 1
+          },
+          {
+            "a": "s11",
+            "c": "t10",
+            "b": 1
+          },
+          {
+            "a": "s12",
+            "c": "t10",
+            "b": 1
+          },
+          {
+            "a": "s13",
+            "c": "t10",
+            "b": 1
+          },
+          {
+            "a": "s14",
+            "c": "t10",
+            "b": 1
+          },
+          {
+            "a": "s15",
+            "c": "t10",
+            "b": 1
+          },
+          {
+            "a": "s16",
+            "c": "t10",
+            "b": 1
+          },
+          {
+            "a": "s17",
+            "c": "t10",
+            "b": 1
+          },
+          {
+            "a": "s18",
+            "c": "t10",
+            "b": 1
+          },
+          {
+            "a": "s19",
+            "c": "t10",
+            "b": 1
+          },
+          {
+            "a": "s0",
+            "c": "t11",
+            "b": 1
+          },
+          {
+            "a": "s1",
+            "c": "t11",
+            "b": 1
+          },
+          {
+            "a": "s2",
+            "c": "t11",
+            "b": 1
+          },
+          {
+            "a": "s3",
+            "c": "t11",
+            "b": 1
+          },
+          {
+            "a": "s4",
+            "c": "t11",
+            "b": 1
+          },
+          {
+            "a": "s5",
+            "c": "t11",
+            "b": 1
+          },
+          {
+            "a": "s6",
+            "c": "t11",
+            "b": 1
+          },
+          {
+            "a": "s7",
+            "c": "t11",
+            "b": 1
+          },
+          {
+            "a": "s8",
+            "c": "t11",
+            "b": 1
+          },
+          {
+            "a": "s9",
+            "c": "t11",
+            "b": 1
+          },
+          {
+            "a": "s10",
+            "c": "t11",
+            "b": 1
+          },
+          {
+            "a": "s11",
+            "c": "t11",
+            "b": 1
+          },
+          {
+            "a": "s12",
+            "c": "t11",
+            "b": 1
+          },
+          {
+            "a": "s13",
+            "c": "t11",
+            "b": 1
+          },
+          {
+            "a": "s14",
+            "c": "t11",
+            "b": 1
+          },
+          {
+            "a": "s15",
+            "c": "t11",
+            "b": 1
+          },
+          {
+            "a": "s16",
+            "c": "t11",
+            "b": 1
+          },
+          {
+            "a": "s17",
+            "c": "t11",
+            "b": 1
+          },
+          {
+            "a": "s18",
+            "c": "t11",
+            "b": 1
+          },
+          {
+            "a": "s19",
+            "c": "t11",
+            "b": 1
+          },
+          {
+            "a": "s0",
+            "c": "t12",
+            "b": 1
+          },
+          {
+            "a": "s1",
+            "c": "t12",
+            "b": 1
+          },
+          {
+            "a": "s2",
+            "c": "t12",
+            "b": 1
+          },
+          {
+            "a": "s3",
+            "c": "t12",
+            "b": 1
+          },
+          {
+            "a": "s4",
+            "c": "t12",
+            "b": 1
+          },
+          {
+            "a": "s5",
+            "c": "t12",
+            "b": 1
+          },
+          {
+            "a": "s6",
+            "c": "t12",
+            "b": 1
+          },
+          {
+            "a": "s7",
+            "c": "t12",
+            "b": 1
+          },
+          {
+            "a": "s8",
+            "c": "t12",
+            "b": 1
+          },
+          {
+            "a": "s9",
+            "c": "t12",
+            "b": 1
+          },
+          {
+            "a": "s10",
+            "c": "t12",
+            "b": 1
+          },
+          {
+            "a": "s11",
+            "c": "t12",
+            "b": 1
+          },
+          {
+            "a": "s12",
+            "c": "t12",
+            "b": 1
+          },
+          {
+            "a": "s13",
+            "c": "t12",
+            "b": 1
+          },
+          {
+            "a": "s14",
+            "c": "t12",
+            "b": 1
+          },
+          {
+            "a": "s15",
+            "c": "t12",
+            "b": 1
+          },
+          {
+            "a": "s16",
+            "c": "t12",
+            "b": 1
+          },
+          {
+            "a": "s17",
+            "c": "t12",
+            "b": 1
+          },
+          {
+            "a": "s18",
+            "c": "t12",
+            "b": 1
+          },
+          {
+            "a": "s19",
+            "c": "t12",
+            "b": 1
+          },
+          {
+            "a": "s0",
+            "c": "t13",
+            "b": 1
+          },
+          {
+            "a": "s1",
+            "c": "t13",
+            "b": 1
+          },
+          {
+            "a": "s2",
+            "c": "t13",
+            "b": 1
+          },
+          {
+            "a": "s3",
+            "c": "t13",
+            "b": 1
+          },
+          {
+            "a": "s4",
+            "c": "t13",
+            "b": 1
+          },
+          {
+            "a": "s5",
+            "c": "t13",
+            "b": 1
+          },
+          {
+            "a": "s6",
+            "c": "t13",
+            "b": 1
+          },
+          {
+            "a": "s7",
+            "c": "t13",
+            "b": 1
+          },
+          {
+            "a": "s8",
+            "c": "t13",
+            "b": 1
+          },
+          {
+            "a": "s9",
+            "c": "t13",
+            "b": 1
+          },
+          {
+            "a": "s10",
+            "c": "t13",
+            "b": 1
+          },
+          {
+            "a": "s11",
+            "c": "t13",
+            "b": 1
+          },
+          {
+            "a": "s12",
+            "c": "t13",
+            "b": 1
+          },
+          {
+            "a": "s13",
+            "c": "t13",
+            "b": 1
+          },
+          {
+            "a": "s14",
+            "c": "t13",
+            "b": 1
+          },
+          {
+            "a": "s15",
+            "c": "t13",
+            "b": 1
+          },
+          {
+            "a": "s16",
+            "c": "t13",
+            "b": 1
+          },
+          {
+            "a": "s17",
+            "c": "t13",
+            "b": 1
+          },
+          {
+            "a": "s18",
+            "c": "t13",
+            "b": 1
+          },
+          {
+            "a": "s19",
+            "c": "t13",
+            "b": 1
+          },
+          {
+            "a": "s0",
+            "c": "t14",
+            "b": 1
+          },
+          {
+            "a": "s1",
+            "c": "t14",
+            "b": 1
+          },
+          {
+            "a": "s2",
+            "c": "t14",
+            "b": 1
+          },
+          {
+            "a": "s3",
+            "c": "t14",
+            "b": 1
+          },
+          {
+            "a": "s4",
+            "c": "t14",
+            "b": 1
+          },
+          {
+            "a": "s5",
+            "c": "t14",
+            "b": 1
+          },
+          {
+            "a": "s6",
+            "c": "t14",
+            "b": 1
+          },
+          {
+            "a": "s7",
+            "c": "t14",
+            "b": 1
+          },
+          {
+            "a": "s8",
+            "c": "t14",
+            "b": 1
+          },
+          {
+            "a": "s9",
+            "c": "t14",
+            "b": 1
+          },
+          {
+            "a": "s10",
+            "c": "t14",
+            "b": 1
+          },
+          {
+            "a": "s11",
+            "c": "t14",
+            "b": 1
+          },
+          {
+            "a": "s12",
+            "c": "t14",
+            "b": 1
+          },
+          {
+            "a": "s13",
+            "c": "t14",
+            "b": 1
+          },
+          {
+            "a": "s14",
+            "c": "t14",
+            "b": 1
+          },
+          {
+            "a": "s15",
+            "c": "t14",
+            "b": 1
+          },
+          {
+            "a": "s16",
+            "c": "t14",
+            "b": 1
+          },
+          {
+            "a": "s17",
+            "c": "t14",
+            "b": 1
+          },
+          {
+            "a": "s18",
+            "c": "t14",
+            "b": 1
+          },
+          {
+            "a": "s19",
+            "c": "t14",
+            "b": 1
+          },
+          {
+            "a": "s0",
+            "c": "t15",
+            "b": 1
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "too_many_nodes",
+          "path": "from"
+        },
+        {
+          "severity": "error",
+          "code": "too_many_links",
+          "path": "data"
+        }
+      ],
+      "normalized": null
+    },
+    {
       "name": "scatter: jitter",
       "spec": {
         "type": "scatter",
@@ -90086,6 +92439,72 @@
       "issueCodes": []
     },
     {
+      "name": "chord: two ways between regions",
+      "spec": {
+        "type": "chord",
+        "from": "a",
+        "to": "b",
+        "value": "v",
+        "format": "integer",
+        "data": [
+          {
+            "a": "x",
+            "b": "m",
+            "v": 3.2
+          },
+          {
+            "a": "m",
+            "b": "x",
+            "v": 2
+          },
+          {
+            "a": "x",
+            "b": "m",
+            "v": 1
+          },
+          {
+            "a": "m",
+            "b": "z",
+            "v": 6.2
+          },
+          {
+            "a": "z",
+            "b": "x",
+            "v": 6.2
+          }
+        ]
+      },
+      "describe": "Chord diagram. 3 groups, 4 flows, 19 in all. Busiest group: x (12 in and out). Largest flow: m to z (6). Arcs follow the order the groups first appear in the data.",
+      "issueCodes": []
+    },
+    {
+      "name": "chord: nothing positive",
+      "spec": {
+        "type": "chord",
+        "from": "a",
+        "to": "b",
+        "value": "v",
+        "title": "Empty",
+        "data": [
+          {
+            "a": "x",
+            "b": "x",
+            "v": 3
+          },
+          {
+            "a": "x",
+            "b": "y",
+            "v": 0
+          }
+        ]
+      },
+      "describe": null,
+      "issueCodes": [
+        "flows_skipped",
+        "no_flows"
+      ]
+    },
+    {
       "name": "scatter: jitter both ways",
       "spec": {
         "type": "scatter",
@@ -106869,6 +109288,114 @@
       }
     },
     {
+      "name": "example chord: whole plot",
+      "spec": {
+        "type": "chord",
+        "title": "Trade between regions",
+        "subtitle": "Exports, USD billions. Invented figures",
+        "from": "from",
+        "to": "to",
+        "value": "billions",
+        "format": "integer",
+        "data": [
+          {
+            "from": "Asia",
+            "to": "Europe",
+            "billions": 120
+          },
+          {
+            "from": "Europe",
+            "to": "Asia",
+            "billions": 95
+          },
+          {
+            "from": "Asia",
+            "to": "Americas",
+            "billions": 150
+          },
+          {
+            "from": "Americas",
+            "to": "Asia",
+            "billions": 70
+          },
+          {
+            "from": "Europe",
+            "to": "Americas",
+            "billions": 85
+          },
+          {
+            "from": "Americas",
+            "to": "Europe",
+            "billions": 110
+          },
+          {
+            "from": "Africa",
+            "to": "Europe",
+            "billions": 45
+          },
+          {
+            "from": "Europe",
+            "to": "Africa",
+            "billions": 30
+          },
+          {
+            "from": "Asia",
+            "to": "Africa",
+            "billions": 40
+          }
+        ]
+      },
+      "ref": "ref:ex",
+      "out": {
+        "ok": true,
+        "rows": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "points": [
+          {
+            "row": 0
+          },
+          {
+            "row": 1
+          },
+          {
+            "row": 2
+          },
+          {
+            "row": 3
+          },
+          {
+            "row": 4
+          },
+          {
+            "row": 5
+          },
+          {
+            "row": 6
+          },
+          {
+            "row": 7
+          },
+          {
+            "row": 8
+          }
+        ],
+        "series": [
+          "billions"
+        ],
+        "keys": [],
+        "label": "9 points"
+      }
+    },
+    {
       "name": "example parallel: whole plot",
       "spec": {
         "type": "parallel",
@@ -117080,6 +119607,71 @@
       }
     },
     {
+      "name": "example chord: every param",
+      "spec": {
+        "type": "chord",
+        "title": "Trade between regions",
+        "subtitle": "Exports, USD billions. Invented figures",
+        "from": "from",
+        "to": "to",
+        "value": "billions",
+        "format": "integer",
+        "data": [
+          {
+            "from": "Asia",
+            "to": "Europe",
+            "billions": 120
+          },
+          {
+            "from": "Europe",
+            "to": "Asia",
+            "billions": 95
+          },
+          {
+            "from": "Asia",
+            "to": "Americas",
+            "billions": 150
+          },
+          {
+            "from": "Americas",
+            "to": "Asia",
+            "billions": 70
+          },
+          {
+            "from": "Europe",
+            "to": "Americas",
+            "billions": 85
+          },
+          {
+            "from": "Americas",
+            "to": "Europe",
+            "billions": 110
+          },
+          {
+            "from": "Africa",
+            "to": "Europe",
+            "billions": 45
+          },
+          {
+            "from": "Europe",
+            "to": "Africa",
+            "billions": 30
+          },
+          {
+            "from": "Asia",
+            "to": "Africa",
+            "billions": 40
+          }
+        ]
+      },
+      "ref": "ref:ex?key=k&series=s&x=x&y=1",
+      "out": {
+        "ok": false,
+        "code": "ref_param_unsupported",
+        "reason": "This chord chart has nothing \"series\" can name; it takes key, x, y."
+      }
+    },
+    {
       "name": "example parallel: every param",
       "spec": {
         "type": "parallel",
@@ -126255,6 +128847,98 @@
         ],
         "keys": [],
         "label": "2 points"
+      }
+    },
+    {
+      "name": "example chord: first x",
+      "spec": {
+        "type": "chord",
+        "title": "Trade between regions",
+        "subtitle": "Exports, USD billions. Invented figures",
+        "from": "from",
+        "to": "to",
+        "value": "billions",
+        "format": "integer",
+        "data": [
+          {
+            "from": "Asia",
+            "to": "Europe",
+            "billions": 120
+          },
+          {
+            "from": "Europe",
+            "to": "Asia",
+            "billions": 95
+          },
+          {
+            "from": "Asia",
+            "to": "Americas",
+            "billions": 150
+          },
+          {
+            "from": "Americas",
+            "to": "Asia",
+            "billions": 70
+          },
+          {
+            "from": "Europe",
+            "to": "Americas",
+            "billions": 85
+          },
+          {
+            "from": "Americas",
+            "to": "Europe",
+            "billions": 110
+          },
+          {
+            "from": "Africa",
+            "to": "Europe",
+            "billions": 45
+          },
+          {
+            "from": "Europe",
+            "to": "Africa",
+            "billions": 30
+          },
+          {
+            "from": "Asia",
+            "to": "Africa",
+            "billions": 40
+          }
+        ]
+      },
+      "ref": "ref:ex?x=Asia",
+      "out": {
+        "ok": true,
+        "rows": [
+          0,
+          1,
+          2,
+          3,
+          8
+        ],
+        "points": [
+          {
+            "row": 0
+          },
+          {
+            "row": 1
+          },
+          {
+            "row": 2
+          },
+          {
+            "row": 3
+          },
+          {
+            "row": 8
+          }
+        ],
+        "series": [
+          "billions"
+        ],
+        "keys": [],
+        "label": "5 points"
       }
     },
     {

@@ -51,6 +51,7 @@ var checks = map[string]func(spec, []row, *[]Issue){
 	"radar":     checkRadar,
 	"treemap":   checkTreemap,
 	"sankey":    checkSankey,
+	"chord":     checkChord,
 }
 
 // mapChecks are the checks of the map charts: they also get the geography that geo resolved to (nil without geo).
@@ -104,6 +105,7 @@ var describers = map[string]func(spec) string{
 	"radar":      describeRadar,
 	"treemap":    describeTreemap,
 	"sankey":     describeSankey,
+	"chord":      describeChord,
 	"choropleth": describeChoropleth,
 	"bubble-map": describeBubbleMap,
 	"column-map": describeColumnMap,
@@ -1536,6 +1538,63 @@ func describeSankey(s spec) string {
 	big := firstMax(ls, func(l *link) float64 { return l.value })
 	return fmt.Sprintf("%s %d nodes, %d flows; %s enters from %s and ends in %s. Largest flow: %s to %s (%s).",
 		lead(s, "Sankey diagram"), len(nodes.keys), len(ls), f(total(entering)), fmtList(sources, 4), fmtList(sinks, 4), clip(big.source, 30), clip(big.target, 30), f(big.value))
+}
+
+// --- chord -----------------------------------------------------------------------------------------------
+// Mirrors packages/core/src/charts/chord.ts; the flows are the sankey's (sankeyLinks).
+
+const chordMaxNodes = 24
+
+func checkChord(s spec, rows []row, issues *[]Issue) {
+	kept := 0
+	nodes := map[string]bool{}
+	links := map[string]bool{}
+	for _, r := range rows {
+		v, ok := toNumber(r[str(s, "value")])
+		src, dst := orEmpty(r[str(s, "from")]), orEmpty(r[str(s, "to")])
+		if !ok || !(v > 0) || src == dst {
+			continue
+		}
+		kept++
+		nodes[src], nodes[dst] = true, true
+		links[src+"\x00"+dst] = true
+	}
+	if kept != len(rows) {
+		issue(issues, "warning", "flows_skipped", "value", "Flows with zero, negative or no number, or that start and end at the same group, are skipped.")
+	}
+	if kept == 0 {
+		issue(issues, "error", "no_flows", "value", "No row has a positive number between two different groups, so there is nothing to draw.", "Check the from, to and value columns.")
+	}
+	if len(nodes) > chordMaxNodes {
+		issue(issues, "error", "too_many_nodes", "from", fmt.Sprintf("A chord diagram can show at most %d groups; this has %d.", chordMaxNodes, len(nodes)), `Merge small groups into "Other".`)
+	}
+	if len(links) > maxLinks {
+		issue(issues, "error", "too_many_links", "data", fmt.Sprintf("A chord diagram can show at most %d flows.", maxLinks))
+	}
+}
+
+func describeChord(s spec) string {
+	ls := sankeyLinks(s)
+	f := formatter(s)
+	if len(ls) == 0 {
+		return lead(s, "Chord diagram") + " No positive flows."
+	}
+	flows := make([]ChordFlow, len(ls))
+	var values []float64
+	for i, l := range ls {
+		flows[i] = ChordFlow{l.source, l.target, l.value}
+		values = append(values, l.value)
+	}
+	nodes, _ := ChordLayout(flows, ChordGap)
+	busy := nodes[0]
+	for _, n := range nodes[1:] {
+		if n.Total > busy.Total {
+			busy = n
+		}
+	}
+	big := firstMax(ls, func(l *link) float64 { return l.value })
+	return fmt.Sprintf("%s %d groups, %d flows, %s in all. Busiest group: %s (%s in and out). Largest flow: %s to %s (%s). Arcs follow the order the groups first appear in the data.",
+		lead(s, "Chord diagram"), len(nodes), len(ls), f(total(values)), clip(busy.Name, 30), f(busy.Total), clip(big.source, 30), clip(big.target, 30), f(big.value))
 }
 
 // --- maps ------------------------------------------------------------------------------------------------

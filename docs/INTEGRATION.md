@@ -13,7 +13,7 @@ registerCharts(basicCharts)
 
 Add more the same way, a group or single charts: `/charts/business` (waterfall, bullet, funnel, waffle, timeline,
 gauge), `/charts/stats` (violin, beeswarm, parallel, radar, bump, calendar), `/charts/maps` (choropleth, bubble map,
-column map, flow map: they bring the projection maths), `/charts/hierarchy` (treemap, sunburst, sankey), `/charts/3d`
+column map, flow map: they bring the projection maths), `/charts/hierarchy` (treemap, sunburst, sankey, chord), `/charts/3d`
 (scatter3d, surface) and `/charts/text` (wordcloud). Each group exports its charts one by one too
 (`import { waterfall } from '@supersolutions/super-plot-core/charts/business'; registerChart(waterfall)`), and
 `/charts` still exports every chart, `allCharts` and `chartGroups`. Every chart is in exactly one group.
@@ -51,12 +51,12 @@ measured on the built packages, as an app imports them). `npm run gate` fails wh
 | core `/base` + `bar`, `resolveRef` | validation and the reference resolver, no drawing | 32.0 |
 | core `/base` + `/charts/basic` | the nine everyday charts | 63.5 |
 | core `/base` + `/charts/basic` + `/transforms` | every transform step (5.3 KB more) | 68.8 |
-| core `.` (everything) | every chart and step, `/canvas`, `/view` | 135.4 |
+| core `.` (everything) | every chart and step, `/canvas`, `/view` | 137.2 |
 | web `/base`, no chart | `SuperPlot` (SVG path, hover, keyboard, zoom, brush, sync, sound, references, styles) | 50.8 |
 | web `/base` + bar + line | | 76.4 |
-| web `/base` + `/charts/basic` | | 91.0 |
-| web `.` (everything) | | 164.1 |
-| chat plugin `.` | web `.`, the `super.plot` card and the agent tools (including the `plot_suggest` rules) | 174.3 |
+| web `/base` + `/charts/basic` | | 90.9 |
+| web `.` (everything) | | 165.9 |
+| chat plugin `.` | web `.`, the `super.plot` card and the agent tools (including the `plot_suggest` rules) | 176.1 |
 
 Core entry points that are not chart groups: `/charts` (every chart), `/transforms` (the steps, `TRANSFORM_DOCS`,
 `filterRow`, `bucket`), `/canvas` (`drawScene`, `drawHover`, `buildHitIndex`, `resolveColor`, `drawPatternTile`: draw
@@ -115,6 +115,7 @@ annotations: [{ x: '2026-03-01', y: 120, label: 'Launch' }, { axis: 'y', value: 
 - Point annotations take `x` and `y` in the units of the horizontal and vertical axis (on a horizontal bar chart `x` is the value). They are listed in the description ("Marked: ...").
 - Region annotations take `xFrom`, `xTo`, `yFrom`, `yTo` (numbers or dates) and shade the rectangle between them; a side left out runs to the edge of the plot, so `{ xFrom: 2, yFrom: 3 }` is the top-right quadrant. Numeric and time axes only (a category axis skips the region with `annotation_out_of_range`). They are listed in the description ("Shaded: ...").
 - **Missing, zero and negative values are said, not drawn as 0.** A pie or donut whose rows add up to nothing positive warns `pie_no_positive` and draws "No positive values to show" where the circle would be (`strings.noPositive`); rows below 0 are dropped with `negative_slices`, and a label that adds up to exactly 0 gets no angle but stays in the legend (`zero_slices`). All three are warnings from `validatePlot`, so `plot_validate` shows them before anything is drawn. A bar category with no number at all (null, `NaN`, text) is called "Missing: b" in the description and left out of its highest, lowest and total, instead of being read as 0; the chart already drew an empty bar for it.
+- `chord`: flows between groups on a circle, `{ type: 'chord', from, to, value, data }` (rows with the same pair are summed; a flow from a group to itself and a non-positive one are skipped with `flows_skipped`; nothing left is the error `no_flows`; at most 24 groups and 300 flows). The layout has no force simulation and no random numbers: arcs follow the order the groups first appear in the data, an arc is as long as the group's flows in and out, and inside an arc the ribbons are ordered by the group at their other end, so the same data is always the same picture. `chordLayout(flows)` (core `/base`, with the exact algorithm in its doc comment, and in Go and Python) gives the angles; conformance holds them equal. Two flows between a pair, one each way, are two ribbons; a tooltip names both ends and the amount, and the description names the busiest group and the largest flow. Honest limits: a chord shows how much flows between pairs but is hard to read past about 12 groups (labels of very short arcs are left out; their tooltip and the description still carry them); the order of the data is the order of the arcs, so sort the rows if you want a particular order; and it cannot show which direction a ribbon runs except in its tooltip (colour is the source's).
 - `jitter` (scatter) nudges each dot by up to that many pixels (0 to 20; `jitterAxis`: `x`, `y` or `both`, the default) so points that sit on the same spot show. It is deterministic: the offset is a function of the row's position in the data only (`jitterUnit(index, axis)`, exported from core with the exact integer arithmetic in its doc comment, and in the Go and Python ports), so the same data draws the same bytes, a reload moves nothing, and hiding a series does not shuffle the others. Only the drawing moves: the tooltip, `onSelect`'s `datum`, the description and the data table keep the true values, the description says the dots are nudged, and a dot is kept inside the plot (one at the very edge cannot move outward). Honest limits: jitter shows how many points overlap, not where they really are, so do not read an exact value off a jittered dot; it is ignored, with the warning `jitter_ignored`, under `density: "hex"` and `order` (a line through nudged dots would be wrong); `jitterAxis` without `jitter` warns `jitter_axis_ignored`; `trend` fits the true values.
 - `order` (scatter) joins each series by a line in the order of a column; `format: 'prefix^…'` prints text before the figure, after a minus sign.
 
@@ -516,7 +517,7 @@ Names are ANDed, the values of one name ORed, and `ref:sales` alone is the whole
 | bump | `x` | `rank`, `y` | `series` |
 | treemap | `label` | `value` | `group` |
 | sunburst | any level of `path` | `value` | |
-| sankey, flow-map | `from`, `to` | `value` | (flow-map: `series`) |
+| sankey, chord, flow-map | `from`, `to` | `value` | (flow-map: `series`) |
 | funnel | `stage` | `value` | |
 | gauge | `label` | `value` | |
 | wordcloud | `text` | `value` | `series` |

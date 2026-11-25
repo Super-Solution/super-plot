@@ -10,7 +10,7 @@ import { join, dirname } from 'node:path'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
 const core = await import(pathToFileURL(join(root, 'packages/core/dist/index.js')).href)
-const { linearTicks, niceDomain, quantile, boxStats, binEdges, binCounts, waffleCells, jitterUnit, kde, silverman, densityPeaks, validatePlot, describePlot, chartCatalog, getChart, chartTypes, COMMON_FIELDS, CARTESIAN_FIELDS, LIMITS, resolveRef, datePeriod, formatCardRef } = core
+const { linearTicks, niceDomain, quantile, boxStats, binEdges, binCounts, waffleCells, jitterUnit, chordLayout, kde, silverman, densityPeaks, validatePlot, describePlot, chartCatalog, getChart, chartTypes, COMMON_FIELDS, CARTESIAN_FIELDS, LIMITS, resolveRef, datePeriod, formatCardRef } = core
 const { registerGeography, unregisterGeography, getGeography, matchRegion, GeographyError, GEO_LIMITS, CAMERA_LIMITS, CAMERA3D_LIMITS } = core
 
 const r = v => (typeof v === 'number' ? Math.round(v * 1e9) / 1e9 : v)
@@ -38,6 +38,15 @@ const densityIn = [
 const density = densityIn.map(c => { const d = kde(c.values, c.bandwidth); return { in: c, out: { silverman: silverman(c.values), ...d, peaks: densityPeaks(d) } } })
 // Scatter jitter: the unit offset of the row at an index, per axis (a port must give the same 32-bit arithmetic).
 const jitterCases = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 99, 1000, 65535, 65536, 123456, 2147483647, 2147483648, 4294967295, 4294967296].flatMap(index => ['x', 'y'].map(axis => ({ in: { index, axis }, out: jitterUnit(index, axis) })))
+// Chord layout: arcs and ribbons from summed flows, the order being the data's.
+const chordCases = [
+  [['a', 'b', 3], ['b', 'a', 1]],
+  [['x', 'y', 5], ['y', 'z', 2], ['z', 'x', 4], ['x', 'z', 1]],
+  [['Asia', 'Europe', 120], ['Europe', 'Asia', 95], ['Asia', 'Americas', 150], ['Americas', 'Asia', 70], ['Europe', 'Americas', 85], ['Americas', 'Europe', 110], ['Africa', 'Europe', 45], ['Europe', 'Africa', 30], ['Asia', 'Africa', 40]],
+  [['p', 'q', 0.1], ['q', 'r', 0.2], ['r', 'p', 0.3], ['p', 'r', 0.7], ['q', 'p', 1e-3]],
+  [['solo', 'pair', 7]],
+  [['m', 'n', 1e9], ['n', 'm', 1], ['o', 'm', 33.3333], ['n', 'o', 2.5]]
+].map(f => { const flows = f.map(([source, target, value]) => ({ source, target, value })); return { in: { flows }, out: chordLayout(flows) } })
 const { logTicks, niceLogDomain, loess, transformBinEdges, currencyDigits, CURRENCY_CODES } = core
 const logTickCases = [[1, 1e6, 5], [1, 1000, 8], [1, 100, 8], [0.01, 1, 9], [20, 80, 5], [3, 800, 4], [0.5, 2e9, 6], [1e-6, 1e-3, 3]].map(([a, b, n]) => ({ in: [a, b, n], out: logTicks(a, b, n) }))
 const logNiceCases = [[3, 800], [10, 10], [1, 1000], [0.02, 0.5], [7, 7.5]].map(([a, b]) => ({ in: [a, b], out: niceLogDomain(a, b) }))
@@ -407,6 +416,12 @@ const V08_VALIDATION = [
   ['pie: a zero slice and a negative row beside a positive one', { type: 'pie', label: 'k', value: 'v', data: [{ k: 'a', v: 3 }, { k: 'b', v: 0 }, { k: 'c', v: -1 }, { k: 'd', v: 'n/a' }] }],
   ['pie: rows of one label are summed before the zero test', { type: 'pie', label: 'k', value: 'v', data: [{ k: 'a', v: 5 }, { k: 'a', v: -5 }, { k: 'b', v: 0 }, { k: 'b', v: 0 }] }],
   ['pie: all well', { type: 'pie', label: 'k', value: 'v', data: [{ k: 'a', v: 3 }, { k: 'b', v: 1 }] }],
+  ['chord: ok', { type: 'chord', from: 'a', to: 'c', value: 'b', data: [{ a: 'x', c: 'y', b: 1 }, { a: 'y', c: 'x', b: 2 }] }],
+  ['chord: a loop is fine', { type: 'chord', from: 'a', to: 'c', value: 'b', data: [{ a: 'x', c: 'y', b: 1 }, { a: 'y', c: 'z', b: 1 }, { a: 'z', c: 'x', b: 1 }] }],
+  ['chord: skipped flows', { type: 'chord', from: 'a', to: 'c', value: 'b', data: [{ a: 'x', c: 'y', b: 1 }, { a: 'x', c: 'x', b: 1 }, { a: 'y', c: 'z', b: 0 }, { a: 'z', c: 'x', b: 'n/a' }] }],
+  ['chord: nothing to draw', { type: 'chord', from: 'a', to: 'c', value: 'b', data: [{ a: 'x', c: 'x', b: 1 }, { a: 'y', c: 'z', b: -2 }] }],
+  ['chord: too many groups', { type: 'chord', from: 'a', to: 'c', value: 'b', data: rowsOf(25, i => ({ a: `n${i}`, c: `n${i + 1}`, b: 1 })) }],
+  ['chord: too many flows', { type: 'chord', from: 'a', to: 'c', value: 'b', data: rowsOf(301, i => ({ a: `s${i % 20}`, c: `t${Math.floor(i / 20)}`, b: 1 })) }],
   ['scatter: jitter', { type: 'scatter', x: 'v', y: 't', jitter: 6, jitterAxis: 'x', data: W }],
   ['scatter: jitter too big', { type: 'scatter', x: 'v', y: 't', jitter: 21, data: W }],
   ['scatter: jitter below zero', { type: 'scatter', x: 'v', y: 't', jitter: -1, data: W }],
@@ -654,6 +669,8 @@ const describeCases = [
   D('bar: categories with no number are missing, not 0', { type: 'bar', x: 'k', y: 'v', data: [{ k: 'a', v: 5 }, { k: 'b', v: 'n/a' }, { k: 'c', v: null }, { k: 'd', v: 3 }] }),
   D('bar: a real zero is not missing', { type: 'bar', x: 'k', y: 'v', data: [{ k: 'a', v: 5 }, { k: 'b', v: 0 }] }),
   D('bar: missing in one of two series only', { type: 'bar', x: 'k', y: ['p', 'q'], data: [{ k: 'a', p: 2, q: null }, { k: 'b', p: null, q: null }, { k: 'c', p: 4, q: 1 }] }),
+  D('chord: two ways between regions', { type: 'chord', from: 'a', to: 'b', value: 'v', format: 'integer', data: [{ a: 'x', b: 'm', v: 3.2 }, { a: 'm', b: 'x', v: 2 }, { a: 'x', b: 'm', v: 1 }, { a: 'm', b: 'z', v: 6.2 }, { a: 'z', b: 'x', v: 6.2 }] }),
+  D('chord: nothing positive', { type: 'chord', from: 'a', to: 'b', value: 'v', title: 'Empty', data: [{ a: 'x', b: 'x', v: 3 }, { a: 'x', b: 'y', v: 0 }] }),
   D('scatter: jitter both ways', { type: 'scatter', x: 'a', y: 'b', jitter: 5, data: rowsOf(12, i => ({ a: i % 3, b: i % 4 })) }),
   D('scatter: jitter sideways', { type: 'scatter', x: 'a', y: 'b', jitter: 5, jitterAxis: 'x', data: rowsOf(12, i => ({ a: i % 3, b: i % 4 })) }),
   D('scatter: jitter up and down', { type: 'scatter', x: 'a', y: 'b', jitter: 5, jitterAxis: 'y', data: rowsOf(12, i => ({ a: i % 3, b: i % 4 })) }),
@@ -1088,6 +1105,7 @@ const doc = rows({
   binStep: binStepCases,
   waffleCells: waffle,
   jitterUnit: jitterCases,
+  chordLayout: chordCases,
   cloudLayout: cloudLayoutCases,
   chartExamples: examples,
   brokenSpecs: broken,

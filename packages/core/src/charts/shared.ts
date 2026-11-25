@@ -15,6 +15,29 @@ export const title = (spec: Record<string, any>, fallback: string): string => (s
 /** "Bar chart "Revenue by region"." style lead for descriptions. */
 export const lead = (spec: Record<string, any>, kind: string): string => (spec.title ? `${kind} "${clip(spec.title, 120)}".` : `${kind}.`)
 
+/** One flow between two named nodes: what `sankey` and `chord` read from `from`, `to` and `value`. */
+export interface Flow { source: string; target: string; value: number }
+
+/**
+ * The flows of a spec: rows summed per (source, target), in the order each pair first appears; a row with no positive
+ * number, or that starts and ends at the same node, is left out.
+ */
+export function flowLinks(spec: Record<string, any>): Flow[] {
+  const sums = new Map<string, Flow>()
+  for (const r of spec.data as Record<string, unknown>[]) {
+    const v = toNumber(r[spec.value])
+    if (v === null || v <= 0) continue
+    const source = String(r[spec.from] ?? '')
+    const target = String(r[spec.to] ?? '')
+    if (source === target) continue
+    const k = `${source}\u0000${target}`
+    const l = sums.get(k)
+    if (l) l.value += v
+    else sums.set(k, { source, target, value: v })
+  }
+  return [...sums.values()]
+}
+
 export const fmtList = (items: string[], max = 5): string => (items.length <= max ? items.join(', ') : `${items.slice(0, max).join(', ')} and ${items.length - max} more`)
 
 export function formatter(spec: Record<string, any>, locale: string): (v: number) => string {

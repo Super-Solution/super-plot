@@ -630,6 +630,102 @@ func JitterUnit(index int, axis string) float64 {
 	return float64(h)/4294967296*2 - 1
 }
 
+// ChordGap is the empty angle between two arcs of a chord diagram, in radians.
+const ChordGap = 0.03
+
+// ChordFlow is one flow, already summed per (Source, Target), positive, with Source != Target.
+type ChordFlow struct {
+	Source, Target string
+	Value          float64
+}
+
+// ChordNode is an arc: where it starts and ends (radians from 0) and its total (in plus out).
+type ChordNode struct {
+	Name              string
+	Start, End, Total float64
+}
+
+// ChordRibbon holds a flow's two ends, the first in the source's arc, the second in the target's.
+type ChordRibbon struct{ SourceStart, SourceEnd, TargetStart, TargetEnd float64 }
+
+// ChordLayout is the arcs and ribbons of a chord diagram, mirroring chordLayout in packages/core/src/util/chord.ts:
+// nodes in the order they first appear (source before target) reading the flows in order; total = the flows' values
+// added in flow order; k = (2 PI - n*gap) / whole (whole = the totals added in node order); arcs from angle 0, each
+// end = start + total*k, the next start = end + gap; inside an arc the flows that touch the node, ordered by the node
+// at the other end (node order), source role before target role, each take value*k. Products are rounded before
+// they are added so that no platform fuses them.
+func ChordLayout(flows []ChordFlow, gap float64) ([]ChordNode, []ChordRibbon) {
+	index := map[string]int{}
+	var names []string
+	at := func(name string) int {
+		i, ok := index[name]
+		if !ok {
+			i = len(names)
+			index[name] = i
+			names = append(names, name)
+		}
+		return i
+	}
+	for _, f := range flows {
+		at(f.Source)
+		at(f.Target)
+	}
+	n := len(names)
+	total := make([]float64, n)
+	for _, f := range flows {
+		total[at(f.Source)] += f.Value
+		total[at(f.Target)] += f.Value
+	}
+	whole := 0.0
+	for _, t := range total {
+		whole += t
+	}
+	if n == 0 || !(whole > 0) {
+		return nil, nil
+	}
+	k := (2*math.Pi - float64(float64(n)*gap)) / whole
+	nodes := make([]ChordNode, n)
+	a := 0.0
+	for i := 0; i < n; i++ {
+		end := a + float64(total[i]*k)
+		nodes[i] = ChordNode{names[i], a, end, total[i]}
+		a = end + gap
+	}
+	ribbons := make([]ChordRibbon, len(flows))
+	type touch struct{ other, dir, flow int }
+	for i := 0; i < n; i++ {
+		var touching []touch
+		for j, f := range flows {
+			if at(f.Source) == i {
+				touching = append(touching, touch{at(f.Target), 0, j})
+			} else if at(f.Target) == i {
+				touching = append(touching, touch{at(f.Source), 1, j})
+			}
+		}
+		sort.SliceStable(touching, func(p, q int) bool {
+			x, y := touching[p], touching[q]
+			if x.other != y.other {
+				return x.other < y.other
+			}
+			if x.dir != y.dir {
+				return x.dir < y.dir
+			}
+			return x.flow < y.flow
+		})
+		cursor := nodes[i].Start
+		for _, t := range touching {
+			end := cursor + float64(flows[t.flow].Value*k)
+			if t.dir == 0 {
+				ribbons[t.flow].SourceStart, ribbons[t.flow].SourceEnd = cursor, end
+			} else {
+				ribbons[t.flow].TargetStart, ribbons[t.flow].TargetEnd = cursor, end
+			}
+			cursor = end
+		}
+	}
+	return nodes, ribbons
+}
+
 // WaffleCells shares cells among the positive values by largest remainder; ties go to the earlier value.
 func WaffleCells(values []float64, cells int) []int {
 	tot := 0.0

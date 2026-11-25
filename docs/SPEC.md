@@ -1517,6 +1517,75 @@ Shows how a quantity flows between stages: bands between nodes, the band width i
     {
 ```
 
+## `chord` — Chord diagram
+
+Shows how much flows between every pair of groups on a circle: an arc for each group, a ribbon between two arcs, the width is the amount.
+
+**Use when:** Flows that go both ways between a handful of groups (trade between regions, migration, who talks to whom). Arcs follow the order the groups first appear in the data, so the picture is the same every time. Not for flows that only go forward through stages (use a sankey), for a single split (use a pie or bar), or for more than about 20 groups.
+
+| Field | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `type` | string | yes |  | Chart type: chord. |
+| `version` | `1` |  |  | Spec format version. Only 1 exists; may be omitted. |
+| `data` | array of rows | yes |  | Tabular rows: an array of flat objects, one per observation. Numbers must be numbers (or plain numeric strings). |
+| `title` | string |  |  | Chart title. State the takeaway or the subject, not "Chart". |
+| `subtitle` | string |  |  | One line of context under the title: unit, period, filter. |
+| `description` | string |  |  | Long description for screen readers and agents. Generated from the data when omitted. |
+| `source` | string |  |  | Source line shown small under the chart. |
+| `legend` | `auto` \| `top` \| `bottom` \| `right` \| `none` |  | `"auto"` | Legend placement. `auto` hides it for a single series and picks a side from the available width. |
+| `tooltip` | boolean |  | `true` | Show a hover tooltip (web binding only). |
+| `format` | format string |  |  | Value format: auto, compact, integer, percent (ratios, 0.25 shows as 25%), percent:N (exactly N decimals), fixed:N, currency:CODE. `currency:CODE:compact` abbreviates large amounts ($1.2B) and `:narrow` uses the narrow symbol ("$", not "US$"), in that order. A `~suffix` (1 to 16 characters) is printed after every value and axis tick, e.g. `integer~ days` shows 92 days; a `prefix^` (1 to 8 characters) goes before it, after the minus sign, e.g. `NT$^integer` shows NT$1,234. |
+| `colors` | object |  |  | Series (or slice/category) name to CSS colour, e.g. {"Revenue":"#2962FF"}. Hex, rgb(), hsl(), a colour name or var(--x). Unlisted series keep palette colours. |
+| `transform` | array of steps |  |  | Data steps run before the chart reads its columns, in order (at most 10): filter, timeUnit, aggregate, sort, top, bin (round bins: start and end columns), window (running sum, mean, count, rank, pctChange, lag, lead, movingMean, ema, per group, in a sort order), fold (wide columns to key/value rows) and index (rescale each group so its value at a base point is 100). No expressions. E.g. [{"timeUnit":{"field":"date","unit":"month","as":"month"}},{"aggregate":{"groupBy":["month"],"fields":{"revenue":"mean"}}}]. Column fields then refer to the output. |
+| `patterns` | boolean |  |  | Default false. Add a texture per series to filled marks (bars, areas, slices, cells) so series stay apart without colour: colour-blind readers, greyscale print. |
+| `key` | column name |  |  | Column that identifies each row (an id, read after `transform`). A reference names rows by it (`key=<id>`, see `resolveRef`); every row should have one, and each only once (`key_missing`, `key_duplicate` warnings). |
+| `from` | column name | yes |  | Column naming the group each flow starts at. |
+| `to` | column name | yes |  | Column naming the group each flow ends at. |
+| `value` | column name | yes |  | Numeric column giving the size of each flow. Rows with the same source and target are summed; a flow from a group to itself, zero and negative values are skipped. A ribbon is as wide as the flow in both groups, so the two directions between a pair are two ribbons. |
+
+```json
+{
+  "type": "chord",
+  "title": "Trade between regions",
+  "subtitle": "Exports, USD billions. Invented figures",
+  "from": "from",
+  "to": "to",
+  "value": "billions",
+  "format": "integer",
+  "data": [
+    {
+      "from": "Asia",
+      "to": "Europe",
+      "billions": 120
+    },
+    {
+      "from": "Europe",
+      "to": "Asia",
+      "billions": 95
+    },
+    {
+      "from": "Asia",
+      "to": "Americas",
+      "billions": 150
+    },
+    {
+      "from": "Americas",
+      "to": "Asia",
+      "billions": 70
+    },
+    {
+      "from": "Europe",
+      "to": "Americas",
+      "billions": 85
+    },
+    {
+      "from": "Americas",
+      "to": "Europe",
+      "billions": 110
+    },
+    {
+```
+
 ## `parallel` — Parallel coordinates
 
 Draws each row as a line across several vertical axes, one per measure, to compare many measures at once.

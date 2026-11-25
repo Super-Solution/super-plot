@@ -437,6 +437,67 @@ def loess(xs: Sequence[float], ys: Sequence[float], bandwidth: float = 0.3, grid
 
 JITTER_MAX = 20
 
+CHORD_GAP = 0.03
+
+
+def chord_layout(flows: Sequence[dict], gap: float = CHORD_GAP) -> dict:
+    """The arcs and ribbons of a chord diagram (mirrors `chordLayout` in packages/core/src/util/chord.ts).
+
+    `flows` are dicts with "source", "target" and "value", already summed per (source, target), positive, source != target.
+    Nodes are in the order they first appear reading the flows in order (source before target); a node's total is
+    the sum of the values of the flows it touches, in flow order; k = (2 pi - n * gap) / whole, whole being the totals
+    added in node order; arcs run from angle 0, end = start + total * k, the next start = end + gap; inside an arc the
+    flows that touch the node are ordered by the node at the other end (node order), source role before target role,
+    and each takes value * k. Returns {"nodes": [{"name", "start", "end", "total"}], "ribbons": [{"sourceStart",
+    "sourceEnd", "targetStart", "targetEnd"}]}, one ribbon per flow."""
+    index: dict[str, int] = {}
+    names: list[str] = []
+
+    def at(name: str) -> int:
+        if name not in index:
+            index[name] = len(names)
+            names.append(name)
+        return index[name]
+
+    for f in flows:
+        at(f["source"])
+        at(f["target"])
+    n = len(names)
+    total = [0.0] * n
+    for f in flows:
+        total[at(f["source"])] += f["value"]
+        total[at(f["target"])] += f["value"]
+    whole = 0.0
+    for t in total:
+        whole += t
+    if n == 0 or not whole > 0:
+        return {"nodes": [], "ribbons": []}
+    k = (2 * math.pi - n * gap) / whole
+    nodes = []
+    a = 0.0
+    for i in range(n):
+        end = a + total[i] * k
+        nodes.append({"name": names[i], "start": a, "end": end, "total": total[i]})
+        a = end + gap
+    ribbons = [{"sourceStart": 0.0, "sourceEnd": 0.0, "targetStart": 0.0, "targetEnd": 0.0} for _ in flows]
+    for i in range(n):
+        touching = []
+        for j, f in enumerate(flows):
+            if at(f["source"]) == i:
+                touching.append((at(f["target"]), 0, j))
+            elif at(f["target"]) == i:
+                touching.append((at(f["source"]), 1, j))
+        touching.sort()
+        cursor = nodes[i]["start"]
+        for _other, d, j in touching:
+            end = cursor + flows[j]["value"] * k
+            if d == 0:
+                ribbons[j]["sourceStart"], ribbons[j]["sourceEnd"] = cursor, end
+            else:
+                ribbons[j]["targetStart"], ribbons[j]["targetEnd"] = cursor, end
+            cursor = end
+    return {"nodes": nodes, "ribbons": ribbons}
+
 
 def jitter_unit(index: int, axis: str) -> float:
     """The offset scatter `jitter` is built on: for the row at `index` in the data (0-based, counted before any series is

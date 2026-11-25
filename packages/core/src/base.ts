@@ -52,6 +52,8 @@ export { binEdges, binCounts, binIndex, transformBinEdges } from './util/bins.js
 export { loess, LOESS_GRID } from './util/loess.js'
 export { logTicks, niceLogDomain } from './scale.js'
 export { boxStats, jitter } from './charts/box.js'
+export { chordLayout, CHORD_GAP } from './util/chord.js'
+export type { ChordFlow, ChordLayout, ChordNode, ChordRibbon } from './util/chord.js'
 export { jitterUnit, JITTER_MAX } from './util/jitter.js'
 export { kde, silverman, densityPeaks, densityPoints, DENSITY_POINTS, MAX_DENSITY_POINTS } from './charts/violin.js'
 export type { Density } from './charts/violin.js'
