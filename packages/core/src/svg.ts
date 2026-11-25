@@ -10,7 +10,12 @@ export interface SvgOptions {
   interactive?: boolean
   /** Replace `var(--sp-*, fallback)` with the fallback, for renderers without CSS variables (PNG, PDF, email). */
   resolveVars?: boolean
-  /** Prefix for element ids, so several charts can share a page. */
+  /**
+   * Prefix for element ids (`<prefix>-t` title, `-d` description, `-p0` texture, `-c<hash>` clip). Default: `sp` plus a
+   * hash of the drawing, so two different charts on one page never share an id (an `aria-labelledby` that points at
+   * another chart's title reads the wrong chart), while the same scene always writes the same bytes. Pass your own to
+   * name them yourself.
+   */
   idPrefix?: string
   /** Font stack for the root element. */
   font?: string
@@ -30,8 +35,10 @@ const n = (v: number): string => (Number.isFinite(v) ? String(Math.round(v * 100
 
 /** Serialise a scene to a standalone SVG string. Deterministic: same scene, same bytes. */
 export function renderSvg(scene: Scene, options: SvgOptions = {}): string {
+  // No prefix given: probe once with a fixed one and use a hash of that markup (content-derived, so deterministic).
+  const id = options.idPrefix
+  if (id === undefined) return renderSvg(scene, { ...options, idPrefix: `sp${svgKey(renderSvg(scene, { ...options, idPrefix: 'sp' }))}` })
   const rv = options.resolveVars ? resolveVars : (s: string): string => s
-  const id = options.idPrefix ?? 'sp'
   const interactive = options.interactive === true
   const font = rv(options.font ?? 'system-ui, sans-serif')
   // Clip ids hash their own path, so several standalone SVGs on one page never borrow each other's clip.

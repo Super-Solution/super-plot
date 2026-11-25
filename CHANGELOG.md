@@ -2,6 +2,12 @@
 
 All four npm packages (`@supersolutions/super-plot-core`, `-web`, `-react`, `-chat-plugin`) share one version.
 
+## Unreleased
+
+### Changed
+
+- `renderToSvg` (and `renderSvg`) no longer write the same element ids for every chart. The default id prefix is `sp` plus a hash of the drawing, so two charts on one page do not share `sp-t` / `sp-d` (an `aria-labelledby` that points at another chart's title reads the wrong chart). The same spec still writes the same bytes; `idPrefix` still names the ids yourself, and `hydrate: true` output is unchanged.
+
 ## 0.7.0 (2026-11-22)
 
 ### Added
