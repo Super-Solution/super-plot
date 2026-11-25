@@ -45,18 +45,18 @@ measured on the built packages, as an app imports them). `npm run gate` fails wh
 
 | Import | What is in it | KB gzip |
 |---|---|---|
-| core `/base`, `renderToSvg`, no chart | validation, layout, SVG, themes, the transform loop; no chart, no step | 21.4 |
-| core `/base` + `bar`, `validatePlot` | | 25.2 |
-| core `/base` + `bar`, `renderToSvg` | | 36.2 |
-| core `/base` + `bar`, `resolveRef` | validation and the reference resolver, no drawing | 28.5 |
-| core `/base` + `/charts/basic` | the nine everyday charts | 56.6 |
-| core `/base` + `/charts/basic` + `/transforms` | every transform step (5.3 KB more) | 61.9 |
-| core `.` (everything) | every chart and step, `/canvas`, `/view` | 127.8 |
-| web `/base`, no chart | `SuperPlot` (SVG path, hover, keyboard, zoom, brush, sync, sound, references, styles) | 48.1 |
-| web `/base` + bar + line | | 71.5 |
-| web `/base` + `/charts/basic` | | 84.4 |
-| web `.` (everything) | | 157.0 |
-| chat plugin `.` | web `.`, the `super.plot` card and the agent tools | 162.3 |
+| core `/base`, `renderToSvg`, no chart | validation, layout, SVG, themes, the transform loop; no chart, no step | 24.6 |
+| core `/base` + `bar`, `validatePlot` | | 28.6 |
+| core `/base` + `bar`, `renderToSvg` | | 40.4 |
+| core `/base` + `bar`, `resolveRef` | validation and the reference resolver, no drawing | 32.0 |
+| core `/base` + `/charts/basic` | the nine everyday charts | 62.7 |
+| core `/base` + `/charts/basic` + `/transforms` | every transform step (5.3 KB more) | 68.0 |
+| core `.` (everything) | every chart and step, `/canvas`, `/view` | 134.6 |
+| web `/base`, no chart | `SuperPlot` (SVG path, hover, keyboard, zoom, brush, sync, sound, references, styles) | 50.8 |
+| web `/base` + bar + line | | 76.4 |
+| web `/base` + `/charts/basic` | | 90.2 |
+| web `.` (everything) | | 163.4 |
+| chat plugin `.` | web `.`, the `super.plot` card and the agent tools (including the `plot_suggest` rules) | 173.5 |
 
 Core entry points that are not chart groups: `/charts` (every chart), `/transforms` (the steps, `TRANSFORM_DOCS`,
 `filterRow`, `bucket`), `/canvas` (`drawScene`, `drawHover`, `buildHitIndex`, `resolveColor`, `drawPatternTile`: draw

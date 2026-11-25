@@ -14,6 +14,7 @@ All four npm packages (`@supersolutions/super-plot-core`, `-web`, `-react`, `-ch
 
 ### Changed
 
+- Dev tooling: vitest 3.2 to 5.1.2 (with vite pinned to ^7.3.8, which vitest 5 accepts but npm would otherwise resolve to vite 8, whose esbuild peer conflicts with the build's). `npm audit` goes from 3 advisories (1 moderate, 2 critical, all in vitest, `@vitest/mocker` and `tinypool`) to 0. Nothing shipped changes. The size tables in README and INTEGRATION.md are measured again with `npm run size` (they had fallen behind); the budgets in `scripts/size.mjs` are raised to match what this release measures.
 - A bar category with no number (null, `NaN`, text) is described as missing (`Missing: b (no value, so not counted above)`) and left out of the highest, lowest and total; it was counted as 0 ("Lowest: b (0)"). Ports and conformance in step.
 - `renderToSvg` (and `renderSvg`) no longer write the same element ids for every chart. The default id prefix is `sp` plus a hash of the drawing, so two charts on one page do not share `sp-t` / `sp-d` (an `aria-labelledby` that points at another chart's title reads the wrong chart). The same spec still writes the same bytes; `idPrefix` still names the ids yourself, and `hydrate: true` output is unchanged.
 
