@@ -51,7 +51,7 @@ new SuperPlot(document.getElementById('chart')!, spec, { theme: 'auto', onSelect
 | `@supersolutions/super-plot-chat-plugin` | A chat plugin: `super.plot` cards in a chat, links in the text that point into them (`ref:sales?x=2026-03`), and agent tools to read, highlight and annotate a plot. | `.` |
 
 Quick start and agents: the package roots (everything registered). For a page: `/base` plus the groups it draws,
-`registerCharts(basicCharts)`; the browser binding with the nine basic charts is 90.2 KB gzip against 163.4 KB for
+`registerCharts(basicCharts)`; the browser binding with the nine basic charts is 91.0 KB gzip against 164.1 KB for
 everything ([INTEGRATION](docs/INTEGRATION.md#import-only-what-you-use) has the table).
 
 Other languages ([`ports/`](ports/README.md)): **Go and Python** validate a spec, write its plain-language description and compute the shared numbers, identical to TypeScript (they do not draw).

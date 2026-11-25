@@ -49,14 +49,14 @@ measured on the built packages, as an app imports them). `npm run gate` fails wh
 | core `/base` + `bar`, `validatePlot` | | 28.6 |
 | core `/base` + `bar`, `renderToSvg` | | 40.4 |
 | core `/base` + `bar`, `resolveRef` | validation and the reference resolver, no drawing | 32.0 |
-| core `/base` + `/charts/basic` | the nine everyday charts | 62.7 |
-| core `/base` + `/charts/basic` + `/transforms` | every transform step (5.3 KB more) | 68.0 |
-| core `.` (everything) | every chart and step, `/canvas`, `/view` | 134.6 |
+| core `/base` + `/charts/basic` | the nine everyday charts | 63.5 |
+| core `/base` + `/charts/basic` + `/transforms` | every transform step (5.3 KB more) | 68.8 |
+| core `.` (everything) | every chart and step, `/canvas`, `/view` | 135.4 |
 | web `/base`, no chart | `SuperPlot` (SVG path, hover, keyboard, zoom, brush, sync, sound, references, styles) | 50.8 |
 | web `/base` + bar + line | | 76.4 |
-| web `/base` + `/charts/basic` | | 90.2 |
-| web `.` (everything) | | 163.4 |
-| chat plugin `.` | web `.`, the `super.plot` card and the agent tools (including the `plot_suggest` rules) | 173.5 |
+| web `/base` + `/charts/basic` | | 91.0 |
+| web `.` (everything) | | 164.1 |
+| chat plugin `.` | web `.`, the `super.plot` card and the agent tools (including the `plot_suggest` rules) | 174.3 |
 
 Core entry points that are not chart groups: `/charts` (every chart), `/transforms` (the steps, `TRANSFORM_DOCS`,
 `filterRow`, `bucket`), `/canvas` (`drawScene`, `drawHover`, `buildHitIndex`, `resolveColor`, `drawPatternTile`: draw

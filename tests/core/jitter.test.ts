@@ -9,7 +9,11 @@ const dots = (spec: Record<string, unknown>, hidden: string[] = []): Dot[] => {
   return r.scene.marks.filter((m): m is Dot => m.type === 'circle' && m.role === 'data')
 }
 
-const describePlot = (spec: Record<string, unknown>): string => describe_(spec).text
+const describePlot = (spec: Record<string, unknown>): string => {
+  const r = describe_(spec)
+  if (!r.ok) throw new Error(JSON.stringify(r.issues))
+  return r.text
+}
 describe('jitterUnit', () => {
   it('is in [-1, 1), repeatable, and differs by axis and index', () => {
     for (let i = 0; i < 2000; i++) for (const a of ['x', 'y'] as const) {
