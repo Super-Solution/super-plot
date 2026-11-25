@@ -31,6 +31,7 @@ the list of cards on screen):
 |---|---|---|
 | `plot_state` | read | chart type, description, columns, rows, hidden series, zoom, issues, annotations, highlight |
 | `plot_data` | read | the rows drawn, with their index; narrowed by `ref`; at most 500 per call |
+| `plot_suggest` | read | other charts that fit the card's rows: ready specs with a stable rule code, why, and what to check; changes nothing |
 | `plot_resolve` | read | what a reference names (rows, series, keys, label) or a code and reason |
 | `plot_highlight` | draft | outline what a reference names until the viewer moves; `ref: null` clears |
 | `plot_annotate` | draft | add or replace the agent's own annotations by key; `applied` and `rejected` with codes |

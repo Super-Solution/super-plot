@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2026 SUPER SOLUTION LABS INC
 import { chartTypes, fieldsOf, getChart } from './registry.js'
+import { SUGGEST_RULES } from './suggest.js'
 import { fieldDefault, fieldSchema, fieldType, LIMITS } from './schema.js'
 
 export interface FieldInfo { name: string; type: string; required: boolean; default?: unknown; description: string }
@@ -11,6 +12,8 @@ export interface ChartInfo {
   useWhen: string
   fields: FieldInfo[]
   example: Record<string, unknown>
+  /** The `plot_suggest` rule codes that can propose this chart (empty: it is never suggested from columns alone). */
+  suggestedBy: string[]
 }
 
 /** Everything an agent needs to pick a chart and fill in its spec, generated from the registry. */
@@ -23,7 +26,8 @@ export function chartCatalog(): ChartInfo[] {
       summary: def.summary,
       useWhen: def.useWhen,
       fields: Object.entries(fieldsOf(def)).map(([name, f]) => ({ name, type: fieldType(f).replace(/\\\|/g, '|'), required: f.required === true, ...(fieldDefault(f) !== undefined ? { default: fieldDefault(f) } : {}), description: f.desc })),
-      example: def.example
+      example: def.example,
+      suggestedBy: SUGGEST_RULES.filter(r => r.type === def.type).map(r => r.code)
     }
   })
 }

@@ -443,9 +443,42 @@ tool.run({ spec })        // { ok, issues: [{ code, path, message, hint, severit
 
 `severity` is `error` (refused), `warning` (drawn, but something was changed or left out) or `info` (drawn as asked, with a note the agent should pass on: `dual_axis`, `axis_break`). Only errors make `ok` false.
 
-Tools: `plot_catalog` (which chart, which fields, an example), `plot_schema`, `plot_validate`, `plot_describe`, `plot_geographies` (the map boundaries the host registered; none ship), `plot_render_svg`.
+Tools: `plot_catalog` (which chart, which fields, an example), `plot_schema`, `plot_suggest` (which charts fit a table), `plot_validate`, `plot_describe`, `plot_geographies` (the map boundaries the host registered; none ship), `plot_render_svg`.
 All have `authority: 'read'`, `inputSchema` (JSON Schema) and `run(args)`, so they can be wrapped by any MCP server or
-tool registry in a few lines. Suggested agent loop: `plot_catalog` -> write spec -> `plot_validate` -> fix by `code` and `hint` -> `plot_render_svg`.
+tool registry in a few lines. Suggested agent loop: `plot_suggest` (when you have a table and no chart yet) or `plot_catalog` -> write spec -> `plot_validate` -> fix by `code` and `hint` -> `plot_render_svg`.
+
+### Which chart for this table: `plot_suggest`
+
+```ts
+import { suggestPlots } from '@supersolutions/super-plot-core/base'   // or getPlotTool('plot_suggest')
+const r = suggestPlots({ rows, intent: 'trend', max: 3 })
+// r.columns      what each column was taken to be: number, time, category, boolean, text or empty
+// r.suggestions  [{ code: 'trend_line', type: 'line', score: 100, why, notes, spec: { type: 'line', x: 'month', y: 'sales' } }]
+// r.issues       info, warning and error issues with a code, a path and a hint
+```
+
+The answer is deterministic: fixed rules over a profile of the columns, no model and no randomness, so the same table gives the same bytes and an agent can branch on `code`. Each suggestion says why it fits (naming the columns) and what to check (rows that will be summed, categories left out). With `rows`, every spec is validated against a sample of them; one that would not draw is dropped with the warning `suggestion_invalid` rather than handed over. The spec comes without `data` unless you pass `includeData`: add your rows and it draws. `intent` (`trend`, `compare`, `ranking`, `composition`, `distribution`, `relationship`) adds 40 to the score of the rules that answer it (at most 100); without it the data's shape alone decides. Ties keep the order of the table below, and `SUGGEST_VERSION` (now 1) is raised whenever a rule changes what it proposes or how it scores.
+
+When the table has too many rows to send, send `columns` instead: `{ name, kind, distinct?, rows?, min?, integer?, granularity?, avgLength? }` per column (a `GROUP BY`/`COUNT(DISTINCT)` gives them). The suggestions are then not checked against any rows (info `unvalidated`). In the chat plugin, `plot_suggest` takes a card and reads its rows.
+
+| Code | Chart | Answers | Applies when |
+|---|---|---|---|
+| `trend_line` | line | trend | A time column and one or more number columns, no category to split by: one line per number column (up to 4). |
+| `trend_line_series` | line | trend | A time column, a number column and a category of 2 to 8 values with several rows per time: one line per category. |
+| `calendar_daily` | calendar | trend | A column of dates (day granularity) over at least 60 days and a number column: one cell per day. |
+| `compare_bar` | bar | compare | A category of 2 to 50 values and a number column: bars, biggest first. |
+| `compare_bar_grouped` | bar | compare | A category of 2 to 12 values and two to four number columns: grouped bars. |
+| `composition_pie` | pie | composition | A category of 2 to 6 values, each once, and a number column with no negatives: shares of a whole. |
+| `composition_stacked_bar` | bar | composition | Two categories (2 to 12 and 2 to 8 values) and a number column with no negatives: stacked bars. |
+| `composition_stacked_area` | area | composition | A time column, a category of 2 to 8 values and a number column with no negatives: stacked areas. |
+| `matrix_heatmap` | heatmap | compare | Two categories (at most 30 values each) and a number column: a grid coloured by the number. |
+| `relationship_scatter` | scatter | relationship | Two number columns (identifiers excluded) and at least 8 rows: a dot per row; a third number sets the size and a category of up to 8 values the colour. |
+| `distribution_histogram` | histogram | distribution | A number column (identifiers excluded) with at least 8 rows: how its values spread. |
+| `distribution_box` | box | distribution | A number column and a category of 2 to 12 values with at least 5 rows each on average: one box per category. |
+
+Issue codes: errors `missing_required`, `empty_data`, `bad_type`, `bad_value`, `bad_enum` (the input is not usable); warnings `suggestion_invalid`, `no_chart`; info `rows_sampled` (only the first 1000 rows are read), `unvalidated`, `column_empty`, `id_column_skipped` (an integer column named like `id` with a different value on every row is not used as a measure), `text_column_skipped` (more than 50 different values, mostly unique: not usable on an axis or a legend), `chart_not_registered`, `more_available`.
+
+Limits, said plainly: a column is a category when it is not a number, a time or a boolean and does not look like free text, so a numeric code such as a postal code is read as a number and a year column (`2024`) as a number, not a time (name it `"2024-01-01"`-style or pass a `columns` profile to say otherwise). The rules know twelve shapes of table, not every chart type: maps, networks, funnels, Sankey and the like need a fact about the data (a geography, links) that a column profile cannot show, so they are never suggested; use `plot_catalog`. A score is a ranking, not a probability. Whether the reader understands the chart, and whether the title says the right thing, is not something a rule can check.
 
 ## References and agent annotations
 

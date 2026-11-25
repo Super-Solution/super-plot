@@ -7,6 +7,7 @@ import { describePlot } from './describe.js'
 import { compilePlot } from './compile.js'
 import { renderSvg } from './svg.js'
 import { validatePlot } from './validate.js'
+import { suggestPlots, type SuggestInput } from './suggest.js'
 import { resolveTheme } from './theme.js'
 import { listGeographies } from './geo/geography.js'
 
@@ -49,6 +50,23 @@ export const plotTools: PlotTool[] = [
       const r = validatePlot(a.spec)
       return { ok: r.ok, issues: r.issues }
     }
+  },
+  {
+    name: 'plot_suggest',
+    description: 'Which charts fit a table: give `rows` (or a `columns` profile if the rows are too many to send) and get up to `max` ready specs, best first, each with a stable rule `code`, a score, why it fits and what to check. Deterministic rules, no model: the same table gives the same answer. With rows every spec is already validated; add the rows as `data` (or pass `includeData`) and draw it. Does not replace plot_catalog for fields or plot_validate for your own spec.',
+    authority: 'read',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        rows: { type: 'array', items: { type: 'object' }, description: 'The table as row objects; the first 1000 are profiled.' },
+        columns: { type: 'array', items: { type: 'object', properties: { name: { type: 'string' }, kind: { enum: ['number', 'time', 'category', 'boolean', 'text', 'empty'] }, distinct: { type: 'integer' }, rows: { type: 'integer' }, min: { type: 'number' }, max: { type: 'number' }, integer: { type: 'boolean' }, granularity: { enum: ['day', 'time'] }, avgLength: { type: 'number' } }, required: ['name', 'kind'] }, description: 'A profile of the columns, instead of rows.' },
+        intent: { enum: ['trend', 'compare', 'ranking', 'composition', 'distribution', 'relationship'], description: 'What the reader should see; matching charts rank higher.' },
+        max: { type: 'integer', minimum: 1, maximum: 8, description: 'Default 5.' },
+        includeData: { type: 'boolean', description: 'Put the rows in each spec as `data`.' }
+      },
+      additionalProperties: false
+    },
+    run: a => suggestPlots(a as unknown as SuggestInput)
   },
   {
     name: 'plot_describe',
