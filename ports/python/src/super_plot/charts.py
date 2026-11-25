@@ -576,6 +576,14 @@ def _check_scatter(spec: Spec, rows: list[dict], issues: Issues) -> None:
     _interval_check(spec, rows, issues, "x")
     if spec.get("order") and spec.get("density") == "hex":
         _issue(issues, "warning", "order_ignored_density", "order", "Hexagons count points, so no line joins them; `order` is ignored while hexagons are drawn.", 'Use `density: "points"` (or leave it out) for a connected scatter.')
+    jit = spec.get("jitter")
+    if is_number(jit) and jit > 0 and not _jittered(spec):
+        if spec.get("order"):
+            _issue(issues, "warning", "jitter_ignored", "jitter", "A line joins the points of a connected scatter, so jitter would pull them off it; `jitter` is ignored.", "Drop `order` to jitter the dots, or drop `jitter`.")
+        else:
+            _issue(issues, "warning", "jitter_ignored", "jitter", "Hexagons count points, so there are no dots to nudge; `jitter` is ignored while hexagons are drawn.", 'Use `density: "points"` (or leave it out) to jitter the dots.')
+    if "jitterAxis" in spec and not (is_number(jit) and jit > 0):
+        _issue(issues, "warning", "jitter_axis_ignored", "jitterAxis", "jitterAxis only applies when `jitter` is above 0; it is ignored.")
     if "trendBandwidth" in spec and spec.get("trend") != "loess":
         _issue(issues, "warning", "trend_bandwidth_ignored", "trendBandwidth", 'trendBandwidth only applies to `trend: "loess"`; it is ignored.')
     if _has_error(issues):
@@ -605,9 +613,18 @@ def _describe_scatter(spec: Spec) -> str:
         t += f" Points carry {' and '.join(bars)} error bars."
     if spec.get("order") and spec.get("density") != "hex":
         t += f" Points are joined by a line in the order of {spec['order']}."
+    if _jittered(spec):
+        axis = spec.get("jitterAxis")
+        t += f" Points are nudged slightly{' sideways' if axis == 'x' else ' up and down' if axis == 'y' else ''} so that overlapping points show; their drawn positions are approximate, the values exact."
     if spec.get("trend") == "loess":
         t += " A LOESS curve shows the local trend."
     return t
+
+
+def _jittered(spec: dict) -> bool:
+    """Whether `jitter` moves points: set, above 0, and not a chart that draws hexagons or joins points by a line."""
+    j = spec.get("jitter")
+    return is_number(j) and j > 0 and spec.get("density") != "hex" and not spec.get("order")
 
 
 # --------------------------------------------------------------------------------------- pie / donut

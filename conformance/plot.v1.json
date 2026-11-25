@@ -3080,6 +3080,288 @@
       ]
     }
   ],
+  "jitterUnit": [
+    {
+      "in": {
+        "index": 0,
+        "axis": "x"
+      },
+      "out": -0.847392919
+    },
+    {
+      "in": {
+        "index": 0,
+        "axis": "y"
+      },
+      "out": -0.150119302
+    },
+    {
+      "in": {
+        "index": 1,
+        "axis": "x"
+      },
+      "out": -0.723794192
+    },
+    {
+      "in": {
+        "index": 1,
+        "axis": "y"
+      },
+      "out": -0.430208401
+    },
+    {
+      "in": {
+        "index": 2,
+        "axis": "x"
+      },
+      "out": -0.405561525
+    },
+    {
+      "in": {
+        "index": 2,
+        "axis": "y"
+      },
+      "out": -0.244634012
+    },
+    {
+      "in": {
+        "index": 3,
+        "axis": "x"
+      },
+      "out": -0.975316191
+    },
+    {
+      "in": {
+        "index": 3,
+        "axis": "y"
+      },
+      "out": 0.963879054
+    },
+    {
+      "in": {
+        "index": 4,
+        "axis": "x"
+      },
+      "out": 0.851582835
+    },
+    {
+      "in": {
+        "index": 4,
+        "axis": "y"
+      },
+      "out": 0.291963612
+    },
+    {
+      "in": {
+        "index": 5,
+        "axis": "x"
+      },
+      "out": 0.694576045
+    },
+    {
+      "in": {
+        "index": 5,
+        "axis": "y"
+      },
+      "out": -0.455793905
+    },
+    {
+      "in": {
+        "index": 6,
+        "axis": "x"
+      },
+      "out": -0.416591797
+    },
+    {
+      "in": {
+        "index": 6,
+        "axis": "y"
+      },
+      "out": 0.359491051
+    },
+    {
+      "in": {
+        "index": 7,
+        "axis": "x"
+      },
+      "out": 0.062156563
+    },
+    {
+      "in": {
+        "index": 7,
+        "axis": "y"
+      },
+      "out": 0.259193616
+    },
+    {
+      "in": {
+        "index": 8,
+        "axis": "x"
+      },
+      "out": 0.412194477
+    },
+    {
+      "in": {
+        "index": 8,
+        "axis": "y"
+      },
+      "out": -0.205723299
+    },
+    {
+      "in": {
+        "index": 9,
+        "axis": "x"
+      },
+      "out": 0.994019905
+    },
+    {
+      "in": {
+        "index": 9,
+        "axis": "y"
+      },
+      "out": 0.492765664
+    },
+    {
+      "in": {
+        "index": 10,
+        "axis": "x"
+      },
+      "out": 0.545939336
+    },
+    {
+      "in": {
+        "index": 10,
+        "axis": "y"
+      },
+      "out": -0.788728324
+    },
+    {
+      "in": {
+        "index": 99,
+        "axis": "x"
+      },
+      "out": -0.168216255
+    },
+    {
+      "in": {
+        "index": 99,
+        "axis": "y"
+      },
+      "out": 0.389259147
+    },
+    {
+      "in": {
+        "index": 1000,
+        "axis": "x"
+      },
+      "out": -0.705414511
+    },
+    {
+      "in": {
+        "index": 1000,
+        "axis": "y"
+      },
+      "out": 0.161664488
+    },
+    {
+      "in": {
+        "index": 65535,
+        "axis": "x"
+      },
+      "out": -0.091205864
+    },
+    {
+      "in": {
+        "index": 65535,
+        "axis": "y"
+      },
+      "out": 0.90177211
+    },
+    {
+      "in": {
+        "index": 65536,
+        "axis": "x"
+      },
+      "out": -0.644570013
+    },
+    {
+      "in": {
+        "index": 65536,
+        "axis": "y"
+      },
+      "out": -0.824004864
+    },
+    {
+      "in": {
+        "index": 123456,
+        "axis": "x"
+      },
+      "out": -0.378099734
+    },
+    {
+      "in": {
+        "index": 123456,
+        "axis": "y"
+      },
+      "out": 0.874995485
+    },
+    {
+      "in": {
+        "index": 2147483647,
+        "axis": "x"
+      },
+      "out": 0.919407228
+    },
+    {
+      "in": {
+        "index": 2147483647,
+        "axis": "y"
+      },
+      "out": -0.07799247
+    },
+    {
+      "in": {
+        "index": 2147483648,
+        "axis": "x"
+      },
+      "out": -0.798346628
+    },
+    {
+      "in": {
+        "index": 2147483648,
+        "axis": "y"
+      },
+      "out": 0.044325444
+    },
+    {
+      "in": {
+        "index": 4294967295,
+        "axis": "x"
+      },
+      "out": -0.028424992
+    },
+    {
+      "in": {
+        "index": 4294967295,
+        "axis": "y"
+      },
+      "out": 0.833067531
+    },
+    {
+      "in": {
+        "index": 4294967296,
+        "axis": "x"
+      },
+      "out": -0.847392919
+    },
+    {
+      "in": {
+        "index": 4294967296,
+        "axis": "y"
+      },
+      "out": -0.150119302
+    }
+  ],
   "cloudLayout": [
     {
       "in": {
@@ -3974,7 +4256,9 @@
         ]
       },
       "valid": true,
-      "issueCodes": [],
+      "issueCodes": [
+        "jitter_axis_ignored"
+      ],
       "normalized": {
         "type": "scatter",
         "title": "Ad spend vs. signups",
@@ -3990,6 +4274,7 @@
         "legend": "auto",
         "tooltip": true,
         "bare": false,
+        "jitterAxis": "both",
         "xType": "auto"
       },
       "describe": "Scatter plot \"Ad spend vs. signups\". 12 points of signups against spend, in 3 groups (Search, Social, Video). Correlation 0.71 (strong positive). signups ranges from 150 to 720."
@@ -26283,6 +26568,11 @@
           "path": "y"
         },
         {
+          "severity": "warning",
+          "code": "jitter_axis_ignored",
+          "path": "jitterAxis"
+        },
+        {
           "severity": "error",
           "code": "no_points",
           "path": "data"
@@ -26313,7 +26603,13 @@
         ]
       },
       "ok": true,
-      "issues": [],
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "jitter_axis_ignored",
+          "path": "jitterAxis"
+        }
+      ],
       "normalized": {
         "type": "scatter",
         "x": "a",
@@ -26322,6 +26618,7 @@
         "legend": "auto",
         "tooltip": true,
         "bare": false,
+        "jitterAxis": "both",
         "xType": "auto"
       }
     },
@@ -43714,7 +44011,13 @@
         ]
       },
       "ok": true,
-      "issues": [],
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "jitter_axis_ignored",
+          "path": "jitterAxis"
+        }
+      ],
       "normalized": {
         "type": "scatter",
         "x": "v",
@@ -43725,6 +44028,7 @@
         "tooltip": true,
         "bare": false,
         "trend": "none",
+        "jitterAxis": "both",
         "xType": "auto"
       }
     },
@@ -44514,7 +44818,13 @@
         ]
       },
       "ok": true,
-      "issues": [],
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "jitter_axis_ignored",
+          "path": "jitterAxis"
+        }
+      ],
       "normalized": {
         "type": "scatter",
         "x": "v",
@@ -44525,6 +44835,7 @@
         "tooltip": true,
         "bare": false,
         "trend": "none",
+        "jitterAxis": "both",
         "xType": "auto"
       }
     },
@@ -44563,7 +44874,13 @@
         ]
       },
       "ok": true,
-      "issues": [],
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "jitter_axis_ignored",
+          "path": "jitterAxis"
+        }
+      ],
       "normalized": {
         "type": "scatter",
         "x": "v",
@@ -44573,6 +44890,7 @@
         "tooltip": true,
         "bare": false,
         "trend": "none",
+        "jitterAxis": "both",
         "xType": "auto"
       }
     },
@@ -44825,7 +45143,13 @@
         ]
       },
       "ok": true,
-      "issues": [],
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "jitter_axis_ignored",
+          "path": "jitterAxis"
+        }
+      ],
       "normalized": {
         "type": "scatter",
         "x": "d",
@@ -44842,6 +45166,7 @@
         "tooltip": true,
         "bare": false,
         "trend": "none",
+        "jitterAxis": "both",
         "xType": "auto"
       }
     },
@@ -45006,6 +45331,11 @@
       },
       "ok": false,
       "issues": [
+        {
+          "severity": "warning",
+          "code": "jitter_axis_ignored",
+          "path": "jitterAxis"
+        },
         {
           "severity": "error",
           "code": "no_points",
@@ -45518,6 +45848,11 @@
           "severity": "error",
           "code": "log_nonpositive",
           "path": "y"
+        },
+        {
+          "severity": "warning",
+          "code": "jitter_axis_ignored",
+          "path": "jitterAxis"
         }
       ],
       "normalized": null
@@ -45558,7 +45893,13 @@
         ]
       },
       "ok": true,
-      "issues": [],
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "jitter_axis_ignored",
+          "path": "jitterAxis"
+        }
+      ],
       "normalized": {
         "type": "scatter",
         "x": "v",
@@ -45569,6 +45910,7 @@
         "tooltip": true,
         "bare": false,
         "trend": "none",
+        "jitterAxis": "both",
         "xType": "auto"
       }
     },
@@ -45656,6 +45998,11 @@
           "severity": "error",
           "code": "log_scale_refused",
           "path": "xScale"
+        },
+        {
+          "severity": "warning",
+          "code": "jitter_axis_ignored",
+          "path": "jitterAxis"
         }
       ],
       "normalized": null
@@ -46129,6 +46476,11 @@
           "severity": "error",
           "code": "interval_incomplete",
           "path": "xLower"
+        },
+        {
+          "severity": "warning",
+          "code": "jitter_axis_ignored",
+          "path": "jitterAxis"
         }
       ],
       "normalized": null
@@ -46412,6 +46764,11 @@
           "severity": "warning",
           "code": "interval_reversed",
           "path": "yLower"
+        },
+        {
+          "severity": "warning",
+          "code": "jitter_axis_ignored",
+          "path": "jitterAxis"
         }
       ],
       "normalized": {
@@ -46424,6 +46781,7 @@
         "tooltip": true,
         "bare": false,
         "trend": "none",
+        "jitterAxis": "both",
         "xType": "auto"
       }
     },
@@ -47553,7 +47911,13 @@
         ]
       },
       "ok": true,
-      "issues": [],
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "jitter_axis_ignored",
+          "path": "jitterAxis"
+        }
+      ],
       "normalized": {
         "type": "scatter",
         "x": "v",
@@ -47563,6 +47927,7 @@
         "tooltip": true,
         "bare": false,
         "trend": "none",
+        "jitterAxis": "both",
         "xType": "auto"
       }
     },
@@ -47607,6 +47972,11 @@
           "severity": "warning",
           "code": "order_ignored_density",
           "path": "order"
+        },
+        {
+          "severity": "warning",
+          "code": "jitter_axis_ignored",
+          "path": "jitterAxis"
         }
       ],
       "normalized": {
@@ -47619,6 +47989,7 @@
         "tooltip": true,
         "bare": false,
         "trend": "none",
+        "jitterAxis": "both",
         "xType": "auto"
       }
     },
@@ -47702,7 +48073,13 @@
         ]
       },
       "ok": true,
-      "issues": [],
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "jitter_axis_ignored",
+          "path": "jitterAxis"
+        }
+      ],
       "normalized": {
         "type": "scatter",
         "x": "v",
@@ -47712,6 +48089,7 @@
         "legend": "auto",
         "tooltip": true,
         "bare": false,
+        "jitterAxis": "both",
         "xType": "auto"
       }
     },
@@ -47755,6 +48133,11 @@
           "severity": "warning",
           "code": "trend_bandwidth_ignored",
           "path": "trendBandwidth"
+        },
+        {
+          "severity": "warning",
+          "code": "jitter_axis_ignored",
+          "path": "jitterAxis"
         }
       ],
       "normalized": {
@@ -47766,6 +48149,7 @@
         "tooltip": true,
         "bare": false,
         "trend": "none",
+        "jitterAxis": "both",
         "xType": "auto"
       }
     },
@@ -49602,6 +49986,457 @@
         "sort": "desc",
         "maxSlices": 8,
         "labels": true
+      }
+    },
+    {
+      "name": "scatter: jitter",
+      "spec": {
+        "type": "scatter",
+        "x": "v",
+        "y": "t",
+        "jitter": 6,
+        "jitterAxis": "x",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [],
+      "normalized": {
+        "type": "scatter",
+        "x": "v",
+        "y": "t",
+        "jitter": 6,
+        "jitterAxis": "x",
+        "legend": "auto",
+        "tooltip": true,
+        "bare": false,
+        "trend": "none",
+        "xType": "auto"
+      }
+    },
+    {
+      "name": "scatter: jitter too big",
+      "spec": {
+        "type": "scatter",
+        "x": "v",
+        "y": "t",
+        "jitter": 21,
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "out_of_range",
+          "path": "jitter"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "scatter: jitter below zero",
+      "spec": {
+        "type": "scatter",
+        "x": "v",
+        "y": "t",
+        "jitter": -1,
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "out_of_range",
+          "path": "jitter"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "scatter: jitter is not a number",
+      "spec": {
+        "type": "scatter",
+        "x": "v",
+        "y": "t",
+        "jitter": "wide",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "bad_type",
+          "path": "jitter"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "scatter: jitterAxis is not an axis",
+      "spec": {
+        "type": "scatter",
+        "x": "v",
+        "y": "t",
+        "jitter": 4,
+        "jitterAxis": "z",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ]
+      },
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "bad_enum",
+          "path": "jitterAxis"
+        }
+      ],
+      "normalized": null
+    },
+    {
+      "name": "scatter: jitterAxis without jitter",
+      "spec": {
+        "type": "scatter",
+        "x": "v",
+        "y": "t",
+        "jitterAxis": "y",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "jitter_axis_ignored",
+          "path": "jitterAxis"
+        }
+      ],
+      "normalized": {
+        "type": "scatter",
+        "x": "v",
+        "y": "t",
+        "jitterAxis": "y",
+        "legend": "auto",
+        "tooltip": true,
+        "bare": false,
+        "trend": "none",
+        "xType": "auto"
+      }
+    },
+    {
+      "name": "scatter: jitter 0 with jitterAxis",
+      "spec": {
+        "type": "scatter",
+        "x": "v",
+        "y": "t",
+        "jitter": 0,
+        "jitterAxis": "y",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "jitter_axis_ignored",
+          "path": "jitterAxis"
+        }
+      ],
+      "normalized": {
+        "type": "scatter",
+        "x": "v",
+        "y": "t",
+        "jitter": 0,
+        "jitterAxis": "y",
+        "legend": "auto",
+        "tooltip": true,
+        "bare": false,
+        "trend": "none",
+        "xType": "auto"
+      }
+    },
+    {
+      "name": "scatter: jitter with hexagons",
+      "spec": {
+        "type": "scatter",
+        "x": "v",
+        "y": "t",
+        "jitter": 4,
+        "density": "hex",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "jitter_ignored",
+          "path": "jitter"
+        }
+      ],
+      "normalized": {
+        "type": "scatter",
+        "x": "v",
+        "y": "t",
+        "jitter": 4,
+        "density": "hex",
+        "legend": "auto",
+        "tooltip": true,
+        "bare": false,
+        "trend": "none",
+        "jitterAxis": "both",
+        "xType": "auto"
+      }
+    },
+    {
+      "name": "scatter: jitter with order",
+      "spec": {
+        "type": "scatter",
+        "x": "v",
+        "y": "t",
+        "jitter": 4,
+        "order": "d",
+        "data": [
+          {
+            "d": "2026-01-05",
+            "k": "a",
+            "g": "p",
+            "v": 3,
+            "t": 5,
+            "w": "n/a"
+          },
+          {
+            "d": "2026-02-09",
+            "k": "b",
+            "g": "q",
+            "v": 8,
+            "t": 5,
+            "w": 4
+          },
+          {
+            "d": "2026-03-16",
+            "k": "c",
+            "g": "p",
+            "v": 6,
+            "t": "7",
+            "w": ""
+          }
+        ]
+      },
+      "ok": true,
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "jitter_ignored",
+          "path": "jitter"
+        }
+      ],
+      "normalized": {
+        "type": "scatter",
+        "x": "v",
+        "y": "t",
+        "jitter": 4,
+        "order": "d",
+        "legend": "auto",
+        "tooltip": true,
+        "bare": false,
+        "trend": "none",
+        "jitterAxis": "both",
+        "xType": "auto"
       }
     },
     {
@@ -89251,6 +90086,318 @@
       "issueCodes": []
     },
     {
+      "name": "scatter: jitter both ways",
+      "spec": {
+        "type": "scatter",
+        "x": "a",
+        "y": "b",
+        "jitter": 5,
+        "data": [
+          {
+            "a": 0,
+            "b": 0
+          },
+          {
+            "a": 1,
+            "b": 1
+          },
+          {
+            "a": 2,
+            "b": 2
+          },
+          {
+            "a": 0,
+            "b": 3
+          },
+          {
+            "a": 1,
+            "b": 0
+          },
+          {
+            "a": 2,
+            "b": 1
+          },
+          {
+            "a": 0,
+            "b": 2
+          },
+          {
+            "a": 1,
+            "b": 3
+          },
+          {
+            "a": 2,
+            "b": 0
+          },
+          {
+            "a": 0,
+            "b": 1
+          },
+          {
+            "a": 1,
+            "b": 2
+          },
+          {
+            "a": 2,
+            "b": 3
+          }
+        ]
+      },
+      "describe": "Scatter plot. 12 points of b against a. Correlation 0.00 (weak positive). b ranges from 0 to 3. Points are nudged slightly so that overlapping points show; their drawn positions are approximate, the values exact.",
+      "issueCodes": []
+    },
+    {
+      "name": "scatter: jitter sideways",
+      "spec": {
+        "type": "scatter",
+        "x": "a",
+        "y": "b",
+        "jitter": 5,
+        "jitterAxis": "x",
+        "data": [
+          {
+            "a": 0,
+            "b": 0
+          },
+          {
+            "a": 1,
+            "b": 1
+          },
+          {
+            "a": 2,
+            "b": 2
+          },
+          {
+            "a": 0,
+            "b": 3
+          },
+          {
+            "a": 1,
+            "b": 0
+          },
+          {
+            "a": 2,
+            "b": 1
+          },
+          {
+            "a": 0,
+            "b": 2
+          },
+          {
+            "a": 1,
+            "b": 3
+          },
+          {
+            "a": 2,
+            "b": 0
+          },
+          {
+            "a": 0,
+            "b": 1
+          },
+          {
+            "a": 1,
+            "b": 2
+          },
+          {
+            "a": 2,
+            "b": 3
+          }
+        ]
+      },
+      "describe": "Scatter plot. 12 points of b against a. Correlation 0.00 (weak positive). b ranges from 0 to 3. Points are nudged slightly sideways so that overlapping points show; their drawn positions are approximate, the values exact.",
+      "issueCodes": []
+    },
+    {
+      "name": "scatter: jitter up and down",
+      "spec": {
+        "type": "scatter",
+        "x": "a",
+        "y": "b",
+        "jitter": 5,
+        "jitterAxis": "y",
+        "data": [
+          {
+            "a": 0,
+            "b": 0
+          },
+          {
+            "a": 1,
+            "b": 1
+          },
+          {
+            "a": 2,
+            "b": 2
+          },
+          {
+            "a": 0,
+            "b": 3
+          },
+          {
+            "a": 1,
+            "b": 0
+          },
+          {
+            "a": 2,
+            "b": 1
+          },
+          {
+            "a": 0,
+            "b": 2
+          },
+          {
+            "a": 1,
+            "b": 3
+          },
+          {
+            "a": 2,
+            "b": 0
+          },
+          {
+            "a": 0,
+            "b": 1
+          },
+          {
+            "a": 1,
+            "b": 2
+          },
+          {
+            "a": 2,
+            "b": 3
+          }
+        ]
+      },
+      "describe": "Scatter plot. 12 points of b against a. Correlation 0.00 (weak positive). b ranges from 0 to 3. Points are nudged slightly up and down so that overlapping points show; their drawn positions are approximate, the values exact.",
+      "issueCodes": []
+    },
+    {
+      "name": "scatter: jitter 0 is off",
+      "spec": {
+        "type": "scatter",
+        "x": "a",
+        "y": "b",
+        "jitter": 0,
+        "data": [
+          {
+            "a": 0,
+            "b": 0
+          },
+          {
+            "a": 1,
+            "b": 1
+          },
+          {
+            "a": 2,
+            "b": 2
+          },
+          {
+            "a": 0,
+            "b": 3
+          },
+          {
+            "a": 1,
+            "b": 0
+          },
+          {
+            "a": 2,
+            "b": 1
+          },
+          {
+            "a": 0,
+            "b": 2
+          },
+          {
+            "a": 1,
+            "b": 3
+          },
+          {
+            "a": 2,
+            "b": 0
+          },
+          {
+            "a": 0,
+            "b": 1
+          },
+          {
+            "a": 1,
+            "b": 2
+          },
+          {
+            "a": 2,
+            "b": 3
+          }
+        ]
+      },
+      "describe": "Scatter plot. 12 points of b against a. Correlation 0.00 (weak positive). b ranges from 0 to 3.",
+      "issueCodes": [
+        "jitter_axis_ignored"
+      ]
+    },
+    {
+      "name": "scatter: jitter ignored with hexagons",
+      "spec": {
+        "type": "scatter",
+        "x": "a",
+        "y": "b",
+        "jitter": 5,
+        "density": "hex",
+        "data": [
+          {
+            "a": 0,
+            "b": 0
+          },
+          {
+            "a": 1,
+            "b": 1
+          },
+          {
+            "a": 2,
+            "b": 2
+          },
+          {
+            "a": 0,
+            "b": 3
+          },
+          {
+            "a": 1,
+            "b": 0
+          },
+          {
+            "a": 2,
+            "b": 1
+          },
+          {
+            "a": 0,
+            "b": 2
+          },
+          {
+            "a": 1,
+            "b": 3
+          },
+          {
+            "a": 2,
+            "b": 0
+          },
+          {
+            "a": 0,
+            "b": 1
+          },
+          {
+            "a": 1,
+            "b": 2
+          },
+          {
+            "a": 2,
+            "b": 3
+          }
+        ]
+      },
+      "describe": "Scatter plot. 12 points of b against a. Correlation 0.00 (weak positive). b ranges from 0 to 3.",
+      "issueCodes": [
+        "jitter_ignored"
+      ]
+    },
+    {
       "name": "pie: nothing positive",
       "spec": {
         "type": "pie",
@@ -89525,7 +90672,9 @@
         ]
       },
       "describe": "Scatter plot. 4 points of v against d. Correlation 0.84 (strong positive). v ranges from 1 to 5.",
-      "issueCodes": []
+      "issueCodes": [
+        "jitter_axis_ignored"
+      ]
     },
     {
       "name": "scatter: weak negative correlation, groups",
@@ -89563,7 +90712,9 @@
         ]
       },
       "describe": "Scatter plot. 5 points of y against x, in 3 groups (a, b, c). Correlation -0.26 (weak negative). y ranges from 3 to 6.",
-      "issueCodes": []
+      "issueCodes": [
+        "jitter_axis_ignored"
+      ]
     },
     {
       "name": "scatter: constant y has no correlation",
@@ -89587,7 +90738,9 @@
         ]
       },
       "describe": "Scatter plot. 3 points of y against x. y ranges from 2 to 2.",
-      "issueCodes": []
+      "issueCodes": [
+        "jitter_axis_ignored"
+      ]
     },
     {
       "name": "pie: merges past maxSlices",
@@ -92786,7 +93939,9 @@
         ]
       },
       "describe": "Scatter plot. 3 points of v against d. Correlation -1.00 (strong negative). v ranges from 3 to 5.",
-      "issueCodes": []
+      "issueCodes": [
+        "jitter_axis_ignored"
+      ]
     },
     {
       "name": "scatter: dates and numbers past the ends, kind detected",
@@ -92814,7 +93969,9 @@
         ]
       },
       "describe": "Scatter plot. 2 points of v against d. Correlation 1.00 (strong positive). v ranges from 4 to 6.",
-      "issueCodes": []
+      "issueCodes": [
+        "jitter_axis_ignored"
+      ]
     },
     {
       "name": "scatter: density",
@@ -92888,7 +94045,9 @@
         ]
       },
       "describe": "Scatter plot. 12 points of b against a, in 2 groups (even, odd). Correlation 0.02 (weak positive). b ranges from 0 to 4.",
-      "issueCodes": []
+      "issueCodes": [
+        "jitter_axis_ignored"
+      ]
     },
     {
       "name": "line: after a transform",

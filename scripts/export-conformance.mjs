@@ -10,7 +10,7 @@ import { join, dirname } from 'node:path'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
 const core = await import(pathToFileURL(join(root, 'packages/core/dist/index.js')).href)
-const { linearTicks, niceDomain, quantile, boxStats, binEdges, binCounts, waffleCells, kde, silverman, densityPeaks, validatePlot, describePlot, chartCatalog, getChart, chartTypes, COMMON_FIELDS, CARTESIAN_FIELDS, LIMITS, resolveRef, datePeriod, formatCardRef } = core
+const { linearTicks, niceDomain, quantile, boxStats, binEdges, binCounts, waffleCells, jitterUnit, kde, silverman, densityPeaks, validatePlot, describePlot, chartCatalog, getChart, chartTypes, COMMON_FIELDS, CARTESIAN_FIELDS, LIMITS, resolveRef, datePeriod, formatCardRef } = core
 const { registerGeography, unregisterGeography, getGeography, matchRegion, GeographyError, GEO_LIMITS, CAMERA_LIMITS, CAMERA3D_LIMITS } = core
 
 const r = v => (typeof v === 'number' ? Math.round(v * 1e9) / 1e9 : v)
@@ -36,6 +36,8 @@ const densityIn = [
   { values: [7] }
 ]
 const density = densityIn.map(c => { const d = kde(c.values, c.bandwidth); return { in: c, out: { silverman: silverman(c.values), ...d, peaks: densityPeaks(d) } } })
+// Scatter jitter: the unit offset of the row at an index, per axis (a port must give the same 32-bit arithmetic).
+const jitterCases = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 99, 1000, 65535, 65536, 123456, 2147483647, 2147483648, 4294967295, 4294967296].flatMap(index => ['x', 'y'].map(axis => ({ in: { index, axis }, out: jitterUnit(index, axis) })))
 const { logTicks, niceLogDomain, loess, transformBinEdges, currencyDigits, CURRENCY_CODES } = core
 const logTickCases = [[1, 1e6, 5], [1, 1000, 8], [1, 100, 8], [0.01, 1, 9], [20, 80, 5], [3, 800, 4], [0.5, 2e9, 6], [1e-6, 1e-3, 3]].map(([a, b, n]) => ({ in: [a, b, n], out: logTicks(a, b, n) }))
 const logNiceCases = [[3, 800], [10, 10], [1, 1000], [0.02, 0.5], [7, 7.5]].map(([a, b]) => ({ in: [a, b], out: niceLogDomain(a, b) }))
@@ -404,7 +406,16 @@ const V08_VALIDATION = [
   ['donut: only zeros', { type: 'donut', label: 'k', value: 'v', data: [{ k: 'a', v: 0 }, { k: 'b', v: '0' }] }],
   ['pie: a zero slice and a negative row beside a positive one', { type: 'pie', label: 'k', value: 'v', data: [{ k: 'a', v: 3 }, { k: 'b', v: 0 }, { k: 'c', v: -1 }, { k: 'd', v: 'n/a' }] }],
   ['pie: rows of one label are summed before the zero test', { type: 'pie', label: 'k', value: 'v', data: [{ k: 'a', v: 5 }, { k: 'a', v: -5 }, { k: 'b', v: 0 }, { k: 'b', v: 0 }] }],
-  ['pie: all well', { type: 'pie', label: 'k', value: 'v', data: [{ k: 'a', v: 3 }, { k: 'b', v: 1 }] }]
+  ['pie: all well', { type: 'pie', label: 'k', value: 'v', data: [{ k: 'a', v: 3 }, { k: 'b', v: 1 }] }],
+  ['scatter: jitter', { type: 'scatter', x: 'v', y: 't', jitter: 6, jitterAxis: 'x', data: W }],
+  ['scatter: jitter too big', { type: 'scatter', x: 'v', y: 't', jitter: 21, data: W }],
+  ['scatter: jitter below zero', { type: 'scatter', x: 'v', y: 't', jitter: -1, data: W }],
+  ['scatter: jitter is not a number', { type: 'scatter', x: 'v', y: 't', jitter: 'wide', data: W }],
+  ['scatter: jitterAxis is not an axis', { type: 'scatter', x: 'v', y: 't', jitter: 4, jitterAxis: 'z', data: W }],
+  ['scatter: jitterAxis without jitter', { type: 'scatter', x: 'v', y: 't', jitterAxis: 'y', data: W }],
+  ['scatter: jitter 0 with jitterAxis', { type: 'scatter', x: 'v', y: 't', jitter: 0, jitterAxis: 'y', data: W }],
+  ['scatter: jitter with hexagons', { type: 'scatter', x: 'v', y: 't', jitter: 4, density: 'hex', data: W }],
+  ['scatter: jitter with order', { type: 'scatter', x: 'v', y: 't', jitter: 4, order: 'd', data: W }]
 ]
 const KB = [{ id: 'r1', a: 'x', b: 1 }, { id: 'r1', a: 'y', b: 2 }, { id: '', a: 'z', b: 3 }, { a: 'w', b: 4 }]
 const VALIDATION = [
@@ -643,6 +654,11 @@ const describeCases = [
   D('bar: categories with no number are missing, not 0', { type: 'bar', x: 'k', y: 'v', data: [{ k: 'a', v: 5 }, { k: 'b', v: 'n/a' }, { k: 'c', v: null }, { k: 'd', v: 3 }] }),
   D('bar: a real zero is not missing', { type: 'bar', x: 'k', y: 'v', data: [{ k: 'a', v: 5 }, { k: 'b', v: 0 }] }),
   D('bar: missing in one of two series only', { type: 'bar', x: 'k', y: ['p', 'q'], data: [{ k: 'a', p: 2, q: null }, { k: 'b', p: null, q: null }, { k: 'c', p: 4, q: 1 }] }),
+  D('scatter: jitter both ways', { type: 'scatter', x: 'a', y: 'b', jitter: 5, data: rowsOf(12, i => ({ a: i % 3, b: i % 4 })) }),
+  D('scatter: jitter sideways', { type: 'scatter', x: 'a', y: 'b', jitter: 5, jitterAxis: 'x', data: rowsOf(12, i => ({ a: i % 3, b: i % 4 })) }),
+  D('scatter: jitter up and down', { type: 'scatter', x: 'a', y: 'b', jitter: 5, jitterAxis: 'y', data: rowsOf(12, i => ({ a: i % 3, b: i % 4 })) }),
+  D('scatter: jitter 0 is off', { type: 'scatter', x: 'a', y: 'b', jitter: 0, data: rowsOf(12, i => ({ a: i % 3, b: i % 4 })) }),
+  D('scatter: jitter ignored with hexagons', { type: 'scatter', x: 'a', y: 'b', jitter: 5, density: 'hex', data: rowsOf(12, i => ({ a: i % 3, b: i % 4 })) }),
   D('pie: nothing positive', { type: 'pie', label: 'k', value: 'v', title: 'Empty', data: PIE0 }),
   D('donut: zero beside positive', { type: 'donut', label: 'k', value: 'v', data: [{ k: 'a', v: 3 }, { k: 'b', v: 0 }] }),
   D('line: weekly dates, two series', { type: 'line', x: 'd', y: ['a', 'b'], title: 'Users', format: 'compact', data: dates(10, i => ({ a: 1000 * (i + 1), b: 40000 - i * 1500 })) }),
@@ -1071,6 +1087,7 @@ const doc = rows({
   loess: loessCases,
   binStep: binStepCases,
   waffleCells: waffle,
+  jitterUnit: jitterCases,
   cloudLayout: cloudLayoutCases,
   chartExamples: examples,
   brokenSpecs: broken,

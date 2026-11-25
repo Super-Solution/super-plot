@@ -115,6 +115,13 @@ type conformance struct {
 		} `json:"in"`
 		Out []int `json:"out"`
 	} `json:"waffleCells"`
+	JitterUnit []struct {
+		In struct {
+			Index int    `json:"index"`
+			Axis  string `json:"axis"`
+		} `json:"in"`
+		Out float64 `json:"out"`
+	} `json:"jitterUnit"`
 	CloudLayout []struct {
 		In struct {
 			Words  []CloudWord `json:"words"`
@@ -676,6 +683,18 @@ func TestWaffleCells(t *testing.T) {
 	for i, k := range c.WaffleCells {
 		if got := WaffleCells(k.In.Values, k.In.Cells); fmt.Sprint(got) != fmt.Sprint(k.Out) {
 			t.Fatalf("waffleCells[%d]: got %v want %v", i, got, k.Out)
+		}
+	}
+}
+
+func TestJitterUnit(t *testing.T) {
+	c := load(t)
+	if len(c.JitterUnit) == 0 {
+		t.Fatal("no jitterUnit cases")
+	}
+	for i, k := range c.JitterUnit {
+		if got := JitterUnit(k.In.Index, k.In.Axis); math.Abs(got-k.Out) > 1e-9 {
+			t.Fatalf("jitterUnit[%d] (%d, %s): got %v want %v", i, k.In.Index, k.In.Axis, got, k.Out)
 		}
 	}
 }

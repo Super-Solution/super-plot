@@ -355,6 +355,8 @@ Plots each row as a point by two numbers to show relationships, clusters and out
 | `yUpper` | column name |  |  | Numeric column with the upper end of the interval on y; see `yLower`. |
 | `xLower` | column name |  |  | Numeric column with the lower end of an interval on x (a confidence or min-max range), drawn as a horizontal error bar with caps through each point. Needs `xUpper` too; the tooltip shows the interval and the axis includes it. |
 | `xUpper` | column name |  |  | Numeric column with the upper end of the interval on x; see `xLower`. |
+| `jitter` | number |  |  | Default 0 (off). Nudge each dot by a fixed, repeatable offset of up to this many pixels so points that sit on the same spot show (whole-number scores, rounded measures). The offset depends only on the row's position in the data, so the same data draws the same way every time and hiding a series moves nothing. Only the drawing moves: tooltips, hover, the description and the data table keep the true values, and a dot is kept inside the plot. Ignored with `density: "hex"` or `order`. |
+| `jitterAxis` | `x` \| `y` \| `both` |  | `"both"` | Which direction `jitter` moves points: `x` (sideways: the y values are the ones that repeat, as in a score from 1 to 5 against a date), `y`, or `both`. |
 | `density` | `points` \| `hex` \| `auto` |  |  | Default points. `hex` draws hexagons coloured by how many points fall in each (with a count legend); `auto` does so above 10,000 visible points. Hexagons merge groups. |
 | `xType` | `auto` \| `linear` \| `time` |  | `"auto"` | How to read `x`. |
 | `xDomain` | [min\|null, max\|null] |  |  | Fix the horizontal range. |

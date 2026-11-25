@@ -856,6 +856,18 @@ func checkScatter(s spec, rows []row, issues *[]Issue) {
 	if str(s, "order") != "" && str(s, "density") == "hex" {
 		issue(issues, "warning", "order_ignored_density", "order", "Hexagons count points, so no line joins them; `order` is ignored while hexagons are drawn.", "Use `density: \"points\"` (or leave it out) for a connected scatter.")
 	}
+	if j, ok := s["jitter"].(float64); ok && j > 0 && !jittered(s) {
+		if str(s, "order") != "" {
+			issue(issues, "warning", "jitter_ignored", "jitter", "A line joins the points of a connected scatter, so jitter would pull them off it; `jitter` is ignored.", "Drop `order` to jitter the dots, or drop `jitter`.")
+		} else {
+			issue(issues, "warning", "jitter_ignored", "jitter", "Hexagons count points, so there are no dots to nudge; `jitter` is ignored while hexagons are drawn.", "Use `density: \"points\"` (or leave it out) to jitter the dots.")
+		}
+	}
+	if has(s, "jitterAxis") {
+		if j, ok := s["jitter"].(float64); !ok || !(j > 0) {
+			issue(issues, "warning", "jitter_axis_ignored", "jitterAxis", "jitterAxis only applies when `jitter` is above 0; it is ignored.")
+		}
+	}
 	if has(s, "trendBandwidth") && str(s, "trend") != "loess" {
 		issue(issues, "warning", "trend_bandwidth_ignored", "trendBandwidth", "trendBandwidth only applies to `trend: \"loess\"`; it is ignored.")
 	}
@@ -920,10 +932,26 @@ func describeScatter(s spec) string {
 	if str(s, "order") != "" && str(s, "density") != "hex" {
 		t += fmt.Sprintf(" Points are joined by a line in the order of %s.", str(s, "order"))
 	}
+	if jittered(s) {
+		dir := ""
+		switch str(s, "jitterAxis") {
+		case "x":
+			dir = " sideways"
+		case "y":
+			dir = " up and down"
+		}
+		t += fmt.Sprintf(" Points are nudged slightly%s so that overlapping points show; their drawn positions are approximate, the values exact.", dir)
+	}
 	if str(s, "trend") == "loess" {
 		t += " A LOESS curve shows the local trend."
 	}
 	return t
+}
+
+// jittered reports whether `jitter` moves points: set, above 0, and not a chart that draws hexagons or joins points by a line.
+func jittered(s spec) bool {
+	j, ok := s["jitter"].(float64)
+	return ok && j > 0 && str(s, "density") != "hex" && str(s, "order") == ""
 }
 
 // --- pie / donut -----------------------------------------------------------------------------------------

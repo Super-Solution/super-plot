@@ -2000,6 +2000,24 @@
           "desc": "Numeric column with the upper end of the interval on x; see `xLower`."
         },
         {
+          "name": "jitter",
+          "kind": "number",
+          "min": 0,
+          "max": 20,
+          "desc": "Default 0 (off). Nudge each dot by a fixed, repeatable offset of up to this many pixels so points that sit on the same spot show (whole-number scores, rounded measures). The offset depends only on the row's position in the data, so the same data draws the same way every time and hiding a series moves nothing. Only the drawing moves: tooltips, hover, the description and the data table keep the true values, and a dot is kept inside the plot. Ignored with `density: \"hex\"` or `order`."
+        },
+        {
+          "name": "jitterAxis",
+          "kind": "enum",
+          "values": [
+            "x",
+            "y",
+            "both"
+          ],
+          "default": "both",
+          "desc": "Which direction `jitter` moves points: `x` (sideways: the y values are the ones that repeat, as in a score from 1 to 5 against a date), `y`, or `both`."
+        },
+        {
           "name": "density",
           "kind": "enum",
           "values": [

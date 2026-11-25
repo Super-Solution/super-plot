@@ -435,6 +435,25 @@ def loess(xs: Sequence[float], ys: Sequence[float], bandwidth: float = 0.3, grid
 # ----------------------------------------------------------------------------------------------- waffle
 
 
+JITTER_MAX = 20
+
+
+def jitter_unit(index: int, axis: str) -> float:
+    """The offset scatter `jitter` is built on: for the row at `index` in the data (0-based, counted before any series is
+    hidden) and an axis ("x" or "y"), a number in [-1, 1). The murmur3 finaliser on 32-bit integers:
+    h = index * 0x9E3779B1 + salt (modulo 2**32; salt 0x243F6A88 for x, 0x13198A2E for y), h ^= h >> 16,
+    h = h * 0x85EBCA6B, h ^= h >> 13, h = h * 0xC2B2AE35, h ^= h >> 16 (each product modulo 2**32), then
+    h / 2**32 * 2 - 1. Every step is exact in a double."""
+    m = 0xFFFFFFFF
+    h = (index * 0x9E3779B1 + (0x243F6A88 if axis == "x" else 0x13198A2E)) & m
+    h ^= h >> 16
+    h = (h * 0x85EBCA6B) & m
+    h ^= h >> 13
+    h = (h * 0xC2B2AE35) & m
+    h ^= h >> 16
+    return h / 4294967296 * 2 - 1
+
+
 def waffle_cells(values: Sequence[float], cells: int) -> list[int]:
     """Share `cells` among the positive values by largest remainder; ties go to the earlier value."""
     tot = 0.0

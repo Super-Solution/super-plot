@@ -609,6 +609,27 @@ func Loess(xs, ys []float64, bandwidth float64, grid int) [][2]float64 {
 	return out
 }
 
+// JitterMax is the most a point may be nudged, in pixels (`jitter` is at most this).
+const JitterMax = 20
+
+// JitterUnit is the offset scatter `jitter` is built on: for the row at index in the data (0-based, counted before any
+// series is hidden) and an axis ("x" or "y"), a number in [-1, 1). The murmur3 finaliser on 32-bit integers:
+// h = index*0x9E3779B1 + salt (modulo 2^32; salt 0x243F6A88 for x, 0x13198A2E for y), h ^= h>>16, h *= 0x85EBCA6B,
+// h ^= h>>13, h *= 0xC2B2AE35, h ^= h>>16, then h/2^32*2 - 1. Unsigned shifts; every step is exact in float64.
+func JitterUnit(index int, axis string) float64 {
+	salt := uint32(0x13198A2E)
+	if axis == "x" {
+		salt = 0x243F6A88
+	}
+	h := uint32(index)*0x9E3779B1 + salt
+	h ^= h >> 16
+	h *= 0x85EBCA6B
+	h ^= h >> 13
+	h *= 0xC2B2AE35
+	h ^= h >> 16
+	return float64(h)/4294967296*2 - 1
+}
+
 // WaffleCells shares cells among the positive values by largest remainder; ties go to the earlier value.
 func WaffleCells(values []float64, cells int) []int {
 	tot := 0.0
