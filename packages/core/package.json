@@ -1,6 +1,6 @@
 {
   "name": "@supersolutions/super-plot-core",
-  "version": "0.8.0",
+  "version": "0.8.1",
   "description": "Renderer-free statistical charts: spec validation, layout to a scene, SVG output, themes and agent tools. No DOM.",
   "license": "Apache-2.0",
   "type": "module",
