@@ -3,25 +3,22 @@
 import type { ChartDef } from '../registry.js'
 import type { ChartCtx } from '../context.js'
 import { distinct } from '../data.js'
+import type { ValidateCtx } from '../schema.js'
 import { formatPercent } from '../util/format.js'
 import { inkOn } from '../util/color.js'
 import { toNumber } from '../util/num.js'
-import { clip } from '../util/text.js'
+import { clip, fit } from '../util/text.js'
 import { arc, formatter, lead, fmtList } from './shared.js'
 
 interface Slice { key: string; value: number; other?: boolean; merged?: string[] }
 
-function slices(spec: Record<string, any>, hidden: Set<string> = new Set()): { all: Slice[]; shown: Slice[]; order: string[]; skipped: number } {
+function slices(spec: Record<string, any>, hidden: Set<string> = new Set()): { all: Slice[]; shown: Slice[]; order: string[] } {
   const sums = new Map<string, number>()
-  let skipped = 0
   for (const r of spec.data as Record<string, unknown>[]) {
     const v = toNumber(r[spec.value])
     const k = String(r[spec.label] ?? '')
     if (v === null) continue
-    if (v < 0) {
-      skipped++
-      continue
-    }
+    if (v < 0) continue
     sums.set(k, (sums.get(k) ?? 0) + v)
   }
   const order = distinct((spec.data as Record<string, unknown>[]).map(r => String(r[spec.label] ?? ''))).filter(k => sums.has(k))
@@ -34,13 +31,13 @@ function slices(spec: Record<string, any>, hidden: Set<string> = new Set()): { a
     const rest = all.filter(s => !keep.has(s.key))
     all = [...all.filter(s => keep.has(s.key)), { key: 'Other', value: rest.reduce((q, s) => q + s.value, 0), other: true, merged: rest.map(r => r.key) }]
   }
-  return { all, shown: all.filter(s => !hidden.has(s.key) && s.value > 0), order, skipped }
+  return { all, shown: all.filter(s => !hidden.has(s.key) && s.value > 0), order }
 }
 
 function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
   const s = c.spec
-  const { all, shown, order, skipped } = slices(s, c.hidden)
-  if (skipped) c.warn('negative_slices', 'data', `${skipped} negative value(s) were skipped; a pie cannot show negatives.`)
+  // The negative_slices, zero_slices and pie_no_positive warnings come from `checkPie` (validation), so they reach `plot_validate` too.
+  const { all, shown, order } = slices(s, c.hidden)
   // The merged slice keeps the key "Other" (colours, legend toggles, datum); only its label is translated.
   const series = c.makeSeries(all.map(a => a.key), Object.fromEntries(all.filter(a => a.other).map(a => [a.key, c.t('other')]))).map(si => {
     const slice = all.find(a => a.key === si.key)!
@@ -54,6 +51,8 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
   const R = Math.max(20, Math.min(frame.w, frame.h) / 2 - 4)
   const cx = frame.x + frame.w / 2
   const cy = frame.y + frame.h / 2
+  // Nothing to draw (every value is 0, or all were negative): say so where the pie would be, not an empty plot.
+  if (!all.some(a => a.value > 0)) c.marks.push(c.text(cx, cy, fit(c.t('noPositive'), frame.w, c.size + 1, c.env.measure), { role: 'label', anchor: 'middle', baseline: 'middle', size: c.size + 1, fill: c.c('text-muted') }))
   const inner = (s.innerRadius ?? (s.type === 'donut' ? 0.62 : 0)) as number
   const r0 = inner * R
   let a = -Math.PI / 2
@@ -88,6 +87,36 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
   return { series }
 }
 
+/**
+ * Cross-field checks of a pie or donut, on what the chart will draw (rows with the same label are summed, text that is
+ * not a number is skipped, as in `slices`): `negative_slices` (rows below 0 are dropped), `pie_no_positive` (no label
+ * adds up to more than 0: nothing can be drawn) and `zero_slices` (labels that add up to exactly 0 get no angle but stay
+ * in the legend). All warnings; the chart is still drawn (with a message in the middle when nothing is positive).
+ */
+export function checkPie(spec: Record<string, any>, ctx: Pick<ValidateCtx, 'issues'>): void {
+  const sums = new Map<string, number>()
+  let negative = 0
+  for (const r of spec.data as Record<string, unknown>[]) {
+    const v = toNumber(r[spec.value])
+    if (v === null) continue
+    if (v < 0) {
+      negative++
+      continue
+    }
+    const k = String(r[spec.label] ?? '')
+    sums.set(k, (sums.get(k) ?? 0) + v)
+  }
+  const warn = (code: string, path: string, message: string, hint: string): void => { ctx.issues.push({ severity: 'warning', code, path, message, hint }) }
+  if (negative) warn('negative_slices', 'data', `${negative} negative value(s) were skipped; a pie cannot show negatives.`, 'Use a bar chart for values that can be negative, or remove those rows with `transform`.')
+  const values = [...sums.values()]
+  if (!values.some(v => v > 0)) {
+    warn('pie_no_positive', 'value', `No slice has a positive value, so the ${spec.type} has nothing to draw.`, `A ${spec.type} shows shares of a positive total: check the "${spec.value}" column, or use a bar chart for values that are zero or negative.`)
+    return
+  }
+  const zero = values.filter(v => v === 0).length
+  if (zero) warn('zero_slices', 'value', `${zero} slice(s) add up to 0: they get no angle and appear in the legend only.`, 'Remove those rows with `transform` to drop them from the legend too.')
+}
+
 const FIELDS: ChartDef['fields'] = {
   label: { kind: 'column', role: 'any', required: true, desc: 'Column naming each slice.' },
   value: { kind: 'column', role: 'number', required: true, desc: 'Numeric column giving each slice\'s size. Rows with the same label are summed; negatives are skipped.' },
@@ -106,7 +135,7 @@ function describePie(spec: Record<string, any>, env: { locale: string }, name: s
     const sorted = [...all].sort((a, b) => b.value - a.value)
     t += ` Largest: ${clip(sorted[0].key, 40)} (${formatPercent(sorted[0].value / total, env.locale)}).`
     if (sorted.length > 2) t += ` The top ${Math.min(3, sorted.length)} (${fmtList(sorted.slice(0, 3).map(x => clip(x.key, 30)), 3)}) make up ${formatPercent(sorted.slice(0, 3).reduce((q, x) => q + x.value, 0) / total, env.locale)}.`
-  }
+  } else t += ' No slice has a positive value, so nothing is drawn.'
   return t
 }
 
@@ -126,6 +155,7 @@ export const pie: ChartDef = {
     label: 'area', value: 'amount', format: 'currency:USD',
     data: [{ area: 'Engineering', amount: 5400000 }, { area: 'Sales', amount: 3100000 }, { area: 'Marketing', amount: 1900000 }, { area: 'Support', amount: 1200000 }, { area: 'G&A', amount: 900000 }]
   },
+  check: checkPie,
   compile,
   describe: (spec, env) => describePie(spec, env, 'Pie chart')
 }

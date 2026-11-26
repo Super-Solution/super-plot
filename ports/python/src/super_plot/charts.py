@@ -13,7 +13,7 @@ from ._js import clip, is_finite_number, is_number, js_string, key_string, numbe
 from .data import detect_x_kind, distinct, matrix, observations
 from .geo import Geography, js_trim, normalize_region
 from .isotime import _civil_from_days, to_time
-from .numeric import bin_counts, bin_edges, box_stats, closest, correlation, density_peaks, extent, js_round, kde, mean, quantile, r2, total, waffle_cells, waffle_grid
+from .numeric import chord_layout, bin_counts, bin_edges, box_stats, closest, correlation, density_peaks, extent, js_round, kde, mean, quantile, r2, total, waffle_cells, waffle_grid
 from .text import format_date, format_datetime, format_duration, format_percent, value_formatter
 
 Spec = dict[str, Any]
@@ -385,7 +385,9 @@ def _check_bar(spec: Spec, rows: list[dict], issues: Issues) -> None:
 def _describe_bar(spec: Spec) -> str:
     cats, keys, m = _bar_model(spec)
     f = _formatter(spec)
-    totals = [{"c": c, "v": total(list(m.get(c, {}).values()))} for c in cats]
+    # A category with no number at all is missing, not 0: named at the end, and left out of the extremes and the total.
+    totals = [{"c": c, "v": total(list(m[c].values()))} for c in cats if c in m]
+    missing = [clip(c, 30) for c in cats if c not in m]
     unstacked = spec.get("stack", "none") == "none"
     t = f"{_lead(spec, 'Lollipop chart' if spec.get('mark') == 'lollipop' and unstacked else 'Bar chart')} {len(cats)} {_plural(len(cats), 'category', 'categories')}"
     if len(keys) > 1:
@@ -400,6 +402,8 @@ def _describe_bar(spec: Spec) -> str:
         if len(totals) > 1:
             t += f" Lowest: {clip(lo['c'], 40)} ({f(lo['v'])})."
         t += f" Total: {f(total([x['v'] for x in totals]))}."
+    if missing:
+        t += f" Missing: {_fmt_list(missing)} (no value, so not counted above)."
     ls = [k for k in _line_cols(spec) if k not in keys]
     if ls:
         t += f" With {'a line' if len(ls) == 1 else 'lines'} for {_fmt_list(ls)} on the same axis."
@@ -572,6 +576,14 @@ def _check_scatter(spec: Spec, rows: list[dict], issues: Issues) -> None:
     _interval_check(spec, rows, issues, "x")
     if spec.get("order") and spec.get("density") == "hex":
         _issue(issues, "warning", "order_ignored_density", "order", "Hexagons count points, so no line joins them; `order` is ignored while hexagons are drawn.", 'Use `density: "points"` (or leave it out) for a connected scatter.')
+    jit = spec.get("jitter")
+    if is_number(jit) and jit > 0 and not _jittered(spec):
+        if spec.get("order"):
+            _issue(issues, "warning", "jitter_ignored", "jitter", "A line joins the points of a connected scatter, so jitter would pull them off it; `jitter` is ignored.", "Drop `order` to jitter the dots, or drop `jitter`.")
+        else:
+            _issue(issues, "warning", "jitter_ignored", "jitter", "Hexagons count points, so there are no dots to nudge; `jitter` is ignored while hexagons are drawn.", 'Use `density: "points"` (or leave it out) to jitter the dots.')
+    if "jitterAxis" in spec and not (is_number(jit) and jit > 0):
+        _issue(issues, "warning", "jitter_axis_ignored", "jitterAxis", "jitterAxis only applies when `jitter` is above 0; it is ignored.")
     if "trendBandwidth" in spec and spec.get("trend") != "loess":
         _issue(issues, "warning", "trend_bandwidth_ignored", "trendBandwidth", 'trendBandwidth only applies to `trend: "loess"`; it is ignored.')
     if _has_error(issues):
@@ -601,9 +613,18 @@ def _describe_scatter(spec: Spec) -> str:
         t += f" Points carry {' and '.join(bars)} error bars."
     if spec.get("order") and spec.get("density") != "hex":
         t += f" Points are joined by a line in the order of {spec['order']}."
+    if _jittered(spec):
+        axis = spec.get("jitterAxis")
+        t += f" Points are nudged slightly{' sideways' if axis == 'x' else ' up and down' if axis == 'y' else ''} so that overlapping points show; their drawn positions are approximate, the values exact."
     if spec.get("trend") == "loess":
         t += " A LOESS curve shows the local trend."
     return t
+
+
+def _jittered(spec: dict) -> bool:
+    """Whether `jitter` moves points: set, above 0, and not a chart that draws hexagons or joins points by a line."""
+    j = spec.get("jitter")
+    return is_number(j) and j > 0 and spec.get("density") != "hex" and not spec.get("order")
 
 
 # --------------------------------------------------------------------------------------- pie / donut
@@ -630,6 +651,30 @@ def _pie_slices(spec: Spec) -> list[dict]:
     return allv
 
 
+def _check_pie(spec: Spec, rows: list[dict], issues: Issues) -> None:
+    """negative_slices, pie_no_positive and zero_slices, on what the chart draws. Mirrors `checkPie`."""
+    sums: dict[str, float] = {}
+    negative = 0
+    for r in rows:
+        v = to_number(r.get(spec["value"]))
+        if v is None:
+            continue
+        if v < 0:
+            negative += 1
+            continue
+        k = or_empty(r.get(spec["label"]))
+        sums[k] = sums.get(k, 0.0) + v
+    if negative:
+        _issue(issues, "warning", "negative_slices", "data", f"{negative} negative value(s) were skipped; a pie cannot show negatives.", "Use a bar chart for values that can be negative, or remove those rows with `transform`.")
+    if not any(v > 0 for v in sums.values()):
+        _issue(issues, "warning", "pie_no_positive", "value", f"No slice has a positive value, so the {spec['type']} has nothing to draw.",
+               f'A {spec["type"]} shows shares of a positive total: check the "{spec["value"]}" column, or use a bar chart for values that are zero or negative.')
+        return
+    zero = sum(1 for v in sums.values() if v == 0)
+    if zero:
+        _issue(issues, "warning", "zero_slices", "value", f"{zero} slice(s) add up to 0: they get no angle and appear in the legend only.", "Remove those rows with `transform` to drop them from the legend too.")
+
+
 def _describe_pie(spec: Spec, name: str) -> str:
     allv = _pie_slices(spec)
     tot = total([a["value"] for a in allv])
@@ -641,6 +686,8 @@ def _describe_pie(spec: Spec, name: str) -> str:
         if len(srt) > 2:
             top = srt[:3]
             t += f" The top {min(3, len(srt))} ({_fmt_list([clip(x['key'], 30) for x in top], 3)}) make up {format_percent(total([x['value'] for x in top]) / tot)}."
+    else:
+        t += " No slice has a positive value, so nothing is drawn."
     return t
 
 
@@ -954,6 +1001,46 @@ def _describe_sankey(spec: Spec) -> str:
     t = f"{_lead(spec, 'Sankey diagram')} {len(nodes)} nodes, {len(ls)} flows; {f(tot)} enters from {_fmt_list(sources, 4)} and ends in {_fmt_list(sinks, 4)}."
     t += f" Largest flow: {clip(big['source'], 30)} to {clip(big['target'], 30)} ({f(big['value'])})."
     return t
+
+
+# ---------------------------------------------------------------------------------------- chord
+# Mirrors `packages/core/src/charts/chord.ts`; the flows are the sankey's (`_links`).
+
+CHORD_MAX_NODES = 24
+
+
+def _check_chord(spec: Spec, rows: list[dict], issues: Issues) -> None:
+    kept = []
+    for r in rows:
+        v = to_number(r.get(spec["value"]))
+        s, t = or_empty(r.get(spec["from"])), or_empty(r.get(spec["to"]))
+        if v is not None and v > 0 and s != t:
+            kept.append((s, t))
+    nodes = {n for pair in kept for n in pair}
+    if len(kept) != len(rows):
+        _issue(issues, "warning", "flows_skipped", "value", "Flows with zero, negative or no number, or that start and end at the same group, are skipped.")
+    if not kept:
+        _issue(issues, "error", "no_flows", "value", "No row has a positive number between two different groups, so there is nothing to draw.", "Check the from, to and value columns.")
+    if len(nodes) > CHORD_MAX_NODES:
+        _issue(issues, "error", "too_many_nodes", "from", f"A chord diagram can show at most {CHORD_MAX_NODES} groups; this has {len(nodes)}.", 'Merge small groups into "Other".')
+    if len({f"{s}\u0000{t}" for s, t in kept}) > MAX_LINKS:
+        _issue(issues, "error", "too_many_links", "data", f"A chord diagram can show at most {MAX_LINKS} flows.")
+
+
+def _describe_chord(spec: Spec) -> str:
+    ls = _links(spec)
+    f = _formatter(spec)
+    if not ls:
+        return f"{_lead(spec, 'Chord diagram')} No positive flows."
+    nodes = chord_layout(ls)["nodes"]
+    busy = nodes[0]
+    for n in nodes[1:]:
+        if n["total"] > busy["total"]:
+            busy = n
+    big = _first_max(ls, lambda l: l["value"])
+    return (f"{_lead(spec, 'Chord diagram')} {len(nodes)} groups, {len(ls)} flows, {f(total([l['value'] for l in ls]))} in all. "
+            f"Busiest group: {clip(busy['name'], 30)} ({f(busy['total'])} in and out). "
+            f"Largest flow: {clip(big['source'], 30)} to {clip(big['target'], 30)} ({f(big['value'])}). Arcs follow the order the groups first appear in the data.")
 
 
 # ------------------------------------------------------------------------------------------- maps
@@ -2000,6 +2087,8 @@ def _describe_area(spec: Spec) -> str:
 
 CHECKS: dict[str, Callable[[Spec, list[dict], Issues], None]] = {
     "bar": _check_bar,
+    "pie": _check_pie,
+    "donut": _check_pie,
     "line": lambda s, r, i: _check_series(s, r, i, False),
     "area": lambda s, r, i: _check_series(s, r, i, True),
     "scatter": _check_scatter,
@@ -2019,6 +2108,7 @@ CHECKS: dict[str, Callable[[Spec, list[dict], Issues], None]] = {
     "radar": _check_radar,
     "treemap": _check_treemap,
     "sankey": _check_sankey,
+    "chord": _check_chord,
 }
 
 # Map charts: the check also gets the geography that `geo` resolved to (None when the spec has no `geo`).
@@ -2053,6 +2143,7 @@ DESCRIBE: dict[str, Callable[[Spec], str]] = {
     "radar": _describe_radar,
     "treemap": _describe_treemap,
     "sankey": _describe_sankey,
+    "chord": _describe_chord,
     "choropleth": _describe_choropleth,
     "bubble-map": _describe_bubble_map,
     "column-map": _describe_column_map,

@@ -55,7 +55,7 @@ describe('the plugin', () => {
     expect(plugin.manifest.name).toBe('@supersolutions/super-plot-chat-plugin')
     expect(plugin.cardKinds!.map(k => k.kind)).toEqual(['super.plot'])
     expect(plugin.tools.map(t => [t.name, t.authority])).toEqual([
-      ['plot_state', 'read'], ['plot_data', 'read'], ['plot_resolve', 'read'],
+      ['plot_state', 'read'], ['plot_data', 'read'], ['plot_suggest', 'read'], ['plot_resolve', 'read'],
       ['plot_highlight', 'draft'], ['plot_annotate', 'draft'], ['plot_clear_annotations', 'act']
     ])
     for (const t of plugin.tools) expect(t.inputSchema.properties).toHaveProperty('card')
@@ -222,6 +222,17 @@ describe('tools', () => {
     expect(r.rows).toHaveLength(500)
     expect(r.more).toBe(true)
     expect((await tool('plot_data')({ offset: 500, limit: 500 })).rows).toHaveLength(200)
+  })
+
+  it('plot_suggest proposes other charts for the rows of a card and changes nothing on screen', async () => {
+    show(cardOf('sales'))
+    const r = await tool('plot_suggest')({ intent: 'trend', max: 2 })
+    expect(r).toMatchObject({ card: 'sales', ok: true, version: 1 })
+    expect(r.suggestions.length).toBeGreaterThan(0)
+    expect(r.suggestions.length).toBeLessThanOrEqual(2)
+    expect(r.suggestions[0]).toMatchObject({ code: 'trend_line', spec: { type: 'line', x: 'month', y: 'sales' } })
+    expect(outlined(box)).toBe(0)
+    await expect(tool('plot_suggest')({ max: 9 })).resolves.toMatchObject({ ok: false, issues: [{ code: 'bad_value' }] })
   })
 
   it('plot_resolve says what a reference names without showing it', async () => {

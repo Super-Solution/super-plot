@@ -49,6 +49,50 @@ export function fit(text: string, maxWidth: number, size: number, measure: Measu
   return lo <= 0 ? '…' : chars.slice(0, lo).join('').trimEnd() + '…'
 }
 
+const wideChar = (ch: string): boolean => isWide(ch.codePointAt(0) ?? 0)
+
+/**
+ * Break `text` into at most `maxLines` lines that each fit `maxWidth`: at spaces for words, between any two characters
+ * of Chinese, Japanese and Korean text (no spaces there). A line that still does not fit (one long word, or the text
+ * left after the last line) is shortened with an ellipsis, as {@link fit} does, so the ellipsis is the last resort and
+ * the words come first. Text that fits is one line, unchanged.
+ */
+export function wrap(text: string, maxWidth: number, size: number, measure: Measure, weight = 400, maxLines = 2): string[] {
+  if (maxLines <= 1 || measure(text, size, weight) <= maxWidth) return [maxLines <= 1 ? fit(text, maxWidth, size, measure, weight) : text]
+  // Tokens: a run of spaces, one wide character, or a run of anything else.
+  const tokens: string[] = []
+  let run = ''
+  const flush = (): void => { if (run) tokens.push(run); run = '' }
+  for (const ch of text) {
+    if (ch === ' ' || ch === '\t' || ch === '\n') { flush(); tokens.push(ch); continue }
+    if (wideChar(ch)) { flush(); tokens.push(ch); continue }
+    run += ch
+  }
+  flush()
+  const lines: string[] = []
+  let cur = ''
+  for (let i = 0; i < tokens.length; i++) {
+    const t = tokens[i]
+    const blank = t.trim() === ''
+    if (cur === '') {
+      if (!blank) cur = t
+      continue
+    }
+    if (measure((cur + t).trimEnd(), size, weight) <= maxWidth) {
+      cur += t
+      continue
+    }
+    lines.push(fit(cur.trimEnd(), maxWidth, size, measure, weight))
+    if (lines.length === maxLines - 1) {
+      lines.push(fit(tokens.slice(i).join('').trim(), maxWidth, size, measure, weight))
+      return lines
+    }
+    cur = blank ? '' : t
+  }
+  if (cur.trim()) lines.push(fit(cur.trimEnd(), maxWidth, size, measure, weight))
+  return lines
+}
+
 /** Cap spec-supplied strings so one runaway label cannot blow up a layout or an SVG. */
 export const clip = (s: unknown, max = 160): string => {
   const t = typeof s === 'string' ? s : s === null || s === undefined ? '' : String(s)

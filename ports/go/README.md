@@ -52,7 +52,7 @@ An `Issue` is `{Severity, Code, Path, Message, Hint}`. `Severity`, `Code` and `P
 
 Round 6 is covered: `gauge`, `wordcloud`, `scatter3d` and `surface` (with `projection` and the `camera` of a 3D view), a second value axis (`yRight`, `yRightLabel`, `rightDomain`, `formatRight`) and a broken one (`yBreak`) on bar, line and area, with their refusals and the sentences they add to a description, and the `index` transform step.
 
-All 31 chart types are covered. Descriptions read dates in UTC (the reference's `timeZone` is a render option the ports do not take). The statistics agree with the reference to the last bit: `fdlibm.go` computes `exp`, `log10`, `cbrt` and powers the way the reference's JavaScript engine does, which is not always what `math` returns.
+All 32 chart types are covered. Descriptions read dates in UTC (the reference's `timeZone` is a render option the ports do not take). The statistics agree with the reference to the last bit: `fdlibm.go` computes `exp`, `log10`, `cbrt` and powers the way the reference's JavaScript engine does, which is not always what `math` returns.
 
 ## Develop
 

@@ -149,8 +149,9 @@ describe('patterns', () => {
   })
   it('SVG defines the patterns and draws them over the fill', () => {
     const svg = renderToSvg(spec)
-    expect(svg).toContain('<pattern id="sp-p0"')
-    expect(svg).toContain('fill="url(#sp-p1)"')
+    const id = svg.match(/<pattern id="(sp[0-9a-z]+)-p0"/)![1]
+    expect(svg).toContain(`fill="url(#${id}-p1)"`)
+    expect(renderToSvg(spec, { idPrefix: 'mine' })).toContain('<pattern id="mine-p0"')
   })
 })
 

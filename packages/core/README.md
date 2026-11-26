@@ -16,7 +16,7 @@ const svg   = renderToSvg(spec, { width: 640, height: 360, theme: 'dark' })
 - `valueFormatter(format, locale)` and `formatPercent` format numbers the way the charts do.
 - `chartCatalog()` and `plotJsonSchema()` describe every registered chart for agents; `registerChart(def)` adds one.
 - `createTheme`, `registerTheme`, `resolveVars` for themes; see `docs/THEMING.md`.
-- `@supersolutions/super-plot-core/tools`: agent tools (`plot_catalog`, `plot_schema`, `plot_validate`, `plot_describe`, `plot_render_svg`), all read-only.
+- `@supersolutions/super-plot-core/tools`: agent tools (`plot_catalog`, `plot_schema`, `plot_suggest`, `plot_validate`, `plot_describe`, `plot_render_svg`), all read-only.
 - `@supersolutions/super-plot-core/adapters`: `fromChatChartCard` turns a Super Chat `chart` card into a spec.
 
 Text width in core is estimated (no DOM); the web binding measures with canvas for exact layout.

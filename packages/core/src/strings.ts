@@ -22,6 +22,10 @@ export const DEFAULT_STRINGS = {
   total: 'Total',
   /** Legend swatch for days or regions without a value (calendar). */
   noData: 'No data',
+  /** Drawn in the middle of a pie or donut that has no positive value to show. */
+  noPositive: 'No positive values to show',
+  /** First line of the placeholder `renderToSvg(spec, { onInvalid: 'placeholder' })` writes for a spec that cannot be drawn. */
+  chartUnavailable: 'This chart cannot be drawn',
   /** After a 0 drawn for a missing value (`gaps: "zero"`). */
   missing: '{value} (missing)',
   /** Accessible name of a legend entry. */

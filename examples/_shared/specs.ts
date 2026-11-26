@@ -148,6 +148,25 @@ export const gallery: { id: string; note: string; spec: Record<string, unknown> 
     }
   },
   {
+    id: 'chord-trade', note: 'arcs follow the order the groups first appear, so the same data is always the same picture; each direction is its own ribbon',
+    spec: {
+      type: 'chord', title: 'Trade between regions', subtitle: 'Exports, USD billions. Invented figures', from: 'from', to: 'to', value: 'billions', format: 'integer',
+      data: [
+        { from: 'Asia', to: 'Europe', billions: 120 }, { from: 'Europe', to: 'Asia', billions: 95 }, { from: 'Asia', to: 'Americas', billions: 150 },
+        { from: 'Americas', to: 'Asia', billions: 70 }, { from: 'Europe', to: 'Americas', billions: 85 }, { from: 'Americas', to: 'Europe', billions: 110 },
+        { from: 'Africa', to: 'Europe', billions: 45 }, { from: 'Europe', to: 'Africa', billions: 30 }, { from: 'Asia', to: 'Africa', billions: 40 }
+      ]
+    }
+  },
+  {
+    id: 'scatter-jitter', note: 'jitter nudges stacked dots by a fixed offset so whole-number scores show; the data and the tooltip keep the true values',
+    spec: {
+      type: 'scatter', title: 'Satisfaction by tenure', subtitle: 'One dot per customer, scores rounded to whole numbers. Invented figures. Dots are nudged 7 px so those on one spot show',
+      x: 'years', y: 'score', series: 'plan', jitter: 7, xLabel: 'Years as a customer', yLabel: 'Score (1 to 5)', xDomain: [0, 6], yDomain: [0, 6],
+      data: Array.from({ length: 60 }, (_, i) => ({ years: 1 + (i * 3) % 5, score: Math.max(1, Math.min(5, 1 + ((i * 7 + (i % 3)) % 5))), plan: i % 2 ? 'Team' : 'Solo' }))
+    }
+  },
+  {
     id: 'scatter-cycle', note: 'order joins the points in time order; four shaded regions make the quadrants; a prefix before the figure',
     spec: {
       type: 'scatter', title: 'Growth and inflation', subtitle: 'One point per year, joined in order. Invented figures', x: 'growth', y: 'inflation', order: 'year', label: 'year',

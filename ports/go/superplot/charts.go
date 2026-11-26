@@ -30,6 +30,8 @@ type spec = map[string]any
 
 var checks = map[string]func(spec, []row, *[]Issue){
 	"bar":       checkBar,
+	"pie":       checkPie,
+	"donut":     checkPie,
 	"line":      func(s spec, r []row, i *[]Issue) { checkSeries(s, r, i, false) },
 	"area":      func(s spec, r []row, i *[]Issue) { checkSeries(s, r, i, true) },
 	"scatter":   checkScatter,
@@ -49,6 +51,7 @@ var checks = map[string]func(spec, []row, *[]Issue){
 	"radar":     checkRadar,
 	"treemap":   checkTreemap,
 	"sankey":    checkSankey,
+	"chord":     checkChord,
 }
 
 // mapChecks are the checks of the map charts: they also get the geography that geo resolved to (nil without geo).
@@ -102,6 +105,7 @@ var describers = map[string]func(spec) string{
 	"radar":      describeRadar,
 	"treemap":    describeTreemap,
 	"sankey":     describeSankey,
+	"chord":      describeChord,
 	"choropleth": describeChoropleth,
 	"bubble-map": describeBubbleMap,
 	"column-map": describeColumnMap,
@@ -477,13 +481,15 @@ func describeBar(s spec) string {
 		c string
 		v float64
 	}
-	totals := make([]tot, len(mod.cats))
-	for i, c := range mod.cats {
-		v := 0.0
+	// A category with no number at all is missing, not 0: named at the end, and left out of the extremes and the total.
+	var totals []tot
+	var missing []string
+	for _, c := range mod.cats {
 		if row, ok := mod.m.get(c); ok {
-			v = total(row.values())
+			totals = append(totals, tot{c, total(row.values())})
+		} else {
+			missing = append(missing, clip(c, 30))
 		}
-		totals[i] = tot{c, v}
 	}
 	kind := "Bar chart"
 	if str(s, "mark") == "lollipop" && !stacked(s) {
@@ -514,6 +520,9 @@ func describeBar(s spec) string {
 			sum[i] = x.v
 		}
 		t += fmt.Sprintf(" Total: %s.", f(total(sum)))
+	}
+	if len(missing) > 0 {
+		t += fmt.Sprintf(" Missing: %s (no value, so not counted above).", fmtList(missing, 5))
 	}
 	var ls []string
 	for _, k := range lineCols(s) {
@@ -849,6 +858,18 @@ func checkScatter(s spec, rows []row, issues *[]Issue) {
 	if str(s, "order") != "" && str(s, "density") == "hex" {
 		issue(issues, "warning", "order_ignored_density", "order", "Hexagons count points, so no line joins them; `order` is ignored while hexagons are drawn.", "Use `density: \"points\"` (or leave it out) for a connected scatter.")
 	}
+	if j, ok := s["jitter"].(float64); ok && j > 0 && !jittered(s) {
+		if str(s, "order") != "" {
+			issue(issues, "warning", "jitter_ignored", "jitter", "A line joins the points of a connected scatter, so jitter would pull them off it; `jitter` is ignored.", "Drop `order` to jitter the dots, or drop `jitter`.")
+		} else {
+			issue(issues, "warning", "jitter_ignored", "jitter", "Hexagons count points, so there are no dots to nudge; `jitter` is ignored while hexagons are drawn.", "Use `density: \"points\"` (or leave it out) to jitter the dots.")
+		}
+	}
+	if has(s, "jitterAxis") {
+		if j, ok := s["jitter"].(float64); !ok || !(j > 0) {
+			issue(issues, "warning", "jitter_axis_ignored", "jitterAxis", "jitterAxis only applies when `jitter` is above 0; it is ignored.")
+		}
+	}
 	if has(s, "trendBandwidth") && str(s, "trend") != "loess" {
 		issue(issues, "warning", "trend_bandwidth_ignored", "trendBandwidth", "trendBandwidth only applies to `trend: \"loess\"`; it is ignored.")
 	}
@@ -913,10 +934,26 @@ func describeScatter(s spec) string {
 	if str(s, "order") != "" && str(s, "density") != "hex" {
 		t += fmt.Sprintf(" Points are joined by a line in the order of %s.", str(s, "order"))
 	}
+	if jittered(s) {
+		dir := ""
+		switch str(s, "jitterAxis") {
+		case "x":
+			dir = " sideways"
+		case "y":
+			dir = " up and down"
+		}
+		t += fmt.Sprintf(" Points are nudged slightly%s so that overlapping points show; their drawn positions are approximate, the values exact.", dir)
+	}
 	if str(s, "trend") == "loess" {
 		t += " A LOESS curve shows the local trend."
 	}
 	return t
+}
+
+// jittered reports whether `jitter` moves points: set, above 0, and not a chart that draws hexagons or joins points by a line.
+func jittered(s spec) bool {
+	j, ok := s["jitter"].(float64)
+	return ok && j > 0 && str(s, "density") != "hex" && str(s, "order") == ""
 }
 
 // --- pie / donut -----------------------------------------------------------------------------------------
@@ -979,6 +1016,44 @@ func pieSlices(s spec) []slice {
 	return all
 }
 
+// checkPie mirrors checkPie: negative_slices, pie_no_positive and zero_slices, computed on what the chart draws
+// (rows with one label are summed, text that is not a number is skipped).
+func checkPie(s spec, rows []row, issues *[]Issue) {
+	sums := newOmap[float64]()
+	negative := 0
+	for _, r := range rows {
+		v, ok := toNumber(r[str(s, "value")])
+		if !ok {
+			continue
+		}
+		if v < 0 {
+			negative++
+			continue
+		}
+		k := orEmpty(r[str(s, "label")])
+		cur, _ := sums.get(k)
+		sums.set(k, cur+v)
+	}
+	if negative > 0 {
+		issue(issues, "warning", "negative_slices", "data", fmt.Sprintf("%d negative value(s) were skipped; a pie cannot show negatives.", negative), "Use a bar chart for values that can be negative, or remove those rows with `transform`.")
+	}
+	positive, zero := false, 0
+	for _, v := range sums.values() {
+		if v > 0 {
+			positive = true
+		} else if v == 0 {
+			zero++
+		}
+	}
+	if !positive {
+		issue(issues, "warning", "pie_no_positive", "value", fmt.Sprintf("No slice has a positive value, so the %s has nothing to draw.", str(s, "type")), fmt.Sprintf(`A %s shows shares of a positive total: check the "%s" column, or use a bar chart for values that are zero or negative.`, str(s, "type"), str(s, "value")))
+		return
+	}
+	if zero > 0 {
+		issue(issues, "warning", "zero_slices", "value", fmt.Sprintf("%d slice(s) add up to 0: they get no angle and appear in the legend only.", zero), "Remove those rows with `transform` to drop them from the legend too.")
+	}
+}
+
 func describePie(s spec, name string) string {
 	all := pieSlices(s)
 	vals := make([]float64, len(all))
@@ -1001,6 +1076,8 @@ func describePie(s spec, name string) string {
 			}
 			t += fmt.Sprintf(" The top %d (%s) make up %s.", min(3, len(sorted)), fmtList(names, 3), FormatPercent(total(tv)/tot, 1))
 		}
+	} else {
+		t += " No slice has a positive value, so nothing is drawn."
 	}
 	return t
 }
@@ -1461,6 +1538,63 @@ func describeSankey(s spec) string {
 	big := firstMax(ls, func(l *link) float64 { return l.value })
 	return fmt.Sprintf("%s %d nodes, %d flows; %s enters from %s and ends in %s. Largest flow: %s to %s (%s).",
 		lead(s, "Sankey diagram"), len(nodes.keys), len(ls), f(total(entering)), fmtList(sources, 4), fmtList(sinks, 4), clip(big.source, 30), clip(big.target, 30), f(big.value))
+}
+
+// --- chord -----------------------------------------------------------------------------------------------
+// Mirrors packages/core/src/charts/chord.ts; the flows are the sankey's (sankeyLinks).
+
+const chordMaxNodes = 24
+
+func checkChord(s spec, rows []row, issues *[]Issue) {
+	kept := 0
+	nodes := map[string]bool{}
+	links := map[string]bool{}
+	for _, r := range rows {
+		v, ok := toNumber(r[str(s, "value")])
+		src, dst := orEmpty(r[str(s, "from")]), orEmpty(r[str(s, "to")])
+		if !ok || !(v > 0) || src == dst {
+			continue
+		}
+		kept++
+		nodes[src], nodes[dst] = true, true
+		links[src+"\x00"+dst] = true
+	}
+	if kept != len(rows) {
+		issue(issues, "warning", "flows_skipped", "value", "Flows with zero, negative or no number, or that start and end at the same group, are skipped.")
+	}
+	if kept == 0 {
+		issue(issues, "error", "no_flows", "value", "No row has a positive number between two different groups, so there is nothing to draw.", "Check the from, to and value columns.")
+	}
+	if len(nodes) > chordMaxNodes {
+		issue(issues, "error", "too_many_nodes", "from", fmt.Sprintf("A chord diagram can show at most %d groups; this has %d.", chordMaxNodes, len(nodes)), `Merge small groups into "Other".`)
+	}
+	if len(links) > maxLinks {
+		issue(issues, "error", "too_many_links", "data", fmt.Sprintf("A chord diagram can show at most %d flows.", maxLinks))
+	}
+}
+
+func describeChord(s spec) string {
+	ls := sankeyLinks(s)
+	f := formatter(s)
+	if len(ls) == 0 {
+		return lead(s, "Chord diagram") + " No positive flows."
+	}
+	flows := make([]ChordFlow, len(ls))
+	var values []float64
+	for i, l := range ls {
+		flows[i] = ChordFlow{l.source, l.target, l.value}
+		values = append(values, l.value)
+	}
+	nodes, _ := ChordLayout(flows, ChordGap)
+	busy := nodes[0]
+	for _, n := range nodes[1:] {
+		if n.Total > busy.Total {
+			busy = n
+		}
+	}
+	big := firstMax(ls, func(l *link) float64 { return l.value })
+	return fmt.Sprintf("%s %d groups, %d flows, %s in all. Busiest group: %s (%s in and out). Largest flow: %s to %s (%s). Arcs follow the order the groups first appear in the data.",
+		lead(s, "Chord diagram"), len(nodes), len(ls), f(total(values)), clip(busy.Name, 30), f(busy.Total), clip(big.source, 30), clip(big.target, 30), f(big.value))
 }
 
 // --- maps ------------------------------------------------------------------------------------------------

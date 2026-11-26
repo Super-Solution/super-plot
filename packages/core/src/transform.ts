@@ -31,7 +31,7 @@ import { closest } from './util/num.js'
 export const TRANSFORM_LIMIT = 10
 export const TRANSFORM_OPS = ['filter', 'timeUnit', 'aggregate', 'sort', 'top', 'bin', 'window', 'fold', 'index'] as const
 export type TransformOp = (typeof TRANSFORM_OPS)[number]
-export const WINDOW_OPS = ['sum', 'mean', 'count', 'rank', 'pctChange', 'lag', 'lead', 'movingMean'] as const
+export const WINDOW_OPS = ['sum', 'mean', 'count', 'rank', 'pctChange', 'lag', 'lead', 'movingMean', 'ema'] as const
 /** `bin` makes at most this many bins; `fold` folds at most this many columns. */
 export const BIN_LIMIT = 200
 export const FOLD_LIMIT = 50

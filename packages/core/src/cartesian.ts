@@ -3,7 +3,7 @@
 import type { ChartCtx } from './context.js'
 import type { AxisInfo, Rect, Tip } from './scene.js'
 import type { BandScale, LinearScale } from './scale.js'
-import { fit } from './util/text.js'
+import { fit, wrap } from './util/text.js'
 import { REGION_BOUNDS } from './schema.js'
 import { toTime, zoneOffset } from './util/time.js'
 
@@ -38,8 +38,20 @@ export interface CartesianExtras {
   ink?: { left?: string; right?: string }
 }
 
-export function layoutCartesian(c: ChartCtx, area: Rect, x: Axis, y: Axis, extras: CartesianExtras = {}): Rect {
+/** A narrow chart (under 420 px) with 1 to 4 labelled annotations numbers them and lists them in a key: room for 4 lines at most. */
+export const MAX_KEYED_ANNOTATIONS = 4
+const MIN_KEYED_PLOT = 140
+
+export function layoutCartesian(c: ChartCtx, whole: Rect, x: Axis, y: Axis, extras: CartesianExtras = {}): Rect {
   const size = c.size
+  // The annotation key sits under the axes: take its lines off the bottom of the area first.
+  const labelled = c.compact && c.spec.bare !== true ? ((c.spec.annotations ?? []) as { label?: string }[]).filter(a => typeof a.label === 'string' && a.label !== '').length : 0
+  const lineH = size * 1.3
+  // The key must leave a plot that can still be read (140 px): a short chart keeps its labels beside the lines.
+  const keyLines = labelled >= 1 && labelled <= MAX_KEYED_ANNOTATIONS && whole.h - (labelled * lineH + 6) >= MIN_KEYED_PLOT ? labelled : 0
+  const keyH = keyLines ? keyLines * lineH + 6 : 0
+  const area: Rect = keyH ? { ...whole, h: Math.max(80, whole.h - keyH) } : whole
+  c.annotationKey = keyH ? { x: whole.x, y: area.y + area.h + 6, w: whole.w, lineH, used: [] } : undefined
   const labelPad = 8
   const titleH = (a: Axis): number => (a.title ? size + 8 : 0)
   const right = extras.right
@@ -110,17 +122,17 @@ export function layoutCartesian(c: ChartCtx, area: Rect, x: Axis, y: Axis, extra
     if (i % xl.stride !== 0) return
     const px = x.scale.at(t.key as never)
     const ty = plot.y + plot.h + labelPad + (xl.rotate ? 2 : 0)
-    c.marks.push(
-      xl.rotate
-        ? c.text(px + 3, ty, xl.fitLabel(t.label), { anchor: 'end', baseline: 'hanging', rotate: -45, fill: muted })
-        : c.text(px, ty, xl.fitLabel(t.label), { anchor: 'middle', baseline: 'hanging', fill: muted })
-    )
+    if (xl.rotate) c.marks.push(c.text(px + 3, ty, xl.lines(t.label)[0], { anchor: 'end', baseline: 'hanging', rotate: -45, fill: muted }))
+    else xl.lines(t.label).forEach((line, k) => c.marks.push(c.text(px, ty + k * size * LABEL_LINE, line, { anchor: 'middle', baseline: 'hanging', fill: muted })))
   })
   const maxYW = y.scale.kind === 'band' ? yLabelW : Infinity
   const leftInk = right ? ink.left ?? muted : muted
+  // Category labels (a horizontal bar chart) wrap to a second line when their row is tall enough, before they are shortened.
+  const rowLines = y.scale.kind === 'band' && plot.h / Math.max(1, yTicks.length) >= size * 2.4 ? 2 : 1
   for (const t of yTicks) {
     const py = y.scale.at(t.key as never)
-    c.marks.push(c.text(plot.x - labelPad, py, fit(t.label, maxYW, size, c.env.measure), { anchor: 'end', baseline: 'middle', fill: leftInk }))
+    const lines = rowLines > 1 ? wrap(t.label, maxYW, size, c.env.measure, 400, rowLines) : [fit(t.label, maxYW, size, c.env.measure)]
+    lines.forEach((line, k) => c.marks.push(c.text(plot.x - labelPad, py + (k - (lines.length - 1) / 2) * size * LABEL_LINE, line, { anchor: 'end', baseline: 'middle', fill: leftInk })))
   }
   if (right) {
     const rightInk = ink.right ?? muted
@@ -132,18 +144,26 @@ export function layoutCartesian(c: ChartCtx, area: Rect, x: Axis, y: Axis, extra
   return plot
 }
 
-function xLabelLayout(c: ChartCtx, x: Axis, ticks: AxisTick[], plotW: number): { rotate: boolean; stride: number; height: number; fitLabel: (s: string) => string } {
+/** Line height of wrapped axis labels, in font sizes. */
+const LABEL_LINE = 1.2
+
+function xLabelLayout(c: ChartCtx, x: Axis, ticks: AxisTick[], plotW: number): { rotate: boolean; stride: number; height: number; lines: (s: string) => string[] } {
   const size = c.size
   const widths = ticks.map(t => c.measure(t.label))
   const maxW = Math.max(0, ...widths)
-  const identity = (s: string): string => s
-  if (x.scale.kind !== 'band') return { rotate: false, stride: 1, height: size + 4, fitLabel: identity }
+  const one = (s: string): string[] => [s]
+  if (x.scale.kind !== 'band') return { rotate: false, stride: 1, height: size + 4, lines: one }
   const step = plotW / Math.max(1, ticks.length)
-  if (maxW <= step - 6) return { rotate: false, stride: 1, height: size + 4, fitLabel: identity }
-  if (step >= 48) return { rotate: false, stride: 1, height: size + 4, fitLabel: s => fit(s, step - 6, size, c.env.measure) }
+  if (maxW <= step - 6) return { rotate: false, stride: 1, height: size + 4, lines: one }
+  if (step >= 48) {
+    // Too wide for its slot, but the slots are wide enough to read: break the words over two lines; shorten only what still does not fit.
+    const lines = (s: string): string[] => wrap(s, step - 6, size, c.env.measure, 400, 2)
+    const most = Math.max(1, ...ticks.map(t => lines(t.label).length))
+    return { rotate: false, stride: 1, height: size + 4 + (most - 1) * size * LABEL_LINE, lines }
+  }
   const cap = 96
   const h = Math.min(maxW, cap) * 0.71 + size * 0.6 + 4
-  return { rotate: true, stride: Math.max(1, Math.ceil((size * 1.35) / Math.max(1, step))), height: h, fitLabel: s => fit(s, cap, size, c.env.measure) }
+  return { rotate: true, stride: Math.max(1, Math.ceil((size * 1.35) / Math.max(1, step))), height: h, lines: s => [fit(s, cap, size, c.env.measure)] }
 }
 
 export interface AxisPair { x: Axis; y: Axis }
@@ -154,6 +174,14 @@ const TONE: Record<string, string> = { neutral: 'text-muted', positive: 'positiv
 function annotationColor(c: ChartCtx, a: { tone?: string } & AnnotationExtra): string {
   if (a.tone === undefined && a.by === 'assistant') return c.c('accent')
   return c.c(TONE[a.tone ?? 'neutral'] ?? 'text-muted')
+}
+
+/** What to print where an annotation sits: its label, or on a narrow chart its number (the label then goes in the key under the plot). */
+function tag(c: ChartCtx, label: string): string {
+  const k = c.annotationKey
+  if (!k) return label
+  k.used.push(label)
+  return String(k.used.length)
 }
 
 /** Reference lines and bands from `spec.annotations`. */
@@ -176,7 +204,8 @@ export function drawAnnotations(c: ChartCtx, plot: Rect, x: Axis, y: Axis): void
     }
     const color = annotationColor(c, a)
     const horizontal = a.axis === 'y'
-    const { label, tip, aria } = annotationText(c, a)
+    const { label: full, tip, aria } = annotationText(c, a)
+    const label = full ? tag(c, full) : full
     // One tab stop per annotation: the note's tooltip goes on the label, or on the line or band when there is none.
     const keyed = a.key !== undefined ? { key: a.key } : {}
     const own = { ...(tip ? { tip, aria } : {}), ...keyed }
@@ -200,6 +229,8 @@ export function drawAnnotations(c: ChartCtx, plot: Rect, x: Axis, y: Axis): void
     }
   }
   for (const [i, a] of points) drawPointAnnotation(c, plot, x, y, i, a)
+  const k = c.annotationKey
+  if (k) k.used.forEach((label, i) => c.marks.push(c.text(k.x + 2, k.y + i * k.lineH, fit(`${i + 1}  ${label}`, k.w - 4, c.size - 1, c.env.measure), { role: 'label', baseline: 'hanging', size: c.size - 1 })))
 }
 
 export interface RegionAnnotation extends AnnotationExtra { xFrom?: string | number; xTo?: string | number; yFrom?: string | number; yTo?: string | number; label?: string; tone?: string }
@@ -234,7 +265,8 @@ function drawRegion(c: ChartCtx, plot: Rect, x: Axis, y: Axis, i: number, a: Reg
     return
   }
   const color = annotationColor(c, a)
-  const { label, tip, aria } = annotationText(c, a)
+  const { label: full, tip, aria } = annotationText(c, a)
+  const label = full ? tag(c, full) : full
   const keyed = a.key !== undefined ? { key: a.key } : {}
   const own = { ...(tip ? { tip, aria } : {}), ...keyed }
   c.marks.push({ type: 'rect', role: 'annotation', x: xs[0], y: ys[0], w: xs[1] - xs[0], h: ys[1] - ys[0], fill: color, opacity: 0.12, ...(label ? keyed : own) })
@@ -290,7 +322,7 @@ function drawPointAnnotation(c: ChartCtx, plot: Rect, x: Axis, y: Axis, i: numbe
   const size = c.size - 1
   const text = annotationText(c, a)
   const own = { ...(text.tip ? { tip: text.tip, aria: text.aria } : {}), ...(a.key !== undefined ? { key: a.key } : {}) }
-  const label = fit(text.label!, Math.max(40, plot.w - 16), size, c.env.measure)
+  const label = fit(tag(c, text.label!), Math.max(40, plot.w - 16), size, c.env.measure)
   const tw = c.measure(label, size)
   const lead = 16
   const right = px + lead + 4 + tw <= plot.x + plot.w || px - lead - 4 - tw < plot.x

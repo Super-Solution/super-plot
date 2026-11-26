@@ -2,7 +2,7 @@
 // Copyright 2026 SUPER SOLUTION LABS INC
 // Every chart type, registered: a chat may show any of them.
 import { SuperPlot, type SuperPlotOptions } from '@supersolutions/super-plot-web'
-import { LIMITS, formatCardRef, isSafeColor, parseCardRef, resolveRef, validatePlot, type CardRef, type CardRefEvent, type CardRefResult, type Issue } from '@supersolutions/super-plot-core/base'
+import { LIMITS, formatCardRef, isSafeColor, parseCardRef, resolveRef, suggestPlots, validatePlot, type CardRef, type CardRefEvent, type CardRefResult, type Issue } from '@supersolutions/super-plot-core/base'
 import { PLOT_CARD_KIND, PLOT_FALLBACK_MESSAGE, isThemeValue, plotCardKind, readHostTheme, validatePlotCardSpec, type CardMount, type CardMountContext, type CardMountHandle, type ChatPlugin, type HostTheme, type PlotCardSpec, type PluginTool } from '@supersolutions/super-protocol'
 
 export { PLOT_CARD_KIND, PLOT_LIMITS, plotCardKind, validatePlotCardSpec, type PlotCardSpec } from '@supersolutions/super-protocol'
@@ -32,7 +32,7 @@ export interface PlotChatPlugin extends ChatPlugin {
 export const PLOT_DATA_MAX = 500
 /** Cards whose agent annotations are kept for a remount. */
 const MAX_KEPT = 64
-const VERSION = '0.7.0'
+const VERSION = '0.8.0'
 const NAME = '@supersolutions/super-plot-chat-plugin'
 /** Host theme tokens that are also plot colours (`--sp-<token>`). */
 const COLOUR_TOKENS = ['background', 'surface', 'border', 'text', 'text-muted', 'accent', 'positive', 'negative', 'warning', 'info'] as const
@@ -355,6 +355,24 @@ export function createPlotChatPlugin(options: PlotChatPluginOptions = {}): PlotC
         }
         const page = index.slice(offset, offset + limit)
         return { card: c.id, ok: true, total: index.length, offset, columns: data.length ? Object.keys(data[0]) : [], rows: page.map(i => ({ index: i, row: data[i] })), more: offset + page.length < index.length }
+      }
+    },
+    {
+      name: 'plot_suggest',
+      authority: 'read',
+      description: 'Which other charts fit the rows of a plot card: up to max ready specs, best first, each with a stable rule code, why it fits and what to check. Deterministic rules over the card\'s columns; nothing is changed on screen. Use it before proposing a different chart.',
+      inputSchema: {
+        type: 'object',
+        properties: { card, intent: { enum: ['trend', 'compare', 'ranking', 'composition', 'distribution', 'relationship'] }, max: { type: 'integer', minimum: 1, maximum: 8 } },
+        additionalProperties: false
+      },
+      run: async raw => {
+        const a = input(raw)
+        const c = find(a.card)
+        const v = validatePlot(drawn(c))
+        if (!v.ok || !v.spec) return { card: c.id, ok: false, code: 'ref_spec_invalid', reason: 'The plot spec does not validate; plot_state lists its issues.' }
+        const r = suggestPlots({ rows: v.spec.data as Record<string, unknown>[], intent: a.intent as never, max: a.max as number | undefined })
+        return { card: c.id, ...r }
       }
     },
     {

@@ -3,30 +3,15 @@
 import type { ChartDef } from '../registry.js'
 import type { ChartCtx } from '../context.js'
 import { formatPercent } from '../util/format.js'
-import { toNumber, r2 } from '../util/num.js'
+import { r2 } from '../util/num.js'
 import { clip, fit } from '../util/text.js'
-import { fmtList, formatter, lead } from './shared.js'
+import { fmtList, flowLinks, formatter, lead, type Flow } from './shared.js'
 
 const MAX_NODES = 40
 const MAX_LINKS = 300
 
-interface Link { source: string; target: string; value: number }
-
-function links(spec: Record<string, any>): Link[] {
-  const sums = new Map<string, Link>()
-  for (const r of spec.data as Record<string, unknown>[]) {
-    const v = toNumber(r[spec.value])
-    if (v === null || v <= 0) continue
-    const source = String(r[spec.from] ?? '')
-    const target = String(r[spec.to] ?? '')
-    if (source === target) continue
-    const k = `${source}\u0000${target}`
-    const l = sums.get(k)
-    if (l) l.value += v
-    else sums.set(k, { source, target, value: v })
-  }
-  return [...sums.values()]
-}
+type Link = Flow
+const links = flowLinks
 
 /** Topological order, or the names on a cycle when there is one. */
 function cycleOf(ls: { source: string; target: string }[]): string[] | null {

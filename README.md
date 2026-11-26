@@ -1,12 +1,12 @@
 # Super Plot
 
 Statistical charts for people and agents: bar (and lollipop), line, area (and stream graph), scatter, pie, donut, waffle, histogram,
-box plot, violin, beeswarm, heatmap, calendar, waterfall, bullet, bump, timeline, radar, treemap, sunburst, sankey, parallel coordinates,
+box plot, violin, beeswarm, heatmap, calendar, waterfall, bullet, bump, timeline, radar, treemap, sunburst, sankey, chord, parallel coordinates,
 funnel, gauge, word cloud, 3D scatter and surface, and maps (choropleth, bubbles, 3D columns, raised regions, flows; flat or on a globe, drawn with SVG, canvas or WebGL).
 Super Plot is the sibling of Super Chart: Super Chart draws financial time series (candles, drawing tools),
 Super Plot draws everything else you put in a report or a chat answer.
 
-Status: **version 0.7.0 (0.1.0 was the first published version).** The four npm packages are `@supersolutions/super-plot-core`,
+Status: **version 0.8.0 (0.1.0 was the first published version).** The four npm packages are `@supersolutions/super-plot-core`,
 `-web`, `-react` and `-chat-plugin`; the Python and Go ports are not published (see
 [docs/OPEN-DECISIONS.md](docs/OPEN-DECISIONS.md)). Licensed under Apache-2.0 (see
 [LICENSE](LICENSE) and [NOTICE](NOTICE)), © SUPER SOLUTION LABS INC.
@@ -51,7 +51,7 @@ new SuperPlot(document.getElementById('chart')!, spec, { theme: 'auto', onSelect
 | `@supersolutions/super-plot-chat-plugin` | A chat plugin: `super.plot` cards in a chat, links in the text that point into them (`ref:sales?x=2026-03`), and agent tools to read, highlight and annotate a plot. | `.` |
 
 Quick start and agents: the package roots (everything registered). For a page: `/base` plus the groups it draws,
-`registerCharts(basicCharts)`; the browser binding with the nine basic charts is 84.4 KB gzip against 157.0 KB for
+`registerCharts(basicCharts)`; the browser binding with the nine basic charts is 90.9 KB gzip against 165.9 KB for
 everything ([INTEGRATION](docs/INTEGRATION.md#import-only-what-you-use) has the table).
 
 Other languages ([`ports/`](ports/README.md)): **Go and Python** validate a spec, write its plain-language description and compute the shared numbers, identical to TypeScript (they do not draw).

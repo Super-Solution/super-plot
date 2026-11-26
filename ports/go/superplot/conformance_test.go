@@ -115,6 +115,36 @@ type conformance struct {
 		} `json:"in"`
 		Out []int `json:"out"`
 	} `json:"waffleCells"`
+	JitterUnit []struct {
+		In struct {
+			Index int    `json:"index"`
+			Axis  string `json:"axis"`
+		} `json:"in"`
+		Out float64 `json:"out"`
+	} `json:"jitterUnit"`
+	ChordLayout []struct {
+		In struct {
+			Flows []struct {
+				Source string  `json:"source"`
+				Target string  `json:"target"`
+				Value  float64 `json:"value"`
+			} `json:"flows"`
+		} `json:"in"`
+		Out struct {
+			Nodes []struct {
+				Name  string  `json:"name"`
+				Start float64 `json:"start"`
+				End   float64 `json:"end"`
+				Total float64 `json:"total"`
+			} `json:"nodes"`
+			Ribbons []struct {
+				SourceStart float64 `json:"sourceStart"`
+				SourceEnd   float64 `json:"sourceEnd"`
+				TargetStart float64 `json:"targetStart"`
+				TargetEnd   float64 `json:"targetEnd"`
+			} `json:"ribbons"`
+		} `json:"out"`
+	} `json:"chordLayout"`
 	CloudLayout []struct {
 		In struct {
 			Words  []CloudWord `json:"words"`
@@ -676,6 +706,48 @@ func TestWaffleCells(t *testing.T) {
 	for i, k := range c.WaffleCells {
 		if got := WaffleCells(k.In.Values, k.In.Cells); fmt.Sprint(got) != fmt.Sprint(k.Out) {
 			t.Fatalf("waffleCells[%d]: got %v want %v", i, got, k.Out)
+		}
+	}
+}
+
+func TestJitterUnit(t *testing.T) {
+	c := load(t)
+	if len(c.JitterUnit) == 0 {
+		t.Fatal("no jitterUnit cases")
+	}
+	for i, k := range c.JitterUnit {
+		if got := JitterUnit(k.In.Index, k.In.Axis); math.Abs(got-k.Out) > 1e-9 {
+			t.Fatalf("jitterUnit[%d] (%d, %s): got %v want %v", i, k.In.Index, k.In.Axis, got, k.Out)
+		}
+	}
+}
+
+func TestChordLayout(t *testing.T) {
+	c := load(t)
+	if len(c.ChordLayout) == 0 {
+		t.Fatal("no chordLayout cases")
+	}
+	near := func(a, b float64) bool { return math.Abs(a-b) <= 1e-9 }
+	for i, k := range c.ChordLayout {
+		var flows []ChordFlow
+		for _, f := range k.In.Flows {
+			flows = append(flows, ChordFlow{f.Source, f.Target, f.Value})
+		}
+		nodes, ribbons := ChordLayout(flows, ChordGap)
+		if len(nodes) != len(k.Out.Nodes) || len(ribbons) != len(k.Out.Ribbons) {
+			t.Fatalf("chordLayout[%d]: %d nodes %d ribbons, want %d and %d", i, len(nodes), len(ribbons), len(k.Out.Nodes), len(k.Out.Ribbons))
+		}
+		for j, n := range k.Out.Nodes {
+			g := nodes[j]
+			if g.Name != n.Name || !near(g.Start, n.Start) || !near(g.End, n.End) || !near(g.Total, n.Total) {
+				t.Fatalf("chordLayout[%d] node %d: got %+v want %+v", i, j, g, n)
+			}
+		}
+		for j, r := range k.Out.Ribbons {
+			g := ribbons[j]
+			if !near(g.SourceStart, r.SourceStart) || !near(g.SourceEnd, r.SourceEnd) || !near(g.TargetStart, r.TargetStart) || !near(g.TargetEnd, r.TargetEnd) {
+				t.Fatalf("chordLayout[%d] ribbon %d: got %+v want %+v", i, j, g, r)
+			}
 		}
 	}
 }

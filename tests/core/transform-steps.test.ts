@@ -53,6 +53,18 @@ describe('window', () => {
     expect(op({ op: 'movingMean', frame: 2 })).toEqual([10, 4, 6, 6, 6, 11])
     expect(op({ op: 'sum', order: 'desc' })).toEqual([22, 12, 22, 28, 8, 12])
   })
+  it('ema smooths with alpha = 2 / (frame + 1), skips a gap without resetting, and starts from the first number', () => {
+    const e = (rows: R[], o: R = {}): unknown[] => run([{ window: { op: 'ema', field: 'v', as: 'e', ...o } }], rows).rows!.map(r => r.e)
+    // frame 3 -> alpha 0.5: 10, then 0.5 * 20 + 0.5 * 10 = 15, then 0.5 * 30 + 0.5 * 15 = 22.5.
+    expect(e([{ v: 10 }, { v: 20 }, { v: 30 }])).toEqual([10, 15, 22.5])
+    // frame 1 -> alpha 1: the series itself. frame 9 -> alpha 0.2.
+    expect(e([{ v: 4 }, { v: 8 }], { frame: 1 })).toEqual([4, 8])
+    expect(e([{ v: 100 }, { v: 0 }], { frame: 9 })).toEqual([100, 80])
+    // Before the first number and at a gap: null, and the average carries on unchanged.
+    expect(e([{ v: null }, { v: 10 }, { v: 'n/a' }, { v: 20 }])).toEqual([null, 10, null, 15])
+    // Per group, in sort order, rows keep their order.
+    expect(op({ op: 'ema', frame: 3 })).toEqual([8, 4, null, 6, 6, 10])
+  })
   it('rank is the standard competition rank of the sort key; without sortBy it ranks the field', () => {
     const rows = [{ k: 'a', s: 3 }, { k: 'b', s: 1 }, { k: 'c', s: 3 }, { k: 'd', s: 2 }, { k: 'e', s: null }]
     expect(run([{ window: { op: 'rank', field: 's', as: 'rk' } }], rows).rows!.map(r => r.rk)).toEqual([3, 1, 3, 2, null])

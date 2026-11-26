@@ -14,7 +14,7 @@ from .isotime import MAX_TIME, MIN_TIME, time_bucket
 from .ref import CARD_REF_LIMITS, CARD_REF_SCHEME, format_card_ref, parse_card_ref
 from .resolve import REF_PARAMS, date_period, resolve_ref
 from .numeric import (
-    bin_counts, bin_edges, box_stats, density_peaks, kde, linear_ticks, loess, log_ticks, nice_domain, nice_log_domain, quantile,
+    bin_counts, bin_edges, box_stats, chord_layout, density_peaks, jitter_unit, kde, linear_ticks, loess, log_ticks, nice_domain, nice_log_domain, quantile,
     silverman, transform_bin_edges, waffle_cells,
 )
 from .text import format_duration, format_percent, format_value
@@ -24,9 +24,9 @@ from .validate import LIMITS, PlotSpecError, Validation, chart_types, describe_p
 __all__ = [
     "AGGREGATE_OPS", "CARD_REF_LIMITS", "CARD_REF_SCHEME", "REF_PARAMS", "date_period", "format_card_ref", "parse_card_ref", "resolve_ref", "GEO_LIMITS", "GEO_PRESETS", "Geography", "GeographyError", "LIMITS", "MAX_TIME", "MIN_TIME", "PlotSpecError", "TIME_UNITS",
     "TRANSFORM_LIMIT", "TRANSFORM_OPS", "Validation", "WINDOW_OPS", "apply_transform", "bin_counts", "bin_edges", "box_stats",
-    "chart_types", "cloud_layout", "density_peaks", "describe_plot", "fields_of", "format_duration", "format_percent", "format_value", "get_geography", "is_safe_color",
-    "kde", "linear_ticks", "list_geographies", "loess", "log_ticks", "match_region", "nice_domain", "nice_log_domain",
+    "chart_types", "chord_layout", "cloud_layout", "density_peaks", "describe_plot", "fields_of", "format_duration", "format_percent", "format_value", "get_geography", "is_safe_color",
+    "jitter_unit", "kde", "linear_ticks", "list_geographies", "loess", "log_ticks", "match_region", "nice_domain", "nice_log_domain",
     "normalize_region", "quantile", "register_geography", "require_valid", "silverman", "time_bucket", "transform_bin_edges",
     "unregister_geography", "validate_plot", "waffle_cells",
 ]
-__version__ = "0.7.0"
+__version__ = "0.8.0"

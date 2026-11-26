@@ -11,7 +11,7 @@ from pathlib import Path
 from super_plot import (
     bin_counts, bin_edges, box_stats, chart_types, describe_plot, format_percent, format_value, linear_ticks,
     nice_domain, quantile, require_valid, validate_plot, PlotSpecError,
-    density_peaks, kde, loess, log_ticks, nice_log_domain, silverman, transform_bin_edges, waffle_cells,
+    chord_layout, density_peaks, jitter_unit, kde, loess, log_ticks, nice_log_domain, silverman, transform_bin_edges, waffle_cells,
     GeographyError, get_geography, match_region, register_geography, unregister_geography,
     apply_transform, time_bucket, cloud_layout,
     parse_card_ref, format_card_ref, resolve_ref, date_period,
@@ -114,6 +114,24 @@ class Conformance(unittest.TestCase):
         self.assertTrue(DATA["waffleCells"])
         for c in DATA["waffleCells"]:
             self.assertEqual(waffle_cells(c["in"]["values"], c["in"]["cells"]), c["out"], str(c["in"]))
+
+    def test_jitter_unit(self):
+        self.assertTrue(DATA["jitterUnit"])
+        for c in DATA["jitterUnit"]:
+            self.assertAlmostEqual(jitter_unit(c["in"]["index"], c["in"]["axis"]), c["out"], places=9, msg=str(c["in"]))
+
+    def test_chord_layout(self):
+        self.assertTrue(DATA["chordLayout"])
+        for c in DATA["chordLayout"]:
+            got, want = chord_layout(c["in"]["flows"]), c["out"]
+            self.assertEqual(len(got["nodes"]), len(want["nodes"]))
+            for g, w in zip(got["nodes"], want["nodes"]):
+                self.assertEqual(g["name"], w["name"])
+                for key in ("start", "end", "total"):
+                    self.assertAlmostEqual(g[key], w[key], places=9, msg=str(c["in"]))
+            for g, w in zip(got["ribbons"], want["ribbons"]):
+                for key in w:
+                    self.assertAlmostEqual(g[key], w[key], places=9, msg=str(c["in"]))
 
     def test_cloud_layout(self):
         self.assertTrue(DATA["cloudLayout"])

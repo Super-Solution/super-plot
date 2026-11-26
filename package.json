@@ -1,7 +1,7 @@
 {
   "name": "super-plot-workspace",
   "private": true,
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "Super Plot monorepo: statistical charts for people and agents (core, web, react).",
   "type": "module",
   "license": "Apache-2.0",
@@ -43,6 +43,7 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "typescript": "^5.9.3",
-    "vitest": "^3.2.7"
+    "vite": "^7.3.8",
+    "vitest": "^5.1.2"
   }
 }

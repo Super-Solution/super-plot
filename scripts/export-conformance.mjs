@@ -10,7 +10,7 @@ import { join, dirname } from 'node:path'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
 const core = await import(pathToFileURL(join(root, 'packages/core/dist/index.js')).href)
-const { linearTicks, niceDomain, quantile, boxStats, binEdges, binCounts, waffleCells, kde, silverman, densityPeaks, validatePlot, describePlot, chartCatalog, getChart, chartTypes, COMMON_FIELDS, CARTESIAN_FIELDS, LIMITS, resolveRef, datePeriod, formatCardRef } = core
+const { linearTicks, niceDomain, quantile, boxStats, binEdges, binCounts, waffleCells, jitterUnit, chordLayout, kde, silverman, densityPeaks, validatePlot, describePlot, chartCatalog, getChart, chartTypes, COMMON_FIELDS, CARTESIAN_FIELDS, LIMITS, resolveRef, datePeriod, formatCardRef } = core
 const { registerGeography, unregisterGeography, getGeography, matchRegion, GeographyError, GEO_LIMITS, CAMERA_LIMITS, CAMERA3D_LIMITS } = core
 
 const r = v => (typeof v === 'number' ? Math.round(v * 1e9) / 1e9 : v)
@@ -36,6 +36,17 @@ const densityIn = [
   { values: [7] }
 ]
 const density = densityIn.map(c => { const d = kde(c.values, c.bandwidth); return { in: c, out: { silverman: silverman(c.values), ...d, peaks: densityPeaks(d) } } })
+// Scatter jitter: the unit offset of the row at an index, per axis (a port must give the same 32-bit arithmetic).
+const jitterCases = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 99, 1000, 65535, 65536, 123456, 2147483647, 2147483648, 4294967295, 4294967296].flatMap(index => ['x', 'y'].map(axis => ({ in: { index, axis }, out: jitterUnit(index, axis) })))
+// Chord layout: arcs and ribbons from summed flows, the order being the data's.
+const chordCases = [
+  [['a', 'b', 3], ['b', 'a', 1]],
+  [['x', 'y', 5], ['y', 'z', 2], ['z', 'x', 4], ['x', 'z', 1]],
+  [['Asia', 'Europe', 120], ['Europe', 'Asia', 95], ['Asia', 'Americas', 150], ['Americas', 'Asia', 70], ['Europe', 'Americas', 85], ['Americas', 'Europe', 110], ['Africa', 'Europe', 45], ['Europe', 'Africa', 30], ['Asia', 'Africa', 40]],
+  [['p', 'q', 0.1], ['q', 'r', 0.2], ['r', 'p', 0.3], ['p', 'r', 0.7], ['q', 'p', 1e-3]],
+  [['solo', 'pair', 7]],
+  [['m', 'n', 1e9], ['n', 'm', 1], ['o', 'm', 33.3333], ['n', 'o', 2.5]]
+].map(f => { const flows = f.map(([source, target, value]) => ({ source, target, value })); return { in: { flows }, out: chordLayout(flows) } })
 const { logTicks, niceLogDomain, loess, transformBinEdges, currencyDigits, CURRENCY_CODES } = core
 const logTickCases = [[1, 1e6, 5], [1, 1000, 8], [1, 100, 8], [0.01, 1, 9], [20, 80, 5], [3, 800, 4], [0.5, 2e9, 6], [1e-6, 1e-3, 3]].map(([a, b, n]) => ({ in: [a, b, n], out: logTicks(a, b, n) }))
 const logNiceCases = [[3, 800], [10, 10], [1, 1000], [0.02, 0.5], [7, 7.5]].map(([a, b]) => ({ in: [a, b], out: niceLogDomain(a, b) }))
@@ -397,6 +408,30 @@ const FEATURE_VALIDATION = [
   ['yBreak: not on an area', { type: 'area', x: 'd', y: 'v', yBreak: [4, 5], data: W }]
 ]
 
+// 0.8.0: pie and donut with nothing (or little) to draw.
+const PIE0 = [{ k: 'a', v: 0 }, { k: 'b', v: -4 }]
+const V08_VALIDATION = [
+  ['pie: nothing positive (zero and negative)', { type: 'pie', label: 'k', value: 'v', data: PIE0 }],
+  ['donut: only zeros', { type: 'donut', label: 'k', value: 'v', data: [{ k: 'a', v: 0 }, { k: 'b', v: '0' }] }],
+  ['pie: a zero slice and a negative row beside a positive one', { type: 'pie', label: 'k', value: 'v', data: [{ k: 'a', v: 3 }, { k: 'b', v: 0 }, { k: 'c', v: -1 }, { k: 'd', v: 'n/a' }] }],
+  ['pie: rows of one label are summed before the zero test', { type: 'pie', label: 'k', value: 'v', data: [{ k: 'a', v: 5 }, { k: 'a', v: -5 }, { k: 'b', v: 0 }, { k: 'b', v: 0 }] }],
+  ['pie: all well', { type: 'pie', label: 'k', value: 'v', data: [{ k: 'a', v: 3 }, { k: 'b', v: 1 }] }],
+  ['chord: ok', { type: 'chord', from: 'a', to: 'c', value: 'b', data: [{ a: 'x', c: 'y', b: 1 }, { a: 'y', c: 'x', b: 2 }] }],
+  ['chord: a loop is fine', { type: 'chord', from: 'a', to: 'c', value: 'b', data: [{ a: 'x', c: 'y', b: 1 }, { a: 'y', c: 'z', b: 1 }, { a: 'z', c: 'x', b: 1 }] }],
+  ['chord: skipped flows', { type: 'chord', from: 'a', to: 'c', value: 'b', data: [{ a: 'x', c: 'y', b: 1 }, { a: 'x', c: 'x', b: 1 }, { a: 'y', c: 'z', b: 0 }, { a: 'z', c: 'x', b: 'n/a' }] }],
+  ['chord: nothing to draw', { type: 'chord', from: 'a', to: 'c', value: 'b', data: [{ a: 'x', c: 'x', b: 1 }, { a: 'y', c: 'z', b: -2 }] }],
+  ['chord: too many groups', { type: 'chord', from: 'a', to: 'c', value: 'b', data: rowsOf(25, i => ({ a: `n${i}`, c: `n${i + 1}`, b: 1 })) }],
+  ['chord: too many flows', { type: 'chord', from: 'a', to: 'c', value: 'b', data: rowsOf(301, i => ({ a: `s${i % 20}`, c: `t${Math.floor(i / 20)}`, b: 1 })) }],
+  ['scatter: jitter', { type: 'scatter', x: 'v', y: 't', jitter: 6, jitterAxis: 'x', data: W }],
+  ['scatter: jitter too big', { type: 'scatter', x: 'v', y: 't', jitter: 21, data: W }],
+  ['scatter: jitter below zero', { type: 'scatter', x: 'v', y: 't', jitter: -1, data: W }],
+  ['scatter: jitter is not a number', { type: 'scatter', x: 'v', y: 't', jitter: 'wide', data: W }],
+  ['scatter: jitterAxis is not an axis', { type: 'scatter', x: 'v', y: 't', jitter: 4, jitterAxis: 'z', data: W }],
+  ['scatter: jitterAxis without jitter', { type: 'scatter', x: 'v', y: 't', jitterAxis: 'y', data: W }],
+  ['scatter: jitter 0 with jitterAxis', { type: 'scatter', x: 'v', y: 't', jitter: 0, jitterAxis: 'y', data: W }],
+  ['scatter: jitter with hexagons', { type: 'scatter', x: 'v', y: 't', jitter: 4, density: 'hex', data: W }],
+  ['scatter: jitter with order', { type: 'scatter', x: 'v', y: 't', jitter: 4, order: 'd', data: W }]
+]
 const KB = [{ id: 'r1', a: 'x', b: 1 }, { id: 'r1', a: 'y', b: 2 }, { id: '', a: 'z', b: 3 }, { a: 'w', b: 4 }]
 const VALIDATION = [
   ['json string, valid', JSON.stringify({ type: 'bar', x: 'a', y: 'b', data: B })],
@@ -605,6 +640,7 @@ const VALIDATION = [
   ['surface: grid too large', { type: 'surface', x: 'x', y: 'y', z: 'z', data: GRID(201, 2) }],
   ['surface: no points', { type: 'surface', x: 'x', y: 'y', z: 'z', data: [{ x: 'a', y: 1, z: 2 }] }],
   ...FEATURE_VALIDATION,
+  ...V08_VALIDATION,
   ...MAP_VALIDATION
 ].map(([name, spec]) => {
   const v = validatePlot(spec)
@@ -630,6 +666,18 @@ const describeCases = [
   D('bar: one category', { type: 'bar', x: 'k', y: 'v', format: 'percent', data: [{ k: 'only', v: 0.256 }] }),
   D('bar: numeric category labels and nulls', { type: 'bar', x: 'k', y: 'v', data: [{ k: 2024, v: 1.5 }, { k: 2025, v: null }, { k: 2026, v: '3' }] }),
   D('bar: many series (list is cut)', { type: 'bar', x: 'k', y: ['a', 'b', 'c', 'd', 'e', 'f', 'g'], data: [{ k: 'x', a: 1, b: 2, c: 3, d: 4, e: 5, f: 6, g: 7 }] }),
+  D('bar: categories with no number are missing, not 0', { type: 'bar', x: 'k', y: 'v', data: [{ k: 'a', v: 5 }, { k: 'b', v: 'n/a' }, { k: 'c', v: null }, { k: 'd', v: 3 }] }),
+  D('bar: a real zero is not missing', { type: 'bar', x: 'k', y: 'v', data: [{ k: 'a', v: 5 }, { k: 'b', v: 0 }] }),
+  D('bar: missing in one of two series only', { type: 'bar', x: 'k', y: ['p', 'q'], data: [{ k: 'a', p: 2, q: null }, { k: 'b', p: null, q: null }, { k: 'c', p: 4, q: 1 }] }),
+  D('chord: two ways between regions', { type: 'chord', from: 'a', to: 'b', value: 'v', format: 'integer', data: [{ a: 'x', b: 'm', v: 3.2 }, { a: 'm', b: 'x', v: 2 }, { a: 'x', b: 'm', v: 1 }, { a: 'm', b: 'z', v: 6.2 }, { a: 'z', b: 'x', v: 6.2 }] }),
+  D('chord: nothing positive', { type: 'chord', from: 'a', to: 'b', value: 'v', title: 'Empty', data: [{ a: 'x', b: 'x', v: 3 }, { a: 'x', b: 'y', v: 0 }] }),
+  D('scatter: jitter both ways', { type: 'scatter', x: 'a', y: 'b', jitter: 5, data: rowsOf(12, i => ({ a: i % 3, b: i % 4 })) }),
+  D('scatter: jitter sideways', { type: 'scatter', x: 'a', y: 'b', jitter: 5, jitterAxis: 'x', data: rowsOf(12, i => ({ a: i % 3, b: i % 4 })) }),
+  D('scatter: jitter up and down', { type: 'scatter', x: 'a', y: 'b', jitter: 5, jitterAxis: 'y', data: rowsOf(12, i => ({ a: i % 3, b: i % 4 })) }),
+  D('scatter: jitter 0 is off', { type: 'scatter', x: 'a', y: 'b', jitter: 0, data: rowsOf(12, i => ({ a: i % 3, b: i % 4 })) }),
+  D('scatter: jitter ignored with hexagons', { type: 'scatter', x: 'a', y: 'b', jitter: 5, density: 'hex', data: rowsOf(12, i => ({ a: i % 3, b: i % 4 })) }),
+  D('pie: nothing positive', { type: 'pie', label: 'k', value: 'v', title: 'Empty', data: PIE0 }),
+  D('donut: zero beside positive', { type: 'donut', label: 'k', value: 'v', data: [{ k: 'a', v: 3 }, { k: 'b', v: 0 }] }),
   D('line: weekly dates, two series', { type: 'line', x: 'd', y: ['a', 'b'], title: 'Users', format: 'compact', data: dates(10, i => ({ a: 1000 * (i + 1), b: 40000 - i * 1500 })) }),
   D('line: month strings and a flat series', { type: 'line', x: 'd', y: 'v', data: [{ d: '2026-01', v: 0 }, { d: '2026-02', v: 5 }, { d: '2026-03', v: 0 }] }),
   D('line: timestamps with a time of day', { type: 'line', x: 'd', y: 'v', xType: 'time', data: [{ d: '2026-03-01T09:30:00Z', v: 3 }, { d: '2026-03-01T18:45:00+02:00', v: 4 }, { d: '2026-03-02 08:00', v: 2 }] }),
@@ -877,11 +925,16 @@ const TRANSFORM = [
   ['bin: step too small', pipe([{ bin: { field: 'revenue', step: 0.1 } }])],
   ['bin: as of one name', pipe([{ bin: { field: 'revenue', as: ['b'] } }])],
   ['bin: as twice the same', pipe([{ bin: { field: 'revenue', as: ['b', 'b'] } }])],
-  ...['sum', 'mean', 'count', 'rank', 'pctChange', 'lag', 'lead', 'movingMean'].map(op => [`window: ${op} per region by date`, pipe([{ window: { op, field: 'revenue', as: 'w', groupBy: ['region'], sortBy: 'date' } }], { y: 'units', x: 'date', series: 'region' })]),
+  ...['sum', 'mean', 'count', 'rank', 'pctChange', 'lag', 'lead', 'movingMean', 'ema'].map(op => [`window: ${op} per region by date`, pipe([{ window: { op, field: 'revenue', as: 'w', groupBy: ['region'], sortBy: 'date' } }], { y: 'units', x: 'date', series: 'region' })]),
   ['window: sum descending, no groups', pipe([{ window: { op: 'sum', field: 'units', as: 'w', sortBy: 'revenue', order: 'desc' } }], { y: 'w' })],
   ['window: rank without sortBy ranks the field, ties share', mix([{ window: { op: 'rank', field: 'v', as: 'r', order: 'desc' } }])],
   ['window: rank of text', mix([{ window: { op: 'rank', field: 'k', as: 'r' } }], { y: 'r' })],
   ['window: movingMean over 2 rows', pipe([{ window: { op: 'movingMean', field: 'revenue', as: 'm', sortBy: 'date', frame: 2 } }], { y: 'm' })],
+  ['window: ema over 4 rows (alpha 0.4)', pipe([{ window: { op: 'ema', field: 'revenue', as: 'm', sortBy: 'date', frame: 4 } }], { y: 'm' })],
+  ['window: ema skips text and missing cells without a reset', mix([{ window: { op: 'ema', field: 'v', as: 'e', frame: 5 } }], { y: 'e' })],
+  ['window: ema with a span of 1 is the series', mix([{ window: { op: 'ema', field: 'v', as: 'e', frame: 1 } }], { y: 'e' })],
+  ['window: ema, a long span, descending', pipe([{ window: { op: 'ema', field: 'revenue', as: 'e', groupBy: ['region'], sortBy: 'date', order: 'desc', frame: 250 } }], { y: 'e' })],
+  ['window: frame ignored for rank', pipe([{ window: { op: 'rank', field: 'revenue', as: 'w', frame: 4 } }])],
   ['window: data order without sortBy', mix([{ window: { op: 'lag', field: 'k', as: 'prev' } }])],
   ['window: frame ignored', pipe([{ window: { op: 'sum', field: 'revenue', as: 'w', frame: 4 } }])],
   ['window: order without sortBy', pipe([{ window: { op: 'sum', field: 'revenue', as: 'w', order: 'desc' } }])],
@@ -1051,6 +1104,8 @@ const doc = rows({
   loess: loessCases,
   binStep: binStepCases,
   waffleCells: waffle,
+  jitterUnit: jitterCases,
+  chordLayout: chordCases,
   cloudLayout: cloudLayoutCases,
   chartExamples: examples,
   brokenSpecs: broken,

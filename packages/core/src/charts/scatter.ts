@@ -11,14 +11,18 @@ import { distinct } from '../data.js'
 import { correlation, extent, linearFit, toNumber } from '../util/num.js'
 import { formatTime, hasTimeOfDay, toTime } from '../util/time.js'
 import { clip } from '../util/text.js'
+import { JITTER_MAX, jitterUnit } from '../util/jitter.js'
 import { formatter, lead } from './shared.js'
 import { loess } from '../util/loess.js'
 import { intervalCheck, intervalFields, intervalText, logDomain, logNonPositive, refuseLog, scaleField } from './extras.js'
 
-interface P { row: Record<string, unknown>; x: number; y: number; s: string; size: number | null; name: string | null; ord?: number; ylo?: number; yhi?: number; xlo?: number; xhi?: number }
+interface P { row: Record<string, unknown>; /** Position of the row in the data (before anything is hidden): what jitter is keyed on. */ i: number; x: number; y: number; s: string; size: number | null; name: string | null; ord?: number; ylo?: number; yhi?: number; xlo?: number; xhi?: number }
 
 /** `density: "auto"` switches to hexagons above this many visible points. */
 export const DENSITY_AUTO = 10_000
+
+/** Whether `jitter` moves points in this chart: set, above 0, and not a chart that draws hexagons or joins points by a line. */
+const jittered = (spec: Record<string, any>): boolean => typeof spec.jitter === 'number' && spec.jitter > 0 && spec.density !== 'hex' && !spec.order
 
 /** Hexagonal bins in pixel space (pointy top), coloured from `seq-low` to `seq-high` by count, with a ramp legend. */
 function hexbin(c: ChartCtx, pts: P[], xs: LinearScale, ys: LinearScale, plot: Rect, rampW: number, groups: number): void {
@@ -95,11 +99,11 @@ function points(spec: Record<string, any>): { pts: P[]; kind: 'linear' | 'time' 
   const logY = spec.yScale === 'log'
   const yi = !!spec.yLower && !!spec.yUpper
   const xi = !!spec.xLower && !!spec.xUpper
-  for (const r of spec.data as Record<string, unknown>[]) {
+  for (const [i, r] of (spec.data as Record<string, unknown>[]).entries()) {
     const x = kind === 'time' ? toTime(r[spec.x]) : toNumber(r[spec.x])
     const y = toNumber(r[spec.y])
     if (x === null || y === null || (logX && !(x > 0)) || (logY && !(y > 0))) continue
-    const p: P = { row: r, x, y, s: spec.series ? String(r[spec.series] ?? '') : String(spec.y), size: spec.size ? toNumber(r[spec.size]) : null, name: spec.label ? String(r[spec.label] ?? '') : null }
+    const p: P = { row: r, i, x, y, s: spec.series ? String(r[spec.series] ?? '') : String(spec.y), size: spec.size ? toNumber(r[spec.size]) : null, name: spec.label ? String(r[spec.label] ?? '') : null }
     if (spec.order) {
       const o = orderKey(r[spec.order])
       if (o !== null) p.ord = o
@@ -174,6 +178,9 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
   const hits: Mark[] = []
   const hitOk = show.length <= 1500
   const cap = 4
+  const jit = jittered(s) ? (s.jitter as number) : 0
+  const nudgeX = jit > 0 && s.jitterAxis !== 'y'
+  const nudgeY = jit > 0 && s.jitterAxis !== 'x'
   const clampX = (v: number): number => Math.max(plot.x, Math.min(plot.x + plot.w, v))
   const clampY = (v: number): number => Math.max(plot.y, Math.min(plot.y + plot.h, v))
   // A log axis cannot place an interval end at or below zero: the bar runs to the plot's edge (no cap there).
@@ -182,9 +189,12 @@ function compile(c: ChartCtx): { series: ReturnType<ChartCtx['makeSeries']> } {
   for (const p of show) {
     const si = keys.indexOf(p.s)
     const color = series[si].color
-    const cx = xScale.at(p.x)
-    const cy = yScale.at(p.y)
-    if (cx < plot.x - 1 || cx > plot.x + plot.w + 1 || cy < plot.y - 1 || cy > plot.y + plot.h + 1) continue
+    const tx0 = xScale.at(p.x)
+    const ty0 = yScale.at(p.y)
+    if (tx0 < plot.x - 1 || tx0 > plot.x + plot.w + 1 || ty0 < plot.y - 1 || ty0 > plot.y + plot.h + 1) continue
+    // Jitter nudges the drawn dot only (kept inside the plot); the datum, the tooltip and the description keep the true values.
+    const cx = nudgeX ? clampX(tx0 + jit * jitterUnit(p.i, 'x')) : tx0
+    const cy = nudgeY ? clampY(ty0 + jit * jitterUnit(p.i, 'y')) : ty0
     const r = radius(p)
     const yInt = p.ylo !== undefined ? ` (${intervalText(fmt, p.ylo, p.yhi!)})` : ''
     const xInt = p.xlo !== undefined ? ` (${intervalText(xfmt, p.xlo, p.xhi!)})` : ''
@@ -271,6 +281,8 @@ export const scatter: ChartDef = {
     xScale: { ...scaleField('x', 'sizes, counts'), desc: `${scaleField('x', 'sizes, counts').desc} Only for a numeric x; dates are refused.` },
     ...intervalFields('y', 'a vertical error bar with caps through each point'),
     ...intervalFields('x', 'a horizontal error bar with caps through each point'),
+    jitter: { kind: 'number', min: 0, max: JITTER_MAX, desc: `Default 0 (off). Nudge each dot by a fixed, repeatable offset of up to this many pixels so points that sit on the same spot show (whole-number scores, rounded measures). The offset depends only on the row's position in the data, so the same data draws the same way every time and hiding a series moves nothing. Only the drawing moves: tooltips, hover, the description and the data table keep the true values, and a dot is kept inside the plot. Ignored with \`density: "hex"\` or \`order\`.` },
+    jitterAxis: { kind: 'enum', values: ['x', 'y', 'both'], default: 'both', desc: 'Which direction `jitter` moves points: `x` (sideways: the y values are the ones that repeat, as in a score from 1 to 5 against a date), `y`, or `both`.' },
     density: { kind: 'enum', values: ['points', 'hex', 'auto'], desc: 'Default points. `hex` draws hexagons coloured by how many points fall in each (with a count legend); `auto` does so above 10,000 visible points. Hexagons merge groups.' },
     xType: { kind: 'enum', values: ['auto', 'linear', 'time'], default: 'auto', desc: 'How to read `x`.' },
     xDomain: { kind: 'domain', desc: 'Fix the horizontal range.' },
@@ -303,6 +315,8 @@ export const scatter: ChartDef = {
     intervalCheck(spec, ctx, 'x')
     if (spec.order && spec.density === 'hex') ctx.issues.push({ severity: 'warning', code: 'order_ignored_density', path: 'order', message: 'Hexagons count points, so no line joins them; `order` is ignored while hexagons are drawn.', hint: 'Use `density: "points"` (or leave it out) for a connected scatter.' })
     if (spec.trendBandwidth !== undefined && spec.trend !== 'loess') ctx.issues.push({ severity: 'warning', code: 'trend_bandwidth_ignored', path: 'trendBandwidth', message: 'trendBandwidth only applies to `trend: "loess"`; it is ignored.' })
+    if (typeof spec.jitter === 'number' && spec.jitter > 0 && !jittered(spec)) ctx.issues.push({ severity: 'warning', code: 'jitter_ignored', path: 'jitter', message: spec.order ? 'A line joins the points of a connected scatter, so jitter would pull them off it; `jitter` is ignored.' : 'Hexagons count points, so there are no dots to nudge; `jitter` is ignored while hexagons are drawn.', hint: spec.order ? 'Drop `order` to jitter the dots, or drop `jitter`.' : 'Use `density: "points"` (or leave it out) to jitter the dots.' })
+    if (spec.jitterAxis !== undefined && !(typeof spec.jitter === 'number' && spec.jitter > 0)) ctx.issues.push({ severity: 'warning', code: 'jitter_axis_ignored', path: 'jitterAxis', message: 'jitterAxis only applies when `jitter` is above 0; it is ignored.' })
     if (ctx.issues.some(i => i.severity === 'error')) return
     if (!points({ ...spec, data: ctx.rows }).pts.length) ctx.issues.push({ severity: 'error', code: 'no_points', path: 'data', message: spec.xScale === 'log' || spec.yScale === 'log' ? 'No row has a numeric x and y that a log axis can place (above zero).' : 'No row has both a numeric x and y.' })
   },
@@ -321,6 +335,7 @@ export const scatter: ChartDef = {
     const bars = [spec.yLower && spec.yUpper ? 'vertical' : '', spec.xLower && spec.xUpper ? 'horizontal' : ''].filter(Boolean)
     if (bars.length) t += ` Points carry ${bars.join(' and ')} error bars.`
     if (spec.order && spec.density !== 'hex') t += ` Points are joined by a line in the order of ${spec.order}.`
+    if (jittered(spec)) t += ` Points are nudged slightly${spec.jitterAxis === 'x' ? ' sideways' : spec.jitterAxis === 'y' ? ' up and down' : ''} so that overlapping points show; their drawn positions are approximate, the values exact.`
     if (spec.trend === 'loess') t += ' A LOESS curve shows the local trend.'
     return t
   }

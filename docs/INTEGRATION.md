@@ -13,7 +13,7 @@ registerCharts(basicCharts)
 
 Add more the same way, a group or single charts: `/charts/business` (waterfall, bullet, funnel, waffle, timeline,
 gauge), `/charts/stats` (violin, beeswarm, parallel, radar, bump, calendar), `/charts/maps` (choropleth, bubble map,
-column map, flow map: they bring the projection maths), `/charts/hierarchy` (treemap, sunburst, sankey), `/charts/3d`
+column map, flow map: they bring the projection maths), `/charts/hierarchy` (treemap, sunburst, sankey, chord), `/charts/3d`
 (scatter3d, surface) and `/charts/text` (wordcloud). Each group exports its charts one by one too
 (`import { waterfall } from '@supersolutions/super-plot-core/charts/business'; registerChart(waterfall)`), and
 `/charts` still exports every chart, `allCharts` and `chartGroups`. Every chart is in exactly one group.
@@ -45,18 +45,18 @@ measured on the built packages, as an app imports them). `npm run gate` fails wh
 
 | Import | What is in it | KB gzip |
 |---|---|---|
-| core `/base`, `renderToSvg`, no chart | validation, layout, SVG, themes, the transform loop; no chart, no step | 21.4 |
-| core `/base` + `bar`, `validatePlot` | | 25.2 |
-| core `/base` + `bar`, `renderToSvg` | | 36.2 |
-| core `/base` + `bar`, `resolveRef` | validation and the reference resolver, no drawing | 28.5 |
-| core `/base` + `/charts/basic` | the nine everyday charts | 56.6 |
-| core `/base` + `/charts/basic` + `/transforms` | every transform step (5.3 KB more) | 61.9 |
-| core `.` (everything) | every chart and step, `/canvas`, `/view` | 127.8 |
-| web `/base`, no chart | `SuperPlot` (SVG path, hover, keyboard, zoom, brush, sync, sound, references, styles) | 48.1 |
-| web `/base` + bar + line | | 71.5 |
-| web `/base` + `/charts/basic` | | 84.4 |
-| web `.` (everything) | | 157.0 |
-| chat plugin `.` | web `.`, the `super.plot` card and the agent tools | 162.3 |
+| core `/base`, `renderToSvg`, no chart | validation, layout, SVG, themes, the transform loop; no chart, no step | 24.6 |
+| core `/base` + `bar`, `validatePlot` | | 28.6 |
+| core `/base` + `bar`, `renderToSvg` | | 40.4 |
+| core `/base` + `bar`, `resolveRef` | validation and the reference resolver, no drawing | 32.0 |
+| core `/base` + `/charts/basic` | the nine everyday charts | 63.5 |
+| core `/base` + `/charts/basic` + `/transforms` | every transform step (5.3 KB more) | 68.8 |
+| core `.` (everything) | every chart and step, `/canvas`, `/view` | 137.2 |
+| web `/base`, no chart | `SuperPlot` (SVG path, hover, keyboard, zoom, brush, sync, sound, references, styles) | 50.8 |
+| web `/base` + bar + line | | 76.4 |
+| web `/base` + `/charts/basic` | | 90.9 |
+| web `.` (everything) | | 165.9 |
+| chat plugin `.` | web `.`, the `super.plot` card and the agent tools (including the `plot_suggest` rules) | 176.1 |
 
 Core entry points that are not chart groups: `/charts` (every chart), `/transforms` (the steps, `TRANSFORM_DOCS`,
 `filterRow`, `bucket`), `/canvas` (`drawScene`, `drawHover`, `buildHitIndex`, `resolveColor`, `drawPatternTile`: draw
@@ -102,6 +102,8 @@ All of these are spec fields (see [SPEC.md](SPEC.md)); validation explains every
 annotations: [{ x: '2026-03-01', y: 120, label: 'Launch' }, { axis: 'y', value: 100, label: 'Target' }]
 // A connected scatter: the points of each series joined in the order of a column, with the quadrants shaded.
 { type: 'scatter', x: 'growth', y: 'inflation', order: 'year', xDomain: [-2, 6], yDomain: [0, 6], annotations: [{ xFrom: 2, yFrom: 3, label: 'Overheating' }, { xTo: 2, yTo: 3, label: 'Slowdown' }], data }
+// Scores that repeat (whole numbers) pile up on one spot: nudge each dot by a fixed, repeatable offset of up to 6 px.
+{ type: 'scatter', x: 'years', y: 'score', series: 'plan', jitter: 6, jitterAxis: 'both', data }
 // A prefix before every figure and a unit after it.
 { type: 'bar', x: 'quarter', y: 'revenue', format: 'NT$^compact~ B', data }
 ```
@@ -112,6 +114,9 @@ annotations: [{ x: '2026-03-01', y: 120, label: 'Launch' }, { axis: 'y', value: 
 - `trend: 'loess'` is a deterministic local regression (`loess(xs, ys, bandwidth, grid)` is exported from core with the exact algorithm in its doc comment); on log axes the fit is made in log space.
 - Point annotations take `x` and `y` in the units of the horizontal and vertical axis (on a horizontal bar chart `x` is the value). They are listed in the description ("Marked: ...").
 - Region annotations take `xFrom`, `xTo`, `yFrom`, `yTo` (numbers or dates) and shade the rectangle between them; a side left out runs to the edge of the plot, so `{ xFrom: 2, yFrom: 3 }` is the top-right quadrant. Numeric and time axes only (a category axis skips the region with `annotation_out_of_range`). They are listed in the description ("Shaded: ...").
+- **Missing, zero and negative values are said, not drawn as 0.** A pie or donut whose rows add up to nothing positive warns `pie_no_positive` and draws "No positive values to show" where the circle would be (`strings.noPositive`); rows below 0 are dropped with `negative_slices`, and a label that adds up to exactly 0 gets no angle but stays in the legend (`zero_slices`). All three are warnings from `validatePlot`, so `plot_validate` shows them before anything is drawn. A bar category with no number at all (null, `NaN`, text) is called "Missing: b" in the description and left out of its highest, lowest and total, instead of being read as 0; the chart already drew an empty bar for it.
+- `chord`: flows between groups on a circle, `{ type: 'chord', from, to, value, data }` (rows with the same pair are summed; a flow from a group to itself and a non-positive one are skipped with `flows_skipped`; nothing left is the error `no_flows`; at most 24 groups and 300 flows). The layout has no force simulation and no random numbers: arcs follow the order the groups first appear in the data, an arc is as long as the group's flows in and out, and inside an arc the ribbons are ordered by the group at their other end, so the same data is always the same picture. `chordLayout(flows)` (core `/base`, with the exact algorithm in its doc comment, and in Go and Python) gives the angles; conformance holds them equal. Two flows between a pair, one each way, are two ribbons; a tooltip names both ends and the amount, and the description names the busiest group and the largest flow. Honest limits: a chord shows how much flows between pairs but is hard to read past about 12 groups (labels of very short arcs are left out; their tooltip and the description still carry them); the order of the data is the order of the arcs, so sort the rows if you want a particular order; and it cannot show which direction a ribbon runs except in its tooltip (colour is the source's).
+- `jitter` (scatter) nudges each dot by up to that many pixels (0 to 20; `jitterAxis`: `x`, `y` or `both`, the default) so points that sit on the same spot show. It is deterministic: the offset is a function of the row's position in the data only (`jitterUnit(index, axis)`, exported from core with the exact integer arithmetic in its doc comment, and in the Go and Python ports), so the same data draws the same bytes, a reload moves nothing, and hiding a series does not shuffle the others. Only the drawing moves: the tooltip, `onSelect`'s `datum`, the description and the data table keep the true values, the description says the dots are nudged, and a dot is kept inside the plot (one at the very edge cannot move outward). Honest limits: jitter shows how many points overlap, not where they really are, so do not read an exact value off a jittered dot; it is ignored, with the warning `jitter_ignored`, under `density: "hex"` and `order` (a line through nudged dots would be wrong); `jitterAxis` without `jitter` warns `jitter_axis_ignored`; `trend` fits the true values.
 - `order` (scatter) joins each series by a line in the order of a column; `format: 'prefix^…'` prints text before the figure, after a minus sign.
 
 ## Transform steps: bin, window, fold
@@ -126,7 +131,7 @@ transform: [
 ]
 ```
 
-Window ops: `sum`, `mean`, `count` (cumulative), `rank` (1, 2, 2, 4), `pctChange`, `lag`, `lead`, `movingMean` (`frame` rows, default 3). A ninth step, `index`, rescales each group to a common base (see [below](#index-rescale-each-group-to-a-common-base)). The table of steps with their keys is generated in [SPEC.md](SPEC.md#transform-steps); the Go and Python ports will be checked against the new `transformCases` in `conformance/plot.v1.json`.
+Window ops: `sum`, `mean`, `count` (cumulative), `rank` (1, 2, 2, 4), `pctChange`, `lag`, `lead`, `movingMean` (`frame` rows, default 3) and `ema`, the exponential moving average. `ema` is `alpha * x + (1 - alpha) * average` with `alpha = 2 / (frame + 1)`, so `frame` is its *span* (default 3, alpha 0.5; 1 returns the series itself, 9 gives alpha 0.2): the first number seen is the starting average, a row whose cell is not a number gets `null` and the average carries on unchanged (a gap is neither a reset nor a 0), and rows before the first number are `null`. Sort first (`sortBy`), as an average of unordered rows means nothing; there is no look-back warm-up, so the first few values lean on the starting number. The three languages compute it in the same order of operations and agree to the last digit (conformance cases). A ninth step, `index`, rescales each group to a common base (see [below](#index-rescale-each-group-to-a-common-base)). The table of steps with their keys is generated in [SPEC.md](SPEC.md#transform-steps); the Go and Python ports will be checked against the new `transformCases` in `conformance/plot.v1.json`.
 ## Two value axes, broken axes and indexed series (read the risks first)
 
 These three were refused in round 5 and are built in round 6 because people ask for them. Each one can mislead; each is off unless the spec asks for it, says its risk as an issue the agent sees, and has a safer alternative named in that issue's `hint`.
@@ -209,6 +214,17 @@ sound.stop(); await sound.done
 
 The first visible series is played left to right as short sine notes (Web Audio), higher values higher (220 to 880 Hz by default, `minFrequency` / `maxFrequency`), with start and end announced in a live region. A second call stops the first and starts again; `dispose()` stops it. Without Web Audio it returns a controller that did nothing and reports `sonify_unavailable` through `onIssues`; nothing to play is `sonify_empty`. The mapping is the pure `sonifyNotes(scene, options)` (exported), which returns the notes with their time, length, frequency, value and label, so it can be tested or played by your own synthesiser.
 
+## Narrow charts
+
+Rules that follow the chart's width, not an option: nothing to switch on, no spec field. Each keeps what a wide chart draws and only changes what would otherwise be cut off. Under **420 px** a chart is `compact` (smaller type, 12 px padding); the rules below that name another size say so.
+
+- **Titles take two lines.** A title that does not fit on one line breaks at spaces (between any two characters of Chinese, Japanese and Korean) and is shortened with an ellipsis only on the second line. The plot starts lower by the line it needed. `scene.title`, `<title>` and the accessible name always carry the whole title.
+- **Category labels wrap.** A label on the x axis that is wider than its slot (and the slots are at least 48 px) breaks over two lines before it is shortened; below 48 px the labels still turn 45 degrees as before. Labels of a horizontal bar chart wrap too, when a row is at least 2.4 text heights tall (otherwise two lines would touch the next row). A word longer than the room is still shortened, so the ellipsis is the last resort, not the first.
+- **Annotations become a numbered key.** Under 420 px, a chart with one to four labelled annotations draws "1", "2" beside the line, band, region or point and lists "1  Target" under the plot, in the same order. The room for the key comes off the plot, and only when a plot of at least 140 px is left: a short chart, a wider one or one with more than four labels keeps the labels beside the marks. The annotation's note and tooltip stay on the number; the key is plain text.
+- **A calendar is cut into rows.** Each day keeps at least 8 px: a year that would get less is split into the fewest equal rows of weeks (two rows of about 27 weeks on a phone), the year's name once above the first. The colour scale goes in a row under the weeks (lowest value, five steps, highest, "No data") where there is no room beside them. A few months that fit stay in one row. `defaultHeight(type, width, spec)` gives such a calendar the taller box it needs; the browser binding uses it when the host sets no height, so does `renderToSvg` without `height`. A chart you size yourself keeps your size, and cells get smaller (with the `calendar_cramped` warning under 6 px).
+
+Not done: the legend below the chart on a phone still wraps by rows without a limit, titles keep two lines at most, and a vertical category axis with long labels and short rows still shortens them. A narrow chart does not hide the data table or the tooltip: they work as on a wide one.
+
 ## Server rendering and hydration
 
 ```ts
@@ -219,6 +235,10 @@ new SuperPlot(document.getElementById('chart')!, spec)
 ```
 
 "Hydration" here means exactly this: `renderToSvg(spec, { hydrate: true })` writes the same markup the browser binding would draw (hover hooks, `var(--sp-*)` colours) and stamps it with `data-sp-key`, a hash of that markup, and `data-sp-id`, its id prefix (derived from the content, or `idPrefix`). When a `SuperPlot` is created on a host whose child is such an `<svg>`, its first draw compiles the spec as usual, serialises it with that id prefix and compares hashes. If they are equal, it keeps the server's nodes (no flash, no layout shift, no entrance animation) and attaches hover, tooltips, keyboard, legend toggling, zoom and brush to them. If they differ (another width or height, theme, dark mode under `theme: 'auto'`, locale, hidden series, plugins, or a chart that will be drawn on canvas), it draws as usual and the server markup is removed. Plain `renderToSvg` output (no `hydrate`) is never adopted and is left where it is.
+
+**Element ids.** Every SVG names its title and description (`aria-labelledby`), textures and clips with ids. Unless you pass `idPrefix`, the prefix is `sp` plus a hash of the drawing (`sp1k2x9f-t`, `-d`, `-p0`, `-c…`), so several charts in one HTML page, a report or an agent's reply never read each other's title and description. It is derived, not random: the same spec, size, theme and locale write the same bytes (cache-friendly, easy to diff), and a different drawing gets a different prefix. Two identical charts on one page share ids, which is harmless because their titles and descriptions are identical too; give one an `idPrefix` if you also address the ids from CSS or script. `hydrate: true` keeps its own prefix (`data-sp-id`), which the browser binding re-uses.
+
+**A spec that cannot be drawn.** `renderToSvg` throws a `PlotSpecError` (its `issues` say how to fix each problem). Pass `onInvalid: 'placeholder'` where a report or a reply should show *why* instead of failing: it returns an SVG of the asked size that says "This chart cannot be drawn" (`strings.chartUnavailable`), the first error with its path and code, and how many more there are, and lists every error in `<desc>` for a screen reader. It never throws for an invalid spec, and a spec that draws is drawn exactly as without the option. The placeholder is never stamped for hydration. Nothing is hidden: a spec with only warnings is still a chart.
 
 To match, the server must draw at the size the browser will measure: the host's width, and either the host's CSS height or no height on either side (both then use `defaultHeight`). A hydrated plot measures text with the same estimator as the server for its whole life, so later redraws do not move labels; a server that passes its own `measure` will not match and is redrawn. React's `<SuperPlot>` still renders an empty container on the server (hydration is for the web binding and `<super-plot>`).
 
@@ -427,9 +447,42 @@ tool.run({ spec })        // { ok, issues: [{ code, path, message, hint, severit
 
 `severity` is `error` (refused), `warning` (drawn, but something was changed or left out) or `info` (drawn as asked, with a note the agent should pass on: `dual_axis`, `axis_break`). Only errors make `ok` false.
 
-Tools: `plot_catalog` (which chart, which fields, an example), `plot_schema`, `plot_validate`, `plot_describe`, `plot_geographies` (the map boundaries the host registered; none ship), `plot_render_svg`.
+Tools: `plot_catalog` (which chart, which fields, an example), `plot_schema`, `plot_suggest` (which charts fit a table), `plot_validate`, `plot_describe`, `plot_geographies` (the map boundaries the host registered; none ship), `plot_render_svg`.
 All have `authority: 'read'`, `inputSchema` (JSON Schema) and `run(args)`, so they can be wrapped by any MCP server or
-tool registry in a few lines. Suggested agent loop: `plot_catalog` -> write spec -> `plot_validate` -> fix by `code` and `hint` -> `plot_render_svg`.
+tool registry in a few lines. Suggested agent loop: `plot_suggest` (when you have a table and no chart yet) or `plot_catalog` -> write spec -> `plot_validate` -> fix by `code` and `hint` -> `plot_render_svg`.
+
+### Which chart for this table: `plot_suggest`
+
+```ts
+import { suggestPlots } from '@supersolutions/super-plot-core/base'   // or getPlotTool('plot_suggest')
+const r = suggestPlots({ rows, intent: 'trend', max: 3 })
+// r.columns      what each column was taken to be: number, time, category, boolean, text or empty
+// r.suggestions  [{ code: 'trend_line', type: 'line', score: 100, why, notes, spec: { type: 'line', x: 'month', y: 'sales' } }]
+// r.issues       info, warning and error issues with a code, a path and a hint
+```
+
+The answer is deterministic: fixed rules over a profile of the columns, no model and no randomness, so the same table gives the same bytes and an agent can branch on `code`. Each suggestion says why it fits (naming the columns) and what to check (rows that will be summed, categories left out). With `rows`, every spec is validated against a sample of them; one that would not draw is dropped with the warning `suggestion_invalid` rather than handed over. The spec comes without `data` unless you pass `includeData`: add your rows and it draws. `intent` (`trend`, `compare`, `ranking`, `composition`, `distribution`, `relationship`) adds 40 to the score of the rules that answer it (at most 100); without it the data's shape alone decides. Ties keep the order of the table below, and `SUGGEST_VERSION` (now 1) is raised whenever a rule changes what it proposes or how it scores.
+
+When the table has too many rows to send, send `columns` instead: `{ name, kind, distinct?, rows?, min?, integer?, granularity?, avgLength? }` per column (a `GROUP BY`/`COUNT(DISTINCT)` gives them). The suggestions are then not checked against any rows (info `unvalidated`). In the chat plugin, `plot_suggest` takes a card and reads its rows.
+
+| Code | Chart | Answers | Applies when |
+|---|---|---|---|
+| `trend_line` | line | trend | A time column and one or more number columns, no category to split by: one line per number column (up to 4). |
+| `trend_line_series` | line | trend | A time column, a number column and a category of 2 to 8 values with several rows per time: one line per category. |
+| `calendar_daily` | calendar | trend | A column of dates (day granularity) over at least 60 days and a number column: one cell per day. |
+| `compare_bar` | bar | compare | A category of 2 to 50 values and a number column: bars, biggest first. |
+| `compare_bar_grouped` | bar | compare | A category of 2 to 12 values and two to four number columns: grouped bars. |
+| `composition_pie` | pie | composition | A category of 2 to 6 values, each once, and a number column with no negatives: shares of a whole. |
+| `composition_stacked_bar` | bar | composition | Two categories (2 to 12 and 2 to 8 values) and a number column with no negatives: stacked bars. |
+| `composition_stacked_area` | area | composition | A time column, a category of 2 to 8 values and a number column with no negatives: stacked areas. |
+| `matrix_heatmap` | heatmap | compare | Two categories (at most 30 values each) and a number column: a grid coloured by the number. |
+| `relationship_scatter` | scatter | relationship | Two number columns (identifiers excluded) and at least 8 rows: a dot per row; a third number sets the size and a category of up to 8 values the colour. |
+| `distribution_histogram` | histogram | distribution | A number column (identifiers excluded) with at least 8 rows: how its values spread. |
+| `distribution_box` | box | distribution | A number column and a category of 2 to 12 values with at least 5 rows each on average: one box per category. |
+
+Issue codes: errors `missing_required`, `empty_data`, `bad_type`, `bad_value`, `bad_enum` (the input is not usable); warnings `suggestion_invalid`, `no_chart`; info `rows_sampled` (only the first 1000 rows are read), `unvalidated`, `column_empty`, `id_column_skipped` (an integer column named like `id` with a different value on every row is not used as a measure), `text_column_skipped` (more than 50 different values, mostly unique: not usable on an axis or a legend), `chart_not_registered`, `more_available`.
+
+Limits, said plainly: a column is a category when it is not a number, a time or a boolean and does not look like free text, so a numeric code such as a postal code is read as a number and a year column (`2024`) as a number, not a time (name it `"2024-01-01"`-style or pass a `columns` profile to say otherwise). The rules know twelve shapes of table, not every chart type: maps, networks, funnels, Sankey and the like need a fact about the data (a geography, links) that a column profile cannot show, so they are never suggested; use `plot_catalog`. A score is a ranking, not a probability. Whether the reader understands the chart, and whether the title says the right thing, is not something a rule can check.
 
 ## References and agent annotations
 
@@ -464,7 +517,7 @@ Names are ANDed, the values of one name ORed, and `ref:sales` alone is the whole
 | bump | `x` | `rank`, `y` | `series` |
 | treemap | `label` | `value` | `group` |
 | sunburst | any level of `path` | `value` | |
-| sankey, flow-map | `from`, `to` | `value` | (flow-map: `series`) |
+| sankey, chord, flow-map | `from`, `to` | `value` | (flow-map: `series`) |
 | funnel | `stage` | `value` | |
 | gauge | `label` | `value` | |
 | wordcloud | `text` | `value` | `series` |

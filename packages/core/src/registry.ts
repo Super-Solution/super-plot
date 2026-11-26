@@ -32,6 +32,12 @@ export interface ChartDef {
    * and which one holds the series. Leave it out and only `key` works. See {@link RefShape}.
    */
   ref?: RefShape
+  /**
+   * A height (px) better than the width-based default (`defaultHeight`) for this spec at this width, or `undefined`
+   * to keep the default. For a chart that needs more room when it is narrow (a calendar cut into rows). It must not
+   * throw on a spec that has not been validated: the web binding asks before validation.
+   */
+  height?(spec: Record<string, any>, width: number): number | undefined
   /** Lay out and draw. Push marks onto `ctx.marks`; return the series for the legend. */
   compile(ctx: ChartCtx): { series: SeriesInfo[] }
   /**
