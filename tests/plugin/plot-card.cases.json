@@ -1,5 +1,5 @@
 {
-  "$comment": "COPY of the plot_card cases of super-protocol PR #5/#6 (conformance/protocol.v1.json, protocol 0.3.0, not published yet). Do not edit: replace with the protocol's own data once 0.3.0 is published.",
+  "$comment": "COPY of the plot_card cases of super-protocol 0.4.1 (conformance/protocol.v1.json at tag v0.4.1). Do not edit: replace with the protocol's own data when the pinned protocol changes.",
   "source": "super-protocol conformance/protocol.v1.json, plot_card",
   "plot_card": [
     {
@@ -880,7 +880,7 @@
       "expect": {
         "ok": false,
         "error": "spec must be an object: the plot spec.",
-        "expected": "spec: { ...a plot spec }, alt: \"one sentence saying what the plot shows\""
+        "expected": "spec: { type: \"bar\", data: [{ region: \"EU\", revenue: 12 }, { region: \"US\", revenue: 20 }], x: \"region\", y: \"revenue\" } (the plot itself, its data inside it), alt: \"one sentence saying what the plot shows\" (beside spec, not inside it)"
       }
     },
     {
@@ -995,7 +995,7 @@
       "expect": {
         "ok": false,
         "error": "alt must be a non-empty string saying what the plot shows.",
-        "expected": "spec: { ...a plot spec }, alt: \"one sentence saying what the plot shows\""
+        "expected": "spec: { type: \"bar\", data: [{ region: \"EU\", revenue: 12 }, { region: \"US\", revenue: 20 }], x: \"region\", y: \"revenue\" } (the plot itself, its data inside it), alt: \"one sentence saying what the plot shows\" (beside spec, not inside it)"
       }
     },
     {
@@ -1368,7 +1368,7 @@
       "expect": {
         "ok": false,
         "error": "spec must be an object: the plot spec.",
-        "expected": "spec: { ...a plot spec }, alt: \"one sentence saying what the plot shows\""
+        "expected": "spec: { type: \"bar\", data: [{ region: \"EU\", revenue: 12 }, { region: \"US\", revenue: 20 }], x: \"region\", y: \"revenue\" } (the plot itself, its data inside it), alt: \"one sentence saying what the plot shows\" (beside spec, not inside it)"
       }
     },
     {
@@ -1434,7 +1434,7 @@
       "expect": {
         "ok": false,
         "error": "spec must be an object: the plot spec.",
-        "expected": "spec: { ...a plot spec }, alt: \"one sentence saying what the plot shows\""
+        "expected": "spec: { type: \"bar\", data: [{ region: \"EU\", revenue: 12 }, { region: \"US\", revenue: 20 }], x: \"region\", y: \"revenue\" } (the plot itself, its data inside it), alt: \"one sentence saying what the plot shows\" (beside spec, not inside it)"
       }
     },
     {
@@ -1445,7 +1445,7 @@
       "expect": {
         "ok": false,
         "error": "alt must be a non-empty string saying what the plot shows.",
-        "expected": "spec: { ...a plot spec }, alt: \"one sentence saying what the plot shows\""
+        "expected": "spec: { type: \"bar\", data: [{ region: \"EU\", revenue: 12 }, { region: \"US\", revenue: 20 }], x: \"region\", y: \"revenue\" } (the plot itself, its data inside it), alt: \"one sentence saying what the plot shows\" (beside spec, not inside it)"
       }
     },
     {
@@ -1456,7 +1456,7 @@
       "expect": {
         "ok": false,
         "error": "spec must be an object: the plot spec.",
-        "expected": "spec: { ...a plot spec }, alt: \"one sentence saying what the plot shows\""
+        "expected": "spec: { type: \"bar\", data: [{ region: \"EU\", revenue: 12 }, { region: \"US\", revenue: 20 }], x: \"region\", y: \"revenue\" } (the plot itself, its data inside it), alt: \"one sentence saying what the plot shows\" (beside spec, not inside it)"
       }
     }
   ]

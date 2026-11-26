@@ -6,7 +6,7 @@ All four npm packages (`@supersolutions/super-plot-core`, `-web`, `-react`, `-ch
 
 ### Changed
 
-- `@supersolutions/super-plot-chat-plugin` depends on `@supersolutions/super-protocol` 0.4.1 (it was 0.3.0), the version Super Chat 0.5.0 uses, so a project with the plugin and Super Chat no longer installs two copies of the protocol. No chart, validation or rendering behaviour changes; the four npm packages move to 0.8.1 together. The Go and Python ports are unchanged and stay at 0.8.0.
+- `@supersolutions/super-plot-chat-plugin` depends on `@supersolutions/super-protocol` 0.4.1 (it was 0.3.0), the version Super Chat 0.5.0 uses, so a project with the plugin and Super Chat no longer installs two copies of the protocol. No chart, validation or rendering behaviour changes; the four npm packages move to 0.8.1 together. The Go and Python ports are unchanged and stay at 0.8.0. The vendored copy of the protocol's `plot_card` cases (`tests/plugin/plot-card.cases.json`) is replaced with protocol 0.4.1's: the inputs are the same and six refusals now carry the longer, nested example in `expected` that 0.4.1 returns.
 
 ## 0.8.0 (2026-11-25)
 
